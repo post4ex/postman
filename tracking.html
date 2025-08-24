@@ -56,7 +56,7 @@
             top: 5rem; /* Adjusted to be below the header */
             background-color: white;
             border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1-px rgba(0, 0, 0, 0.06);
             padding: 0.5rem;
             z-index: 50; /* Ensure it's on top of other content */
         }
@@ -85,6 +85,40 @@
         }
         .scan-history-table tr:last-child td {
             border-bottom: none;
+        }
+        /* Styling for the order list items */
+        .order-list-item {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Allows wrapping on smaller screens */
+            gap: 1rem;
+        }
+        /* Modal-specific CSS */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            position: relative;
         }
     </style>
 </head>
@@ -162,6 +196,21 @@
             </div>
         </div>
     </div>
+    
+    <!-- The Modal Pop-up for Scan History -->
+    <div id="scanHistoryModal" class="modal-overlay hidden">
+        <div class="modal-content relative card">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Scan History</h2>
+            <button id="closeModalButton" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div id="modalContent">
+                <!-- Scan history table will be injected here -->
+            </div>
+        </div>
+    </div>
 
     <script>
         // --- CRITICAL: REPLACE THIS URL WITH YOUR GOOGLE APPS SCRIPT DEPLOYMENT URL ---
@@ -176,6 +225,10 @@
         const messageBox = document.getElementById('messageBox');
         const messageText = document.getElementById('messageText');
         const loadingIndicator = document.getElementById('loadingIndicator');
+        const scanHistoryModal = document.getElementById('scanHistoryModal');
+        const closeModalButton = document.getElementById('closeModalButton');
+        const modalContent = document.getElementById('modalContent');
+
 
         // New DOM elements for menu
         const menuButton = document.getElementById('menuButton');
@@ -183,6 +236,7 @@
 
         // State to manage the current search type
         let currentSearchType = 'ref';
+        let allConsignments = []; // Store all fetched consignments
 
         /**
          * Formats a date string from ISO 8601 to 'dd-mm-yy hh:mm:ss'.
@@ -195,6 +249,10 @@
                 return 'N/A';
             }
             const date = new Date(isoString);
+            // Check if the date object is a valid date
+            if (isNaN(date.getTime())) {
+                return 'Date not available';
+            }
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const year = String(date.getFullYear()).slice(-2);
@@ -250,6 +308,29 @@
             }
         });
 
+        // Event listener for the "Track" button on the order list
+        resultsContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('track-btn')) {
+                const index = e.target.dataset.index;
+                if (allConsignments[index]) {
+                    // Corrected function call to open the modal
+                    showScanHistoryModal(allConsignments[index]);
+                }
+            }
+        });
+
+        // Event listener to close the modal
+        closeModalButton.addEventListener('click', () => {
+            scanHistoryModal.classList.add('hidden');
+        });
+        
+        // Also close modal when clicking outside the content
+        scanHistoryModal.addEventListener('click', (e) => {
+            if (e.target === scanHistoryModal) {
+                scanHistoryModal.classList.add('hidden');
+            }
+        });
+
         // Main function to handle the tracking logic
         async function trackConsignment() {
             let query = searchInput.value.trim();
@@ -258,6 +339,7 @@
             resultsContainer.innerHTML = '';
             resultsContainer.classList.add('hidden');
             messageBox.classList.add('hidden');
+            allConsignments = []; // Reset stored consignments
             
             // Show loading indicator
             loadingIndicator.classList.remove('hidden');
@@ -293,6 +375,9 @@
                 let allOrdersFound = true;
                 
                 results.forEach(responseData => {
+                    // Log the entire response data object for debugging purposes
+                    console.log('API Response Data for:', responseData);
+
                     if (responseData.error) {
                         showMessage(responseData.error, 'error');
                         allOrdersFound = false;
@@ -301,22 +386,27 @@
 
                     const orders = responseData.orders;
                     if (orders && orders.length > 0) {
-                        resultsContainer.classList.remove('hidden');
-                        orders.forEach(consignment => {
-                            renderConsignmentDetails(consignment);
-                        });
+                        allConsignments = allConsignments.concat(orders); // Store all consignments
                     } else {
-                        showMessage(`No orders found for one or more of your queries.`, 'error');
                         allOrdersFound = false;
                     }
                 });
 
-                if (allOrdersFound && resultsContainer.children.length > 0) {
+                if (allConsignments.length > 0) {
+                    resultsContainer.classList.remove('hidden');
+                    if (currentSearchType === 'mobile') {
+                        // Sort orders by date in descending order before rendering
+                        allConsignments.sort((a, b) => new Date(b.order['Order Date']) - new Date(a.order['Order Date']));
+                        renderOrderList(allConsignments);
+                    } else {
+                        // If AWB/Ref search, show the first order's details immediately
+                        allConsignments.forEach(consignment => {
+                             showConsignmentDetails(consignment);
+                        });
+                    }
                      showMessage('Tracking results successfully loaded.', 'success');
-                } else if (!allOrdersFound) {
-                     // The error message is already displayed in the loop
                 } else {
-                    showMessage(`No orders found for the ${currentSearchType} number(s) provided.`, 'error');
+                     showMessage(`No orders found for the ${currentSearchType} number(s) provided.`, 'error');
                 }
 
             } catch (error) {
@@ -327,8 +417,58 @@
             }
         }
         
+        /**
+         * Renders a list of orders for a mobile number search.
+         * @param {Array} consignments - An array of consignment objects.
+         */
+        function renderOrderList(consignments) {
+            // Mapping object for 'Billing Mode' values
+            const modeMap = {
+                'E': 'Express',
+                'P': 'Premium',
+                'A': 'Airline',
+                'S': 'Surface'
+            };
+            
+            resultsContainer.innerHTML = `
+                <div class="card space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Orders for Mobile Number</h2>
+                    <ul class="space-y-4">
+                        ${consignments.map((consignment, index) => `
+                            <li class="order-list-item">
+                                <!-- Order details container -->
+                                <div class="grid grid-cols-2 gap-x-6 gap-y-2 flex-grow">
+                                    <div class="col-span-2 sm:col-span-1">
+                                        <p class="font-medium text-gray-800">Status: ${consignment.track?.['Current Status'] || 'N/A'}</p>
+                                        <p class="text-sm text-gray-600">AWB: ${consignment.order['AWB Booked']}</p>
+                                        <p class="text-sm text-gray-600">Order Date: ${formatDateTime(consignment.order['Order Date'])}</p>
+                                    </div>
+                                    <div class="col-span-2 sm:col-span-1">
+                                        <p class="text-sm text-gray-600">Carrier: ${consignment.order['Carrier Name']}</p>
+                                        <p class="text-sm text-gray-500">Mode: ${modeMap[consignment.order['Billing Mode']] || consignment.order['Billing Mode']}</p>
+                                        <p class="text-sm text-gray-500">Wt: ${consignment.order.Weight} kg / Pcs: ${consignment.order.Piecs}</p>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <p class="text-sm text-gray-600">Dest: ${consignment.order['Consignee Name']} - ${consignment.order['Consignee City']}</p>
+                                    </div>
+                                </div>
+                                
+                                <button class="track-btn px-4 py-2 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors" data-index="${index}">
+                                    Track
+                                </button>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+
         // Function to render a single consignment's details
-        function renderConsignmentDetails(consignment) {
+        function showConsignmentDetails(consignment) {
+            // Clear previous content
+            resultsContainer.innerHTML = '';
+            
             const { order, track, logs } = consignment;
 
             // Sort logs by date in descending order (most recent first) before anything else
@@ -344,17 +484,19 @@
                 'S': 'Surface'
             };
             
-            // Determine the current status date. If the track date is not available,
-            // use the date from the most recent scan in the history logs.
-            let currentUpdateDate;
+            // Determine the current status date
+            let currentUpdateDate = 'N/A';
             const currentTrackDate = track && track['Current Date'];
             if (currentTrackDate) {
                 currentUpdateDate = currentTrackDate;
             } else if (logs && logs.length > 0) {
-                // The logs are now sorted, so the first entry has the most recent date.
-                currentUpdateDate = logs[0]['Scan Date'];
-            } else {
-                currentUpdateDate = 'N/A';
+                // Find the latest date from the logs by comparing all of them
+                const latestLog = logs.reduce((latest, current) => {
+                    const latestDate = new Date(latest['Scan Date']);
+                    const currentDate = new Date(current['Scan Date']);
+                    return currentDate > latestDate ? current : latest;
+                });
+                currentUpdateDate = latestLog['Scan Date'];
             }
 
             // Add a null check for 'track' before attempting to access its properties
@@ -394,8 +536,8 @@
                             <!-- Ticket 4: Consignor and Consignee -->
                             <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
                                 <h3 class="font-medium text-gray-800">Origin & Destination</h3>
-                                <p class="text-sm">Consignor: <span class="font-semibold text-gray-900">${order.Customer} - ${order['Sender City']}</span></p>
-                                <p class="text-sm">Consignee: <span class="font-semibold text-gray-900">${order['Consignee Name']} - ${order['Consignee City']}</span></p>
+                                <p class="text-sm">Origin: <span class="font-semibold text-gray-900">${order.Customer} - ${order['Sender City']}</span></p>
+                                <p class="text-sm">Dest: <span class="font-semibold text-gray-900">${order['Consignee Name']} - ${order['Consignee City']}</span></p>
                             </div>
                         </div>
                     </div>
@@ -438,6 +580,47 @@
                 </div>
             `;
             resultsContainer.insertAdjacentHTML('beforeend', html);
+        }
+        
+        // New function to show scan history in a modal
+        function showScanHistoryModal(consignment) {
+            const logs = consignment.logs;
+            
+            // Sort logs by date in descending order (most recent first)
+            if (logs && logs.length > 0) {
+                logs.sort((a, b) => new Date(b['Scan Date']) - new Date(a['Scan Date']));
+            }
+
+            let modalHtml = '';
+            if (logs && logs.length > 0) {
+                modalHtml = `
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="scan-history-table w-full text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-600">
+                                    <th class="py-3 px-4 font-semibold">Event Date</th>
+                                    <th class="py-3 px-4 font-semibold">Event & Remarks</th>
+                                    <th class="py-3 px-4 font-semibold">Location</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${logs.map(log => `
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="py-3 px-4 text-gray-700">${formatDateTime(log['Scan Date'])}</td>
+                                        <td class="py-3 px-4 text-gray-700">${log['Scan Status']} - ${log.Remark}</td>
+                                        <td class="py-3 px-4 text-gray-700">${log['Scan Location']}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                modalHtml = `<p class="text-gray-500">No scan history found for this consignment.</p>`;
+            }
+            
+            modalContent.innerHTML = modalHtml;
+            scanHistoryModal.classList.remove('hidden');
         }
 
         // Function to show messages
