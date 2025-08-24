@@ -1,332 +1,461 @@
-<!DOCTYPE html>
+<!DOCTYPE-html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Postman Tracker</title>
-    <!-- Tailwind CSS for styling -->
+    <title>Consignment Tracker</title>
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React, ReactDOM, and Babel for JSX compilation -->
-    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
         }
-        .collapsible-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-            background-color: #f9fafb;
-            border-radius: 8px;
-            margin-top: 1rem;
+        .container {
+            max-width: 800px;
+            margin: auto;
         }
-        .collapsible-content.expanded {
-            max-height: 500px;
-            padding: 1rem;
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        /* Custom font size for the terms content */
-        .terms-text {
-            font-size: 10px;
+        .track-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+        }
+        .track-dot {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 9999px;
+            background-color: #d1d5db; /* Gray dot */
+            position: relative;
+        }
+        .track-dot.completed {
+            background-color: #10b981; /* Green dot for completed */
+        }
+        .track-line {
+            position: absolute;
+            width: 2px;
+            background-color: #d1d5db;
+            height: 2rem;
+            top: 1rem;
+            left: 0.45rem;
+        }
+        /* Custom CSS for dropdown menu */
+        .dropdown-menu {
+            position: absolute;
+            right: 1.5rem;
+            top: 5rem; /* Adjusted to be below the header */
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 0.5rem;
+            z-index: 50; /* Ensure it's on top of other content */
+        }
+        .dropdown-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            color: #1a202c; /* text-gray-900 */
+            transition-property: background-color, color;
+            transition-duration: 150ms;
+        }
+        .dropdown-menu a:hover {
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        /* Style for the new table */
+        .scan-history-table th, .scan-history-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* A light gray border */
+        }
+        .scan-history-table th {
+            font-weight: 600;
+            color: #4b5563; /* text-gray-600 */
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+        .scan-history-table tr:last-child td {
+            border-bottom: none;
         }
     </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8 flex flex-col items-center relative">
 
-    <script type="text/babel">
-        const { useState } = React;
+    <!-- Website Header -->
+    <header class="w-full bg-white text-blue-900 shadow-md mb-8 py-4 px-6 rounded-b-lg">
+        <div class="container flex items-center justify-between relative">
+            <!-- Logo positioned on the left -->
+            <a href="#" class="flex items-center space-x-2 flex-shrink-0">
+                <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto rounded-lg">
+            </a>
 
-        const App = () => {
-            // State for UI navigation
-            const [activeSection, setActiveSection] = useState('main');
-            const [termsExpanded, setTermsExpanded] = useState(false);
-            // State for tracking functionality
-            const [searchInput, setSearchInput] = useState('');
-            const [trackingResults, setTrackingResults] = useState([]); // Array to hold multiple results
-            const [loading, setLoading] = useState(false);
-            const [searchMessage, setSearchMessage] = useState('');
+            <!-- Optional navigation links for larger screens -->
+            <nav class="hidden sm:flex space-x-2 text-sm font-semibold flex-shrink-0">
+                <a href="#" class="px-4 py-2 rounded-lg text-blue-900 hover:text-blue-700 transition-colors">Home</a>
+                <a href="#" class="px-4 py-2 rounded-lg text-blue-900 hover:text-blue-700 transition-colors">Services</a>
+                <a href="#" class="px-4 py-2 rounded-lg text-blue-900 hover:text-blue-700 transition-colors">Contact</a>
+            </nav>
 
-            // The Google Apps Script URL to fetch data from
-            const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLN1G3ZmbqcX5nN9nx46p4pZz6AU3xSk4AzeRMxknRVxbqQMzvsj-mWWhfFjxv7tvlTw/exec";
+            <!-- Menu Button for smaller screens -->
+            <button id="menuButton" class="sm:hidden p-2 rounded-lg text-blue-900 hover:text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
 
-            // --- HELPER FUNCTIONS ---
-            const formatDateIST = (dateString) => {
-                if (!dateString) return 'N/A';
-                const date = new Date(dateString);
-                const pad = (num) => num.toString().padStart(2, '0');
-                const day = pad(date.getUTCDate());
-                const month = pad(date.getUTCMonth() + 1);
-                const year = pad(date.getUTCFullYear() % 100);
-                let hours = date.getUTCHours();
-                let minutes = date.getUTCMinutes();
-                const seconds = date.getUTCSeconds();
-                minutes += 30;
-                hours += 5;
-                if (minutes >= 60) {
-                    hours += Math.floor(minutes / 60);
-                    minutes = minutes % 60;
-                }
-                if (hours >= 24) {
-                    hours = hours % 24;
-                }
-                return `${pad(day)}-${pad(month)}-${pad(year)} ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-            };
+            <!-- Dropdown Menu -->
+            <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden">
+                <a href="#">Home</a>
+                <a href="#">Services</a>
+                <a href="#">Contact</a>
+            </div>
+        </div>
+    </header>
 
-            const formatDateDDMMYY = (dateString) => {
-                if (!dateString) return 'N/A';
-                const date = new Date(dateString);
-                const pad = (num) => num.toString().padStart(2, '0');
-                const day = pad(date.getUTCDate());
-                const month = pad(date.getUTCMonth() + 1);
-                const year = pad(date.getUTCFullYear() % 100);
-                return `${pad(day)}-${pad(month)}-${pad(year)}`;
-            };
-
-            // --- SEARCH LOGIC ---
-            const handleSearch = async (e) => {
-                e.preventDefault();
-                setLoading(true);
-                setTrackingResults([]);
-                setSearchMessage('');
-                setTermsExpanded(false);
-
-                // Split the input by comma and trim each query
-                const queries = searchInput.split(',').map(q => q.trim().toUpperCase()).filter(q => q !== '');
-                if (queries.length === 0) {
-                    setSearchMessage('Please enter one or more Ref or AWB numbers.');
-                    setLoading(false);
-                    return;
-                }
-
-                try {
-                    const response = await fetch(APPS_SCRIPT_URL);
-                    const data = await response.json();
-                    const tracksData = data.tracks;
-                    const logsData = data.logs;
-                    const ordersData = data.orders;
-
-                    const newResults = [];
-                    queries.forEach(query => {
-                        const track = tracksData.find(item => item.ref.toString().toUpperCase() === query || item.awb.toString().toUpperCase() === query);
-
-                        if (!track) {
-                            newResults.push({
-                                query,
-                                error: `No results found for "${query}".`
-                            });
-                            return;
-                        }
-
-                        const refToSearch = track.ref.toString().toUpperCase();
-                        const order = ordersData.find(item => item.ref.toString().toUpperCase() === refToSearch || (item.awbBooked && item.awbBooked.toString().toUpperCase() === refToSearch));
-
-                        const fullTrack = {
-                            ref: track.ref,
-                            awb: track.awb,
-                            courier: track.courier,
-                            currentStatus: track.currentStatus,
-                            currentDate: track.currentDate,
-                            orderDate: order ? order.orderDate : 'N/A',
-                            edd: order ? order.edd : 'N/A',
-                            customer: order ? order.customer : 'N/A',
-                            billingMode: order ? order.billingMode : 'N/A',
-                            pieces: order ? order.pieces : 'N/A',
-                            weight: order ? order.weight : 'N/A',
-                            consigneeName: order ? order.consigneeName : 'N/A',
-                            consigneeCity: order ? order.consigneeCity : 'N/A',
-                            destCountry: order ? order.destCountry : 'N/A',
-                        };
-
-                        const filteredLogs = logsData.filter(log => log.ref.toString().toUpperCase() === refToSearch);
-                        if (filteredLogs.length > 0) {
-                            filteredLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
-                        }
-
-                        newResults.push({
-                            query,
-                            data: fullTrack,
-                            logs: filteredLogs
-                        });
-                    });
-
-                    setTrackingResults(newResults);
-
-                } catch (error) {
-                    console.error("Failed to fetch data:", error);
-                    setSearchMessage('Failed to load tracking data. Please check your Apps Script deployment.');
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const renderMainSection = () => (
-                <div id="mainSection" className="p-4 md:p-8">
-                    <h1 className="text-3xl md:text-4xl font-extrabold text-gray-500 mb-6 text-center">Adventures of a Postman</h1>
-                    <form onSubmit={handleSearch}>
-                        <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4 mb-8">
-                            <input
-                                type="text"
-                                id="searchInput"
-                                placeholder="Enter Ref or AWB numbers (e.g., 501, 101, 201)..."
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                className="flex-1 p-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-700 transition-all text-gray-700"
-                            />
-                            <button
-                                type="submit"
-                                className="w-full md:w-auto px-6 py-3 bg-blue-900 text-white font-semibold rounded-xl hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-opacity-50 transition-colors shadow-md"
-                                disabled={loading}
-                            >
-                                {loading ? 'Searching...' : 'Search'}
-                            </button>
-                        </div>
-                    </form>
-                    <div id="resultsSection" className="space-y-6">
-                        {trackingResults.length > 0 && trackingResults.map((result, index) => (
-                            <div key={index} className="bg-white rounded-xl shadow-2xl w-full p-4 md:p-8 mb-8">
-                                <h2 className="text-xl font-bold text-gray-800 mb-4">Results for "{result.query}"</h2>
-                                {result.error ? (
-                                    <p className="text-red-500">{result.error}</p>
-                                ) : (
-                                    <>
-                                        <div id={`summaryResults-${index}`} className="">
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
-                                                <div className="bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Ref Number</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{result.data.ref}</p>
-                                                </div>
-                                                <div className="bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">AWB Number</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{result.data.awb}</p>
-                                                </div>
-                                                <div className="bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Courier Name</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{result.data.courier}</p>
-                                                </div>
-                                                {/* Merged card for medium and wider views */}
-                                                <div className="hidden md:block bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Status & Date</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{`${result.data.currentStatus} | ${formatDateIST(result.data.currentDate)}`}</p>
-                                                </div>
-                                                {/* Separate cards for mobile views */}
-                                                <div className="block md:hidden bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Current Status</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{result.data.currentStatus}</p>
-                                                </div>
-                                                <div className="block md:hidden bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Status Date</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{formatDateIST(result.data.currentDate)}</p>
-                                                </div>
-                                                <div className="bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Order and EDD Date</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{result.data.orderDate !== 'N/A' ? `${formatDateDDMMYY(result.data.orderDate)} - ${formatDateDDMMYY(result.data.edd)}` : 'N/A'}</p>
-                                                </div>
-                                                <div className="bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Customer</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{result.data.customer}</p>
-                                                </div>
-                                                <div className="bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Mode, Pieces & Weight</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{result.data.billingMode !== 'N/A' ? `${result.data.billingMode} / ${result.data.pieces} Pcs / ${result.data.weight} Kg` : 'N/A'}</p>
-                                                </div>
-                                                <div className="bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Consignee Name</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{result.data.consigneeName}</p>
-                                                </div>
-                                                <div className="bg-gray-100 p-4 rounded-xl shadow-sm">
-                                                    <span className="text-gray-500 font-medium">Destination</span>
-                                                    <p className="text-base md:text-lg font-bold text-blue-800 mt-1">{result.data.consigneeCity !== 'N/A' ? `${result.data.consigneeCity} - ${result.data.destCountry}` : 'N/A'}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {result.logs.length > 0 && (
-                                            <div id={`logTableSection-${index}`} className="mt-8">
-                                                <h3 className="text-lg font-bold text-gray-800 mb-4">Tracking History</h3>
-                                                <div className="overflow-x-auto rounded-xl shadow-sm border border-gray-200">
-                                                    <table className="min-w-full divide-y divide-gray-200 table-auto">
-                                                        <thead className="bg-gray-50">
-                                                            <tr>
-                                                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-normal">Scan Date & Time</th>
-                                                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-normal">Event</th>
-                                                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-normal">Scan Location</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="bg-white divide-y divide-gray-200">
-                                                            {result.logs.map((log, logIndex) => (
-                                                                <tr key={logIndex} className="hover:bg-gray-100 transition-colors">
-                                                                    <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-normal">{formatDateIST(log.date)}</td>
-                                                                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-normal">{log.remark ? `${log.status} - ${log.remark}` : log.status}</td>
-                                                                    <td className="px-6 py-4 text-sm text-gray-500 whitespace-normal">{log.location}</td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                        ))}
-                        <div className="text-center mt-6">
-                            <a href="#" onClick={(e) => { e.preventDefault(); setTermsExpanded(!termsExpanded); }} className="text-sm text-gray-500 hover:text-blue-700 transition-colors">Terms and Conditions Apply</a>
-                        </div>
-                        <div className={`collapsible-content ${termsExpanded ? 'expanded' : ''}`}>
-                            <ol className="list-decimal list-inside space-y-2 terms-text text-gray-600 leading-relaxed">
-                                <li>Consignor is fully responsible if IATAICAO/IMDG,ADR restricted/Prohabitted items is being ship or mismatch with declared contain.</li>
-                                <li>This Tracking means said shipment has been handovered for shipping.</li>
-                                <li>Shipment TAT may differ as declared, depends transport, air traffic and natural clamity.</li>
-                                <li>Custom, Clearance and Penalty are not paid be paid by carrier. will be taken if charged by GOV.</li>
-                                <li>Higher Value shipments are mandatory to be insured by the shipper/sender as “Owner’s Risk” with a valid insurance Documents. In-case of “Carrier’s Risk”, the sender pay the risk surcharge as per defined.</li>
-                                <li>Fright refund will not be entertained in any claims if service failure is resulted from any condition Eg. Strikes, Bandh, Elections, Rains, Floods, Fire, Accident or other natural calamities.</li>
-                                <li>NO FRAGILE and Perishable Item can be booked under Carrier's Risk.</li>
-                                <li>This Tracking has 90 days life from booking date.</li>
-                                <li>We are a service provider and in case of any unforeseen delay, damage, loss of consignment, our liabilities are specifically limited.</li>
-                                <li>Carrrier has the right at its option or at the request of competent authorities to open consignment at any time to inspect the contents of the shipment.</li>
-                            </ol>
-                        </div>
-                        {searchMessage && <p className="text-center text-gray-500">{searchMessage}</p>}
-                    </div>
+    <div class="container space-y-8 mt-4">
+        <!-- Main Application Card -->
+        <div class="card">
+            <!-- Search Input, Toggle and Button -->
+            <!-- The outer div now correctly stacks elements in a column on small screens -->
+            <div class="flex flex-col sm:flex-row items-center gap-4 mb-8">
+                <!-- Segmented control now takes full width on small screens -->
+                <div class="flex rounded-lg overflow-hidden w-full sm:w-1/4">
+                    <button id="refButton" class="p-3 text-white font-semibold rounded-l-lg transition-colors w-1/2 bg-blue-800 hover:bg-blue-900">
+                        AWB/Ref
+                    </button>
+                    <button id="mobileButton" class="p-3 text-gray-700 font-semibold rounded-r-lg transition-colors w-1/2 bg-gray-200 hover:bg-gray-300">
+                        Mobile
+                    </button>
                 </div>
-            );
+                
+                <!-- Input field now always takes full width on small screens -->
+                <input type="text" id="searchInput" placeholder="Enter AWB/Ref Number(s), comma-separated" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700 w-full">
+                
+                <!-- Search button also takes full width on small screens -->
+                <button id="searchButton" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors w-full sm:w-auto">
+                    Search
+                </button>
+            </div>
             
-            const renderAboutSection = () => (
-                <div className="p-4 md:p-8">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-4">About This Tool</h2>
-                    <p className="text-gray-600 leading-relaxed mb-4">This web application provides a simple and efficient way to track shipments using a reference number or an AWB number. It fetches data from a connected Google Apps Script to display real-time tracking information and a detailed history of the shipment's journey.</p>
-                    <p className="text-600 leading-relaxed">The main goal of this project is to create a lightweight, responsive, and easy-to-use interface that can be easily customized and deployed. It's an excellent example of how simple web tools can be built to solve practical problems.</p>
-                </div>
-            );
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="hidden text-center text-gray-500 mb-4">
+                <p>Loading data...</p>
+            </div>
 
-            return (
-                <div className="flex flex-col min-h-screen bg-gray-100 font-sans p-4">
-                    <header className="bg-white shadow-sm py-4 px-6 md:px-10 sticky top-0 z-50">
-                        <div className="container mx-auto flex items-center justify-between">
-                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveSection('main'); }} className="flex items-center space-x-3">
-                                <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman Logo" className="w-1/4 rounded-lg" onError={(e) => e.target.src = 'https://placehold.co/200x300/1D4ED8/ffffff?text=Postman'} />
-                            </a>
-                            <nav>
-                                <ul className="flex space-x-6">
-                                    <li><a href="#" onClick={(e) => { e.preventDefault(); setActiveSection('main'); }} className="text-gray-600 hover:text-blue-700 font-medium transition-colors">Home</a></li>
-                                    <li><a href="#" onClick={(e) => { e.preventDefault(); setActiveSection('about'); }} className="text-gray-600 hover:text-blue-700 font-medium transition-colors">About</a></li>
-                                </ul>
-                            </nav>
-                        </div>
-                    </header>
-                    <div className="p-4 md:p-8 flex items-center justify-center flex-grow">
-                        <div className="bg-white rounded-xl shadow-2xl w-full">
-                            {activeSection === 'main' && renderMainSection()}
-                            {activeSection === 'about' && renderAboutSection()}
+            <!-- Tracking Details Display Area -->
+            <div id="resultsContainer" class="hidden space-y-6">
+                <!-- Data will be dynamically injected here -->
+            </div>
+            
+            <!-- Message Box for errors or notifications -->
+            <div id="messageBox" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert">
+                <p id="messageText"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CRITICAL: REPLACE THIS URL WITH YOUR GOOGLE APPS SCRIPT DEPLOYMENT URL ---
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwdEPTko2RsIDO4T3-11nwsCUcVR3jtzC8Xpya5FTqZo13aNWfn1uNhZQ9Zfw_r7hk4aQ/exec'; 
+
+        // Get DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const refButton = document.getElementById('refButton');
+        const mobileButton = document.getElementById('mobileButton');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        // New DOM elements for menu
+        const menuButton = document.getElementById('menuButton');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+
+        // State to manage the current search type
+        let currentSearchType = 'ref';
+
+        /**
+         * Formats a date string from ISO 8601 to 'dd-mm-yy hh:mm:ss'.
+         * @param {string} isoString The date string in ISO 8601 format.
+         * @returns {string} The formatted date string, or 'N/A' if the input is invalid.
+         */
+        function formatDateTime(isoString) {
+            // Check for invalid or null input
+            if (!isoString) {
+                return 'N/A';
+            }
+            const date = new Date(isoString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = String(date.getFullYear()).slice(-2);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+        }
+
+
+        // Function to update the button styles
+        function updateButtonStyles() {
+            if (currentSearchType === 'ref') {
+                refButton.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                refButton.classList.add('bg-blue-800', 'hover:bg-blue-900', 'text-white');
+                mobileButton.classList.remove('bg-blue-800', 'hover:bg-blue-900', 'text-white');
+                mobileButton.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                searchInput.placeholder = 'Enter AWB/Ref Number(s), comma-separated';
+                searchInput.type = 'text';
+            } else {
+                mobileButton.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                mobileButton.classList.add('bg-blue-800', 'hover:bg-blue-900', 'text-white');
+                refButton.classList.remove('bg-blue-800', 'hover:bg-blue-900', 'text-white');
+                refButton.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                searchInput.placeholder = 'Enter Mobile Number';
+                searchInput.type = 'tel';
+            }
+        }
+
+        // Event listener to toggle the dropdown menu
+        menuButton.addEventListener('click', () => {
+            dropdownMenu.classList.toggle('hidden');
+        });
+
+        // Event listeners for the search type buttons
+        refButton.addEventListener('click', () => {
+            currentSearchType = 'ref';
+            updateButtonStyles();
+        });
+
+        mobileButton.addEventListener('click', () => {
+            currentSearchType = 'mobile';
+            updateButtonStyles();
+        });
+
+        // Event listener for the search button
+        searchButton.addEventListener('click', () => trackConsignment());
+
+        // Event listener for the input field to allow pressing Enter
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                trackConsignment();
+            }
+        });
+
+        // Main function to handle the tracking logic
+        async function trackConsignment() {
+            let query = searchInput.value.trim();
+            
+            // Clear previous results and messages
+            resultsContainer.innerHTML = '';
+            resultsContainer.classList.add('hidden');
+            messageBox.classList.add('hidden');
+            
+            // Show loading indicator
+            loadingIndicator.classList.remove('hidden');
+
+            if (!query) {
+                showMessage(`Please enter a valid ${currentSearchType === 'ref' ? 'Reference/AWB Number(s)' : 'Mobile Number'}.`, 'error');
+                loadingIndicator.classList.add('hidden');
+                return;
+            }
+
+            // Split the query into an array of individual queries for 'ref' search type
+            const queries = currentSearchType === 'ref' 
+                ? query.split(',').map(item => item.trim()).filter(item => item)
+                : [query];
+
+            const fetchPromises = queries.map(q => {
+                const url = `${API_URL}?searchType=${currentSearchType}&query=${encodeURIComponent(q)}`;
+                return fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Network response for ${q} was not ok`);
+                        }
+                        return response.json();
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching data for ${q}:`, error);
+                        return { error: `Failed to load data for ${q}.` };
+                    });
+            });
+
+            try {
+                const results = await Promise.all(fetchPromises);
+                let allOrdersFound = true;
+                
+                results.forEach(responseData => {
+                    if (responseData.error) {
+                        showMessage(responseData.error, 'error');
+                        allOrdersFound = false;
+                        return;
+                    }
+
+                    const orders = responseData.orders;
+                    if (orders && orders.length > 0) {
+                        resultsContainer.classList.remove('hidden');
+                        orders.forEach(consignment => {
+                            renderConsignmentDetails(consignment);
+                        });
+                    } else {
+                        showMessage(`No orders found for one or more of your queries.`, 'error');
+                        allOrdersFound = false;
+                    }
+                });
+
+                if (allOrdersFound && resultsContainer.children.length > 0) {
+                     showMessage('Tracking results successfully loaded.', 'success');
+                } else if (!allOrdersFound) {
+                     // The error message is already displayed in the loop
+                } else {
+                    showMessage(`No orders found for the ${currentSearchType} number(s) provided.`, 'error');
+                }
+
+            } catch (error) {
+                console.error('Error with one or more fetch calls:', error);
+                showMessage('An unexpected error occurred. Please try again later.', 'error');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+        
+        // Function to render a single consignment's details
+        function renderConsignmentDetails(consignment) {
+            const { order, track, logs } = consignment;
+
+            // Sort logs by date in descending order (most recent first) before anything else
+            if (logs && logs.length > 0) {
+                logs.sort((a, b) => new Date(b['Scan Date']) - new Date(a['Scan Date']));
+            }
+
+            // Mapping object for 'Billing Mode' values
+            const modeMap = {
+                'E': 'Express',
+                'P': 'Premium',
+                'A': 'Airline',
+                'S': 'Surface'
+            };
+            
+            // Determine the current status date. If the track date is not available,
+            // use the date from the most recent scan in the history logs.
+            let currentUpdateDate;
+            const currentTrackDate = track && track['Current Date'];
+            if (currentTrackDate) {
+                currentUpdateDate = currentTrackDate;
+            } else if (logs && logs.length > 0) {
+                // The logs are now sorted, so the first entry has the most recent date.
+                currentUpdateDate = logs[0]['Scan Date'];
+            } else {
+                currentUpdateDate = 'N/A';
+            }
+
+            // Add a null check for 'track' before attempting to access its properties
+            const currentStatus = track && track['Current Status'] ? track['Current Status'] : 'Status N/A';
+            const edd = order.EDD ? order.EDD : 'N/A'; // Use the EDD from the Orders sheet.
+            
+            let html = `
+                <div class="card space-y-4 mb-8">
+                    <!-- Order Details as tickets -->
+                    <div class="space-y-4">
+                        <h2 class="text-xl font-semibold text-gray-700">Order Details</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 text-gray-600">
+
+                            <!-- Ticket 1: Ref and AWB -->
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <h3 class="font-medium text-gray-800">Reference & AWB</h3>
+                                <p class="text-sm">Ref: <span class="font-semibold text-gray-900">${order.Ref}</span></p>
+                                <p class="text-sm">AWB: <span class="font-semibold text-gray-900">${order['AWB Booked']}</span></p>
+                            </div>
+
+                            <!-- Ticket 2: Order Date & EDD -->
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <h3 class="font-medium text-gray-800">Expected Delivery</h3>
+                                <p class="text-sm">Order Date: <span class="font-semibold text-gray-900">${formatDateTime(order['Order Date'])}</span></p>
+                                <p class="text-sm">EDD: <span class="font-semibold text-gray-900">${edd !== 'N/A' ? formatDateTime(edd) : edd}</span></p>
+                            </div>
+
+                            <!-- Ticket 3: Carrier, Pieces, Mode & Weight -->
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <h3 class="font-medium text-gray-800">Consignment Info</h3>
+                                <p class="text-sm">Carrier: <span class="font-semibold text-gray-900">${order['Carrier Name']}</span></p>
+                                <p class="text-sm">Pieces: <span class="font-semibold text-gray-900">${order.Piecs}</span></p>
+                                <p class="text-sm">Mode: <span class="font-semibold text-gray-900">${modeMap[order['Billing Mode']] || order['Billing Mode']}</span></p>
+                                <p class="text-sm">Weight: <span class="font-semibold text-gray-900">${order.Weight} kg</span></p>
+                            </div>
+                            
+                            <!-- Ticket 4: Consignor and Consignee -->
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <h3 class="font-medium text-gray-800">Origin & Destination</h3>
+                                <p class="text-sm">Consignor: <span class="font-semibold text-gray-900">${order.Customer} - ${order['Sender City']}</span></p>
+                                <p class="text-sm">Consignee: <span class="font-semibold text-gray-900">${order['Consignee Name']} - ${order['Consignee City']}</span></p>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Current Status -->
+                    <div class="mt-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4">Current Status</h2>
+                        <p class="text-3xl font-bold text-gray-800 mb-2">${currentStatus}</p>
+                        <p class="text-gray-500">Last updated: ${formatDateTime(currentUpdateDate)}</p>
+                    </div>
+
+                    <!-- Scan History as a table -->
+                    <div class="mt-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-4">Scan History</h2>
+                        ${logs && logs.length > 0 ? `
+                            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                                <table class="scan-history-table w-full text-sm">
+                                    <thead>
+                                        <tr class="bg-gray-50 text-gray-600">
+                                            <th class="py-3 px-4 font-semibold">Event Date</th>
+                                            <th class="py-3 px-4 font-semibold">Event & Remarks</th>
+                                            <th class="py-3 px-4 font-semibold">Location</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${logs.map(log => `
+                                            <tr class="hover:bg-gray-50 transition-colors">
+                                                <td class="py-3 px-4 text-gray-700">${formatDateTime(log['Scan Date'])}</td>
+                                                <td class="py-3 px-4 text-gray-700">${log['Scan Status']} - ${log.Remark}</td>
+                                                <td class="py-3 px-4 text-gray-700">${log['Scan Location']}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : `
+                            <p class="text-gray-500">No scan history found for this consignment.</p>
+                        `}
+                    </div>
                 </div>
-            );
-        };
-        const container = document.getElementById('root');
-        const root = ReactDOM.createRoot(container);
-        root.render(React.createElement(App));
+            `;
+            resultsContainer.insertAdjacentHTML('beforeend', html);
+        }
+
+        // Function to show messages
+        function showMessage(text, type) {
+            messageText.textContent = text;
+            messageBox.classList.remove('hidden');
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+                messageBox.classList.remove('bg-green-100', 'border-green-400', 'text-green-700');
+            } else {
+                messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
+                messageBox.classList.remove('bg-red-100', 'border-red-400', 'text-red-700');
+            }
+        }
+
+        // Set initial button styles when the page loads
+        document.addEventListener('DOMContentLoaded', updateButtonStyles);
+
     </script>
 </body>
 </html>
