@@ -62,18 +62,6 @@
             padding: 0.5rem;
             z-index: 50; /* Ensure it's on top of other content */
         }
-        .dropdown-menu a {
-            display: block;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            color: #1a202c; /* text-gray-900 */
-            transition-property: background-color, color;
-            transition-duration: 150ms;
-        }
-        .dropdown-menu a:hover {
-            background-color: #f3f4f6; /* bg-gray-100 */
-        }
         /* Style for the new table */
         .scan-history-table th, .scan-history-table td {
             padding: 0.75rem;
@@ -122,6 +110,19 @@
             overflow-y: auto;
             position: relative;
         }
+
+        /* NEW: Floating buttons for mobile view */
+        @media (max-width: 639px) { /* Tailwind's 'sm' breakpoint is 640px */
+            .social-buttons-floating {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                z-index: 50;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 sm:p-8 flex flex-col items-center relative">
@@ -130,7 +131,7 @@
     <header class="w-full bg-white text-blue-900 shadow-md mb-8 py-4 px-6 rounded-b-lg">
         <div class="container flex items-center justify-between relative">
             <!-- Logo positioned on the left -->
-            <a href="#" class="flex items-center space-x-2 flex-shrink-0">
+            <a href="#" id="logoLink" class="flex items-center space-x-2 flex-shrink-0">
                 <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto rounded-lg">
             </a>
 
@@ -138,9 +139,9 @@
             <!-- The 'a' tags have been updated to look like buttons -->
             <nav class="hidden sm:flex space-x-2 text-sm font-semibold flex-shrink-0">
                 <!-- Buttons now use bg-blue-900 and hover:bg-blue-800 -->
-                <a href="#" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-                <a href="#" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
-                <a href="#" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Contact</a>
+                <a href="#" id="homeLink" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
+                <a href="#services-section" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
+                <button id="contactButton" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Contact</button>
             </nav>
 
             <!-- Menu Button for smaller screens -->
@@ -154,9 +155,9 @@
             <!-- The 'a' tags have been updated to look like buttons -->
             <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden">
                 <!-- Buttons now use bg-blue-900 and hover:bg-blue-800 -->
-                <a href="#" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-                <a href="#" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
-                <a href="#" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Contact</a>
+                <a href="#" id="homeLinkMobile" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
+                <a href="#services-section" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
+                <button id="contactButtonMobile" class="block w-full text-left px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Contact</button>
                 <!-- New Complaint Button in Mobile Menu -->
                 <button id="complaintButtonMobile" class="w-full text-left px-4 py-2 mt-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Raise a Complaint</button>
             </div>
@@ -205,6 +206,80 @@
         </div>
     </div>
     
+    <!-- Services Section -->
+    <section id="services-section" class="container card space-y-8 mt-8 py-8 px-6">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Our Services</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+            <!-- Service 1: AirLine Services -->
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                <div class="w-16 h-16 mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9m6.75-3.75C19.912 3.474 16.592 2.25 12 2.25s-7.912 1.224-10.5 3.75m21 0c-2.625 2.516-5.912 3.75-10.5 3.75S4.125 8.766 1.5 6m19.5 0v3.75m0 0v3.75h-.75M21 12.75h-.75m0 0H18.75m-2.25-4.5h.75m-7.5 7.5h.75m0 0h.75m-7.5 7.5h.75m0 0H12a6.75 6.75 0 006.75-6.75V6" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">AirLine Services</h3>
+                <p class="text-gray-600">Our AirLine Services offer the fastest way to get your consignments to their destination, ensuring timely and secure delivery across the globe.</p>
+            </div>
+
+            <!-- Service 2: Surface Services -->
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                <div class="w-16 h-16 mb-4 text-blue-800">
+                    <svg xmlns="http://www.3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3 0h15a3 3 0 003-3V6a3 3 0 00-3-3H4.5a3 3 0 00-3 3v13.5m15-6l-3-3m0 0l-3 3m3-3v12m-2.25 0h-3.75m-15 0h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Surface Services</h3>
+                <p class="text-gray-600">For cost-effective and reliable transportation, our Surface Services are the ideal choice. We handle large and heavy shipments with care, ensuring they reach their destination safely.</p>
+            </div>
+
+            <!-- Service 3: Premium Services -->
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                <div class="w-16 h-16 mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 009-9V6.257l-2.26-1.506C17.427 4.542 16.5 4.755 16.5 5.5v3.25M12 21a9 9 0 01-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m0 0h7.5m-7.5 0v1.5a1.5 1.5 0 001.5 1.5h4.5a1.5 1.5 0 001.5-1.5v-1.5" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">Premium Services</h3>
+                <p class="text-gray-600">Experience the highest standard of service with our Premium Services. Enjoy priority handling, real-time tracking, and dedicated support for your most valuable shipments.</p>
+            </div>
+
+            <!-- Service 4: E-Commerce Services -->
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                <div class="w-16 h-16 mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.405M21.75 14.25v2.25h-5.25a2.25 2.25 0 01-2.25-2.25V6.75m0 0V6a2.25 2.25 0 012.25-2.25h1.5m0 0V3m0 3.75v3.75m-9-3.75a3 3 0 11-6 0 3 3 0 016 0zm-3 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm12 9a3 3 0 11-6 0 3 3 0 016 0zm-3 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">E-Commerce Services</h3>
+                <p class="text-gray-600">Tailored solutions for your online business. We handle everything from last-mile delivery to cash-on-delivery and returns, helping your e-commerce store thrive.</p>
+            </div>
+
+            <!-- Service 5: LTL Services -->
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                <div class="w-16 h-16 mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 4.5a2.25 2.25 0 114.5 0M18.75 9h-1.5m-14.25-3.75h-.75m17.25 10.5H12m14.25 0h-1.5m14.25 0H12m0 0L9.75 15m0 0L7.5 12h-1.5" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">LTL Services</h3>
+                <p class="text-gray-600">Our Less-than-Truckload (LTL) Services are perfect for shipments that don't require a full truck. We provide flexible and economical options for your partial loads.</p>
+            </div>
+
+            <!-- Service 6: VAS Services -->
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                <div class="w-16 h-16 mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 00-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m4.5 12.75a9 9 0 01-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m0 0h7.5m-7.5 0v1.5a1.5 1.5 0 001.5 1.5h4.5a1.5 1.5 0 001.5-1.5v-1.5m-7.5 0H12a6.75 6.75 0 006.75-6.75V6" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">VAS Services</h3>
+                <p class="text-gray-600">Enhance your logistics with our Value-Added Services (VAS), including special handling, packaging, and customizable solutions to meet your unique business needs.</p>
+            </div>
+
+        </div>
+    </section>
+
     <!-- The Modal Pop-up for Scan History -->
     <div id="scanHistoryModal" class="modal-overlay hidden">
         <div class="modal-content relative card">
@@ -295,6 +370,28 @@
         </div>
     </div>
 
+    <!-- The Contact Pop-up Modal -->
+    <div id="contactModal" class="modal-overlay hidden">
+        <div class="modal-content relative card">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Contact Details</h2>
+            <button id="closeContactModalButton" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="space-y-4 text-gray-700">
+                <div>
+                    <h3 class="font-medium">Address:</h3>
+                    <p class="text-gray-600">Shivlok Colony, Haripur, Dehradun - 248001</p>
+                </div>
+                <div>
+                    <h3 class="font-medium">Email:</h3>
+                    <p class="text-gray-600">Post4Ex@gmail.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Website Footer -->
     <!-- Footer height adjusted with smaller padding (py-3) -->
@@ -304,7 +401,8 @@
             <p class="text-center sm:text-left text-sm mb-4 sm:mb-0">&copy; 2022 The Postman. All rights reserved.</p>
             
             <!-- Social Media Icons -->
-            <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <!-- Modified this div to have the floating class for mobile -->
+            <div class="hidden sm:flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <a href="https://wa.me/919410512115" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-400 transition-colors flex items-center gap-2">
                     <i class="fa-brands fa-whatsapp text-2xl"></i>
                     <span class="sm:hidden">WhatsApp</span>
@@ -319,6 +417,16 @@
             </div>
         </div>
     </footer>
+    
+    <!-- NEW: Floating buttons for mobile view -->
+    <div class="social-buttons-floating sm:hidden">
+        <a href="https://wa.me/919410512115" target="_blank" rel="noopener noreferrer" class="text-white bg-blue-800 p-3 rounded-full shadow-lg hover:bg-blue-900 transition-colors">
+            <i class="fa-brands fa-whatsapp text-2xl"></i>
+        </a>
+        <a href="mailto:post4ex@gmail.com" target="_blank" class="text-white bg-blue-800 p-3 rounded-full shadow-lg hover:bg-blue-900 transition-colors">
+            <i class="fa-regular fa-envelope text-2xl"></i>
+        </a>
+    </div>
 
     <script>
         // --- CRITICAL: THE CORRECT GOOGLE APPS SCRIPT DEPLOYMENT URL ---
@@ -338,6 +446,12 @@
         const modalContent = document.getElementById('modalContent');
         const menuButton = document.getElementById('menuButton');
         const dropdownMenu = document.getElementById('dropdownMenu');
+        
+        // New DOM elements for Contact Modal
+        const contactModal = document.getElementById('contactModal');
+        const contactButton = document.getElementById('contactButton');
+        const contactButtonMobile = document.getElementById('contactButtonMobile');
+        const closeContactModalButton = document.getElementById('closeContactModalButton');
 
         // New DOM elements for Complaint Form
         const complaintButton = document.getElementById('complaintButton');
@@ -356,6 +470,12 @@
         const complaintLoadingIndicator = document.getElementById('complaintLoadingIndicator');
         const complaintMessageBox = document.getElementById('complaintMessageBox');
         const complaintMessageText = document.getElementById('complaintMessageText');
+
+        // NEW DOM elements for page-refreshing links and services section
+        const homeLink = document.getElementById('homeLink');
+        const homeLinkMobile = document.getElementById('homeLinkMobile');
+        const logoLink = document.getElementById('logoLink');
+        const servicesSection = document.getElementById('services-section');
 
         // State to manage the current search type
         let currentSearchType = 'ref';
@@ -407,8 +527,25 @@
         }
 
         // Event listener to toggle the dropdown menu
-        menuButton.addEventListener('click', () => {
+        menuButton.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevents the document click event from firing immediately
             dropdownMenu.classList.toggle('hidden');
+        });
+
+        // Close the dropdown menu if a user clicks on a link inside it
+        dropdownMenu.addEventListener('click', () => {
+            dropdownMenu.classList.add('hidden');
+        });
+        
+        // Close the dropdown menu if a user clicks anywhere else on the document
+        document.addEventListener('click', (event) => {
+            // Check if the click was outside the menu button and the dropdown menu itself
+            const isClickInsideMenuButton = menuButton.contains(event.target);
+            const isClickInsideDropdownMenu = dropdownMenu.contains(event.target);
+            
+            if (!isClickInsideMenuButton && !isClickInsideDropdownMenu) {
+                dropdownMenu.classList.add('hidden');
+            }
         });
 
         // Event listeners for the search type buttons
@@ -468,9 +605,14 @@
             // Show loading indicator
             loadingIndicator.classList.remove('hidden');
 
+            // NEW: Collapse the services section when search starts
+            servicesSection.classList.add('hidden');
+
             if (!query) {
                 showMessage(`Please enter a valid ${currentSearchType === 'ref' ? 'Reference/AWB Number(s)' : 'Mobile Number'}.`, 'error');
                 loadingIndicator.classList.add('hidden');
+                // NEW: Show services section again on empty query
+                servicesSection.classList.remove('hidden');
                 return;
             }
 
@@ -517,13 +659,18 @@
                         });
                     }
                     showMessage('Tracking results successfully loaded.', 'success');
+                    // Keep the services section hidden
                 } else {
                     showMessage(`No orders found for the ${currentSearchType} number(s) provided.`, 'error');
+                    // NEW: Show services section again if no results found
+                    servicesSection.classList.remove('hidden');
                 }
 
             } catch (error) {
                 console.error('An unexpected error occurred:', error);
                 showMessage(`A network error occurred. Please check your internet connection and try again.`, 'error');
+                // NEW: Show services section again on network error
+                servicesSection.classList.remove('hidden');
             } finally {
                 loadingIndicator.classList.add('hidden');
             }
@@ -922,6 +1069,47 @@
             complaintConsignment = null;
             complaintMessageBox.classList.add('hidden');
         }
+
+        // --- Contact Modal Logic ---
+        
+        // Open the modal
+        contactButton.addEventListener('click', () => {
+            contactModal.classList.remove('hidden');
+        });
+        
+        // Open the modal from the mobile dropdown
+        contactButtonMobile.addEventListener('click', () => {
+            contactModal.classList.remove('hidden');
+            dropdownMenu.classList.add('hidden'); // Hide the menu
+        });
+
+        // Close the modal
+        closeContactModalButton.addEventListener('click', () => {
+            contactModal.classList.add('hidden');
+        });
+
+        // Close the modal when clicking outside the content
+        contactModal.addEventListener('click', (e) => {
+            if (e.target === contactModal) {
+                contactModal.classList.add('hidden');
+            }
+        });
+        
+        // NEW: Event listeners for page refresh
+        logoLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            location.reload();
+        });
+
+        homeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            location.reload();
+        });
+        
+        homeLinkMobile.addEventListener('click', (e) => {
+            e.preventDefault();
+            location.reload();
+        });
 
     </script>
 </body>
