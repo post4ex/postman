@@ -301,9 +301,24 @@
                         <input type="text" id="billingState" name="billingState" required>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="billingEmail">Billing Email</label>
-                    <input type="email" id="billingEmail" name="billingEmail" required>
+                <div class="sub-grid">
+                    <div class="form-group">
+                        <label for="underBranch">Under Branch</label>
+                        <select id="underBranch" name="underBranch">
+                            <option value="DDN">DDN</option>
+                            <option value="HRD">HRD</option>
+                            <option value="SRE">SRE</option>
+                            <option value="RRK">RRK</option>
+                            <option value="MZN">MZN</option>
+                            <option value="MRT">MRT</option>
+                            <option value="RSK">RSK</option>
+                            <option value="SLQ">SLQ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="billingEmail">Billing Email</label>
+                        <input type="email" id="billingEmail" name="billingEmail" required>
+                    </div>
                 </div>
                 <div class="three-column-grid">
                     <div class="form-group">
@@ -643,7 +658,7 @@
                     showGstinSelectionModal(data.data.gstinResList);
                     gstStatusDiv.textContent = `${data.data.gstinResList.length} GSTINs found. Please select one.`;
                 } else {
-                    const firstGstin = data.data.gstinResList[0].gstin;
+                    const firstGstin = data.data.data.gstinResList[0].gstin;
                     gstStatusDiv.textContent = `Found GSTIN: ${firstGstin}. Fetching details...`;
                     fetchGstDetails(firstGstin);
                 }
@@ -770,8 +785,15 @@
         const formData = new FormData(form);
 
         // Convert form data to a JavaScript object
-        const data = Object.fromEntries(formData.entries());
+        let data = Object.fromEntries(formData.entries());
 
+        // Convert percentage values from the form by dividing by 100
+        data.codIf = parseFloat(data.codIf) / 100;
+        data.insuranceIf = parseFloat(data.insuranceIf) / 100;
+        data.ewayIf = parseFloat(data.ewayIf) / 100;
+        data.fuelCharges = parseFloat(data.fuelCharges) / 100;
+        data.devlpChg = parseFloat(data.devlpChg) / 100;
+        
         // Gather data from the editable rate table
         const rateListRows = Array.from(rateTableBody.children);
         const rateListData = rateListRows.map(row => {
@@ -804,7 +826,7 @@
         
         // This is the URL of your deployed Google Apps Script.
         // You MUST replace this with your actual URL after deploying the script provided below.
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxC4C8q3Cy2RCw5ctLcb0U-gKQHz_uTaRCaYhCZfknmKn2G1n41Hd2aRiJQujBpImpqtA/exec'; 
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbziCEBZbsltSkrLuaxvwtSsgicDvEMLFI5rN5LRH-XO4AofjTfSW9K3YuzgXuw1CRhjAg/exec'; 
 
         if (scriptUrl === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
             formStatusDiv.textContent = 'Please update the scriptUrl with your Google Apps Script URL.';
