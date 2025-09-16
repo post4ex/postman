@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Creation Form</title>
+    <title>Customer Management Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
+        /* Styles from customers.html */
+        .customers-form-container {
             max-width: 900px;
             margin: auto;
             background: #fff;
             padding: 30px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        h2 {
+        .customers-form-container h2 {
             text-align: center;
             color: #333;
             margin-bottom: 30px;
@@ -56,20 +54,20 @@
             color: #555;
             margin-bottom: 5px;
         }
-        input[type="text"],
-        input[type="email"],
-        input[type="number"],
-        input[type="tel"],
-        select,
-        textarea {
+        /* Fix for form inputs and dropdowns to ensure no rounded corners */
+        .customers-form-container input[type="text"],
+        .customers-form-container input[type="email"],
+        .customers-form-container input[type="number"],
+        .customers-form-container input[type="tel"],
+        .customers-form-container select,
+        .customers-form-container textarea {
             width: 100%;
             padding: 10px;
             box-sizing: border-box;
             border: 1px solid #ccc;
-            border-radius: 0; /* Ensure no rounded corners anywhere */
+            border-radius: 0 !important; /* Use !important to override Tailwind */
             -moz-appearance: textfield;
         }
-        /* Hide number input spinners for Chrome, Safari, Edge, Opera */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none;
@@ -97,31 +95,137 @@
             color: #666;
             text-align: center;
         }
-        .info-box {
-            background-color: #e6f7ff;
-            border: 1px solid #b3e0ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .input-group-percent {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        #formStatus {
             text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
         }
-        .info-box h4 {
-            margin-top: 0;
-            color: #0056b3;
+        .success {
+            color: green;
         }
-        .info-box ul {
-            list-style-type: none;
+        .error {
+            color: red;
+        }
+        .editable-table-container {
+            margin-top: 30px;
+            border: 1px solid #ccc;
+            border-radius: 0;
+            overflow: auto;
+        }
+        .editable-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .editable-table th,
+        .editable-table td {
             padding: 0;
-            margin: 10px 0 0;
-            font-family: monospace;
-            font-size: 14px;
-            color: #333;
+            border: 1px solid #eee;
+            text-align: left;
+        }
+        .editable-table th {
+            background-color: #f8f8f8;
+            font-weight: bold;
+            padding: 10px;
+            vertical-align: top;
+            white-space: normal;
+            word-wrap: break-word;
+            width: 70px;
+        }
+        .editable-table input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: none;
+            background: transparent;
+            font: inherit;
+            white-space: nowrap;
+        }
+        .editable-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .hidden-column {
+            display: none;
+        }
+        
+        /* Styles from customerlist.html */
+        .customer-list-container h1 {
+            text-align: center;
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 1.5rem;
+        }
+        .collapsible-row {
+            display: none;
+        }
+        .collapsible-content {
+            padding: 1rem;
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+        .expand-toggle {
+            cursor: pointer;
+        }
+        .collapsible-row.open {
+            display: table-row;
+        }
+
+        /* General & Tabbed Interface Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .main-container {
+            max-width: 1200px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .tab-button {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-button.active {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
             }
         }
+
         /* Modal Styles */
         .modal-overlay {
             display: none;
@@ -141,7 +245,7 @@
             border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             width: 90%;
-            max-width: 400px; /* Reduced width for a smaller modal */
+            max-width: 400px;
             position: relative;
         }
         .modal-close {
@@ -152,21 +256,13 @@
             cursor: pointer;
             color: #aaa;
         }
-        .modal-close:hover {
-            color: #555;
-        }
-        .modal-content h3 {
-            margin-top: 0;
-            text-align: center;
-            color: #333;
-        }
         .gstin-list {
             list-style: none;
             padding: 0;
             margin-top: 20px;
-            display: grid; /* Changed to grid */
-            grid-template-columns: 1fr 1fr; /* Two columns */
-            gap: 10px; /* Added gap between items */
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
         .gstin-list li {
             background-color: #f0f0f0;
@@ -177,695 +273,821 @@
             text-align: center;
             font-weight: bold;
         }
-        .gstin-list li:hover {
-            background-color: #e2e2e2;
-            transform: translateY(-2px);
-        }
-        .input-group-percent {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        #formStatus {
-            text-align: center;
-            margin-top: 20px;
-            font-weight: bold;
-        }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-        /* Styles for the editable table */
-        .editable-table-container {
-            margin-top: 30px;
-            border: 1px solid #ccc;
-            border-radius: 0;
-            overflow: auto;
-        }
-        .editable-table {
-            width: 100%;
-            border-collapse: collapse; /* Critical for a spreadsheet look */
-        }
-        .editable-table th,
-        .editable-table td {
-            padding: 0; /* Remove padding from cells */
-            border: 1px solid #eee; /* Apply border to cells instead of inputs */
-            text-align: left;
-        }
-        /* Allow text to wrap in header cells */
-        .editable-table th {
-            background-color: #f8f8f8;
-            font-weight: bold;
-            padding: 10px;
-            vertical-align: top;
-            white-space: normal;
-            word-wrap: break-word;
-            width: 70px; /* Ensure cells have enough space */
-        }
-        /* Prevent text wrapping in input fields */
-        .editable-table input {
-            width: 100%;
-            padding: 10px; /* Padding for the input itself */
-            box-sizing: border-box;
-            border: none; /* Remove all borders from the input */
-            background: transparent;
-            font: inherit; /* Inherit font from parent */
-            white-space: nowrap;
-        }
-        .editable-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .hidden-column {
-            display: none;
-        }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 p-4 sm:p-8">
 
-<div class="container">
-    <h2>Customer Creation</h2>
-    <form id="customerForm">
-        <div class="form-grid">
-            <!-- Left Section -->
-            <div class="form-section">
-                <div class="three-one-grid">
-                    <div class="form-group">
-                        <label for="billingID">Billing ID (GST, PAN, Aadhar)</label>
-                        <input type="text" id="billingID" name="billingID">
-                        <div id="gstStatus" class="status-message"></div>
+    <div class="main-container">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">Customer Management Portal</h1>
+        
+        <div class="tab-container">
+            <button id="createTab" class="tab-button active">Create Customer</button>
+            <button id="listTab" class="tab-button">Customer List</button>
+        </div>
+
+        <!-- Create Customer Tab Content -->
+        <div id="createContent" class="tab-content active fade-in">
+            <div class="customers-form-container">
+                <h2>Customer Creation</h2>
+                <form id="customerForm">
+                    <div class="form-grid">
+                        <!-- Left Section -->
+                        <div class="form-section">
+                            <div class="three-one-grid">
+                                <div class="form-group">
+                                    <label for="billingID">Billing ID (GST, PAN, Aadhar)</label>
+                                    <input type="text" id="billingID" name="billingID">
+                                    <div id="gstStatus" class="status-message"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="gstInclusive">GST Inclusive</label>
+                                    <select id="gstInclusive" name="gstInclusive">
+                                        <option value="Y">Y</option>
+                                        <option value="N">N</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="customerName">Customer Name</label>
+                                <input type="text" id="customerName" name="customerName" required>
+                            </div>
+                            <div class="sub-grid">
+                                <div class="form-group">
+                                    <label for="customerCode">Customer Code</label>
+                                    <input type="text" id="customerCode" name="customerCode" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="mobileNumber">Mobile Number</label>
+                                    <input type="tel" id="mobileNumber" name="mobileNumber" pattern="[0-9]{10}" title="Ten digits number" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="billingAddress">Billing Address</label>
+                                <textarea id="billingAddress" name="billingAddress" rows="4" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="billingLandmark">Billing Landmark</label>
+                                <input type="text" id="billingLandmark" name="billingLandmark">
+                            </div>
+                            <div class="three-column-grid">
+                                <div class="form-group">
+                                    <label for="billingPincode">Billing Pincode</label>
+                                    <input type="number" id="billingPincode" name="billingPincode" required>
+                                    <div id="pincodeStatus" class="status-message"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="billingCity">Billing City</label>
+                                    <input type="text" id="billingCity" name="billingCity" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="billingState">Billing State</label>
+                                    <input type="text" id="billingState" name="billingState" required>
+                                </div>
+                            </div>
+                            <div class="sub-grid">
+                                <div class="form-group">
+                                    <label for="underBranch">Under Branch</label>
+                                    <select id="underBranch" name="underBranch">
+                                        <option value="DDN">DDN</option>
+                                        <option value="HRD">HRD</option>
+                                        <option value="SRE">SRE</option>
+                                        <option value="RRK">RRK</option>
+                                        <option value="MZN">MZN</option>
+                                        <option value="MRT">MRT</option>
+                                        <option value="RSK">RSK</option>
+                                        <option value="SLQ">SLQ</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="billingEmail">Billing Email</label>
+                                    <input type="email" id="billingEmail" name="billingEmail" required>
+                                </div>
+                            </div>
+                            <div class="three-column-grid">
+                                <div class="form-group">
+                                    <label for="carrier">Carrier</label>
+                                    <select id="carrier" name="carrier">
+                                        <option value="GEN">GEN</option>
+                                        <option value="REV">REV</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="billerType">Biller Type</label>
+                                    <select id="billerType" name="billerType">
+                                        <option value="REG">REG</option>
+                                        <option value="URP">URP</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="billingCycle">Billing Cycle</label>
+                                    <select id="billingCycle" name="billingCycle">
+                                        <option value="E">E - Every Consignment</option>
+                                        <option value="D">D - Daily</option>
+                                        <option value="W">W - Weekly</option>
+                                        <option value="F">F - Fifteen Days</option>
+                                        <option value="M">M - Monthly</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Section -->
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label for="weightChange">Weight Change</label>
+                                <input type="text" id="weightChange" name="weightChange" value="3">
+                            </div>
+                            <div class="form-group">
+                                <label for="toPayIf">ToPay If</label>
+                                <input type="number" id="toPayIf" name="toPayIf" value="150">
+                            </div>
+                            <div class="form-group">
+                                <label for="codIf">COD If</label>
+                                <div class="input-group-percent">
+                                    <input type="number" id="codIf" name="codIf" value="1.3">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="insuranceIf">Insurance If</label>
+                                <div class="input-group-percent">
+                                    <input type="number" id="insuranceIf" name="insuranceIf" value="2">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="ewayIf">Eway If</label>
+                                <div class="input-group-percent">
+                                    <input type="number" id="ewayIf" name="ewayIf" value="0.2">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="awbCharge">AWB Charge</label>
+                                <input type="number" id="awbCharge" name="awbCharge" step="0.01" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="packingCharges">Packing Charges</label>
+                                <input type="number" id="packingCharges" name="packingCharges" step="0.01" value="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="fuelCharges">Fuel Charges</label>
+                                <div class="input-group-percent">
+                                    <input type="number" id="fuelCharges" name="fuelCharges" step="0.01" value="15">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="devlpChg">Development Charges</label>
+                                <div class="input-group-percent">
+                                    <input type="number" id="devlpChg" name="devlpChg" step="0.01" value="5">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="gstInclusive">GST Inclusive</label>
-                        <select id="gstInclusive" name="gstInclusive">
-                            <option value="Y">Y</option>
-                            <option value="N">N</option>
-                        </select>
+
+                    <!-- Editable Rate List Table -->
+                    <div class="editable-table-container">
+                        <h3>Rate List</h3>
+                        <table class="editable-table">
+                            <thead>
+                                <tr>
+                                    <th class="hidden-column"></th>
+                                    <th class="hidden-column"></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th class="hidden-column"></th>
+                                    <th>UP UK WST</th>
+                                    <th>UP EST DIR</th>
+                                    <th>PB HR RAJ DIR</th>
+                                    <th>DEL NCR</th>
+                                    <th>RO UP UK</th>
+                                    <th>RO PB HR RAJ</th>
+                                    <th>BHR &RO IXJ HP</th>
+                                    <th>M E T R O</th>
+                                    <th>GJ MH</th>
+                                    <th>GWT SXR</th>
+                                    <th>WB OR ROI</th>
+                                    <th>DMN DUI</th>
+                                    <th>NOR EST</th>
+                                    <th>PBR AG IMP</th>
+                                </tr>
+                                <tr>
+                                    <th class="hidden-column">Code</th>
+                                    <th class="hidden-column">Carrier</th>
+                                    <th>Service</th>
+                                    <th>Weight</th>
+                                    <th class="hidden-column">UID</th>
+                                    <th>Z1</th>
+                                    <th>Z2</th>
+                                    <th>Z3</th>
+                                    <th>Z4</th>
+                                    <th>Z5</th>
+                                    <th>Z6</th>
+                                    <th>Z7</th>
+                                    <th>Z8</th>
+                                    <th>Z9</th>
+                                    <th>Z10</th>
+                                    <th>Z11</th>
+                                    <th>Z12</th>
+                                    <th>Z13</th>
+                                    <th>Z14</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rateTableBody">
+                                <!-- Table rows will be inserted here by JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="customerName">Customer Name</label>
-                    <input type="text" id="customerName" name="customerName" required>
-                </div>
-                <div class="sub-grid">
-                    <div class="form-group">
-                        <label for="customerCode">Customer Code</label>
-                        <input type="text" id="customerCode" name="customerCode" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="mobileNumber">Mobile Number</label>
-                        <input type="tel" id="mobileNumber" name="mobileNumber" pattern="[0-9]{10}" title="Ten digits number" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="billingAddress">Billing Address</label>
-                    <textarea id="billingAddress" name="billingAddress" rows="4" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="billingLandmark">Billing Landmark</label>
-                    <input type="text" id="billingLandmark" name="billingLandmark">
-                </div>
-                <div class="three-column-grid">
-                    <div class="form-group">
-                        <label for="billingPincode">Billing Pincode</label>
-                        <input type="number" id="billingPincode" name="billingPincode" required>
-                        <div id="pincodeStatus" class="status-message"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="billingCity">Billing City</label>
-                        <input type="text" id="billingCity" name="billingCity" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="billingState">Billing State</label>
-                        <input type="text" id="billingState" name="billingState" required>
-                    </div>
-                </div>
-                <div class="sub-grid">
-                    <div class="form-group">
-                        <label for="underBranch">Under Branch</label>
-                        <select id="underBranch" name="underBranch">
-                            <option value="DDN">DDN</option>
-                            <option value="HRD">HRD</option>
-                            <option value="SRE">SRE</option>
-                            <option value="RRK">RRK</option>
-                            <option value="MZN">MZN</option>
-                            <option value="MRT">MRT</option>
-                            <option value="RSK">RSK</option>
-                            <option value="SLQ">SLQ</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="billingEmail">Billing Email</label>
-                        <input type="email" id="billingEmail" name="billingEmail" required>
-                    </div>
-                </div>
-                <div class="three-column-grid">
-                    <div class="form-group">
-                        <label for="carrier">Carrier</label>
-                        <select id="carrier" name="carrier">
-                            <option value="GEN">GEN</option>
-                            <option value="REV">REV</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="billerType">Biller Type</label>
-                        <select id="billerType" name="billerType">
-                            <option value="REG">REG</option>
-                            <option value="URP">URP</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="billingCycle">Billing Cycle</label>
-                        <select id="billingCycle" name="billingCycle">
-                            <option value="E">E - Every Consignment</option>
-                            <option value="D">D - Daily</option>
-                            <option value="W">W - Weekly</option>
-                            <option value="F">F - Fifteen Days</option>
-                            <option value="M">M - Monthly</option>
-                        </select>
-                    </div>
-                </div>
+
+                    <button type="submit" class="submit-btn">Create Customer</button>
+                </form>
+                <div id="formStatus"></div>
             </div>
+        </div>
 
-            <!-- Right Section -->
-            <div class="form-section">
-                <div class="form-group">
-                    <label for="weightChange">Weight Change</label>
-                    <input type="text" id="weightChange" name="weightChange" value="3">
-                </div>
-                <div class="form-group">
-                    <label for="toPayIf">ToPay If</label>
-                    <input type="number" id="toPayIf" name="toPayIf" value="150">
-                </div>
-                <div class="form-group">
-                    <label for="codIf">COD If</label>
-                    <div class="input-group-percent">
-                        <input type="number" id="codIf" name="codIf" value="1.3">
-                        <span>%</span>
+        <!-- Customer List Tab Content -->
+        <div id="listContent" class="tab-content fade-in">
+            <div class="customer-list-container">
+                <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">Customer List</h1>
+                
+                <!-- Search and filters section -->
+                <div class="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
+                    <div class="relative w-full sm:w-1/2">
+                        <input type="text" id="searchInput" placeholder="Search by name or code..." class="w-full px-4 py-2 pl-10 rounded-full border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="insuranceIf">Insurance If</label>
-                    <div class="input-group-percent">
-                        <input type="number" id="insuranceIf" name="insuranceIf" value="2">
-                        <span>%</span>
+                    <div class="w-full sm:w-auto">
+                        <select id="branchFilter" class="w-full px-4 py-2 rounded-full border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow">
+                            <option value="all">All Branches</option>
+                        </select>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="ewayIf">Eway If</label>
-                    <div class="input-group-percent">
-                        <input type="number" id="ewayIf" name="ewayIf" value="0.2">
-                        <span>%</span>
+                    <div class="w-full sm:w-auto text-center">
+                        <span id="recordCount" class="text-gray-600 text-sm font-medium"></span>
                     </div>
+                    <button id="refreshButton" class="w-full sm:w-auto px-6 py-2 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Refresh
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label for="awbCharge">AWB Charge</label>
-                    <input type="number" id="awbCharge" name="awbCharge" step="0.01" value="0">
+
+                <!-- Data table -->
+                <div class="overflow-x-auto rounded-lg shadow-md">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider rounded-tl-lg">Code</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">City</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">GST</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fuel Charges</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Dev Charges</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Weight Change</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">GST Inclusive</th>
+                                <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider rounded-tr-lg">Billing Cycle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Data will be loaded here -->
+                            <tr>
+                                <td colspan="9" class="py-4 text-center text-gray-500 font-medium">Loading data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="form-group">
-                    <label for="packingCharges">Packing Charges</label>
-                    <input type="number" id="packingCharges" name="packingCharges" step="0.01" value="10">
-                </div>
-                <div class="form-group">
-                    <label for="fuelCharges">Fuel Charges</label>
-                    <div class="input-group-percent">
-                        <input type="number" id="fuelCharges" name="fuelCharges" step="0.01" value="15">
-                        <span>%</span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="devlpChg">Development Charges</label>
-                    <div class="input-group-percent">
-                        <input type="number" id="devlpChg" name="devlpChg" step="0.01" value="5">
-                        <span>%</span>
+
+                <!-- Error Message Modal -->
+                <div id="errorModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
+                    <div class="bg-white rounded-lg p-6 shadow-xl max-w-sm mx-auto transform transition-all sm:my-8 sm:align-middle">
+                        <div class="text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                            <h3 class="mt-2 text-lg leading-6 font-medium text-gray-900">Error</h3>
+                            <div class="mt-2">
+                                <p id="errorMessage" class="text-sm text-gray-500"></p>
+                            </div>
+                            <div class="mt-4">
+                                <button onclick="document.getElementById('errorModal').style.display='none'" class="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:text-sm">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Editable Rate List Table -->
-        <div class="editable-table-container">
-            <h3>Rate List</h3>
-            <table class="editable-table">
-                <thead>
-                    <!-- The new descriptive row is now first -->
-                    <tr>
-                        <th class="hidden-column"></th>
-                        <th class="hidden-column"></th>
-                        <th></th>
-                        <th></th>
-                        <th class="hidden-column"></th>
-                        <th>UP UK WST</th>
-                        <th>UP EST DIR</th>
-                        <th>PB HR RAJ DIR</th>
-                        <th>DEL NCR</th>
-                        <th>RO UP UK</th>
-                        <th>RO PB HR RAJ</th>
-                        <th>BHR &RO IXJ HP</th>
-                        <th>M E T R O</th>
-                        <th>GJ MH</th>
-                        <th>GWT SXR</th>
-                        <th>WB OR ROI</th>
-                        <th>DMN DUI</th>
-                        <th>NOR EST</th>
-                        <th>PBR AG IMP</th>
-                    </tr>
-                    <!-- The zone number row is now second -->
-                    <tr>
-                        <th class="hidden-column">Code</th>
-                        <th class="hidden-column">Carrier</th>
-                        <th>Service</th>
-                        <th>Weight</th>
-                        <th class="hidden-column">UID</th>
-                        <th>Z1</th>
-                        <th>Z2</th>
-                        <th>Z3</th>
-                        <th>Z4</th>
-                        <th>Z5</th>
-                        <th>Z6</th>
-                        <th>Z7</th>
-                        <th>Z8</th>
-                        <th>Z9</th>
-                        <th>Z10</th>
-                        <th>Z11</th>
-                        <th>Z12</th>
-                        <th>Z13</th>
-                        <th>Z14</th>
-                    </tr>
-                </thead>
-                <tbody id="rateTableBody">
-                    <!-- Table rows will be inserted here by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-
-        <button type="submit" class="submit-btn">Create Customer</button>
-    </form>
-    <div id="formStatus"></div>
-</div>
-
-<!-- Modal for GSTIN Selection -->
-<div id="gstinModal" class="modal-overlay">
-    <div class="modal-content">
-        <span class="modal-close" id="closeModal">&times;</span>
-        <h3>Multiple GSTINs found. Please select one:</h3>
-        <ul id="gstinList" class="gstin-list">
-            <!-- GSTINs will be populated here by JavaScript -->
-        </ul>
     </div>
-</div>
 
-<script>
-    const pincodeInput = document.getElementById('billingPincode');
-    const cityInput = document.getElementById('billingCity');
-    const stateInput = document.getElementById('billingState');
-    const pincodeStatusDiv = document.getElementById('pincodeStatus');
-    const billingIdInput = document.getElementById('billingID');
-    const customerNameInput = document.getElementById('customerName');
-    const billingAddressInput = document.getElementById('billingAddress');
-    const gstStatusDiv = document.getElementById('gstStatus');
-    const customerForm = document.getElementById('customerForm');
-    const formStatusDiv = document.getElementById('formStatus');
-    const rateTableBody = document.getElementById('rateTableBody');
-    const customerCodeInput = document.getElementById('customerCode');
-    const billerTypeSelect = document.getElementById('billerType');
+    <!-- Modal for GSTIN Selection -->
+    <div id="gstinModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" id="closeModal">&times;</span>
+            <h3>Multiple GSTINs found. Please select one:</h3>
+            <ul id="gstinList" class="gstin-list">
+                <!-- GSTINs will be populated here by JavaScript -->
+            </ul>
+        </div>
+    </div>
 
-    const gstinModal = document.getElementById('gstinModal');
-    const gstinListElement = document.getElementById('gstinList');
-    const closeModalBtn = document.getElementById('closeModal');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // =========================================================
+            //  DOM Elements
+            // =========================================================
+            const createTab = document.getElementById('createTab');
+            const listTab = document.getElementById('listTab');
+            const createContent = document.getElementById('createContent');
+            const listContent = document.getElementById('listContent');
 
-    // Replace with your own API key to make the GSTIN lookup work
-    const API_KEY = '22ac287aeba0d5281a0be722ac450f5b';
+            // Customer Form Elements
+            const pincodeInput = document.getElementById('billingPincode');
+            const cityInput = document.getElementById('billingCity');
+            const stateInput = document.getElementById('billingState');
+            const pincodeStatusDiv = document.getElementById('pincodeStatus');
+            const billingIdInput = document.getElementById('billingID');
+            const customerNameInput = document.getElementById('customerName');
+            const billingAddressInput = document.getElementById('billingAddress');
+            const gstStatusDiv = document.getElementById('gstStatus');
+            const customerForm = document.getElementById('customerForm');
+            const formStatusDiv = document.getElementById('formStatus');
+            const rateTableBody = document.getElementById('rateTableBody');
+            const customerCodeInput = document.getElementById('customerCode');
+            const billerTypeSelect = document.getElementById('billerType');
 
-    // Debounce function to limit API calls
-    const debounce = (func, delay) => {
-        let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func(...args), delay);
-        };
-    };
+            // GSTIN Modal Elements
+            const gstinModal = document.getElementById('gstinModal');
+            const gstinListElement = document.getElementById('gstinList');
+            const closeModalBtn = document.getElementById('closeModal');
 
-    // Function to fetch city/state from pincode
-    const fetchPincodeDetails = () => {
-        const pincode = pincodeInput.value;
+            // Customer List Elements
+            const tableBody = document.getElementById('customerTableBody');
+            const searchInput = document.getElementById('searchInput');
+            const branchFilter = document.getElementById('branchFilter');
+            const recordCount = document.getElementById('recordCount');
+            const errorModal = document.getElementById('errorModal');
+            const errorMessage = document.getElementById('errorMessage');
+            const refreshButton = document.getElementById('refreshButton');
 
-        if (pincode.length !== 6 || isNaN(pincode)) {
-            cityInput.value = '';
-            stateInput.value = '';
-            pincodeStatusDiv.textContent = '';
-            return;
-        }
+            // =========================================================
+            //  Constants and State
+            // =========================================================
+            const CREATE_CUSTOMER_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZBMX_ZtrCW36iTxKMK8yL5n3u5EHRzCO4kpRTbVLE69hl5HHcj1tCFl5BNdQ60AKoHw/exec';
+            const CUSTOMER_LIST_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyc4CinA9KDmCYBT013zrnqLtR5rTOUSKL_Vf_A2GdkKSULx03iH2OSd8_WSEq60JAaHg/exec';
+            const GST_API_KEY = '22ac287aeba0d5281a0be722ac450f5b';
 
-        pincodeStatusDiv.textContent = 'Fetching location...';
+            let allCustomers = [];
+            let allRateLists = [];
 
-        fetch(`https://api.postalpincode.in/pincode/${pincode}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.length > 0 && data[0].Status === 'Success') {
-                    const postOffice = data[0].PostOffice[0];
-                    cityInput.value = postOffice.District;
-                    stateInput.value = postOffice.State;
-                    pincodeStatusDiv.textContent = '';
-                } else {
-                    pincodeStatusDiv.textContent = 'Invalid Pincode.';
+            // =========================================================
+            //  General Functions
+            // =========================================================
+            const debounce = (func, delay) => {
+                let timeout;
+                return (...args) => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func(...args), delay);
+                };
+            };
+            
+            function showTab(tabName) {
+                const tabs = [
+                    { button: createTab, content: createContent },
+                    { button: listTab, content: listContent }
+                ];
+
+                tabs.forEach(tab => {
+                    tab.button.classList.remove('active');
+                    tab.content.classList.remove('active');
+                });
+
+                const activeTab = tabs.find(tab => tab.content.id === `${tabName}Content`);
+                if (activeTab) {
+                    activeTab.button.classList.add('active');
+                    activeTab.content.classList.add('active');
+                    if (tabName === 'list') {
+                        fetchData();
+                    }
+                }
+            }
+
+            // =========================================================
+            //  Create Customer Tab Logic
+            // =========================================================
+            const fetchPincodeDetails = () => {
+                const pincode = pincodeInput.value;
+                if (pincode.length !== 6 || isNaN(pincode)) {
                     cityInput.value = '';
                     stateInput.value = '';
+                    pincodeStatusDiv.textContent = '';
+                    return;
                 }
-            })
-            .catch(error => {
-                console.error('Error fetching pincode data:', error);
-                pincodeStatusDiv.textContent = 'Error fetching location data.';
+                pincodeStatusDiv.textContent = 'Fetching location...';
+                fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.length > 0 && data[0].Status === 'Success') {
+                            const postOffice = data[0].PostOffice[0];
+                            cityInput.value = postOffice.District;
+                            stateInput.value = postOffice.State;
+                            pincodeStatusDiv.textContent = '';
+                        } else {
+                            pincodeStatusDiv.textContent = 'Invalid Pincode.';
+                            cityInput.value = '';
+                            stateInput.value = '';
+                        }
+                    })
+                    .catch(() => {
+                        pincodeStatusDiv.textContent = 'Error fetching location data.';
+                        cityInput.value = '';
+                        stateInput.value = '';
+                    });
+            };
+
+            const fetchGstDetails = async (gstin) => {
+                gstStatusDiv.textContent = 'Fetching GSTIN details...';
+                billingIdInput.value = gstin;
+                customerNameInput.value = '';
+                billingAddressInput.value = '';
+                pincodeInput.value = '';
                 cityInput.value = '';
                 stateInput.value = '';
-            });
-    };
-    
-    // Function to fetch GSTIN details and populate form fields
-    const fetchGstDetails = async (gstin) => {
-        gstStatusDiv.textContent = 'Fetching GSTIN details...';
-        
-        // This is the added line to fix the issue
-        billingIdInput.value = gstin;
-
-        // Clear previous data
-        customerNameInput.value = '';
-        billingAddressInput.value = '';
-        pincodeInput.value = '';
-        cityInput.value = '';
-        stateInput.value = '';
-        billerTypeSelect.value = 'URP'; // Set to URP by default
-
-        const apiUrl = `https://sheet.gstincheck.co.in/check/${API_KEY}/${gstin}`;
-
-        try {
-            const response = await fetch(apiUrl);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `API response was not ok, status: ${response.status}`);
-            }
-            const data = await response.json();
-            
-            if (data.flag && data.data) {
-                const gstDetails = data.data;
-
-                // Populate form fields, prioritizing trade name over legal name
-                customerNameInput.value = gstDetails.tradeNam || gstDetails.lgnm || '';
-                
-                // Use a more robust check for address and pincode
-                if (gstDetails.pradr && gstDetails.pradr.addr) {
-                    const addressParts = [
-                        gstDetails.pradr.addr.flno,
-                        gstDetails.pradr.addr.bno,
-                        gstDetails.pradr.addr.bnm,
-                        gstDetails.pradr.addr.st,
-                        gstDetails.pradr.addr.loc
-                    ].filter(part => part); // Filter out empty or null values
-                    
-                    billingAddressInput.value = addressParts.join(', ');
-                    pincodeInput.value = gstDetails.pradr.addr.pncd || '';
-                    cityInput.value = gstDetails.pradr.addr.dst || '';
-                    stateInput.value = gstDetails.pradr.addr.stcd || '';
-
-                } else {
-                    // Fallback in case 'pradr' is not present or is empty
-                    const addressPart1 = gstDetails.address1 || '';
-                    const addressPart2 = gstDetails.address2 || '';
-                    billingAddressInput.value = (addressPart1 + ' ' + addressPart2).trim();
-                    pincodeInput.value = gstDetails.pinCode || '';
+                billerTypeSelect.value = 'URP';
+                const apiUrl = `https://sheet.gstincheck.co.in/check/${GST_API_KEY}/${gstin}`;
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || `API response was not ok, status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    if (data.flag && data.data) {
+                        const gstDetails = data.data;
+                        customerNameInput.value = gstDetails.tradeNam || gstDetails.lgnm || '';
+                        if (gstDetails.pradr && gstDetails.pradr.addr) {
+                            const addressParts = [
+                                gstDetails.pradr.addr.flno,
+                                gstDetails.pradr.addr.bno,
+                                gstDetails.pradr.addr.bnm,
+                                gstDetails.pradr.addr.st,
+                                gstDetails.pradr.addr.loc
+                            ].filter(part => part);
+                            billingAddressInput.value = addressParts.join(', ');
+                            pincodeInput.value = gstDetails.pradr.addr.pncd || '';
+                            cityInput.value = gstDetails.pradr.addr.dst || '';
+                            stateInput.value = gstDetails.pradr.addr.stcd || '';
+                        } else {
+                            const addressPart1 = gstDetails.address1 || '';
+                            const addressPart2 = gstDetails.address2 || '';
+                            billingAddressInput.value = (addressPart1 + ' ' + addressPart2).trim();
+                            pincodeInput.value = gstDetails.pinCode || '';
+                        }
+                        if (pincodeInput.value) {
+                            pincodeInput.dispatchEvent(new Event('input'));
+                        }
+                        gstStatusDiv.textContent = `GSTIN details found. Status: ${gstDetails.sts}`;
+                        billerTypeSelect.value = 'REG';
+                    } else {
+                        gstStatusDiv.textContent = `GSTIN not found: ${data.message}`;
+                    }
+                } catch (error) {
+                    gstStatusDiv.textContent = `Error: ${error.message}`;
                 }
-                
-                if (pincodeInput.value) {
-                    pincodeInput.dispatchEvent(new Event('input')); 
-                }
-                
-                gstStatusDiv.textContent = `GSTIN details found. Status: ${gstDetails.sts}`;
-
-                // Set Biller Type to REG if GST is found
-                billerTypeSelect.value = 'REG';
-
-            } else {
-                gstStatusDiv.textContent = `GSTIN not found: ${data.message}`;
-            }
-        } catch (error) {
-            console.error('Error fetching GSTIN data:', error);
-            gstStatusDiv.textContent = `Error: ${error.message}`;
-        }
-    };
-
-    // Function to display the GSTIN selection modal
-    const showGstinSelectionModal = (gstinData) => {
-        gstinListElement.innerHTML = ''; // Clear previous list
-        gstinData.forEach(gstin => {
-            const li = document.createElement('li');
-            li.textContent = gstin.gstin;
-            li.onclick = () => {
-                fetchGstDetails(gstin.gstin);
-                hideGstinSelectionModal();
             };
-            gstinListElement.appendChild(li);
-        });
-        gstinModal.style.display = 'flex';
-    };
 
-    // Function to hide the GSTIN selection modal
-    const hideGstinSelectionModal = () => {
-        gstinModal.style.display = 'none';
-    };
+            const showGstinSelectionModal = (gstinData) => {
+                gstinListElement.innerHTML = '';
+                gstinData.forEach(gstin => {
+                    const li = document.createElement('li');
+                    li.textContent = gstin.gstin;
+                    li.onclick = () => {
+                        fetchGstDetails(gstin.gstin);
+                        hideGstinSelectionModal();
+                    };
+                    gstinListElement.appendChild(li);
+                });
+                gstinModal.style.display = 'flex';
+            };
 
-    // Function to fetch GSTINs from a PAN number
-    const fetchGstinsFromPan = async (pan) => {
-        gstStatusDiv.textContent = 'Fetching associated GSTINs from PAN...';
-        const panUrl = 'https://sheet.gstincheck.co.in/check/pan';
-        const payload = {
-            "api_key": API_KEY,
-            "pan": pan
-        };
+            const hideGstinSelectionModal = () => {
+                gstinModal.style.display = 'none';
+            };
 
-        try {
-            const response = await fetch(panUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-            if (data.flag && data.data && data.data.gstinResList.length > 0) {
-                if (data.data.gstinResList.length > 1) {
-                    showGstinSelectionModal(data.data.gstinResList);
-                    gstStatusDiv.textContent = `${data.data.gstinResList.length} GSTINs found. Please select one.`;
-                } else {
-                    const firstGstin = data.data.data.gstinResList[0].gstin;
-                    gstStatusDiv.textContent = `Found GSTIN: ${firstGstin}. Fetching details...`;
-                    fetchGstDetails(firstGstin);
+            const fetchGstinsFromPan = async (pan) => {
+                gstStatusDiv.textContent = 'Fetching associated GSTINs from PAN...';
+                const panUrl = 'https://sheet.gstincheck.co.in/check/pan';
+                const payload = { "api_key": GST_API_KEY, "pan": pan };
+                try {
+                    const response = await fetch(panUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    if (data.flag && data.data && data.data.gstinResList.length > 0) {
+                        if (data.data.gstinResList.length > 1) {
+                            showGstinSelectionModal(data.data.gstinResList);
+                            gstStatusDiv.textContent = `${data.data.gstinResList.length} GSTINs found. Please select one.`;
+                        } else {
+                            const firstGstin = data.data.gstinResList[0].gstin;
+                            gstStatusDiv.textContent = `Found GSTIN: ${firstGstin}. Fetching details...`;
+                            fetchGstDetails(firstGstin);
+                        }
+                    } else {
+                        gstStatusDiv.textContent = 'No GSTINs found for this PAN.';
+                    }
+                } catch (error) {
+                    gstStatusDiv.textContent = `Error fetching PAN data: ${error.message}`;
                 }
-            } else {
-                gstStatusDiv.textContent = 'No GSTINs found for this PAN.';
+            };
+
+            const handleBillingIDInput = () => {
+                const input = billingIdInput.value.trim().toUpperCase();
+                gstStatusDiv.textContent = '';
+                customerNameInput.value = '';
+                billingAddressInput.value = '';
+                pincodeInput.value = '';
+                cityInput.value = '';
+                stateInput.value = '';
+                billerTypeSelect.value = 'URP';
+                const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+                const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+                if (gstinRegex.test(input)) {
+                    fetchGstDetails(input);
+                } else if (panRegex.test(input)) {
+                    fetchGstinsFromPan(input);
+                } else {
+                    gstStatusDiv.textContent = 'Enter a valid GSTIN or PAN.';
+                }
+            };
+
+            const generateUid = (code, service, weight) => {
+                let serviceAbbr = '';
+                switch (service.toLowerCase()) {
+                    case 'premium': serviceAbbr = 'P'; break;
+                    case 'express': serviceAbbr = 'E'; break;
+                    case 'airline': serviceAbbr = 'A'; break;
+                    case 'surface': serviceAbbr = 'S'; break;
+                }
+                return `${code}${serviceAbbr}${weight}`.toUpperCase();
+            };
+
+            const loadRateListTable = (customerCode = '') => {
+                const rateListData = [
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Premium", "Weight": "0.5", "Zone 1": "50", "Zone 2": "60", "Zone 3": "65", "Zone 4": "50", "Zone 5": "85", "Zone 6": "85", "Zone 7": "95", "Zone 8": "95", "Zone 9": "120", "Zone 10": "120", "Zone 11": "120", "Zone 12": "120", "Zone 13": "170", "Zone 14": "190" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Premium", "Weight": "0.5A", "Zone 1": "45", "Zone 2": "50", "Zone 3": "55", "Zone 4": "45", "Zone 5": "70", "Zone 6": "70", "Zone 7": "80", "Zone 8": "80", "Zone 9": "100", "Zone 10": "100", "Zone 11": "100", "Zone 12": "100", "Zone 13": "140", "Zone 14": "160" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Express", "Weight": "0.5", "Zone 1": "45", "Zone 2": "55", "Zone 3": "60", "Zone 4": "45", "Zone 5": "75", "Zone 6": "75", "Zone 7": "85", "Zone 8": "85", "Zone 9": "110", "Zone 10": "110", "Zone 11": "110", "Zone 12": "110", "Zone 13": "160", "Zone 14": "180" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Express", "Weight": "0.5A", "Zone 1": "40", "Zone 2": "45", "Zone 3": "50", "Zone 4": "40", "Zone 5": "65", "Zone 6": "65", "Zone 7": "75", "Zone 8": "75", "Zone 9": "95", "Zone 10": "95", "Zone 11": "95", "Zone 12": "95", "Zone 13": "130", "Zone 14": "150" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "3", "Zone 1": "25", "Zone 2": "30", "Zone 3": "35", "Zone 4": "25", "Zone 5": "45", "Zone 6": "45", "Zone 7": "50", "Zone 8": "50", "Zone 9": "60", "Zone 10": "60", "Zone 11": "60", "Zone 12": "60", "Zone 13": "90", "Zone 14": "110" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "10", "Zone 1": "20", "Zone 2": "25", "Zone 3": "30", "Zone 4": "20", "Zone 5": "40", "Zone 6": "40", "Zone 7": "45", "Zone 8": "45", "Zone 9": "55", "Zone 10": "55", "Zone 11": "55", "Zone 12": "55", "Zone 13": "80", "Zone 14": "100" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "25", "Zone 1": "18", "Zone 2": "23", "Zone 3": "28", "Zone 4": "18", "Zone 5": "38", "Zone 6": "38", "Zone 7": "43", "Zone 8": "43", "Zone 9": "53", "Zone 10": "53", "Zone 11": "53", "Zone 12": "53", "Zone 13": "78", "Zone 14": "98" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "50", "Zone 1": "17", "Zone 2": "22", "Zone 3": "27", "Zone 4": "17", "Zone 5": "37", "Zone 6": "37", "Zone 7": "42", "Zone 8": "42", "Zone 9": "52", "Zone 10": "52", "Zone 11": "52", "Zone 12": "52", "Zone 13": "77", "Zone 14": "97" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "100", "Zone 1": "16", "Zone 2": "21", "Zone 3": "26", "Zone 4": "16", "Zone 5": "36", "Zone 6": "36", "Zone 7": "41", "Zone 8": "41", "Zone 9": "51", "Zone 10": "51", "Zone 11": "51", "Zone 12": "51", "Zone 13": "76", "Zone 14": "96" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "500", "Zone 1": "15", "Zone 2": "20", "Zone 3": "25", "Zone 4": "15", "Zone 5": "35", "Zone 6": "35", "Zone 7": "40", "Zone 8": "40", "Zone 9": "50", "Zone 10": "50", "Zone 11": "50", "Zone 12": "50", "Zone 13": "75", "Zone 14": "95" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "3", "Zone 1": "30", "Zone 2": "40", "Zone 3": "45", "Zone 4": "40", "Zone 5": "50", "Zone 6": "50", "Zone 7": "55", "Zone 8": "55", "Zone 9": "65", "Zone 10": "65", "Zone 11": "65", "Zone 12": "65", "Zone 13": "100", "Zone 14": "110" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "10", "Zone 1": "20", "Zone 2": "25", "Zone 3": "30", "Zone 4": "25", "Zone 5": "35", "Zone 6": "35", "Zone 7": "40", "Zone 8": "40", "Zone 9": "50", "Zone 10": "50", "Zone 11": "50", "Zone 12": "50", "Zone 13": "80", "Zone 14": "90" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "25", "Zone 1": "18", "Zone 2": "23", "Zone 3": "28", "Zone 4": "23", "Zone 5": "33", "Zone 6": "33", "Zone 7": "38", "Zone 8": "38", "Zone 9": "48", "Zone 10": "48", "Zone 11": "48", "Zone 12": "48", "Zone 13": "78", "Zone 14": "88" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "50", "Zone 1": "17", "Zone 2": "22", "Zone 3": "27", "Zone 4": "22", "Zone 5": "32", "Zone 6": "32", "Zone 7": "37", "Zone 8": "37", "Zone 9": "47", "Zone 10": "47", "Zone 11": "47", "Zone 12": "47", "Zone 13": "77", "Zone 14": "87" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "100", "Zone 1": "16", "Zone 2": "21", "Zone 3": "26", "Zone 4": "21", "Zone 5": "31", "Zone 6": "31", "Zone 7": "36", "Zone 8": "36", "Zone 9": "46", "Zone 10": "46", "Zone 11": "46", "Zone 12": "46", "Zone 13": "76", "Zone 14": "86" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "500", "Zone 1": "15", "Zone 2": "20", "Zone 3": "25", "Zone 4": "20", "Zone 5": "30", "Zone 6": "30", "Zone 7": "35", "Zone 8": "35", "Zone 9": "45", "Zone 10": "45", "Zone 11": "45", "Zone 12": "45", "Zone 13": "75", "Zone 14": "85" },
+                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "1000", "Zone 1": "14", "Zone 2": "19", "Zone 3": "24", "Zone 4": "19", "Zone 5": "29", "Zone 6": "29", "Zone 7": "34", "Zone 8": "34", "Zone 9": "44", "Zone 10": "44", "Zone 11": "44", "Zone 12": "44", "Zone 13": "74", "Zone 14": "84" }
+                ];
+                rateTableBody.innerHTML = '';
+                rateListData.forEach(row => {
+                    const tr = document.createElement('tr');
+                    const uid = generateUid(customerCode, row.Service, row.Weight);
+                    tr.innerHTML = `
+                        <td class="hidden-column"><input type="text" value="${customerCode}" readonly></td>
+                        <td class="hidden-column"><input type="text" value="${row.Carrier}" readonly></td>
+                        <td><input type="text" value="${row.Service}" readonly></td>
+                        <td><input type="text" value="${row.Weight}" readonly></td>
+                        <td class="hidden-column"><input type="text" value="${uid}" readonly></td>
+                        <td><input type="number" value="${row['Zone 1']}"></td>
+                        <td><input type="number" value="${row['Zone 2']}"></td>
+                        <td><input type="number" value="${row['Zone 3']}"></td>
+                        <td><input type="number" value="${row['Zone 4']}"></td>
+                        <td><input type="number" value="${row['Zone 5']}"></td>
+                        <td><input type="number" value="${row['Zone 6']}"></td>
+                        <td><input type="number" value="${row['Zone 7']}"></td>
+                        <td><input type="number" value="${row['Zone 8']}"></td>
+                        <td><input type="number" value="${row['Zone 9']}"></td>
+                        <td><input type="number" value="${row['Zone 10']}"></td>
+                        <td><input type="number" value="${row['Zone 11']}"></td>
+                        <td><input type="number" value="${row['Zone 12']}"></td>
+                        <td><input type="number" value="${row['Zone 13']}"></td>
+                        <td><input type="number" value="${row['Zone 14']}"></td>
+                    `;
+                    rateTableBody.appendChild(tr);
+                });
+            };
+
+            const handleFormSubmit = async (event) => {
+                event.preventDefault();
+                formStatusDiv.textContent = 'Submitting data...';
+                formStatusDiv.className = 'status-message';
+
+                const formData = new FormData(customerForm);
+                let data = Object.fromEntries(formData.entries());
+                data.codIf = parseFloat(data.codIf) / 100;
+                data.insuranceIf = parseFloat(data.insuranceIf) / 100;
+                data.ewayIf = parseFloat(data.ewayIf) / 100;
+                data.fuelCharges = parseFloat(data.fuelCharges) / 100;
+                data.devlpChg = parseFloat(data.devlpChg) / 100;
+                
+                const rateListRows = Array.from(rateTableBody.children);
+                const rateListData = rateListRows.map(row => {
+                    const inputs = row.querySelectorAll('input');
+                    const rowData = {};
+                    rowData.Code = inputs[0].value;
+                    rowData.Carrier = inputs[1].value;
+                    rowData.Service = inputs[2].value;
+                    rowData.Weight = inputs[3].value;
+                    rowData.UID = inputs[4].value;
+                    rowData['Zone 1'] = inputs[5].value;
+                    rowData['Zone 2'] = inputs[6].value;
+                    rowData['Zone 3'] = inputs[7].value;
+                    rowData['Zone 4'] = inputs[8].value;
+                    rowData['Zone 5'] = inputs[9].value;
+                    rowData['Zone 6'] = inputs[10].value;
+                    rowData['Zone 7'] = inputs[11].value;
+                    rowData['Zone 8'] = inputs[12].value;
+                    rowData['Zone 9'] = inputs[13].value;
+                    rowData['Zone 10'] = inputs[14].value;
+                    rowData['Zone 11'] = inputs[15].value;
+                    rowData['Zone 12'] = inputs[16].value;
+                    rowData['Zone 13'] = inputs[17].value;
+                    rowData['Zone 14'] = inputs[18].value;
+                    return rowData;
+                });
+
+                data.rateList = rateListData;
+                
+                try {
+                    const response = await fetch(CREATE_CUSTOMER_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    formStatusDiv.textContent = 'Customer data successfully submitted!';
+                    formStatusDiv.className = 'status-message success';
+                    customerForm.reset();
+                    loadRateListTable();
+                } catch (error) {
+                    formStatusDiv.textContent = `Error submitting data: ${error.message}`;
+                    formStatusDiv.className = 'status-message error';
+                }
+            };
+
+            // =========================================================
+            //  Customer List Tab Logic
+            // =========================================================
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorModal.style.display = 'flex';
             }
 
-        } catch (error) {
-            console.error('Error fetching PAN data:', error);
-            gstStatusDiv.textContent = `Error fetching PAN data: ${error.message}`;
-        }
-    };
+            async function fetchData() {
+                tableBody.innerHTML = '<tr><td colspan="9" class="py-4 text-center text-gray-500 font-medium animate-pulse">Fetching data...</td></tr>';
+                try {
+                    const [customersResponse, rateListsResponse] = await Promise.all([
+                        fetch(`${CUSTOMER_LIST_SCRIPT_URL}?sheet=Customers`),
+                        fetch(`${CUSTOMER_LIST_SCRIPT_URL}?sheet=RateLists`)
+                    ]);
+                    
+                    if (!customersResponse.ok || !rateListsResponse.ok) {
+                        throw new Error('Failed to fetch data from one or more sheets.');
+                    }
+                    
+                    allCustomers = await customersResponse.json();
+                    allRateLists = await rateListsResponse.json();
 
-    // Main function to handle input and determine type (GSTIN or PAN)
-    const handleBillingIDInput = () => {
-        const input = billingIdInput.value.trim().toUpperCase();
-        
-        // Clear previous data and status
-        gstStatusDiv.textContent = '';
-        customerNameInput.value = '';
-        billingAddressInput.value = '';
-        pincodeInput.value = '';
-        cityInput.value = '';
-        stateInput.value = '';
-        billerTypeSelect.value = 'URP'; // Reset to default
+                    if (allCustomers && allCustomers.length > 0) {
+                        populateBranchFilter(allCustomers);
+                        filterAndRender();
+                    } else {
+                        tableBody.innerHTML = '<tr><td colspan="9" class="py-4 text-center text-gray-500">No customer data found.</td></tr>';
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch data:', error);
+                    tableBody.innerHTML = '<tr><td colspan="9" class="py-4 text-center text-red-500">Error loading data. Please try again.</td></tr>';
+                    showError(`Failed to fetch data: ${error.message}`);
+                }
+            }
+            
+            function populateBranchFilter(customers) {
+                const branches = new Set(customers.map(c => c.underBranch).filter(b => b));
+                branchFilter.innerHTML = '<option value="all">All Branches</option>';
+                [...branches].sort().forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch;
+                    option.textContent = branch;
+                    branchFilter.appendChild(option);
+                });
+            }
 
-        // Regex for GSTIN and PAN format validation
-        const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-        const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+            function filterAndRender() {
+                const searchQuery = searchInput.value.toLowerCase();
+                const selectedBranch = branchFilter.value;
+                const filteredCustomers = allCustomers.filter(customer => {
+                    const name = customer['Customer Name'] ? customer['Customer Name'].toLowerCase() : '';
+                    const code = customer['Customer Code'] ? customer['Customer Code'].toLowerCase() : '';
+                    const matchesSearch = name.includes(searchQuery) || code.includes(searchQuery);
+                    const matchesBranch = selectedBranch === 'all' || customer.underBranch === selectedBranch;
+                    return matchesSearch && matchesBranch;
+                });
+                renderTable(filteredCustomers);
+            }
 
-        if (gstinRegex.test(input)) {
-            fetchGstDetails(input);
-        } else if (panRegex.test(input)) {
-            fetchGstinsFromPan(input);
-        } else {
-            gstStatusDiv.textContent = 'Enter a valid GSTIN or PAN.';
-        }
-    };
+            function renderTable(customers) {
+                tableBody.innerHTML = '';
+                recordCount.textContent = `Showing ${customers.length} records`;
+                if (customers.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="9" class="py-4 text-center text-gray-500">No matching customers found.</td></tr>';
+                    return;
+                }
+                customers.forEach(customer => {
+                    const fuelCharges = customer['Fuel Charges'] ?? customer['FuelCharges'] ?? 'N/A';
+                    const devCharges = customer['Dev Charges'] ?? customer['DevCharges'] ?? 'N/A';
+                    const customerRow = document.createElement('tr');
+                    customerRow.classList.add('cursor-pointer', 'hover:bg-gray-100', 'transition-colors', 'duration-200');
+                    customerRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${customer['Customer Code'] || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customer['Customer Name'] || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customer['Billing City'] || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customer['Billing ID GST PAN Adhar'] || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${fuelCharges}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${devCharges}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customer['Weight Change'] ?? 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customer['GST Inclusive'] ?? 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${customer['Billing Cycle'] ?? 'N/A'}</td>
+                    `;
+                    tableBody.appendChild(customerRow);
+                    const collapsibleRow = document.createElement('tr');
+                    collapsibleRow.classList.add('collapsible-row');
+                    collapsibleRow.innerHTML = `
+                        <td colspan="9">
+                            <div class="collapsible-content">
+                                ${generateRateListTable(customer['Customer Code'])}
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(collapsibleRow);
+                    customerRow.addEventListener('click', () => {
+                        collapsibleRow.classList.toggle('open');
+                    });
+                });
+            }
 
-    // Function to generate UID based on service abbreviation
-    const generateUid = (code, service, weight) => {
-        let serviceAbbr = '';
-        switch (service.toLowerCase()) {
-            case 'premium':
-                serviceAbbr = 'P';
-                break;
-            case 'express':
-                serviceAbbr = 'E';
-                break;
-            case 'airline':
-                serviceAbbr = 'A';
-                break;
-            case 'surface':
-                serviceAbbr = 'S';
-                break;
-        }
-        return `${code}${serviceAbbr}${weight}`.toUpperCase();
-    };
+            function generateRateListTable(customerCode) {
+                const rateData = allRateLists.filter(rate => rate['Code'] === customerCode);
+                const codeRow = allRateLists.find(rate => rate['Code'] === 'Code');
+                if (rateData.length === 0 || !codeRow) {
+                    return `<div class="text-sm text-center text-gray-500 p-4">No rate list found for this customer.</div>`;
+                }
+                const hiddenHeaders = ['Code', 'Carrier', 'UID'];
+                const headerKeys = Object.keys(codeRow).filter(key => !hiddenHeaders.includes(key));
+                let tableHtml = `<div class="overflow-x-auto rounded-lg shadow-inner mt-4">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            ${headerKeys.map(header => `<th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">${header}</th>`).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">`;
+                rateData.forEach(rate => {
+                    tableHtml += `
+                        <tr>
+                            ${headerKeys.map(key => `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${rate[key] || ''}</td>`).join('')}
+                        </tr>
+                    `;
+                });
+                tableHtml += `</tbody></table></div>`;
+                return tableHtml;
+            }
 
-    // Function to load the rate list data into the editable table
-    const loadRateListTable = (customerCode = '') => {
-        const rateListData = [
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Premium", "Weight": "0.5", "Zone 1": "50", "Zone 2": "60", "Zone 3": "65", "Zone 4": "50", "Zone 5": "85", "Zone 6": "85", "Zone 7": "95", "Zone 8": "95", "Zone 9": "120", "Zone 10": "120", "Zone 11": "120", "Zone 12": "120", "Zone 13": "170", "Zone 14": "190" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Premium", "Weight": "0.5A", "Zone 1": "45", "Zone 2": "50", "Zone 3": "55", "Zone 4": "45", "Zone 5": "70", "Zone 6": "70", "Zone 7": "80", "Zone 8": "80", "Zone 9": "100", "Zone 10": "100", "Zone 11": "100", "Zone 12": "100", "Zone 13": "140", "Zone 14": "160" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Express", "Weight": "0.5", "Zone 1": "45", "Zone 2": "55", "Zone 3": "60", "Zone 4": "45", "Zone 5": "75", "Zone 6": "75", "Zone 7": "85", "Zone 8": "85", "Zone 9": "110", "Zone 10": "110", "Zone 11": "110", "Zone 12": "110", "Zone 13": "160", "Zone 14": "180" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Express", "Weight": "0.5A", "Zone 1": "40", "Zone 2": "45", "Zone 3": "50", "Zone 4": "40", "Zone 5": "65", "Zone 6": "65", "Zone 7": "75", "Zone 8": "75", "Zone 9": "95", "Zone 10": "95", "Zone 11": "95", "Zone 12": "95", "Zone 13": "130", "Zone 14": "150" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "3", "Zone 1": "25", "Zone 2": "30", "Zone 3": "35", "Zone 4": "25", "Zone 5": "45", "Zone 6": "45", "Zone 7": "50", "Zone 8": "50", "Zone 9": "60", "Zone 10": "60", "Zone 11": "60", "Zone 12": "60", "Zone 13": "90", "Zone 14": "110" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "10", "Zone 1": "20", "Zone 2": "25", "Zone 3": "30", "Zone 4": "20", "Zone 5": "40", "Zone 6": "40", "Zone 7": "45", "Zone 8": "45", "Zone 9": "55", "Zone 10": "55", "Zone 11": "55", "Zone 12": "55", "Zone 13": "80", "Zone 14": "100" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "25", "Zone 1": "18", "Zone 2": "23", "Zone 3": "28", "Zone 4": "18", "Zone 5": "38", "Zone 6": "38", "Zone 7": "43", "Zone 8": "43", "Zone 9": "53", "Zone 10": "53", "Zone 11": "53", "Zone 12": "53", "Zone 13": "78", "Zone 14": "98" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "50", "Zone 1": "17", "Zone 2": "22", "Zone 3": "27", "Zone 4": "17", "Zone 5": "37", "Zone 6": "37", "Zone 7": "42", "Zone 8": "42", "Zone 9": "52", "Zone 10": "52", "Zone 11": "52", "Zone 12": "52", "Zone 13": "77", "Zone 14": "97" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "100", "Zone 1": "16", "Zone 2": "21", "Zone 3": "26", "Zone 4": "16", "Zone 5": "36", "Zone 6": "36", "Zone 7": "41", "Zone 8": "41", "Zone 9": "51", "Zone 10": "51", "Zone 11": "51", "Zone 12": "51", "Zone 13": "76", "Zone 14": "96" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "500", "Zone 1": "15", "Zone 2": "20", "Zone 3": "25", "Zone 4": "15", "Zone 5": "35", "Zone 6": "35", "Zone 7": "40", "Zone 8": "40", "Zone 9": "50", "Zone 10": "50", "Zone 11": "50", "Zone 12": "50", "Zone 13": "75", "Zone 14": "95" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "3", "Zone 1": "30", "Zone 2": "40", "Zone 3": "45", "Zone 4": "40", "Zone 5": "50", "Zone 6": "50", "Zone 7": "55", "Zone 8": "55", "Zone 9": "65", "Zone 10": "65", "Zone 11": "65", "Zone 12": "65", "Zone 13": "100", "Zone 14": "110" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "10", "Zone 1": "20", "Zone 2": "25", "Zone 3": "30", "Zone 4": "25", "Zone 5": "35", "Zone 6": "35", "Zone 7": "40", "Zone 8": "40", "Zone 9": "50", "Zone 10": "50", "Zone 11": "50", "Zone 12": "50", "Zone 13": "80", "Zone 14": "90" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "25", "Zone 1": "18", "Zone 2": "23", "Zone 3": "28", "Zone 4": "23", "Zone 5": "33", "Zone 6": "33", "Zone 7": "38", "Zone 8": "38", "Zone 9": "48", "Zone 10": "48", "Zone 11": "48", "Zone 12": "48", "Zone 13": "78", "Zone 14": "88" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "50", "Zone 1": "17", "Zone 2": "22", "Zone 3": "27", "Zone 4": "22", "Zone 5": "32", "Zone 6": "32", "Zone 7": "37", "Zone 8": "37", "Zone 9": "47", "Zone 10": "47", "Zone 11": "47", "Zone 12": "47", "Zone 13": "77", "Zone 14": "87" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "100", "Zone 1": "16", "Zone 2": "21", "Zone 3": "26", "Zone 4": "21", "Zone 5": "31", "Zone 6": "31", "Zone 7": "36", "Zone 8": "36", "Zone 9": "46", "Zone 10": "46", "Zone 11": "46", "Zone 12": "46", "Zone 13": "76", "Zone 14": "86" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "500", "Zone 1": "15", "Zone 2": "20", "Zone 3": "25", "Zone 4": "20", "Zone 5": "30", "Zone 6": "30", "Zone 7": "35", "Zone 8": "35", "Zone 9": "45", "Zone 10": "45", "Zone 11": "45", "Zone 12": "45", "Zone 13": "75", "Zone 14": "85" },
-            { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "1000", "Zone 1": "14", "Zone 2": "19", "Zone 3": "24", "Zone 4": "19", "Zone 5": "29", "Zone 6": "29", "Zone 7": "34", "Zone 8": "34", "Zone 9": "44", "Zone 10": "44", "Zone 11": "44", "Zone 12": "44", "Zone 13": "74", "Zone 14": "84" }
-        ];
+            // =========================================================
+            //  Event Listeners
+            // =========================================================
+            createTab.addEventListener('click', () => showTab('create'));
+            listTab.addEventListener('click', () => showTab('list'));
+            pincodeInput.addEventListener('input', debounce(fetchPincodeDetails, 500));
+            billingIdInput.addEventListener('input', debounce(handleBillingIDInput, 500));
+            closeModalBtn.addEventListener('click', hideGstinSelectionModal);
+            customerForm.addEventListener('submit', handleFormSubmit);
+            customerCodeInput.addEventListener('input', (e) => loadRateListTable(e.target.value.trim()));
+            searchInput.addEventListener('input', filterAndRender);
+            branchFilter.addEventListener('change', filterAndRender);
+            refreshButton.addEventListener('click', fetchData);
 
-        rateTableBody.innerHTML = ''; // Clear existing rows
-
-        rateListData.forEach(row => {
-            const tr = document.createElement('tr');
-            const uid = generateUid(customerCode, row.Service, row.Weight);
-            tr.innerHTML = `
-                <td class="hidden-column"><input type="text" value="${customerCode}" readonly></td>
-                <td class="hidden-column"><input type="text" value="${row.Carrier}" readonly></td>
-                <td><input type="text" value="${row.Service}" readonly></td>
-                <td><input type="text" value="${row.Weight}" readonly></td>
-                <td class="hidden-column"><input type="text" value="${uid}" readonly></td>
-                <td><input type="number" value="${row['Zone 1']}"></td>
-                <td><input type="number" value="${row['Zone 2']}"></td>
-                <td><input type="number" value="${row['Zone 3']}"></td>
-                <td><input type="number" value="${row['Zone 4']}"></td>
-                <td><input type="number" value="${row['Zone 5']}"></td>
-                <td><input type="number" value="${row['Zone 6']}"></td>
-                <td><input type="number" value="${row['Zone 7']}"></td>
-                <td><input type="number" value="${row['Zone 8']}"></td>
-                <td><input type="number" value="${row['Zone 9']}"></td>
-                <td><input type="number" value="${row['Zone 10']}"></td>
-                <td><input type="number" value="${row['Zone 11']}"></td>
-                <td><input type="number" value="${row['Zone 12']}"></td>
-                <td><input type="number" value="${row['Zone 13']}"></td>
-                <td><input type="number" value="${row['Zone 14']}"></td>
-            `;
-            rateTableBody.appendChild(tr);
+            // =========================================================
+            //  Initial Setup
+            // =========================================================
+            showTab('create');
+            loadRateListTable();
         });
-    };
-
-    customerCodeInput.addEventListener('input', (e) => {
-        loadRateListTable(e.target.value.trim());
-    });
-
-    // Function to handle form submission
-    const handleFormSubmit = async (event) => {
-        event.preventDefault(); // Prevent default form submission
-
-        formStatusDiv.textContent = 'Submitting data...';
-        formStatusDiv.className = 'status-message';
-
-        const form = event.target;
-        const formData = new FormData(form);
-
-        // Convert form data to a JavaScript object
-        let data = Object.fromEntries(formData.entries());
-
-        // Convert percentage values from the form by dividing by 100
-        data.codIf = parseFloat(data.codIf) / 100;
-        data.insuranceIf = parseFloat(data.insuranceIf) / 100;
-        data.ewayIf = parseFloat(data.ewayIf) / 100;
-        data.fuelCharges = parseFloat(data.fuelCharges) / 100;
-        data.devlpChg = parseFloat(data.devlpChg) / 100;
-        
-        // Gather data from the editable rate table
-        const rateListRows = Array.from(rateTableBody.children);
-        const rateListData = rateListRows.map(row => {
-            const inputs = row.querySelectorAll('input');
-            const rowData = {};
-            rowData.Code = inputs[0].value;
-            rowData.Carrier = inputs[1].value;
-            rowData.Service = inputs[2].value;
-            rowData.Weight = inputs[3].value;
-            rowData.UID = inputs[4].value;
-            rowData['Zone 1'] = inputs[5].value;
-            rowData['Zone 2'] = inputs[6].value;
-            rowData['Zone 3'] = inputs[7].value;
-            rowData['Zone 4'] = inputs[8].value;
-            rowData['Zone 5'] = inputs[9].value;
-            rowData['Zone 6'] = inputs[10].value;
-            rowData['Zone 7'] = inputs[11].value;
-            rowData['Zone 8'] = inputs[12].value;
-            rowData['Zone 9'] = inputs[13].value;
-            rowData['Zone 10'] = inputs[14].value;
-            rowData['Zone 11'] = inputs[15].value;
-            rowData['Zone 12'] = inputs[16].value;
-            rowData['Zone 13'] = inputs[17].value;
-            rowData['Zone 14'] = inputs[18].value;
-            return rowData;
-        });
-
-        // Add rate list data to the main data object
-        data.rateList = rateListData;
-        
-        // This is the URL of your deployed Google Apps Script.
-        // You MUST replace this with your actual URL after deploying the script provided below.
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbzZBMX_ZtrCW36iTxKMK8yL5n3u5EHRzCO4kpRTbVLE69hl5HHcj1tCFl5BNdQ60AKoHw/exec'; 
-
-        if (scriptUrl === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-            formStatusDiv.textContent = 'Please update the scriptUrl with your Google Apps Script URL.';
-            formStatusDiv.className = 'status-message error';
-            return;
-        }
-
-        try {
-            const response = await fetch(scriptUrl, {
-                method: 'POST',
-                mode: 'no-cors', // Required for Google Apps Script to work with fetch
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            });
-
-            formStatusDiv.textContent = 'Customer data successfully submitted!';
-            formStatusDiv.className = 'status-message success';
-            form.reset(); // Reset the form after successful submission
-            loadRateListTable(); // Reload the table with default values
-
-        } catch (error) {
-            console.error('Error submitting form:', error);
-            formStatusDiv.textContent = `Error submitting data: ${error.message}`;
-            formStatusDiv.className = 'status-message error';
-        }
-    };
-
-    // Attach event listeners
-    pincodeInput.addEventListener('input', debounce(fetchPincodeDetails, 500));
-    billingIdInput.addEventListener('input', debounce(handleBillingIDInput, 500));
-    closeModalBtn.addEventListener('click', hideGstinSelectionModal);
-    customerForm.addEventListener('submit', handleFormSubmit);
-
-    // Initial calls
-    fetchPincodeDetails();
-    loadRateListTable();
-</script>
-
+    </script>
 </body>
 </html>
