@@ -9,11 +9,11 @@
     <style>
         /* Styles from customers.html */
         .customers-form-container {
-            max-width: 900px;
+            max-width: 100%;
             margin: auto;
             background: #fff;
             padding: 30px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: none;
         }
         .customers-form-container h2 {
             text-align: center;
@@ -74,21 +74,27 @@
             margin: 0;
         }
         .submit-btn {
-            display: block;
-            width: 100%;
             padding: 12px;
-            margin-top: 30px;
-            background-color: #007bff;
-            color: white;
             border: none;
             border-radius: 6px;
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            color: white;
         }
-        .submit-btn:hover {
+        .btn-primary {
+            background-color: #007bff;
+        }
+        .btn-primary:hover {
             background-color: #0056b3;
         }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
         .status-message {
             margin-top: 10px;
             font-style: italic;
@@ -181,7 +187,7 @@
             background-color: #f3f4f6;
         }
         .main-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: auto;
             background: #fff;
             padding: 20px;
@@ -220,10 +226,20 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
+
+        /* Rate List Zooming Styles */
+        .rate-list-zoom-container {
+            font-size: 14px; /* Default for large screens */
+        }
+        @media (max-width: 1200px) {
+            .rate-list-zoom-container { font-size: 12px; }
+        }
+        @media (max-width: 992px) {
+            .rate-list-zoom-container { font-size: 10px; }
+        }
         @media (max-width: 768px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
+            .form-grid { grid-template-columns: 1fr; }
+            .rate-list-zoom-container { font-size: 9px; }
         }
 
         /* Modal Styles */
@@ -275,7 +291,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 p-4 sm:p-8">
+<body class="bg-gray-100">
 
     <div class="main-container">
         <h1 class="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">Customer Management Portal</h1>
@@ -315,6 +331,7 @@
                                 <div class="form-group">
                                     <label for="customerCode">Customer Code</label>
                                     <input type="text" id="customerCode" name="customerCode" required>
+                                    <div id="customerCodeStatus" class="status-message"></div>
                                 </div>
                                 <div class="form-group">
                                     <label for="mobileNumber">Mobile Number</label>
@@ -500,8 +517,10 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <button type="submit" class="submit-btn">Create Customer</button>
+                    <div class="flex gap-4 mt-8">
+                         <button type="submit" class="submit-btn btn-primary flex-1">Create Customer</button>
+                         <button type="button" id="clearFormBtn" class="submit-btn btn-secondary flex-1">Clear Form</button>
+                    </div>
                 </form>
                 <div id="formStatus"></div>
             </div>
@@ -615,7 +634,25 @@
             const formStatusDiv = document.getElementById('formStatus');
             const rateTableBody = document.getElementById('rateTableBody');
             const customerCodeInput = document.getElementById('customerCode');
+            const customerCodeStatus = document.getElementById('customerCodeStatus');
             const billerTypeSelect = document.getElementById('billerType');
+            const mobileNumberInput = document.getElementById('mobileNumber');
+            const billingLandmarkInput = document.getElementById('billingLandmark');
+            const underBranchSelect = document.getElementById('underBranch');
+            const billingEmailInput = document.getElementById('billingEmail');
+            const carrierSelect = document.getElementById('carrier');
+            const billingCycleSelect = document.getElementById('billingCycle');
+            const weightChangeInput = document.getElementById('weightChange');
+            const toPayIfInput = document.getElementById('toPayIf');
+            const codIfInput = document.getElementById('codIf');
+            const insuranceIfInput = document.getElementById('insuranceIf');
+            const ewayIfInput = document.getElementById('ewayIf');
+            const awbChargeInput = document.getElementById('awbCharge');
+            const packingChargesInput = document.getElementById('packingCharges');
+            const fuelChargesInput = document.getElementById('fuelCharges');
+            const devlpChgInput = document.getElementById('devlpChg');
+            const clearFormBtn = document.getElementById('clearFormBtn');
+
 
             // GSTIN Modal Elements
             const gstinModal = document.getElementById('gstinModal');
@@ -640,6 +677,7 @@
 
             let allCustomers = [];
             let allRateLists = [];
+            let isDataLoading = false;
 
             // =========================================================
             //  General Functions
@@ -667,15 +705,21 @@
                 if (activeTab) {
                     activeTab.button.classList.add('active');
                     activeTab.content.classList.add('active');
-                    if (tabName === 'list') {
-                        fetchData();
-                    }
                 }
             }
 
             // =========================================================
             //  Create Customer Tab Logic
             // =========================================================
+             const clearForm = () => {
+                customerForm.reset();
+                gstStatusDiv.textContent = '';
+                pincodeStatusDiv.textContent = '';
+                customerCodeStatus.textContent = '';
+                formStatusDiv.textContent = '';
+                displayRateList('');
+            };
+            
             const fetchPincodeDetails = () => {
                 const pincode = pincodeInput.value;
                 if (pincode.length !== 6 || isNaN(pincode)) {
@@ -834,26 +878,33 @@
                 return `${code}${serviceAbbr}${weight}`.toUpperCase();
             };
 
-            const loadRateListTable = (customerCode = '') => {
-                const rateListData = [
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Premium", "Weight": "0.5", "Zone 1": "50", "Zone 2": "60", "Zone 3": "65", "Zone 4": "50", "Zone 5": "85", "Zone 6": "85", "Zone 7": "95", "Zone 8": "95", "Zone 9": "120", "Zone 10": "120", "Zone 11": "120", "Zone 12": "120", "Zone 13": "170", "Zone 14": "190" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Premium", "Weight": "0.5A", "Zone 1": "45", "Zone 2": "50", "Zone 3": "55", "Zone 4": "45", "Zone 5": "70", "Zone 6": "70", "Zone 7": "80", "Zone 8": "80", "Zone 9": "100", "Zone 10": "100", "Zone 11": "100", "Zone 12": "100", "Zone 13": "140", "Zone 14": "160" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Express", "Weight": "0.5", "Zone 1": "45", "Zone 2": "55", "Zone 3": "60", "Zone 4": "45", "Zone 5": "75", "Zone 6": "75", "Zone 7": "85", "Zone 8": "85", "Zone 9": "110", "Zone 10": "110", "Zone 11": "110", "Zone 12": "110", "Zone 13": "160", "Zone 14": "180" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Express", "Weight": "0.5A", "Zone 1": "40", "Zone 2": "45", "Zone 3": "50", "Zone 4": "40", "Zone 5": "65", "Zone 6": "65", "Zone 7": "75", "Zone 8": "75", "Zone 9": "95", "Zone 10": "95", "Zone 11": "95", "Zone 12": "95", "Zone 13": "130", "Zone 14": "150" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "3", "Zone 1": "25", "Zone 2": "30", "Zone 3": "35", "Zone 4": "25", "Zone 5": "45", "Zone 6": "45", "Zone 7": "50", "Zone 8": "50", "Zone 9": "60", "Zone 10": "60", "Zone 11": "60", "Zone 12": "60", "Zone 13": "90", "Zone 14": "110" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "10", "Zone 1": "20", "Zone 2": "25", "Zone 3": "30", "Zone 4": "20", "Zone 5": "40", "Zone 6": "40", "Zone 7": "45", "Zone 8": "45", "Zone 9": "55", "Zone 10": "55", "Zone 11": "55", "Zone 12": "55", "Zone 13": "80", "Zone 14": "100" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "25", "Zone 1": "18", "Zone 2": "23", "Zone 3": "28", "Zone 4": "18", "Zone 5": "38", "Zone 6": "38", "Zone 7": "43", "Zone 8": "43", "Zone 9": "53", "Zone 10": "53", "Zone 11": "53", "Zone 12": "53", "Zone 13": "78", "Zone 14": "98" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "50", "Zone 1": "17", "Zone 2": "22", "Zone 3": "27", "Zone 4": "17", "Zone 5": "37", "Zone 6": "37", "Zone 7": "42", "Zone 8": "42", "Zone 9": "52", "Zone 10": "52", "Zone 11": "52", "Zone 12": "52", "Zone 13": "77", "Zone 14": "97" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "100", "Zone 1": "16", "Zone 2": "21", "Zone 3": "26", "Zone 4": "16", "Zone 5": "36", "Zone 6": "36", "Zone 7": "41", "Zone 8": "41", "Zone 9": "51", "Zone 10": "51", "Zone 11": "51", "Zone 12": "51", "Zone 13": "76", "Zone 14": "96" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "500", "Zone 1": "15", "Zone 2": "20", "Zone 3": "25", "Zone 4": "15", "Zone 5": "35", "Zone 6": "35", "Zone 7": "40", "Zone 8": "40", "Zone 9": "50", "Zone 10": "50", "Zone 11": "50", "Zone 12": "50", "Zone 13": "75", "Zone 14": "95" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "3", "Zone 1": "30", "Zone 2": "40", "Zone 3": "45", "Zone 4": "40", "Zone 5": "50", "Zone 6": "50", "Zone 7": "55", "Zone 8": "55", "Zone 9": "65", "Zone 10": "65", "Zone 11": "65", "Zone 12": "65", "Zone 13": "100", "Zone 14": "110" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "10", "Zone 1": "20", "Zone 2": "25", "Zone 3": "30", "Zone 4": "25", "Zone 5": "35", "Zone 6": "35", "Zone 7": "40", "Zone 8": "40", "Zone 9": "50", "Zone 10": "50", "Zone 11": "50", "Zone 12": "50", "Zone 13": "80", "Zone 14": "90" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "25", "Zone 1": "18", "Zone 2": "23", "Zone 3": "28", "Zone 4": "23", "Zone 5": "33", "Zone 6": "33", "Zone 7": "38", "Zone 8": "38", "Zone 9": "48", "Zone 10": "48", "Zone 11": "48", "Zone 12": "48", "Zone 13": "78", "Zone 14": "88" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "50", "Zone 1": "17", "Zone 2": "22", "Zone 3": "27", "Zone 4": "22", "Zone 5": "32", "Zone 6": "32", "Zone 7": "37", "Zone 8": "37", "Zone 9": "47", "Zone 10": "47", "Zone 11": "47", "Zone 12": "47", "Zone 13": "77", "Zone 14": "87" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "100", "Zone 1": "16", "Zone 2": "21", "Zone 3": "26", "Zone 4": "21", "Zone 5": "31", "Zone 6": "31", "Zone 7": "36", "Zone 8": "36", "Zone 9": "46", "Zone 10": "46", "Zone 11": "46", "Zone 12": "46", "Zone 13": "76", "Zone 14": "86" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "500", "Zone 1": "15", "Zone 2": "20", "Zone 3": "25", "Zone 4": "20", "Zone 5": "30", "Zone 6": "30", "Zone 7": "35", "Zone 8": "35", "Zone 9": "45", "Zone 10": "45", "Zone 11": "45", "Zone 12": "45", "Zone 13": "75", "Zone 14": "85" },
-                    { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "1000", "Zone 1": "14", "Zone 2": "19", "Zone 3": "24", "Zone 4": "19", "Zone 5": "29", "Zone 6": "29", "Zone 7": "34", "Zone 8": "34", "Zone 9": "44", "Zone 10": "44", "Zone 11": "44", "Zone 12": "44", "Zone 13": "74", "Zone 14": "84" }
-                ];
+            const displayRateList = (customerCode, rates) => {
+                let rateListData;
+                if (rates && rates.length > 0) {
+                    rateListData = rates.map(row => ({ ...row, Code: customerCode }));
+                } else {
+                    // Default rate list structure
+                    rateListData = [
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Premium", "Weight": "0.5", "Zone 1": "50", "Zone 2": "60", "Zone 3": "65", "Zone 4": "50", "Zone 5": "85", "Zone 6": "85", "Zone 7": "95", "Zone 8": "95", "Zone 9": "120", "Zone 10": "120", "Zone 11": "120", "Zone 12": "120", "Zone 13": "170", "Zone 14": "190" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Premium", "Weight": "0.5A", "Zone 1": "45", "Zone 2": "50", "Zone 3": "55", "Zone 4": "45", "Zone 5": "70", "Zone 6": "70", "Zone 7": "80", "Zone 8": "80", "Zone 9": "100", "Zone 10": "100", "Zone 11": "100", "Zone 12": "100", "Zone 13": "140", "Zone 14": "160" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Express", "Weight": "0.5", "Zone 1": "45", "Zone 2": "55", "Zone 3": "60", "Zone 4": "45", "Zone 5": "75", "Zone 6": "75", "Zone 7": "85", "Zone 8": "85", "Zone 9": "110", "Zone 10": "110", "Zone 11": "110", "Zone 12": "110", "Zone 13": "160", "Zone 14": "180" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Express", "Weight": "0.5A", "Zone 1": "40", "Zone 2": "45", "Zone 3": "50", "Zone 4": "40", "Zone 5": "65", "Zone 6": "65", "Zone 7": "75", "Zone 8": "75", "Zone 9": "95", "Zone 10": "95", "Zone 11": "95", "Zone 12": "95", "Zone 13": "130", "Zone 14": "150" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "3", "Zone 1": "25", "Zone 2": "30", "Zone 3": "35", "Zone 4": "25", "Zone 5": "45", "Zone 6": "45", "Zone 7": "50", "Zone 8": "50", "Zone 9": "60", "Zone 10": "60", "Zone 11": "60", "Zone 12": "60", "Zone 13": "90", "Zone 14": "110" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "10", "Zone 1": "20", "Zone 2": "25", "Zone 3": "30", "Zone 4": "20", "Zone 5": "40", "Zone 6": "40", "Zone 7": "45", "Zone 8": "45", "Zone 9": "55", "Zone 10": "55", "Zone 11": "55", "Zone 12": "55", "Zone 13": "80", "Zone 14": "100" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "25", "Zone 1": "18", "Zone 2": "23", "Zone 3": "28", "Zone 4": "18", "Zone 5": "38", "Zone 6": "38", "Zone 7": "43", "Zone 8": "43", "Zone 9": "53", "Zone 10": "53", "Zone 11": "53", "Zone 12": "53", "Zone 13": "78", "Zone 14": "98" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "50", "Zone 1": "17", "Zone 2": "22", "Zone 3": "27", "Zone 4": "17", "Zone 5": "37", "Zone 6": "37", "Zone 7": "42", "Zone 8": "42", "Zone 9": "52", "Zone 10": "52", "Zone 11": "52", "Zone 12": "52", "Zone 13": "77", "Zone 14": "97" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "100", "Zone 1": "16", "Zone 2": "21", "Zone 3": "26", "Zone 4": "16", "Zone 5": "36", "Zone 6": "36", "Zone 7": "41", "Zone 8": "41", "Zone 9": "51", "Zone 10": "51", "Zone 11": "51", "Zone 12": "51", "Zone 13": "76", "Zone 14": "96" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Airline", "Weight": "500", "Zone 1": "15", "Zone 2": "20", "Zone 3": "25", "Zone 4": "15", "Zone 5": "35", "Zone 6": "35", "Zone 7": "40", "Zone 8": "40", "Zone 9": "50", "Zone 10": "50", "Zone 11": "50", "Zone 12": "50", "Zone 13": "75", "Zone 14": "95" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "3", "Zone 1": "30", "Zone 2": "40", "Zone 3": "45", "Zone 4": "40", "Zone 5": "50", "Zone 6": "50", "Zone 7": "55", "Zone 8": "55", "Zone 9": "65", "Zone 10": "65", "Zone 11": "65", "Zone 12": "65", "Zone 13": "100", "Zone 14": "110" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "10", "Zone 1": "20", "Zone 2": "25", "Zone 3": "30", "Zone 4": "25", "Zone 5": "35", "Zone 6": "35", "Zone 7": "40", "Zone 8": "40", "Zone 9": "50", "Zone 10": "50", "Zone 11": "50", "Zone 12": "50", "Zone 13": "80", "Zone 14": "90" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "25", "Zone 1": "18", "Zone 2": "23", "Zone 3": "28", "Zone 4": "23", "Zone 5": "33", "Zone 6": "33", "Zone 7": "38", "Zone 8": "38", "Zone 9": "48", "Zone 10": "48", "Zone 11": "48", "Zone 12": "48", "Zone 13": "78", "Zone 14": "88" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "50", "Zone 1": "17", "Zone 2": "22", "Zone 3": "27", "Zone 4": "22", "Zone 5": "32", "Zone 6": "32", "Zone 7": "37", "Zone 8": "37", "Zone 9": "47", "Zone 10": "47", "Zone 11": "47", "Zone 12": "47", "Zone 13": "77", "Zone 14": "87" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "100", "Zone 1": "16", "Zone 2": "21", "Zone 3": "26", "Zone 4": "21", "Zone 5": "31", "Zone 6": "31", "Zone 7": "36", "Zone 8": "36", "Zone 9": "46", "Zone 10": "46", "Zone 11": "46", "Zone 12": "46", "Zone 13": "76", "Zone 14": "86" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "500", "Zone 1": "15", "Zone 2": "20", "Zone 3": "25", "Zone 4": "20", "Zone 5": "30", "Zone 6": "30", "Zone 7": "35", "Zone 8": "35", "Zone 9": "45", "Zone 10": "45", "Zone 11": "45", "Zone 12": "45", "Zone 13": "75", "Zone 14": "85" },
+                        { "Code": customerCode, "Carrier": "GEN", "Service": "Surface", "Weight": "1000", "Zone 1": "14", "Zone 2": "19", "Zone 3": "24", "Zone 4": "19", "Zone 5": "29", "Zone 6": "29", "Zone 7": "34", "Zone 8": "34", "Zone 9": "44", "Zone 10": "44", "Zone 11": "44", "Zone 12": "44", "Zone 13": "74", "Zone 14": "84" }
+                    ];
+                }
+                
                 rateTableBody.innerHTML = '';
                 rateListData.forEach(row => {
                     const tr = document.createElement('tr');
@@ -864,20 +915,20 @@
                         <td><input type="text" value="${row.Service}" readonly></td>
                         <td><input type="text" value="${row.Weight}" readonly></td>
                         <td class="hidden-column"><input type="text" value="${uid}" readonly></td>
-                        <td><input type="number" value="${row['Zone 1']}"></td>
-                        <td><input type="number" value="${row['Zone 2']}"></td>
-                        <td><input type="number" value="${row['Zone 3']}"></td>
-                        <td><input type="number" value="${row['Zone 4']}"></td>
-                        <td><input type="number" value="${row['Zone 5']}"></td>
-                        <td><input type="number" value="${row['Zone 6']}"></td>
-                        <td><input type="number" value="${row['Zone 7']}"></td>
-                        <td><input type="number" value="${row['Zone 8']}"></td>
-                        <td><input type="number" value="${row['Zone 9']}"></td>
-                        <td><input type="number" value="${row['Zone 10']}"></td>
-                        <td><input type="number" value="${row['Zone 11']}"></td>
-                        <td><input type="number" value="${row['Zone 12']}"></td>
-                        <td><input type="number" value="${row['Zone 13']}"></td>
-                        <td><input type="number" value="${row['Zone 14']}"></td>
+                        <td><input type="number" value="${row['Zone 1'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 2'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 3'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 4'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 5'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 6'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 7'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 8'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 9'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 10'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 11'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 12'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 13'] || ''}"></td>
+                        <td><input type="number" value="${row['Zone 14'] || ''}"></td>
                     `;
                     rateTableBody.appendChild(tr);
                 });
@@ -933,12 +984,31 @@
                     });
                     formStatusDiv.textContent = 'Customer data successfully submitted!';
                     formStatusDiv.className = 'status-message success';
-                    customerForm.reset();
-                    loadRateListTable();
+                    clearForm();
                 } catch (error) {
                     formStatusDiv.textContent = `Error submitting data: ${error.message}`;
                     formStatusDiv.className = 'status-message error';
                 }
+            };
+
+            const handleCustomerCodeInput = (event) => {
+                const code = event.target.value.trim().toUpperCase();
+                customerCodeStatus.textContent = '';
+                customerCodeStatus.className = 'status-message';
+
+                if (!code) {
+                    displayRateList('');
+                    return;
+                }
+                
+                const codeExists = allCustomers.some(c => c['Customer Code'] === code);
+                if (codeExists) {
+                    customerCodeStatus.textContent = 'This customer code is already taken.';
+                    customerCodeStatus.className = 'status-message error';
+                }
+
+                // Always update the rate list table with the current code, using default rates
+                displayRateList(code, null);
             };
 
             // =========================================================
@@ -950,6 +1020,8 @@
             }
 
             async function fetchData() {
+                if (isDataLoading) return;
+                isDataLoading = true;
                 tableBody.innerHTML = '<tr><td colspan="9" class="py-4 text-center text-gray-500 font-medium animate-pulse">Fetching data...</td></tr>';
                 try {
                     const [customersResponse, rateListsResponse] = await Promise.all([
@@ -974,6 +1046,8 @@
                     console.error('Failed to fetch data:', error);
                     tableBody.innerHTML = '<tr><td colspan="9" class="py-4 text-center text-red-500">Error loading data. Please try again.</td></tr>';
                     showError(`Failed to fetch data: ${error.message}`);
+                } finally {
+                    isDataLoading = false;
                 }
             }
             
@@ -1049,18 +1123,22 @@
                 }
                 const hiddenHeaders = ['Code', 'Carrier', 'UID'];
                 const headerKeys = Object.keys(codeRow).filter(key => !hiddenHeaders.includes(key));
-                let tableHtml = `<div class="overflow-x-auto rounded-lg shadow-inner mt-4">
+                
+                const thClasses = "px-4 py-3 text-left font-bold text-gray-500 uppercase";
+                const tdClasses = "px-4 py-4 whitespace-nowrap text-gray-500";
+
+                let tableHtml = `<div class="overflow-x-auto rounded-lg shadow-inner mt-4 rate-list-zoom-container">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-100">
                                         <tr>
-                                            ${headerKeys.map(header => `<th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">${header}</th>`).join('')}
+                                            ${headerKeys.map(header => `<th class="${thClasses}">${header}</th>`).join('')}
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">`;
                 rateData.forEach(rate => {
                     tableHtml += `
                         <tr>
-                            ${headerKeys.map(key => `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${rate[key] || ''}</td>`).join('')}
+                            ${headerKeys.map(key => `<td class="${tdClasses}">${rate[key] || ''}</td>`).join('')}
                         </tr>
                     `;
                 });
@@ -1069,25 +1147,45 @@
             }
 
             // =========================================================
-            //  Event Listeners
+            //  Event Listeners & Input Validation
             // =========================================================
             createTab.addEventListener('click', () => showTab('create'));
             listTab.addEventListener('click', () => showTab('list'));
             pincodeInput.addEventListener('input', debounce(fetchPincodeDetails, 500));
-            billingIdInput.addEventListener('input', debounce(handleBillingIDInput, 500));
+            
+            const debouncedBillingIdHandler = debounce(handleBillingIDInput, 500);
+            billingIdInput.addEventListener('input', () => {
+                billingIdInput.value = billingIdInput.value.toUpperCase();
+                debouncedBillingIdHandler();
+            });
+            
             closeModalBtn.addEventListener('click', hideGstinSelectionModal);
             customerForm.addEventListener('submit', handleFormSubmit);
-            customerCodeInput.addEventListener('input', (e) => loadRateListTable(e.target.value.trim()));
+
+            const debouncedCustomerCodeHandler = debounce(handleCustomerCodeInput, 500);
+            customerCodeInput.addEventListener('input', (e) => {
+                customerCodeInput.value = customerCodeInput.value.toUpperCase().slice(0, 4);
+                debouncedCustomerCodeHandler(e);
+            });
+
             searchInput.addEventListener('input', filterAndRender);
             branchFilter.addEventListener('change', filterAndRender);
             refreshButton.addEventListener('click', fetchData);
+            clearFormBtn.addEventListener('click', clearForm);
+
+            customerNameInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
+            billingAddressInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
+            billingLandmarkInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
+
 
             // =========================================================
             //  Initial Setup
             // =========================================================
             showTab('create');
-            loadRateListTable();
+            displayRateList('');
+            fetchData();
         });
     </script>
 </body>
 </html>
+
