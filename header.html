@@ -27,7 +27,7 @@
         <div class="flex items-center space-x-4">
              <!-- Login/Logout Button Container -->
             <div id="auth-button-container">
-                <a href="https://post4ex.github.io/postman/login.html" id="login-button" class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-semibold">Login</a>
+                <a href="https://post4ex.github.io/postman/login.html" id="login-button" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors text-sm font-semibold">Login</a>
                 <button id="logout-button" class="hidden px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-semibold">Logout</button>
             </div>
             <!-- Mobile Menu Button -->
@@ -49,9 +49,9 @@
 </header>
 
 <!-- Collapsible Sidebar (hidden by default) -->
-<div id="sidebar" class="fixed top-0 left-0 h-full bg-gray-800 text-white w-64 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out">
+<div id="sidebar" class="fixed top-0 left-0 h-full bg-gray-800 text-white w-64 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
     <div class="p-4 space-y-2">
-        <h2 class="text-xl font-bold border-b border-gray-600 pb-2">Admin Menu</h2>
+        <h2 class="text-xl font-bold border-b border-gray-600 pb-2 mb-2">Admin Menu</h2>
         <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Book</a>
         
         <!-- Manifest Sub-menu -->
@@ -86,6 +86,19 @@
         
         <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">CRM</a>
         <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Ledger</a>
+        
+        <!-- Create Sub-menu -->
+        <div>
+            <button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700 flex justify-between items-center" onclick="toggleSubmenu('create-submenu')">
+                Create
+                <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div id="create-submenu" class="hidden pl-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Customer</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Client</a>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -97,8 +110,13 @@
         const submenu = document.getElementById(submenuId);
         const icon = submenu.previousElementSibling.querySelector('i');
         submenu.classList.toggle('hidden');
-        icon.classList.toggle('fa-chevron-down');
-        icon.classList.toggle('fa-chevron-up');
+        if (submenu.classList.contains('hidden')) {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        } else {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        }
     }
 </script>
 
