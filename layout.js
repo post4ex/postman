@@ -1,5 +1,6 @@
 /**
- * Fetches and injects HTML content from a component file into a placeholder element.
+ * Fetches and injects HTML content from a component file into a placeholder element,
+ * and executes any scripts within the component.
  * @param {string} componentUrl - The URL of the HTML component to load.
  * @param {string} placeholderId - The ID of the element to inject the content into.
  * @returns {Promise<void>}
@@ -13,7 +14,28 @@ async function loadComponent(componentUrl, placeholderId) {
         const text = await response.text();
         const placeholder = document.getElementById(placeholderId);
         if (placeholder) {
-            placeholder.innerHTML = text;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(text, 'text/html');
+            const componentBody = doc.body;
+
+            // Find and execute any script tags within the component
+            const scripts = componentBody.querySelectorAll('script');
+            scripts.forEach(script => {
+                const newScript = document.createElement('script');
+                // Copy script content or src
+                if (script.src) {
+                    newScript.src = script.src;
+                } else {
+                    newScript.textContent = script.textContent;
+                }
+                // Append the new script to the main document's body to execute it, then remove it
+                document.body.appendChild(newScript).remove();
+            });
+
+            // Append the component's HTML content to the placeholder
+            while (componentBody.firstChild) {
+                placeholder.appendChild(componentBody.firstChild);
+            }
         }
     } catch (error) {
         console.error(error);
@@ -23,6 +45,7 @@ async function loadComponent(componentUrl, placeholderId) {
         }
     }
 }
+
 
 /**
  * Fetches, injects, and initializes dynamic page content (like tracking, services).
