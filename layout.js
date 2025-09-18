@@ -22,13 +22,11 @@ async function loadComponent(componentUrl, placeholderId) {
             const scripts = componentBody.querySelectorAll('script');
             scripts.forEach(script => {
                 const newScript = document.createElement('script');
-                // Copy script content or src
                 if (script.src) {
                     newScript.src = script.src;
                 } else {
                     newScript.textContent = script.textContent;
                 }
-                // Append the new script to the main document's body to execute it, then remove it
                 document.body.appendChild(newScript).remove();
             });
 
@@ -74,7 +72,6 @@ async function loadDynamicContent(url, targetElementId) {
 
             if (pageScriptTag && pageScriptTag.textContent) {
                 let scriptContent = pageScriptTag.textContent;
-                // This regex is designed to extract the content from the DOMContentLoaded listener
                 const regex = /document\.addEventListener\(\s*['"]DOMContentLoaded['"]\s*,\s*(?:function\s*\(\s*\)\s*\{|(?:\(\s*\)\s*=>\s*\{))([\s\S]*)\}\s*\)\s*;/;
                 const match = scriptContent.match(regex);
                 
@@ -82,7 +79,6 @@ async function loadDynamicContent(url, targetElementId) {
                     scriptContent = match[1];
                 }
 
-                // Execute the extracted script
                 const script = document.createElement('script');
                 script.textContent = scriptContent;
                 document.body.appendChild(script).remove();
@@ -102,21 +98,19 @@ async function loadDynamicContent(url, targetElementId) {
  * @param {string} pageId - Identifier for the page (e.g., 'main', 'tracking').
  */
 const setActiveNav = (pageId) => {
-    // Use a small timeout to ensure the header has been loaded
     setTimeout(() => {
         const navLinks = document.querySelectorAll('#main-nav a, #dropdownMenu a');
         navLinks.forEach(link => {
             link.classList.remove('bg-gray-600', 'font-bold');
-            link.classList.add('bg-blue-900'); // Default style
+            link.classList.add('bg-blue-900');
             
-            // Extract page identifier from link ID (e.g., 'nav-main' -> 'main')
             const linkPage = link.id ? link.id.split('-')[1] : '';
             if (linkPage === pageId) {
                 link.classList.remove('bg-blue-900');
-                link.classList.add('bg-gray-600', 'font-bold'); // Active style
+                link.classList.add('bg-gray-600', 'font-bold');
             }
         });
-    }, 100); // 100ms delay
+    }, 100);
 };
 window.setActiveNav = setActiveNav;
 
@@ -129,29 +123,49 @@ function checkLoginStatus() {
     const logoutButton = document.getElementById('logout-button');
     const sidebarToggleContainer = document.getElementById('sidebar-toggle-container');
     
+    // Get home links to make them dynamic
+    const homeLink = document.getElementById('nav-main');
+    const homeLinkMobile = document.getElementById('dropdown-main');
+    
+    // Mobile auth buttons
+    const loginButtonMobile = document.getElementById('login-button-mobile');
+    const logoutButtonMobile = document.getElementById('logout-button-mobile');
+
     if (!loginButton || !logoutButton || !sidebarToggleContainer) return;
 
+    let isLoggedIn = false;
     if (loginDataJSON) {
         const loginData = JSON.parse(loginDataJSON);
         const now = new Date().getTime();
-
-        // Check if the session is expired
-        if (now > loginData.expires) {
-            localStorage.removeItem('loginData'); // Clear expired session
-            loginButton.classList.remove('hidden');
-            logoutButton.classList.add('hidden');
-            sidebarToggleContainer.classList.add('hidden');
+        if (now <= loginData.expires) {
+            isLoggedIn = true;
         } else {
-            // User is logged in and session is valid
-            loginButton.classList.add('hidden');
-            logoutButton.classList.remove('hidden');
-            sidebarToggleContainer.classList.remove('hidden');
+            localStorage.removeItem('loginData'); // Clear expired session
         }
+    }
+
+    if (isLoggedIn) {
+        // --- UI for LOGGED IN user ---
+        loginButton.classList.add('hidden');
+        logoutButton.classList.remove('hidden');
+        if(loginButtonMobile) loginButtonMobile.classList.add('hidden');
+        if(logoutButtonMobile) logoutButtonMobile.classList.remove('hidden');
+        
+        sidebarToggleContainer.classList.remove('hidden');
+        // Update home links to point to the dashboard
+        if (homeLink) homeLink.href = 'https://post4ex.github.io/postman/dashboard.html';
+        if (homeLinkMobile) homeLinkMobile.href = 'https://post4ex.github.io/postman/dashboard.html';
     } else {
-        // User is not logged in
+        // --- UI for LOGGED OUT user ---
         loginButton.classList.remove('hidden');
         logoutButton.classList.add('hidden');
+        if(loginButtonMobile) loginButtonMobile.classList.remove('hidden');
+        if(logoutButtonMobile) logoutButtonMobile.classList.add('hidden');
+
         sidebarToggleContainer.classList.add('hidden');
+        // Update home links to point to the main public page
+        if (homeLink) homeLink.href = 'https://post4ex.github.io/postman/main.html';
+        if (homeLinkMobile) homeLinkMobile.href = 'https://post4ex.github.io/postman/main.html';
     }
 }
 
@@ -163,11 +177,11 @@ function initializeUI() {
     const menuButton = document.getElementById('menuButton');
     const dropdownMenu = document.getElementById('dropdownMenu');
     const logoutButton = document.getElementById('logout-button');
+    const logoutButtonMobile = document.getElementById('logout-button-mobile');
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
     
-    // Mobile menu toggle
     if (menuButton && dropdownMenu) {
         menuButton.addEventListener('click', (event) => {
             event.stopPropagation();
@@ -176,7 +190,6 @@ function initializeUI() {
         dropdownMenu.addEventListener('click', () => dropdownMenu.classList.add('hidden'));
     }
 
-    // Close mobile menu on outside click
     document.addEventListener('click', (event) => {
         const isClickInsideMenuButton = menuButton ? menuButton.contains(event.target) : false;
         const isClickInsideDropdownMenu = dropdownMenu ? dropdownMenu.contains(event.target) : false;
@@ -185,16 +198,13 @@ function initializeUI() {
         }
     });
 
-    // Logout functionality
-    if (logoutButton) {
-        logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('loginData');
-            // Redirect to login page for a clean state
-            window.location.href = 'https://post4ex.github.io/postman/login.html';
-        });
-    }
+    const handleLogout = () => {
+        localStorage.removeItem('loginData');
+        window.location.href = 'https://post4ex.github.io/postman/login.html';
+    };
+    if (logoutButton) logoutButton.addEventListener('click', handleLogout);
+    if (logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
 
-    // Sidebar toggle functionality
     if (sidebar && sidebarToggle && sidebarOverlay) {
         const toggleSidebar = () => {
             sidebar.classList.toggle('-translate-x-full');
@@ -204,7 +214,6 @@ function initializeUI() {
         sidebarOverlay.addEventListener('click', toggleSidebar);
     }
 
-    // Initial check of login status to set the correct UI state
     checkLoginStatus();
 }
 
@@ -214,6 +223,7 @@ function initializeUI() {
 const setActiveNavOnLoad = () => {
     const path = window.location.pathname;
     let pageId = 'main'; // Default to main
+    if (path.includes('dashboard.html')) pageId = 'main'; // Treat dashboard as home
     if (path.includes('tracking.html')) pageId = 'tracking';
     if (path.includes('services.html')) pageId = 'services';
     if (path.includes('complaint.html')) pageId = 'complaint';
@@ -223,17 +233,32 @@ const setActiveNavOnLoad = () => {
 
 // --- SCRIPT EXECUTION STARTS HERE ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Protect the dashboard page from unauthorized access
+    const path = window.location.pathname;
+    if (path.includes('dashboard.html')) {
+        const loginDataJSON = localStorage.getItem('loginData');
+        let isLoggedIn = false;
+        if (loginDataJSON) {
+            const loginData = JSON.parse(loginDataJSON);
+            if (new Date().getTime() <= loginData.expires) {
+                isLoggedIn = true;
+            }
+        }
+        if (!isLoggedIn) {
+            // Redirect to login page if not logged in
+            window.location.href = 'https://post4ex.github.io/postman/login.html';
+            return; // Stop further script execution for this page
+        }
+    }
+
     // Load header and footer components first
     Promise.all([
         loadComponent('https://post4ex.github.io/postman/header.html', 'header-placeholder'),
         loadComponent('https://post4ex.github.io/postman/footer.html', 'footer-placeholder')
     ]).then(() => {
-        // Once components are loaded, initialize UI elements and check states
         initializeUI();
         setActiveNavOnLoad();
         
-        // Determine if we are on the main page to auto-load content
-        const path = window.location.pathname;
         const isMainPage = path.endsWith('/') || path.endsWith('main.html') || path.endsWith('/postman/') || path === '/postman';
         
         if (isMainPage) {
