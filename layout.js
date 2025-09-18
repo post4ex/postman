@@ -27,6 +27,64 @@ async function loadComponent(componentUrl, placeholderId) {
 }
 
 /**
+ * Fetches, injects, and initializes dynamic page content (like tracking, services).
+ * @param {string} url - The URL of the page to load.
+ * @param {string} targetElementId - The ID of the element to inject the content into.
+ */
+async function loadDynamicContent(url, targetElementId) {
+    const targetElement = document.getElementById(targetElementId);
+    if (!targetElement) {
+        console.error(`Dynamic content target element #${targetElementId} not found.`);
+        return;
+    }
+
+    try {
+        // Show a loading indicator
+        targetElement.innerHTML = `<div class="card text-center mt-8"><p class="text-gray-500">Loading...</p></div>`;
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to load content. Status: ${response.status}`);
+        
+        const htmlText = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+        
+        const mainContent = doc.querySelector('main');
+        // Find the page-specific inline script. We assume it's the last script tag in the body.
+        const pageScriptTag = doc.querySelector('body > script:last-of-type');
+        
+        if (mainContent) {
+            targetElement.innerHTML = mainContent.innerHTML;
+
+            // If a page-specific inline script exists, extract and run its core logic.
+            if (pageScriptTag && pageScriptTag.textContent) {
+                let scriptContent = pageScriptTag.textContent;
+
+                // This regex robustly finds and removes the DOMContentLoaded wrapper.
+                const regex = /document\.addEventListener\(\s*['"]DOMContentLoaded['"]\s*,\s*(?:function\s*\(\s*\)\s*\{|(?:\(\s*\)\s*=>\s*\{))([\s\S]*)\}\s*\)\s*;/;
+                const match = scriptContent.match(regex);
+                
+                // If a match is found, use the inner content of the wrapper.
+                if (match && match[1]) {
+                    scriptContent = match[1];
+                }
+
+                // Execute the cleaned script by creating a new script element.
+                const script = document.createElement('script');
+                script.textContent = scriptContent;
+                document.body.appendChild(script).remove(); // Append to run, then immediately remove.
+            }
+        } else {
+            throw new Error('Could not find main content in the fetched page.');
+        }
+    } catch (error) {
+        console.error('Error loading dynamic content:', error);
+        targetElement.innerHTML = `<div class="card text-center mt-8 text-red-600"><p>Sorry, could not load the content. Please try again.</p></div>`;
+    }
+}
+
+
+/**
  * Sets the active state for a navigation link based on a page identifier.
  * @param {string} pageId - Identifier for the page (e.g., 'main', 'tracking').
  */
@@ -40,7 +98,8 @@ const setActiveNav = (pageId) => {
             link.classList.remove('bg-gray-600', 'font-bold');
             link.classList.add('bg-blue-900');
 
-            const linkPage = link.id.split('-')[1]; // e.g., 'nav-tracking' -> 'tracking'
+            // The link's ID should be in the format 'nav-main', 'nav-tracking', etc.
+            const linkPage = link.id ? link.id.split('-')[1] : '';
 
             // Apply active styles to the matching link
             if (linkPage === pageId) {
@@ -96,6 +155,26 @@ function initializeUI() {
             if (e.target === contactModal) contactModal.classList.add('hidden');
         });
     }
+
+    // Add event listeners for the dynamic content buttons on the main page.
+    const dynamicButtons = document.querySelectorAll('.dynamic-loader-btn');
+    dynamicButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const url = button.dataset.url;
+            const page = button.dataset.page;
+            const welcomeSection = document.getElementById('welcome-section');
+            
+            if (welcomeSection) {
+                welcomeSection.classList.add('hidden');
+            }
+            
+            // Load the new content
+            loadDynamicContent(url, 'dynamic-content-area');
+
+            // Update the active nav link
+            setActiveNav(page);
+        });
+    });
 }
 
 /**
