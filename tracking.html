@@ -1,1116 +1,234 @@
-<!DOCTYPE-html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Postman</title>
-    <!-- Inter font -->
+    <title>Postman - Track Shipment</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for social media icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-        }
-        .card {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        .track-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.75rem 0;
-        }
-        .track-dot {
-            width: 1rem;
-            height: 1rem;
-            border-radius: 9999px;
-            background-color: #d1d5db; /* Gray dot */
-            position: relative;
-        }
-        .track-dot.completed {
-            background-color: #10b981; /* Green dot for completed */
-        }
-        .track-line {
-            position: absolute;
-            width: 2px;
-            background-color: #d1d5db;
-            height: 2rem;
-            top: 1rem;
-            left: 0.45rem;
-        }
-        /* Custom CSS for dropdown menu */
-        .dropdown-menu {
-            position: absolute;
-            right: 1.5rem;
-            top: 5rem; /* Adjusted to be below the header */
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1-px rgba(0, 0, 0, 0.06);
-            padding: 0.5rem;
-            z-index: 50; /* Ensure it's on top of other content */
-        }
-        /* Style for the new table */
-        .scan-history-table th, .scan-history-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb; /* A light gray border */
-        }
-        .scan-history-table th {
-            font-weight: 600;
-            color: #4b5563; /* text-gray-600 */
-            background-color: #f9fafb; /* bg-gray-50 */
-        }
-        .scan-history-table tr:last-child td {
-            border-bottom: none;
-        }
-        /* Styling for the order list items */
-        .order-list-item {
-            background-color: #f3f4f6;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: 1px solid #e5e7eb;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap; /* Allows wrapping on smaller screens */
-            gap: 1rem;
-        }
-        /* Modal-specific CSS */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 0.75rem;
-            max-width: 90%;
-            max-height: 90%;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        /* NEW: Floating buttons for mobile view */
-        @media (max-width: 639px) { /* Tailwind's 'sm' breakpoint is 640px */
-            .social-buttons-floating {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                z-index: 50;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="https://post4ex.github.io/postman/style.css">
 </head>
 <body class="bg-gray-100 min-h-screen p-4 sm:p-8 flex flex-col items-center relative">
 
-    <!-- Website Header -->
-    <header class="w-full bg-white text-blue-900 shadow-md mb-8 py-4 px-6 rounded-b-lg">
-        <div class="container flex items-center justify-between relative">
-            <!-- Logo positioned on the left -->
-            <a href="#" id="logoLink" class="flex items-center space-x-2 flex-shrink-0">
-                <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto rounded-lg">
-            </a>
+    <div id="header-placeholder"></div>
 
-            <!-- Optional navigation links for larger screens -->
-            <!-- The 'a' tags have been updated to look like buttons -->
-            <nav class="hidden sm:flex space-x-2 text-sm font-semibold flex-shrink-0">
-                <!-- Buttons now use bg-blue-900 and hover:bg-blue-800 -->
-                <a href="#" id="homeLink" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-                <a href="#services-section" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
-                <button id="contactButton" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Contact</button>
-            </nav>
-
-            <!-- Menu Button for smaller screens -->
-            <button id="menuButton" class="sm:hidden p-2 rounded-lg text-blue-900 hover:text-blue-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
-
-            <!-- Dropdown Menu -->
-            <!-- The 'a' tags have been updated to look like buttons -->
-            <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden">
-                <!-- Buttons now use bg-blue-900 and hover:bg-blue-800 -->
-                <a href="#" id="homeLinkMobile" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-                <a href="#services-section" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
-                <button id="contactButtonMobile" class="block w-full text-left px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Contact</button>
-                <!-- New Complaint Button in Mobile Menu -->
-                <button id="complaintButtonMobile" class="w-full text-left px-4 py-2 mt-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Raise a Complaint</button>
-            </div>
-        </div>
-    </header>
-
-    <div class="container space-y-8 mt-4">
-        <!-- Main Application Card -->
+    <main class="container space-y-8 mt-4">
         <div class="card">
-            <!-- Search Input, Toggle and Button -->
-            <!-- The outer div now correctly stacks elements in a column on small screens -->
             <div class="flex flex-col sm:flex-row items-center gap-4 mb-8">
-                <!-- Segmented control now takes full width on small screens -->
                 <div class="flex rounded-lg overflow-hidden w-full sm:w-1/4">
-                    <button id="refButton" class="p-3 text-white font-semibold rounded-l-lg transition-colors w-1/2 bg-blue-800 hover:bg-blue-900">
-                        AWB/Ref
-                    </button>
-                    <button id="mobileButton" class="p-3 text-gray-700 font-semibold rounded-r-lg transition-colors w-1/2 bg-gray-200 hover:bg-gray-300">
-                        Mobile
-                    </button>
+                    <button id="refButton" class="p-3 text-white font-semibold rounded-l-lg transition-colors w-1/2 bg-blue-800 hover:bg-blue-900">AWB/Ref</button>
+                    <button id="mobileButton" class="p-3 text-gray-700 font-semibold rounded-r-lg transition-colors w-1/2 bg-gray-200 hover:bg-gray-300">Mobile</button>
                 </div>
-                
-                <!-- Input field now always takes full width on small screens -->
                 <input type="text" id="searchInput" placeholder="Enter AWB/Ref Number(s), comma-separated" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700 w-full">
-                
-                <!-- Search button also takes full width on small screens -->
-                <button id="searchButton" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors w-full sm:w-auto">
-                    Search
-                </button>
+                <button id="searchButton" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors w-full sm:w-auto">Search</button>
             </div>
-            
-            <!-- Loading Indicator -->
-            <div id="loadingIndicator" class="hidden text-center text-gray-500 mb-4">
-                <p>Loading data...</p>
-            </div>
-
-            <!-- Tracking Details Display Area -->
-            <div id="resultsContainer" class="hidden space-y-6">
-                <!-- Data will be dynamically injected here -->
-            </div>
-            
-            <!-- Message Box for errors or notifications -->
-            <div id="messageBox" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert">
-                <p id="messageText"></p>
-            </div>
+            <div id="loadingIndicator" class="hidden text-center text-gray-500 mb-4"><p>Loading data...</p></div>
+            <div id="resultsContainer" class="hidden space-y-6"></div>
+            <div id="messageBox" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert"><p id="messageText"></p></div>
         </div>
-    </div>
-    
-    <!-- Services Section -->
-    <section id="services-section" class="container card space-y-8 mt-8 py-8 px-6">
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Our Services</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    </main>
 
-            <!-- Service 1: AirLine Services -->
-            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
-                <div class="w-16 h-16 mb-4 text-blue-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9m6.75-3.75C19.912 3.474 16.592 2.25 12 2.25s-7.912 1.224-10.5 3.75m21 0c-2.625 2.516-5.912 3.75-10.5 3.75S4.125 8.766 1.5 6m19.5 0v3.75m0 0v3.75h-.75M21 12.75h-.75m0 0H18.75m-2.25-4.5h.75m-7.5 7.5h.75m0 0h.75m-7.5 7.5h.75m0 0H12a6.75 6.75 0 006.75-6.75V6" />
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">AirLine Services</h3>
-                <p class="text-gray-600">Our AirLine Services offer the fastest way to get your consignments to their destination, ensuring timely and secure delivery across the globe.</p>
-            </div>
+    <div id="footer-placeholder"></div>
 
-            <!-- Service 2: Surface Services -->
-            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
-                <div class="w-16 h-16 mb-4 text-blue-800">
-                    <svg xmlns="http://www.3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3 0h15a3 3 0 003-3V6a3 3 0 00-3-3H4.5a3 3 0 00-3 3v13.5m15-6l-3-3m0 0l-3 3m3-3v12m-2.25 0h-3.75m-15 0h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0" />
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">Surface Services</h3>
-                <p class="text-gray-600">For cost-effective and reliable transportation, our Surface Services are the ideal choice. We handle large and heavy shipments with care, ensuring they reach their destination safely.</p>
-            </div>
-
-            <!-- Service 3: Premium Services -->
-            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
-                <div class="w-16 h-16 mb-4 text-blue-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 009-9V6.257l-2.26-1.506C17.427 4.542 16.5 4.755 16.5 5.5v3.25M12 21a9 9 0 01-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m0 0h7.5m-7.5 0v1.5a1.5 1.5 0 001.5 1.5h4.5a1.5 1.5 0 001.5-1.5v-1.5" />
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">Premium Services</h3>
-                <p class="text-gray-600">Experience the highest standard of service with our Premium Services. Enjoy priority handling, real-time tracking, and dedicated support for your most valuable shipments.</p>
-            </div>
-
-            <!-- Service 4: E-Commerce Services -->
-            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
-                <div class="w-16 h-16 mb-4 text-blue-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.405M21.75 14.25v2.25h-5.25a2.25 2.25 0 01-2.25-2.25V6.75m0 0V6a2.25 2.25 0 012.25-2.25h1.5m0 0V3m0 3.75v3.75m-9-3.75a3 3 0 11-6 0 3 3 0 016 0zm-3 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm12 9a3 3 0 11-6 0 3 3 0 016 0zm-3 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">E-Commerce Services</h3>
-                <p class="text-gray-600">Tailored solutions for your online business. We handle everything from last-mile delivery to cash-on-delivery and returns, helping your e-commerce store thrive.</p>
-            </div>
-
-            <!-- Service 5: LTL Services -->
-            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
-                <div class="w-16 h-16 mb-4 text-blue-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 4.5a2.25 2.25 0 114.5 0M18.75 9h-1.5m-14.25-3.75h-.75m17.25 10.5H12m14.25 0h-1.5m14.25 0H12m0 0L9.75 15m0 0L7.5 12h-1.5" />
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">LTL Services</h3>
-                <p class="text-gray-600">Our Less-than-Truckload (LTL) Services are perfect for shipments that don't require a full truck. We provide flexible and economical options for your partial loads.</p>
-            </div>
-
-            <!-- Service 6: VAS Services -->
-            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
-                <div class="w-16 h-16 mb-4 text-blue-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 00-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m4.5 12.75a9 9 0 01-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m0 0h7.5m-7.5 0v1.5a1.5 1.5 0 001.5 1.5h4.5a1.5 1.5 0 001.5-1.5v-1.5m-7.5 0H12a6.75 6.75 0 006.75-6.75V6" />
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-800 mb-2">VAS Services</h3>
-                <p class="text-gray-600">Enhance your logistics with our Value-Added Services (VAS), including special handling, packaging, and customizable solutions to meet your unique business needs.</p>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- The Modal Pop-up for Scan History -->
+    <!-- Modal for Scan History -->
     <div id="scanHistoryModal" class="modal-overlay hidden">
         <div class="modal-content relative card">
             <h2 class="text-xl font-semibold text-gray-700 mb-4">Scan History</h2>
             <button id="closeModalButton" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div id="modalContent">
-                <!-- Scan history table will be injected here -->
-            </div>
+            <div id="modalContent"></div>
         </div>
     </div>
-
-    <!-- The Complaint Pop-up Modal -->
-    <div id="complaintModal" class="modal-overlay hidden">
-        <div class="modal-content relative card w-full">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Raise a Complaint</h2>
-            <button id="closeComplaintModalButton" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            
-            <!-- Complaint Form -->
-            <div class="space-y-4">
-                <!-- Search for consignment details -->
-                <div class="flex items-center gap-4">
-                    <input type="text" id="complaintSearchInput" placeholder="Enter AWB/Ref Number" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
-                    <button id="complaintSearchButton" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors">
-                        Search
-                    </button>
-                </div>
-                
-                <div id="complaintLoadingIndicator" class="hidden text-center text-gray-500">
-                    <p>Fetching consignment details...</p>
-                </div>
-
-                <div id="complaintResultsContainer" class="hidden space-y-4">
-                    <!-- Consignment details will be injected here -->
-                </div>
-                
-                <div id="complaintMessageContainer">
-                    <div>
-                        <label for="complaintCategory" class="block text-sm font-medium text-gray-700 mb-1">Complaint Category</label>
-                        <select id="complaintCategory" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
-                            <option value="">Select a category</option>
-                            <option value="Delay in Delivery">Delay in Delivery</option>
-                            <option value="Damaged Consignment">Damaged Consignment</option>
-                            <option value="Incorrect Status">Incorrect Status</option>
-                            <option value="Lost Consignment">Lost Consignment</option>
-                            <option value="Billing Issue">Billing Issue</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-
-                    <!-- NEW MOBILE NUMBER AND EMAIL FIELDS -->
-                    <div>
-                        <label for="complainantMobile" class="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
-                        <input type="tel" id="complainantMobile" placeholder="Your mobile number" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
-                    </div>
-
-                    <div>
-                        <label for="complainantEmail" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                        <input type="email" id="complainantEmail" placeholder="Your email address" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
-                    </div>
-                    
-                    <div>
-                        <label for="complaintMessage" class="block text-sm font-medium text-gray-700 mb-1">Your Message</label>
-                        <textarea id="complaintMessage" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700" placeholder="Please provide details about your complaint"></textarea>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <button id="submitComplaintButton" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
-                        Email Complaint
-                    </button>
-                    <div id="emailSendingStatus" class="hidden text-sm text-gray-500">
-                        Sending...
-                    </div>
-                </div>
-            </div>
-            
-            <div id="complaintMessageBox" class="hidden p-4 mt-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert">
-                <p id="complaintMessageText"></p>
-            </div>
-        </div>
-    </div>
-
-    <!-- The Contact Pop-up Modal -->
-    <div id="contactModal" class="modal-overlay hidden">
-        <div class="modal-content relative card">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Contact Details</h2>
-            <button id="closeContactModalButton" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <div class="space-y-4 text-gray-700">
-                <div>
-                    <h3 class="font-medium">Address:</h3>
-                    <p class="text-gray-600">Shivlok Colony, Haripur, Dehradun - 248001</p>
-                </div>
-                <div>
-                    <h3 class="font-medium">Email:</h3>
-                    <p class="text-gray-600">Post4Ex@gmail.com</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Website Footer -->
-    <!-- Footer height adjusted with smaller padding (py-3) -->
-    <footer class="w-full bg-blue-900 text-gray-200 mt-8 py-3 px-6 rounded-t-lg">
-        <div class="container flex flex-col sm:flex-row items-center justify-between">
-            <!-- Copyright Text updated to "2022 The Postman" -->
-            <p class="text-center sm:text-left text-sm mb-4 sm:mb-0">&copy; 2022 The Postman. All rights reserved.</p>
-            
-            <!-- Social Media Icons -->
-            <!-- Modified this div to have the floating class for mobile -->
-            <div class="hidden sm:flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <a href="https://wa.me/919410512115" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-400 transition-colors flex items-center gap-2">
-                    <i class="fa-brands fa-whatsapp text-2xl"></i>
-                    <span class="sm:hidden">WhatsApp</span>
-                </a>
-                <!-- Mail button now redirects to a new tab with target="_blank" -->
-                <a href="mailto:post4ex@gmail.com" target="_blank" class="text-white hover:text-gray-400 transition-colors flex items-center gap-2">
-                    <i class="fa-regular fa-envelope text-2xl"></i>
-                    <span class="sm:hidden">Email</span>
-                </a>
-                <!-- New Complaint Button -->
-                <button id="complaintButton" class="px-4 py-2 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors hidden sm:block">Raise a Complaint</button>
-            </div>
-        </div>
-    </footer>
     
-    <!-- NEW: Floating buttons for mobile view -->
-    <div class="social-buttons-floating sm:hidden">
-        <a href="https://wa.me/919410512115" target="_blank" rel="noopener noreferrer" class="text-white bg-blue-800 p-3 rounded-full shadow-lg hover:bg-blue-900 transition-colors">
-            <i class="fa-brands fa-whatsapp text-2xl"></i>
-        </a>
-        <a href="mailto:post4ex@gmail.com" target="_blank" class="text-white bg-blue-800 p-3 rounded-full shadow-lg hover:bg-blue-900 transition-colors">
-            <i class="fa-regular fa-envelope text-2xl"></i>
-        </a>
-    </div>
-
+    <script src="https://post4ex.github.io/postman/layout.js"></script>
     <script>
-        // --- CRITICAL: THE CORRECT GOOGLE APPS SCRIPT DEPLOYMENT URL ---
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwdEPTko2RsIDO4T3-11nwsCUcVR3jtzC8Xpya5FTqZo13aNWfn1uNhZQ9Zfw_r7hk4aQ/exec'; 
-
-        // Get DOM elements
-        const searchInput = document.getElementById('searchInput');
-        const searchButton = document.getElementById('searchButton');
-        const refButton = document.getElementById('refButton');
-        const mobileButton = document.getElementById('mobileButton');
-        const resultsContainer = document.getElementById('resultsContainer');
-        const messageBox = document.getElementById('messageBox');
-        const messageText = document.getElementById('messageText');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const scanHistoryModal = document.getElementById('scanHistoryModal');
-        const closeModalButton = document.getElementById('closeModalButton');
-        const modalContent = document.getElementById('modalContent');
-        const menuButton = document.getElementById('menuButton');
-        const dropdownMenu = document.getElementById('dropdownMenu');
-        
-        // New DOM elements for Contact Modal
-        const contactModal = document.getElementById('contactModal');
-        const contactButton = document.getElementById('contactButton');
-        const contactButtonMobile = document.getElementById('contactButtonMobile');
-        const closeContactModalButton = document.getElementById('closeContactModalButton');
-
-        // New DOM elements for Complaint Form
-        const complaintButton = document.getElementById('complaintButton');
-        const complaintButtonMobile = document.getElementById('complaintButtonMobile');
-        const complaintModal = document.getElementById('complaintModal');
-        const closeComplaintModalButton = document.getElementById('closeComplaintModalButton');
-        const complaintSearchInput = document.getElementById('complaintSearchInput');
-        const complaintSearchButton = document.getElementById('complaintSearchButton');
-        const complaintResultsContainer = document.getElementById('complaintResultsContainer');
-        const complaintCategory = document.getElementById('complaintCategory');
-        const complainantMobile = document.getElementById('complainantMobile'); // NEW
-        const complainantEmail = document.getElementById('complainantEmail');   // NEW
-        const complaintMessage = document.getElementById('complaintMessage');
-        const submitComplaintButton = document.getElementById('submitComplaintButton');
-        const emailSendingStatus = document.getElementById('emailSendingStatus');
-        const complaintLoadingIndicator = document.getElementById('complaintLoadingIndicator');
-        const complaintMessageBox = document.getElementById('complaintMessageBox');
-        const complaintMessageText = document.getElementById('complaintMessageText');
-
-        // NEW DOM elements for page-refreshing links and services section
-        const homeLink = document.getElementById('homeLink');
-        const homeLinkMobile = document.getElementById('homeLinkMobile');
-        const logoLink = document.getElementById('logoLink');
-        const servicesSection = document.getElementById('services-section');
-
-        // State to manage the current search type
-        let currentSearchType = 'ref';
-        let allConsignments = []; // Store all fetched consignments
-        let complaintConsignment = null; // Store the single consignment for the complaint
-
-        /**
-         * Formats a date string from ISO 8601 to 'dd-mm-yy hh:mm:ss'.
-         * @param {string} isoString The date string in ISO 8601 format.
-         * @returns {string} The formatted date string, or 'N/A' if the input is invalid.
-         */
-        function formatDateTime(isoString) {
-            // Check for invalid or null input
-            if (!isoString) {
-                return 'N/A';
-            }
-            const date = new Date(isoString);
-            // Check if the date object is a valid date
-            if (isNaN(date.getTime())) {
-                return 'Date not available';
-            }
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = String(date.getFullYear()).slice(-2);
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
-        }
-
-
-        // Function to update the button styles
-        function updateButtonStyles() {
-            if (currentSearchType === 'ref') {
-                refButton.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
-                refButton.classList.add('bg-blue-800', 'hover:bg-blue-900', 'text-white');
-                mobileButton.classList.remove('bg-blue-800', 'hover:bg-blue-900', 'text-white');
-                mobileButton.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
-                searchInput.placeholder = 'Enter AWB/Ref Number(s), comma-separated';
-                searchInput.type = 'text';
-            } else {
-                mobileButton.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
-                mobileButton.classList.add('bg-blue-800', 'hover:bg-blue-900', 'text-white');
-                refButton.classList.remove('bg-blue-800', 'hover:bg-blue-900', 'text-white');
-                refButton.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
-                searchInput.placeholder = 'Enter Mobile Number';
-                searchInput.type = 'tel';
-            }
-        }
-
-        // Event listener to toggle the dropdown menu
-        menuButton.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevents the document click event from firing immediately
-            dropdownMenu.classList.toggle('hidden');
-        });
-
-        // Close the dropdown menu if a user clicks on a link inside it
-        dropdownMenu.addEventListener('click', () => {
-            dropdownMenu.classList.add('hidden');
-        });
-        
-        // Close the dropdown menu if a user clicks anywhere else on the document
-        document.addEventListener('click', (event) => {
-            // Check if the click was outside the menu button and the dropdown menu itself
-            const isClickInsideMenuButton = menuButton.contains(event.target);
-            const isClickInsideDropdownMenu = dropdownMenu.contains(event.target);
+        // --- Tracking Specific Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_URL = 'https://script.google.com/macros/s/AKfycbwdEPTko2RsIDO4T3-11nwsCUcVR3jtzC8Xpya5FTqZo13aNWfn1uNhZQ9Zfw_r7hk4aQ/exec';
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const refButton = document.getElementById('refButton');
+            const mobileButton = document.getElementById('mobileButton');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const scanHistoryModal = document.getElementById('scanHistoryModal');
+            const closeModalButton = document.getElementById('closeModalButton');
+            const modalContent = document.getElementById('modalContent');
             
-            if (!isClickInsideMenuButton && !isClickInsideDropdownMenu) {
-                dropdownMenu.classList.add('hidden');
+            let currentSearchType = 'ref';
+            let allConsignments = [];
+
+            function formatDateTime(isoString) {
+                if (!isoString) return 'N/A';
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return 'Date not available';
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = String(date.getFullYear()).slice(-2);
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const seconds = String(date.getSeconds()).padStart(2, '0');
+                return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
             }
-        });
 
-        // Event listeners for the search type buttons
-        refButton.addEventListener('click', () => {
-            currentSearchType = 'ref';
-            updateButtonStyles();
-        });
-
-        mobileButton.addEventListener('click', () => {
-            currentSearchType = 'mobile';
-            updateButtonStyles();
-        });
-
-        // Event listener for the search button
-        searchButton.addEventListener('click', () => trackConsignment());
-
-        // Event listener for the input field to allow pressing Enter
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                trackConsignment();
-            }
-        });
-
-        // Event listener for the "Track" button on the order list
-        resultsContainer.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('track-btn')) {
-                const index = e.target.dataset.index;
-                if (allConsignments[index]) {
-                    // Corrected function call to open the modal
-                    showScanHistoryModal(allConsignments[index]);
+            function updateButtonStyles() {
+                if (currentSearchType === 'ref') {
+                    refButton.classList.add('bg-blue-800', 'text-white');
+                    refButton.classList.remove('bg-gray-200', 'text-gray-700');
+                    mobileButton.classList.add('bg-gray-200', 'text-gray-700');
+                    mobileButton.classList.remove('bg-blue-800', 'text-white');
+                    searchInput.placeholder = 'Enter AWB/Ref Number(s), comma-separated';
+                    searchInput.type = 'text';
+                } else {
+                    mobileButton.classList.add('bg-blue-800', 'text-white');
+                    mobileButton.classList.remove('bg-gray-200', 'text-gray-700');
+                    refButton.classList.add('bg-gray-200', 'text-gray-700');
+                    refButton.classList.remove('bg-blue-800', 'text-white');
+                    searchInput.placeholder = 'Enter Mobile Number';
+                    searchInput.type = 'tel';
                 }
             }
-        });
 
-        // Event listener to close the modal
-        closeModalButton.addEventListener('click', () => {
-            scanHistoryModal.classList.add('hidden');
-        });
-        
-        // Also close modal when clicking outside the content
-        scanHistoryModal.addEventListener('click', (e) => {
-            if (e.target === scanHistoryModal) {
-                scanHistoryModal.classList.add('hidden');
-            }
-        });
+            refButton.addEventListener('click', () => { currentSearchType = 'ref'; updateButtonStyles(); });
+            mobileButton.addEventListener('click', () => { currentSearchType = 'mobile'; updateButtonStyles(); });
+            searchButton.addEventListener('click', trackConsignment);
+            searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') trackConsignment(); });
+            resultsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('track-btn')) {
+                    const index = e.target.dataset.index;
+                    if (allConsignments[index]) showScanHistoryModal(allConsignments[index]);
+                }
+            });
+            closeModalButton.addEventListener('click', () => scanHistoryModal.classList.add('hidden'));
+            scanHistoryModal.addEventListener('click', (e) => { if (e.target === scanHistoryModal) scanHistoryModal.classList.add('hidden'); });
 
-        // Main function to handle the tracking logic
-        async function trackConsignment() {
-            let query = searchInput.value.trim();
-            
-            // Clear previous results and messages
-            resultsContainer.innerHTML = '';
-            resultsContainer.classList.add('hidden');
-            messageBox.classList.add('hidden');
-            allConsignments = []; // Reset stored consignments
-            
-            // Show loading indicator
-            loadingIndicator.classList.remove('hidden');
+            async function trackConsignment() {
+                let query = searchInput.value.trim();
+                resultsContainer.innerHTML = '';
+                resultsContainer.classList.add('hidden');
+                messageBox.classList.add('hidden');
+                allConsignments = [];
+                loadingIndicator.classList.remove('hidden');
 
-            // NEW: Collapse the services section when search starts
-            servicesSection.classList.add('hidden');
+                if (!query) {
+                    showMessage(`Please enter a valid ${currentSearchType === 'ref' ? 'Reference/AWB Number(s)' : 'Mobile Number'}.`, 'error');
+                    loadingIndicator.classList.add('hidden');
+                    return;
+                }
 
-            if (!query) {
-                showMessage(`Please enter a valid ${currentSearchType === 'ref' ? 'Reference/AWB Number(s)' : 'Mobile Number'}.`, 'error');
-                loadingIndicator.classList.add('hidden');
-                // NEW: Show services section again on empty query
-                servicesSection.classList.remove('hidden');
-                return;
-            }
-
-            // Split the query into an array of individual queries for 'ref' search type
-            const queries = currentSearchType === 'ref' 
-                ? query.split(',').map(item => item.trim()).filter(item => item)
-                : [query];
-            
-            // New, more robust async/await fetch logic
-            try {
-                const fetchPromises = queries.map(q => {
-                    const url = `${API_URL}?searchType=${currentSearchType}&query=${encodeURIComponent(q)}`;
-                    console.log(`Attempting to fetch data from: ${url}`);
-                    return fetch(url);
-                });
-
-                const responses = await Promise.all(fetchPromises);
+                const queries = currentSearchType === 'ref' ? query.split(',').map(item => item.trim()).filter(Boolean) : [query];
                 
-                const results = await Promise.all(responses.map(async (response, index) => {
-                    if (!response.ok) {
-                        console.error(`Network response for ${queries[index]} was not ok:`, response.status, response.statusText);
-                        throw new Error(`Failed to load data for ${queries[index]}. Status: ${response.status}`);
-                    }
-                    return await response.json();
-                }));
+                try {
+                    const fetchPromises = queries.map(q => fetch(`${API_URL}?searchType=${currentSearchType}&query=${encodeURIComponent(q)}`));
+                    const responses = await Promise.all(fetchPromises);
+                    const results = await Promise.all(responses.map(res => res.ok ? res.json() : Promise.reject(new Error(`Status: ${res.status}`))));
 
-                let allOrdersFound = false;
-                results.forEach(responseData => {
-                    console.log('API Response Data for:', responseData);
-                    if (responseData.orders && responseData.orders.length > 0) {
-                        allConsignments = allConsignments.concat(responseData.orders);
-                        allOrdersFound = true;
-                    }
-                });
+                    let allOrdersFound = false;
+                    results.forEach(responseData => {
+                        if (responseData.orders && responseData.orders.length > 0) {
+                            allConsignments.push(...responseData.orders);
+                            allOrdersFound = true;
+                        }
+                    });
 
-                if (allOrdersFound) {
-                    resultsContainer.classList.remove('hidden');
-                    if (currentSearchType === 'mobile') {
-                        allConsignments.sort((a, b) => new Date(b.order['Order Date']) - new Date(a.order['Order Date']));
-                        renderOrderList(allConsignments);
+                    if (allOrdersFound) {
+                        resultsContainer.classList.remove('hidden');
+                        if (currentSearchType === 'mobile') {
+                            allConsignments.sort((a, b) => new Date(b.order['Order Date']) - new Date(a.order['Order Date']));
+                            renderOrderList(allConsignments);
+                        } else {
+                            resultsContainer.innerHTML = '';
+                            allConsignments.forEach(showConsignmentDetails);
+                        }
+                        showMessage('Tracking results successfully loaded.', 'success');
                     } else {
-                        allConsignments.forEach(consignment => {
-                             showConsignmentDetails(consignment);
-                        });
+                        showMessage(`No orders found for the ${currentSearchType} number(s) provided.`, 'error');
                     }
-                    showMessage('Tracking results successfully loaded.', 'success');
-                    // Keep the services section hidden
-                } else {
-                    showMessage(`No orders found for the ${currentSearchType} number(s) provided.`, 'error');
-                    // NEW: Show services section again if no results found
-                    servicesSection.classList.remove('hidden');
+                } catch (error) {
+                    console.error('An unexpected error occurred:', error);
+                    showMessage('A network error occurred. Please check your internet connection and try again.', 'error');
+                } finally {
+                    loadingIndicator.classList.add('hidden');
                 }
-
-            } catch (error) {
-                console.error('An unexpected error occurred:', error);
-                showMessage(`A network error occurred. Please check your internet connection and try again.`, 'error');
-                // NEW: Show services section again on network error
-                servicesSection.classList.remove('hidden');
-            } finally {
-                loadingIndicator.classList.add('hidden');
-            }
-        }
-        
-        /**
-         * Renders a list of orders for a mobile number search.
-         * @param {Array} consignments - An array of consignment objects.
-         */
-        function renderOrderList(consignments) {
-            // Mapping object for 'Billing Mode' values
-            const modeMap = {
-                'E': 'Express',
-                'P': 'Premium',
-                'A': 'Airline',
-                'S': 'Surface'
-            };
-            
-            resultsContainer.innerHTML = `
-                <div class="card space-y-4">
-                    <h2 class="text-xl font-semibold text-gray-700">Orders for Mobile Number</h2>
-                    <ul class="space-y-4">
-                        ${consignments.map((consignment, index) => `
-                            <li class="order-list-item">
-                                <!-- Order details container -->
-                                <div class="grid grid-cols-2 gap-x-6 gap-y-2 flex-grow">
-                                    <div class="col-span-2 sm:col-span-1">
-                                        <p class="font-medium text-gray-800">Status: ${consignment.track?.['Current Status'] || 'N/A'}</p>
-                                        <p class="text-sm text-gray-600">AWB: ${consignment.order['AWB Booked']}</p>
-                                        <p class="text-sm text-gray-600">Order Date: ${formatDateTime(consignment.order['Order Date'])}</p>
-                                    </div>
-                                    <div class="col-span-2 sm:col-span-1">
-                                        <p class="text-sm text-gray-600">Carrier: ${consignment.order['Carrier Name']}</p>
-                                        <p class="text-sm text-gray-500">Mode: ${modeMap[consignment.order['Billing Mode']] || consignment.order['Billing Mode']}</p>
-                                        <p class="text-sm text-gray-500">Wt: ${consignment.order.Weight} kg / Pcs: ${consignment.order.Piecs}</p>
-                                    </div>
-                                    <div class="col-span-2">
-                                        <p class="text-sm text-gray-600">Dest: ${consignment.order['Consignee Name']} - ${consignment.order['Consignee City']}</p>
-                                    </div>
-                                </div>
-                                
-                                <button class="track-btn px-4 py-2 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors" data-index="${index}">
-                                    Track
-                                </button>
-                            </li>
-                        `).join('')}
-                    </ul>
-                </div>
-            `;
-        }
-
-
-        // Function to render a single consignment's details
-        function showConsignmentDetails(consignment) {
-            // Clear previous content
-            resultsContainer.innerHTML = '';
-            
-            const { order, track, logs } = consignment;
-
-            // Sort logs by date in descending order (most recent first) before anything else
-            if (logs && logs.length > 0) {
-                logs.sort((a, b) => new Date(b['Scan Date']) - new Date(a['Scan Date']));
             }
 
-            // Mapping object for 'Billing Mode' values
-            const modeMap = {
-                'E': 'Express',
-                'P': 'Premium',
-                'A': 'Airline',
-                'S': 'Surface'
-            };
-            
-            // Determine the current status date
-            let currentUpdateDate = 'N/A';
-            const currentTrackDate = track && track['Current Date'];
-            if (currentTrackDate) {
-                currentUpdateDate = currentTrackDate;
-            } else if (logs && logs.length > 0) {
-                // Find the latest date from the logs by comparing all of them
-                const latestLog = logs.reduce((latest, current) => {
-                    const latestDate = new Date(latest['Scan Date']);
-                    const currentDate = new Date(current['Scan Date']);
-                    return currentDate > latestDate ? current : latest;
-                });
-                currentUpdateDate = latestLog['Scan Date'];
-            }
-
-            // Add a null check for 'track' before attempting to access its properties
-            const currentStatus = track && track['Current Status'] ? track['Current Status'] : 'Status N/A';
-            const edd = order.EDD ? order.EDD : 'N/A'; // Use the EDD from the Orders sheet.
-            
-            let html = `
-                <div class="card space-y-4 mb-8">
-                    <!-- Order Details as tickets -->
-                    <div class="space-y-4">
-                        <h2 class="text-xl font-semibold text-gray-700">Order Details</h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 text-gray-600">
-
-                            <!-- Ticket 1: Ref and AWB -->
-                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                <h3 class="font-medium text-gray-800">Reference & AWB</h3>
-                                <p class="text-sm">Ref: <span class="font-semibold text-gray-900">${order.Ref}</span></p>
-                                <p class="text-sm">AWB: <span class="font-semibold text-gray-900">${order['AWB Booked']}</span></p>
+            function renderOrderList(consignments) {
+                const modeMap = {'E': 'Express', 'P': 'Premium', 'A': 'Airline', 'S': 'Surface'};
+                resultsContainer.innerHTML = `<div class="card space-y-4"><h2 class="text-xl font-semibold text-gray-700">Orders Found</h2><ul class="space-y-4">${consignments.map((c, i) => `
+                    <li class="order-list-item">
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 flex-grow">
+                            <div class="col-span-2 sm:col-span-1">
+                                <p class="font-medium text-gray-800">Status: ${c.track?.['Current Status'] || 'N/A'}</p>
+                                <p class="text-sm text-gray-600">AWB: ${c.order['AWB Booked']}</p>
+                                <p class="text-sm text-gray-600">Date: ${formatDateTime(c.order['Order Date'])}</p>
                             </div>
-
-                            <!-- Ticket 2: Order Date & EDD -->
-                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                <h3 class="font-medium text-gray-800">Expected Delivery</h3>
-                                <p class="text-sm">Order Date: <span class="font-semibold text-gray-900">${formatDateTime(order['Order Date'])}</span></p>
-                                <p class="text-sm">EDD: <span class="font-semibold text-gray-900">${edd !== 'N/A' ? formatDateTime(edd) : edd}</span></p>
+                            <div class="col-span-2 sm:col-span-1">
+                                <p class="text-sm text-gray-600">Carrier: ${c.order['Carrier Name']}</p>
+                                <p class="text-sm text-gray-500">Mode: ${modeMap[c.order['Billing Mode']] || c.order['Billing Mode']}</p>
                             </div>
-
-                            <!-- Ticket 3: Carrier, Pieces, Mode & Weight -->
-                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                <h3 class="font-medium text-gray-800">Consignment Info</h3>
-                                <p class="text-sm">Carrier: <span class="font-semibold text-gray-900">${order['Carrier Name']}</span></p>
-                                <p class="text-sm">Pieces: <span class="font-semibold text-gray-900">${order.Piecs}</span></p>
-                                <p class="text-sm">Mode: <span class="font-semibold text-gray-900">${modeMap[order['Billing Mode']] || order['Billing Mode']}</span></p>
-                                <p class="text-sm">Weight: <span class="font-semibold text-gray-900">${order.Weight} kg</span></p>
-                            </div>
-                            
-                            <!-- Ticket 4: Consignor and Consignee -->
-                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                <h3 class="font-medium text-gray-800">Origin & Destination</h3>
-                                <p class="text-sm">Origin: <span class="font-semibold text-gray-900">${order.Customer} - ${order['Sender City']}</span></p>
-                                <p class="text-sm">Dest: <span class="font-semibold text-gray-900">${order['Consignee Name']} - ${order['Consignee City']}</span></p>
-                            </div>
+                            <div class="col-span-2"><p class="text-sm text-gray-600">To: ${c.order['Consignee Name']} - ${c.order['Consignee City']}</p></div>
                         </div>
-                    </div>
-
-                    <!-- Current Status -->
-                    <div class="mt-6">
-                        <h2 class="text-xl font-semibold text-gray-700 mb-4">Current Status</h2>
-                        <p class="text-3xl font-bold text-gray-800 mb-2">${currentStatus}</p>
-                        <p class="text-gray-500">Last updated: ${formatDateTime(currentUpdateDate)}</p>
-                    </div>
-
-                    <!-- Scan History as a table -->
-                    <div class="mt-6">
-                        <h2 class="text-xl font-semibold text-gray-700 mb-4">Scan History</h2>
-                        ${logs && logs.length > 0 ? `
-                            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                                <table class="scan-history-table w-full text-sm">
-                                    <thead>
-                                        <tr class="bg-gray-50 text-gray-600">
-                                            <th class="py-3 px-4 font-semibold">Event Date</th>
-                                            <th class="py-3 px-4 font-semibold">Event & Remarks</th>
-                                            <th class="py-3 px-4 font-semibold">Location</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${logs.map(log => `
-                                            <tr class="hover:bg-gray-50 transition-colors">
-                                                <td class="py-3 px-4 text-gray-700">${formatDateTime(log['Scan Date'])}</td>
-                                                <td class="py-3 px-4 text-gray-700">${log['Scan Status']} - ${log.Remark}</td>
-                                                <td class="py-3 px-4 text-gray-700">${log['Scan Location']}</td>
-                                            </tr>
-                                        `).join('')}
-                            </tbody>
-                                </table>
-                            </div>
-                        ` : `
-                            <p class="text-gray-500">No scan history found for this consignment.</p>
-                        `}
-                    </div>
-                </div>
-            `;
-            resultsContainer.insertAdjacentHTML('beforeend', html);
-        }
-        
-        // New function to show scan history in a modal
-        function showScanHistoryModal(consignment) {
-            const logs = consignment.logs;
-            
-            // Sort logs by date in descending order (most recent first)
-            if (logs && logs.length > 0) {
-                logs.sort((a, b) => new Date(b['Scan Date']) - new Date(a['Scan Date']));
+                        <button class="track-btn px-4 py-2 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900" data-index="${i}">Track</button>
+                    </li>`).join('')}</ul></div>`;
             }
 
-            let modalHtml = '';
-            if (logs && logs.length > 0) {
-                modalHtml = `
-                    <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="scan-history-table w-full text-sm">
-                            <thead>
-                                <tr class="bg-gray-50 text-gray-600">
-                                    <th class="py-3 px-4 font-semibold">Event Date</th>
-                                    <th class="py-3 px-4 font-semibold">Event & Remarks</th>
-                                    <th class="py-3 px-4 font-semibold">Location</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${logs.map(log => `
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="py-3 px-4 text-gray-700">${formatDateTime(log['Scan Date'])}</td>
-                                        <td class="py-3 px-4 text-gray-700">${log['Scan Status']} - ${log.Remark}</td>
-                                        <td class="py-3 px-4 text-gray-700">${log['Scan Location']}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            } else {
-                modalHtml = `<p class="text-gray-500">No scan history found for this consignment.</p>`;
-            }
-            
-            modalContent.innerHTML = modalHtml;
-            scanHistoryModal.classList.remove('hidden');
-        }
-
-        // Function to show messages
-        function showMessage(text, type) {
-            messageText.textContent = text;
-            messageBox.classList.remove('hidden');
-            if (type === 'error') {
-                messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
-                messageBox.classList.remove('bg-green-100', 'border-green-400', 'text-green-700');
-            } else {
-                messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
-                messageBox.classList.remove('bg-red-100', 'border-red-400', 'text-red-700');
-            }
-        }
-
-        // Set initial button styles when the page loads
-        document.addEventListener('DOMContentLoaded', updateButtonStyles);
-
-        // --- Complaint Form Logic ---
-        
-        // Show complaint modal
-        complaintButton.addEventListener('click', () => {
-            complaintModal.classList.remove('hidden');
-        });
-        
-        // Show complaint modal from mobile menu
-        complaintButtonMobile.addEventListener('click', () => {
-            complaintModal.classList.remove('hidden');
-            dropdownMenu.classList.add('hidden'); // Hide the menu
-        });
-
-        // Close complaint modal
-        closeComplaintModalButton.addEventListener('click', () => {
-            complaintModal.classList.add('hidden');
-            clearComplaintForm();
-        });
-        
-        // Close modal when clicking outside the content
-        complaintModal.addEventListener('click', (e) => {
-            if (e.target === complaintModal) {
-                complaintModal.classList.add('hidden');
-                clearComplaintForm();
-            }
-        });
-
-        // Search for consignment details in the complaint form
-        complaintSearchButton.addEventListener('click', () => searchAndDisplayComplaint());
-        complaintSearchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                searchAndDisplayComplaint();
-            }
-        });
-        
-        async function searchAndDisplayComplaint() {
-            const query = complaintSearchInput.value.trim();
-            complaintConsignment = null;
-            complaintResultsContainer.innerHTML = '';
-            complaintResultsContainer.classList.add('hidden');
-            complaintMessageBox.classList.add('hidden');
-            
-            complaintLoadingIndicator.classList.remove('hidden');
-            
-            if (!query) {
-                showComplaintMessage('Please enter a valid AWB/Ref Number.', 'error');
-                complaintLoadingIndicator.classList.add('hidden');
-                return;
-            }
-            
-            try {
-                const url = `${API_URL}?searchType=ref&query=${encodeURIComponent(query)}`;
-                const response = await fetch(url);
+            function showConsignmentDetails(consignment) {
+                const { order, track, logs } = consignment;
+                if (logs) logs.sort((a, b) => new Date(b['Scan Date']) - new Date(a['Scan Date']));
+                const modeMap = {'E': 'Express', 'P': 'Premium', 'A': 'Airline', 'S': 'Surface'};
+                const latestLogDate = logs && logs.length > 0 ? logs[0]['Scan Date'] : null;
+                const currentUpdateDate = track?.['Current Date'] || latestLogDate;
+                const currentStatus = track?.['Current Status'] || 'Status N/A';
+                const edd = order.EDD ? formatDateTime(order.EDD) : 'N/A';
                 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok.');
-                }
-                
-                const data = await response.json();
-                
-                if (data.orders && data.orders.length > 0) {
-                    complaintConsignment = data.orders[0];
-                    renderComplaintDetails(complaintConsignment);
-                    showComplaintMessage('Consignment details successfully loaded.', 'success');
+                let html = `<div class="card space-y-4 mb-8">
+                    <h2 class="text-xl font-semibold text-gray-700">Order Details for AWB: ${order['AWB Booked']}</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600">
+                        <div class="bg-blue-50 p-4 rounded-lg border"><h3 class="font-medium text-gray-800">Reference & AWB</h3><p>Ref: <span class="font-semibold">${order.Ref}</span></p><p>AWB: <span class="font-semibold">${order['AWB Booked']}</span></p></div>
+                        <div class="bg-blue-50 p-4 rounded-lg border"><h3 class="font-medium text-gray-800">Dates</h3><p>Order: <span class="font-semibold">${formatDateTime(order['Order Date'])}</span></p><p>EDD: <span class="font-semibold">${edd}</span></p></div>
+                        <div class="bg-blue-50 p-4 rounded-lg border"><h3 class="font-medium text-gray-800">Shipment</h3><p>Carrier: <span class="font-semibold">${order['Carrier Name']}</span></p><p>Mode: <span class="font-semibold">${modeMap[order['Billing Mode']] || order['Billing Mode']}</span></p></div>
+                        <div class="bg-blue-50 p-4 rounded-lg border"><h3 class="font-medium text-gray-800">From / To</h3><p>From: <span class="font-semibold">${order.Customer} - ${order['Sender City']}</span></p><p>To: <span class="font-semibold">${order['Consignee Name']} - ${order['Consignee City']}</span></p></div>
+                    </div>
+                    <div class="mt-6"><h2 class="text-xl font-semibold text-gray-700">Current Status</h2><p class="text-3xl font-bold text-gray-800">${currentStatus}</p><p class="text-gray-500">Last updated: ${formatDateTime(currentUpdateDate)}</p></div>
+                    <div class="mt-6"><h2 class="text-xl font-semibold text-gray-700 mb-4">Scan History</h2>${(logs && logs.length > 0) ? `
+                        <div class="overflow-x-auto rounded-lg border"><table class="scan-history-table w-full text-sm"><thead><tr><th class="py-3 px-4 font-semibold">Date</th><th class="py-3 px-4 font-semibold">Status & Remarks</th><th class="py-3 px-4 font-semibold">Location</th></tr></thead><tbody>
+                        ${logs.map(log => `<tr class="hover:bg-gray-50"><td>${formatDateTime(log['Scan Date'])}</td><td>${log['Scan Status']} - ${log.Remark}</td><td>${log['Scan Location']}</td></tr>`).join('')}
+                        </tbody></table></div>` : `<p class="text-gray-500">No scan history found.</p>`}
+                    </div></div>`;
+                resultsContainer.insertAdjacentHTML('beforeend', html);
+            }
+            
+            function showScanHistoryModal(consignment) {
+                const logs = consignment.logs;
+                if (logs) logs.sort((a, b) => new Date(b['Scan Date']) - new Date(a['Scan Date']));
+                let modalHtml = (logs && logs.length > 0) ? `
+                    <div class="overflow-x-auto rounded-lg border"><table class="scan-history-table w-full text-sm">
+                        <thead><tr><th class="py-3 px-4 font-semibold">Date</th><th class="py-3 px-4 font-semibold">Status & Remarks</th><th class="py-3 px-4 font-semibold">Location</th></tr></thead>
+                        <tbody>${logs.map(log => `<tr class="hover:bg-gray-50"><td>${formatDateTime(log['Scan Date'])}</td><td>${log['Scan Status']} - ${log.Remark}</td><td>${log['Scan Location']}</td></tr>`).join('')}</tbody>
+                    </table></div>` : `<p class="text-gray-500">No scan history found.</p>`;
+                modalContent.innerHTML = modalHtml;
+                scanHistoryModal.classList.remove('hidden');
+            }
+
+            function showMessage(text, type) {
+                messageText.textContent = text;
+                messageBox.classList.remove('hidden');
+                messageBox.className = 'p-4 rounded-lg';
+                if (type === 'error') {
+                    messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
                 } else {
-                    showComplaintMessage('No consignment found for this number.', 'error');
+                    messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
                 }
-            } catch (error) {
-                console.error('Error fetching complaint details:', error);
-                showComplaintMessage('Failed to fetch details. Please try again.', 'error');
-            } finally {
-                complaintLoadingIndicator.classList.add('hidden');
             }
-        }
-        
-        function renderComplaintDetails(consignment) {
-            const { order } = consignment;
-            const detailsHtml = `
-                <div class="card p-4 bg-gray-50 border border-gray-200">
-                    <h3 class="font-semibold text-gray-800 mb-2">Consignment Details</h3>
-                    <p class="text-sm text-gray-600">AWB/Ref: <span class="font-medium text-gray-900">${order['AWB Booked'] || order.Ref}</span></p>
-                    <p class="text-sm text-gray-600">Status: <span class="font-medium text-gray-900">${consignment.track?.['Current Status'] || 'N/A'}</span></p>
-                    <p class="text-sm text-gray-600">Order Date: <span class="font-medium text-gray-900">${formatDateTime(order['Order Date'])}</span></p>
-                    <p class="text-sm text-gray-600">Origin: <span class="font-medium text-gray-900">${order.Customer} - ${order['Sender City']}</span></p>
-                    <p class="text-sm text-gray-600">Destination: <span class="font-medium text-gray-900">${order['Consignee Name']} - ${order['Consignee City']}</span></p>
-                </div>
-            `;
-            complaintResultsContainer.innerHTML = detailsHtml;
-            complaintResultsContainer.classList.remove('hidden');
-        }
-        
-        // Handle complaint submission
-        submitComplaintButton.addEventListener('click', sendComplaintEmail);
-        
-        async function sendComplaintEmail() {
-            if (!complaintConsignment) {
-                showComplaintMessage('Please search for and load consignment details first.', 'error');
-                return;
-            }
-            
-            const awb = complaintConsignment.order['AWB Booked'] || complaintConsignment.order.Ref;
-            const category = complaintCategory.value;
-            const mobile = complainantMobile.value.trim();  // NEW
-            const email = complainantEmail.value.trim();      // NEW
-            const message = complaintMessage.value.trim();
-            
-            if (!category || !mobile || !email || !message) {
-                showComplaintMessage('Please fill in all required fields (Category, Mobile, Email, and Message).', 'error');
-                return;
-            }
-            
-            emailSendingStatus.classList.remove('hidden');
-            submitComplaintButton.disabled = true;
-
-            const payload = {
-                action: 'sendComplaint',
-                awb: awb,
-                category: category,
-                mobile: mobile, // NEW
-                email: email,     // NEW
-                message: message
-            };
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                // Check if the response is successful
-                if (response.ok) {
-                    // You can parse the response if the script returns a message
-                    // const result = await response.json();
-                    showComplaintMessage('Your complaint has been successfully submitted!', 'success');
-                    clearComplaintForm();
-                } else {
-                    throw new Error('Server response was not ok.');
-                }
-            } catch (error) {
-                console.error('Error sending complaint:', error);
-                showComplaintMessage('Failed to send complaint. Please try again.', 'error');
-            } finally {
-                emailSendingStatus.classList.add('hidden');
-                submitComplaintButton.disabled = false;
-            }
-        }
-        
-        function showComplaintMessage(text, type) {
-            complaintMessageText.textContent = text;
-            complaintMessageBox.classList.remove('hidden');
-            if (type === 'error') {
-                complaintMessageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
-                complaintMessageBox.classList.remove('bg-green-100', 'border-green-400', 'text-green-700');
-            } else {
-                complaintMessageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
-                complaintMessageBox.classList.remove('bg-red-100', 'border-red-400', 'text-red-700');
-            }
-        }
-        
-        function clearComplaintForm() {
-            complaintSearchInput.value = '';
-            complaintResultsContainer.innerHTML = '';
-            complaintResultsContainer.classList.add('hidden');
-            complaintCategory.value = '';
-            complainantMobile.value = ''; // NEW
-            complainantEmail.value = '';   // NEW
-            complaintMessage.value = '';
-            complaintConsignment = null;
-            complaintMessageBox.classList.add('hidden');
-        }
-
-        // --- Contact Modal Logic ---
-        
-        // Open the modal
-        contactButton.addEventListener('click', () => {
-            contactModal.classList.remove('hidden');
+            updateButtonStyles();
         });
-        
-        // Open the modal from the mobile dropdown
-        contactButtonMobile.addEventListener('click', () => {
-            contactModal.classList.remove('hidden');
-            dropdownMenu.classList.add('hidden'); // Hide the menu
-        });
-
-        // Close the modal
-        closeContactModalButton.addEventListener('click', () => {
-            contactModal.classList.add('hidden');
-        });
-
-        // Close the modal when clicking outside the content
-        contactModal.addEventListener('click', (e) => {
-            if (e.target === contactModal) {
-                contactModal.classList.add('hidden');
-            }
-        });
-        
-        // NEW: Event listeners for page refresh
-        logoLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            location.reload();
-        });
-
-        homeLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            location.reload();
-        });
-        
-        homeLinkMobile.addEventListener('click', (e) => {
-            e.preventDefault();
-            location.reload();
-        });
-
     </script>
 </body>
 </html>
+
