@@ -1,41 +1,46 @@
 <!-- Main Header -->
 <header id="main-header" class="w-full bg-white text-blue-900 shadow-md py-4 px-6 rounded-b-lg">
     <div class="container flex items-center justify-between relative">
-        <!-- Sidebar Toggle (hidden by default, shown on login) -->
-        <div id="sidebar-toggle-container" class="hidden">
-            <button id="sidebar-toggle" class="p-2 rounded-lg text-blue-900 hover:text-blue-700 focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
-            </button>
+        <!-- LEFT SIDE GROUP -->
+        <div class="flex items-center space-x-4">
+            <!-- Sidebar Toggle (hidden by default, shown on login) -->
+            <div id="sidebar-toggle-container" class="hidden">
+                <button id="sidebar-toggle" class="p-2 rounded-lg text-blue-900 hover:text-blue-700 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+            </div>
+            <!-- Logo -->
+            <a href="https://post4ex.github.io/postman/main.html" class="flex items-center space-x-2">
+                <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto rounded-lg">
+            </a>
         </div>
 
-        <!-- Logo -->
-        <a href="https://post4ex.github.io/postman/main.html" class="flex items-center space-x-2">
-            <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto rounded-lg">
-        </a>
+        <!-- RIGHT SIDE GROUP -->
+        <div class="flex items-center">
+            <!-- Main Navigation -->
+            <nav id="main-nav" class="hidden sm:flex space-x-2 text-sm font-semibold mr-4">
+                <a id="nav-main" href="https://post4ex.github.io/postman/main.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
+                <a id="nav-tracking" href="https://post4ex.github.io/postman/tracking.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
+                <a id="nav-services" href="https://post4ex.github.io/postman/services.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
+                <a id="nav-complaint" href="https://post4ex.github.io/postman/complaint.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
+            </nav>
 
-        <!-- Main Navigation -->
-        <nav id="main-nav" class="hidden sm:flex space-x-2 text-sm font-semibold">
-            <a id="nav-main" href="https://post4ex.github.io/postman/main.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-            <a id="nav-tracking" href="https://post4ex.github.io/postman/tracking.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
-            <a id="nav-services" href="https://post4ex.github.io/postman/services.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
-            <a id="nav-complaint" href="https://post4ex.github.io/postman/complaint.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
-        </nav>
-
-        <!-- Right side buttons -->
-        <div class="flex items-center space-x-4">
-             <!-- Login/Logout Button Container -->
-            <div id="auth-button-container">
-                <a href="https://post4ex.github.io/postman/login.html" id="login-button" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors text-sm font-semibold">Login</a>
-                <button id="logout-button" class="hidden px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-semibold">Logout</button>
+            <!-- Auth Buttons & Mobile Menu -->
+            <div class="flex items-center space-x-4">
+                <!-- Login/Logout Button Container -->
+                <div id="auth-button-container" class="hidden sm:block">
+                    <a href="https://post4ex.github.io/postman/login.html" id="login-button" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors text-sm font-semibold">Login</a>
+                    <button id="logout-button" class="hidden px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-semibold">Logout</button>
+                </div>
+                <!-- Mobile Menu Button -->
+                <button id="menuButton" class="sm:hidden p-2 rounded-lg text-blue-900 hover:text-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
             </div>
-            <!-- Mobile Menu Button -->
-            <button id="menuButton" class="sm:hidden p-2 rounded-lg text-blue-900 hover:text-blue-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
         </div>
 
         <!-- Dropdown Menu for Mobile -->
@@ -44,6 +49,12 @@
              <a id="dropdown-tracking" href="https://post4ex.github.io/postman/tracking.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors mb-1">Tracking</a>
              <a id="dropdown-services" href="https://post4ex.github.io/postman/services.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors mb-1">Services</a>
              <a id="dropdown-complaint" href="https://post4ex.github.io/postman/complaint.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
+             <hr class="my-2 border-gray-500">
+             <!-- Auth buttons for mobile dropdown -->
+             <div id="auth-button-container-mobile" class="px-2">
+                <a href="https://post4ex.github.io/postman/login.html" id="login-button-mobile" class="block text-center w-full px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors text-sm font-semibold">Login</a>
+                <button id="logout-button-mobile" class="hidden w-full text-center mt-1 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-semibold">Logout</button>
+            </div>
         </div>
     </div>
 </header>
@@ -98,13 +109,13 @@
                 <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Client</a>
             </div>
         </div>
-
     </div>
 </div>
 
 <!-- Overlay for Sidebar -->
 <div id="sidebar-overlay" class="hidden fixed top-0 left-0 w-full h-full bg-black opacity-50 z-40"></div>
 
+<!-- This script is now safely executed by the updated layout.js -->
 <script>
     function toggleSubmenu(submenuId) {
         const submenu = document.getElementById(submenuId);
