@@ -16,87 +16,59 @@
     <div id="header-placeholder"></div>
 
     <main class="flex-grow w-full p-4 sm:p-8">
-        <div class="container">
-            <!-- Initial welcome content -->
-            <div id="welcome-section" class="card text-center">
-                <h1 class="text-4xl font-bold text-gray-800 mb-4">Welcome to Postman</h1>
-                <p class="text-lg text-gray-600 mb-8">Your reliable partner for fast and secure consignment delivery. Track your package, explore our services, or get in touch with us.</p>
-                <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
-                    <button data-url="https://post4ex.github.io/postman/tracking.html" data-page="tracking" class="dynamic-loader-btn w-full sm:w-auto px-8 py-4 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors">
-                        Track Your Shipment
-                    </button>
-                    <button data-url="https://post4ex.github.io/postman/services.html" data-page="services" class="dynamic-loader-btn w-full sm:w-auto px-8 py-4 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
-                        Explore Our Services
-                    </button>
-                </div>
-            </div>
+        <div class="container space-y-8">
+            <!-- Content from tracking.html will be loaded here -->
+            <div id="tracking-content-area"></div>
             
-            <!-- Area for dynamically loaded content -->
-            <div id="dynamic-content-area"></div>
+            <!-- Content from services.html will be loaded here -->
+            <div id="services-content-area"></div>
         </div>
     </main>
+
+    <!-- The Contact Pop-up Modal (Required by scripts) -->
+    <div id="contactModal" class="modal-overlay hidden">
+        <div class="modal-content relative card">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Contact Details</h2>
+            <button id="closeContactModalButton" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="space-y-4 text-gray-700">
+                <div><h3 class="font-medium">Address:</h3><p class="text-gray-600">Shivlok Colony, Haripur, Dehradun - 248001</p></div>
+                <div><h3 class="font-medium">Email:</h3><p class="text-gray-600">Post4Ex@gmail.com</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Complaint Pop-up Modal (Required by scripts) -->
+    <div id="complaintModal" class="modal-overlay hidden">
+         <div class="modal-content relative card w-full">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Raise a Complaint</h2>
+            <button id="closeComplaintModalButton" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="space-y-4">
+                <div class="flex items-center gap-4"><input type="text" id="complaintSearchInput" placeholder="Enter AWB/Ref Number" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700"><button id="complaintSearchButton" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors">Search</button></div>
+                <div id="complaintLoadingIndicator" class="hidden text-center text-gray-500"><p>Fetching consignment details...</p></div>
+                <div id="complaintResultsContainer" class="hidden space-y-4"></div>
+                <div id="complaintMessageContainer">
+                    <div><label for="complaintCategory" class="block text-sm font-medium text-gray-700 mb-1">Complaint Category</label><select id="complaintCategory" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700"><option value="">Select a category</option><option value="Delay in Delivery">Delay in Delivery</option><option value="Damaged Consignment">Damaged Consignment</option><option value="Incorrect Status">Incorrect Status</option><option value="Lost Consignment">Lost Consignment</option><option value="Billing Issue">Billing Issue</option><option value="Other">Other</option></select></div>
+                    <div><label for="complainantMobile" class="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label><input type="tel" id="complainantMobile" placeholder="Your mobile number" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700"></div>
+                    <div><label for="complainantEmail" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label><input type="email" id="complainantEmail" placeholder="Your email address" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700"></div>
+                    <div><label for="complaintMessage" class="block text-sm font-medium text-gray-700 mb-1">Your Message</label><textarea id="complaintMessage" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700" placeholder="Please provide details about your complaint"></textarea></div>
+                </div>
+                <div class="flex items-center gap-4"><button id="submitComplaintButton" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">Email Complaint</button><div id="emailSendingStatus" class="hidden text-sm text-gray-500">Sending...</div></div>
+            </div>
+            <div id="complaintMessageBox" class="hidden p-4 mt-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert"><p id="complaintMessageText"></p></div>
+        </div>
+    </div>
 
     <div id="footer-placeholder"></div>
 
     <script src="https://post4ex.github.io/postman/layout.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const dynamicContentArea = document.getElementById('dynamic-content-area');
-            const welcomeSection = document.getElementById('welcome-section');
-            const buttons = document.querySelectorAll('.dynamic-loader-btn');
-
-            const loadContent = async (url, targetElement) => {
-                try {
-                    // Show a loading indicator
-                    targetElement.innerHTML = `<div class="card text-center mt-8"><p class="text-gray-500">Loading...</p></div>`;
-
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Failed to load content. Status: ${response.status}`);
-                    
-                    const htmlText = await response.text();
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(htmlText, 'text/html');
-                    
-                    const mainContent = doc.querySelector('main');
-                    const pageScript = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('Specific Logic'));
-                    
-                    if (mainContent) {
-                        targetElement.innerHTML = mainContent.innerHTML;
-
-                        // If there was a page-specific inline script, create a new script tag and run it
-                        if (pageScript) {
-                            const script = document.createElement('script');
-                            script.textContent = pageScript.textContent;
-                            document.body.appendChild(script).remove(); // Append, run, and immediately remove
-                        }
-                    } else {
-                        throw new Error('Could not find main content in the fetched page.');
-                    }
-                } catch (error) {
-                    console.error('Error loading dynamic content:', error);
-                    targetElement.innerHTML = `<div class="card text-center mt-8 text-red-600"><p>Sorry, could not load the content. Please try again later.</p></div>`;
-                }
-            };
-            
-            buttons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const url = button.dataset.url;
-                    const page = button.dataset.page;
-                    
-                    // Hide the welcome section
-                    welcomeSection.classList.add('hidden');
-                    
-                    // Load the new content
-                    loadContent(url, dynamicContentArea);
-
-                    // Update the active nav link using the function from layout.js
-                    if (window.setActiveNav) {
-                        window.setActiveNav(page);
-                    }
-                });
-            });
-        });
-    </script>
 </body>
 </html>
 
