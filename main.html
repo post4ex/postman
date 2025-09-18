@@ -17,24 +17,86 @@
 
     <main class="flex-grow w-full p-4 sm:p-8">
         <div class="container">
-            <div class="card text-center">
+            <!-- Initial welcome content -->
+            <div id="welcome-section" class="card text-center">
                 <h1 class="text-4xl font-bold text-gray-800 mb-4">Welcome to Postman</h1>
                 <p class="text-lg text-gray-600 mb-8">Your reliable partner for fast and secure consignment delivery. Track your package, explore our services, or get in touch with us.</p>
                 <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
-                    <a href="https://post4ex.github.io/postman/tracking.html" class="w-full sm:w-auto px-8 py-4 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors">
+                    <button data-url="https://post4ex.github.io/postman/tracking.html" data-page="tracking" class="dynamic-loader-btn w-full sm:w-auto px-8 py-4 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors">
                         Track Your Shipment
-                    </a>
-                    <a href="https://post4ex.github.io/postman/services.html" class="w-full sm:w-auto px-8 py-4 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+                    </button>
+                    <button data-url="https://post4ex.github.io/postman/services.html" data-page="services" class="dynamic-loader-btn w-full sm:w-auto px-8 py-4 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
                         Explore Our Services
-                    </a>
+                    </button>
                 </div>
             </div>
+            
+            <!-- Area for dynamically loaded content -->
+            <div id="dynamic-content-area"></div>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
 
     <script src="https://post4ex.github.io/postman/layout.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dynamicContentArea = document.getElementById('dynamic-content-area');
+            const welcomeSection = document.getElementById('welcome-section');
+            const buttons = document.querySelectorAll('.dynamic-loader-btn');
+
+            const loadContent = async (url, targetElement) => {
+                try {
+                    // Show a loading indicator
+                    targetElement.innerHTML = `<div class="card text-center mt-8"><p class="text-gray-500">Loading...</p></div>`;
+
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`Failed to load content. Status: ${response.status}`);
+                    
+                    const htmlText = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, 'text/html');
+                    
+                    const mainContent = doc.querySelector('main');
+                    const pageScript = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('Specific Logic'));
+                    
+                    if (mainContent) {
+                        targetElement.innerHTML = mainContent.innerHTML;
+
+                        // If there was a page-specific inline script, create a new script tag and run it
+                        if (pageScript) {
+                            const script = document.createElement('script');
+                            script.textContent = pageScript.textContent;
+                            document.body.appendChild(script).remove(); // Append, run, and immediately remove
+                        }
+                    } else {
+                        throw new Error('Could not find main content in the fetched page.');
+                    }
+                } catch (error) {
+                    console.error('Error loading dynamic content:', error);
+                    targetElement.innerHTML = `<div class="card text-center mt-8 text-red-600"><p>Sorry, could not load the content. Please try again later.</p></div>`;
+                }
+            };
+            
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const url = button.dataset.url;
+                    const page = button.dataset.page;
+                    
+                    // Hide the welcome section
+                    welcomeSection.classList.add('hidden');
+                    
+                    // Load the new content
+                    loadContent(url, dynamicContentArea);
+
+                    // Update the active nav link using the function from layout.js
+                    if (window.setActiveNav) {
+                        window.setActiveNav(page);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
 
