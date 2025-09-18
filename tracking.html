@@ -11,23 +11,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://post4ex.github.io/postman/style.css">
 </head>
-<body class="bg-gray-100 min-h-screen p-4 sm:p-8 flex flex-col items-center relative">
+<body class="bg-gray-100 min-h-screen flex flex-col">
 
     <div id="header-placeholder"></div>
 
-    <main class="container space-y-8 mt-4">
-        <div class="card">
-            <div class="flex flex-col sm:flex-row items-center gap-4 mb-8">
-                <div class="flex rounded-lg overflow-hidden w-full sm:w-1/4">
-                    <button id="refButton" class="p-3 text-white font-semibold rounded-l-lg transition-colors w-1/2 bg-blue-800 hover:bg-blue-900">AWB/Ref</button>
-                    <button id="mobileButton" class="p-3 text-gray-700 font-semibold rounded-r-lg transition-colors w-1/2 bg-gray-200 hover:bg-gray-300">Mobile</button>
+    <main class="w-full flex-grow p-4 sm:p-8">
+        <div class="container">
+            <div class="card">
+                <div class="flex flex-col sm:flex-row items-center gap-4 mb-8">
+                    <div class="flex rounded-lg overflow-hidden w-full sm:w-1/4">
+                        <button id="refButton" class="p-3 text-white font-semibold rounded-l-lg transition-colors w-1/2 bg-blue-800 hover:bg-blue-900">AWB/Ref</button>
+                        <button id="mobileButton" class="p-3 text-gray-700 font-semibold rounded-r-lg transition-colors w-1/2 bg-gray-200 hover:bg-gray-300">Mobile</button>
+                    </div>
+                    <input type="text" id="searchInput" placeholder="Enter AWB/Ref Number(s), comma-separated" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700 w-full">
+                    <button id="searchButton" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors w-full sm:w-auto">Search</button>
                 </div>
-                <input type="text" id="searchInput" placeholder="Enter AWB/Ref Number(s), comma-separated" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700 w-full">
-                <button id="searchButton" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors w-full sm:w-auto">Search</button>
+                <div id="loadingIndicator" class="hidden text-center text-gray-500 mb-4"><p>Loading data...</p></div>
+                <div id="resultsContainer" class="hidden space-y-6"></div>
+                <div id="messageBox" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert"><p id="messageText"></p></div>
             </div>
-            <div id="loadingIndicator" class="hidden text-center text-gray-500 mb-4"><p>Loading data...</p></div>
-            <div id="resultsContainer" class="hidden space-y-6"></div>
-            <div id="messageBox" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert"><p id="messageText"></p></div>
         </div>
     </main>
 
@@ -46,8 +48,8 @@
     
     <script src="https://post4ex.github.io/postman/layout.js"></script>
     <script>
-        // --- Tracking Specific Logic ---
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Tracking Specific Logic ---
             const API_URL = 'https://script.google.com/macros/s/AKfycbwdEPTko2RsIDO4T3-11nwsCUcVR3jtzC8Xpya5FTqZo13aNWfn1uNhZQ9Zfw_r7hk4aQ/exec';
             const searchInput = document.getElementById('searchInput');
             const searchButton = document.getElementById('searchButton');
@@ -100,8 +102,9 @@
             searchButton.addEventListener('click', trackConsignment);
             searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') trackConsignment(); });
             resultsContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('track-btn')) {
-                    const index = e.target.dataset.index;
+                if (e.target.tagName === 'BUTTON' && e.target.closest('.track-btn')) {
+                    const button = e.target.closest('.track-btn');
+                    const index = button.dataset.index;
                     if (allConsignments[index]) showScanHistoryModal(allConsignments[index]);
                 }
             });
@@ -219,7 +222,7 @@
             function showMessage(text, type) {
                 messageText.textContent = text;
                 messageBox.classList.remove('hidden');
-                messageBox.className = 'p-4 rounded-lg';
+                messageBox.className = 'p-4 rounded-lg border';
                 if (type === 'error') {
                     messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
                 } else {
