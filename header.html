@@ -59,32 +59,58 @@
     </div>
 </header>
 
-<!-- Collapsible Sidebar (hidden by default) -->
+<!-- Collapsible Sidebar -->
 <div id="sidebar" class="fixed top-0 left-0 h-full bg-gray-800 text-white w-64 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
     <div class="p-4 space-y-2">
         <h2 class="text-xl font-bold border-b border-gray-600 pb-2 mb-2">Admin Menu</h2>
-        <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Book</a>
-        
-        <!-- Manifest Sub-menu -->
+
+        <!-- Orders -->
         <div>
-            <button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700 flex justify-between items-center" onclick="toggleSubmenu('manifest-submenu')">
-                Manifest
-                <i class="fas fa-chevron-down text-xs"></i>
+            <button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700 flex justify-between items-center" onclick="toggleSubmenu('orders-submenu')">
+                Orders <i class="fas fa-chevron-down text-xs"></i>
             </button>
-            <div id="manifest-submenu" class="hidden pl-4 mt-1 space-y-1">
-                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">OutManifest</a>
-                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">InManifest</a>
+            <div id="orders-submenu" class="hidden pl-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Create Order</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Pickup Request</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Book Order</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Assign Carrier</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Edit Order</a>
             </div>
         </div>
 
-        <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Runsheet</a>
-        <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Update</a>
+        <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Shipments</a>
 
-        <!-- Report Sub-menu -->
+        <!-- Estimate -->
+        <div>
+            <button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700 flex justify-between items-center" onclick="toggleSubmenu('estimate-submenu')">
+                Estimate <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div id="estimate-submenu" class="hidden pl-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Pincode</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Calculator</a>
+            </div>
+        </div>
+
+        <!-- Scans -->
+        <div>
+            <button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700 flex justify-between items-center" onclick="toggleSubmenu('scans-submenu')">
+                Scans <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div id="scans-submenu" class="hidden pl-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">OutManifest</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">InManifest</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">RunSheet</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Update</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">POD</a>
+            </div>
+        </div>
+        
+        <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">CRM</a>
+
+        <!-- Report -->
         <div>
             <button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700 flex justify-between items-center" onclick="toggleSubmenu('report-submenu')">
-                Report
-                <i class="fas fa-chevron-down text-xs"></i>
+                Report <i class="fas fa-chevron-down text-xs"></i>
             </button>
             <div id="report-submenu" class="hidden pl-4 mt-1 space-y-1">
                 <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Booking</a>
@@ -94,19 +120,46 @@
                 <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">CRM</a>
             </div>
         </div>
-        
-        <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">CRM</a>
-        <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Ledger</a>
-        
-        <!-- Create Sub-menu -->
+
+        <a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Billing</a>
+
+        <!-- Ledger -->
         <div>
-            <button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700 flex justify-between items-center" onclick="toggleSubmenu('create-submenu')">
-                Create
-                <i class="fas fa-chevron-down text-xs"></i>
+            <button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700 flex justify-between items-center" onclick="toggleSubmenu('ledger-submenu')">
+                Ledger <i class="fas fa-chevron-down text-xs"></i>
             </button>
-            <div id="create-submenu" class="hidden pl-4 mt-1 space-y-1">
+            <div id="ledger-submenu" class="hidden pl-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Summary</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Accounts</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Receipts</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Payments</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Expense Claims</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Customers</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Sales Invoices</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Credit Notes</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Delivery Notes</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Suppliers</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Purchase Invoices</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Debit Notes</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Employees</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Journal Entries</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Ledger Reports</a>
+            </div>
+        </div>
+        
+        <!-- Masters -->
+        <div>
+            <button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700 flex justify-between items-center" onclick="toggleSubmenu('masters-submenu')">
+                Masters <i class="fas fa-chevron-down text-xs"></i>
+            </button>
+            <div id="masters-submenu" class="hidden pl-4 mt-1 space-y-1">
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Branches</a>
                 <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Customer</a>
-                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Client</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Clients</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Suppliers</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Vendors</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Staff</a>
+                <a href="#" class="block py-2 px-4 rounded hover:bg-gray-600">Stock</a>
             </div>
         </div>
     </div>
