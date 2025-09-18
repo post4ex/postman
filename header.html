@@ -1,27 +1,33 @@
-<!-- This is a partial file. It contains only the header content. -->
-<header class="w-full bg-white text-blue-900 shadow-md">
-    <div class="container flex items-center justify-between relative py-4 px-6">
-        <a href="https://post4ex.github.io/postman/main.html" id="logoLink" class="flex items-center space-x-2 flex-shrink-0">
+<header class="w-full bg-white text-blue-900 shadow-md mb-8 py-4 px-6 rounded-b-lg">
+    <div class="container flex items-center justify-between relative">
+        <!-- Logo -->
+        <a href="https://post4ex.github.io/postman/main.html" class="flex items-center space-x-2 flex-shrink-0">
             <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto rounded-lg">
         </a>
-        <nav class="hidden sm:flex space-x-2 text-sm font-semibold flex-shrink-0" id="main-nav">
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden sm:flex space-x-2 text-sm font-semibold flex-shrink-0">
             <a href="https://post4ex.github.io/postman/main.html" id="nav-main" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
             <a href="https://post4ex.github.io/postman/tracking.html" id="nav-tracking" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
             <a href="https://post4ex.github.io/postman/services.html" id="nav-services" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
             <a href="https://post4ex.github.io/postman/complaint.html" id="nav-complaint" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
             <button id="contactButton" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Contact</button>
         </nav>
+
+        <!-- Mobile Menu Button -->
         <button id="menuButton" class="sm:hidden p-2 rounded-lg text-blue-900 hover:text-blue-700">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
+
+        <!-- Mobile Dropdown Menu -->
         <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden">
-            <a href="https://post4ex.github.io/postman/main.html" id="nav-main-mobile" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-            <a href="https://post4ex.github.io/postman/tracking.html" id="nav-tracking-mobile" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
-            <a href="https://post4ex.github.io/postman/services.html" id="nav-services-mobile" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
-            <a href="https://post4ex.github.io/postman/complaint.html" id="nav-complaint-mobile" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
-            <button id="contactButtonMobile" class="block w-full text-left px-4 py-2 mt-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Contact</button>
+            <a href="https://post4ex.github.io/postman/main.html" class="block w-full text-left px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors mb-2">Home</a>
+            <a href="https://post4ex.github.io/postman/tracking.html" class="block w-full text-left px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors mb-2">Tracking</a>
+            <a href="https://post4ex.github.io/postman/services.html" class="block w-full text-left px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors mb-2">Services</a>
+            <a href="https://post4ex.github.io/postman/complaint.html" class="block w-full text-left px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors mb-2">Complaint</a>
+            <button id="contactButtonMobile" class="block w-full text-left px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Contact</button>
         </div>
     </div>
 </header>
