@@ -1,63 +1,15 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener('DOMContentLoaded', () => {
+    const base = 'https://post4ex.github.io/postman/';
     const headerPlaceholder = document.getElementById('header-placeholder');
     const footerPlaceholder = document.getElementById('footer-placeholder');
-    const basePath = 'https://post4ex.github.io/postman/';
-
-    // Determine the current page to set the active nav link
     const currentPage = window.location.pathname.split('/').pop() || 'main.html';
 
-    const loadComponent = async (url, element) => {
-        try {
-            const response = await fetch(url);
-            if (response.ok) {
-                const text = await response.text();
-                element.innerHTML = text;
-            } else {
-                element.innerHTML = `<p class="text-red-500 text-center">Failed to load component from ${url}</p>`;
-            }
-        } catch (error) {
-            console.error(`Error fetching component from ${url}:`, error);
-            element.innerHTML = `<p class="text-red-500 text-center">Could not load content.</p>`;
-        }
-    };
-
-    const setActiveNav = () => {
-        const navLinks = document.querySelectorAll('#main-nav a, #dropdownMenu a');
-        navLinks.forEach(link => {
-            const linkPage = link.href.split('/').pop();
-            // Default 'main.html' for root link
-            const targetPage = (linkPage === '' || linkPage === 'postman') ? 'main.html' : linkPage;
-
-            if (targetPage === currentPage) {
-                link.classList.remove('bg-blue-900', 'hover:bg-blue-800');
-                link.classList.add('bg-blue-700', 'font-semibold');
-            }
-        });
-    };
-
-    const initializeLayoutScripts = () => {
+    // Function to initialize header scripts
+    const initializeHeaderScripts = () => {
         const menuButton = document.getElementById('menuButton');
         const dropdownMenu = document.getElementById('dropdownMenu');
-        const contactModal = document.getElementById('contactModal');
-        
-        if (contactModal) {
-            const contactButton = document.getElementById('contactButton');
-            const contactButtonMobile = document.getElementById('contactButtonMobile');
-            const closeContactModalButton = document.getElementById('closeContactModalButton');
-
-            if (contactButton) contactButton.addEventListener('click', () => contactModal.classList.remove('hidden'));
-            if (contactButtonMobile) contactButtonMobile.addEventListener('click', () => {
-                contactModal.classList.remove('hidden');
-                if (dropdownMenu) dropdownMenu.classList.add('hidden');
-            });
-            if (closeContactModalButton) closeContactModalButton.addEventListener('click', () => contactModal.classList.add('hidden'));
-            contactModal.addEventListener('click', (e) => {
-                if (e.target === contactModal) contactModal.classList.add('hidden');
-            });
-        }
-
-        if (menuButton && dropdownMenu) {
-             menuButton.addEventListener('click', (event) => {
+        if(menuButton && dropdownMenu) {
+            menuButton.addEventListener('click', (event) => {
                 event.stopPropagation();
                 dropdownMenu.classList.toggle('hidden');
             });
@@ -67,15 +19,62 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             });
         }
-        // Set the active navigation link style
-        setActiveNav();
     };
 
-    // Load header and footer, then initialize their scripts
-    Promise.all([
-        loadComponent(`${basePath}_header.html`, headerPlaceholder),
-        loadComponent(`${basePath}_footer.html`, footerPlaceholder)
-    ]).then(() => {
-        initializeLayoutScripts();
-    });
+    // Function to initialize footer scripts
+    const initializeFooterScripts = () => {
+        const contactModal = document.getElementById('contactModal');
+        const contactButton = document.querySelector('#header-placeholder #contactButton'); // Scoped to header
+        const contactButtonMobile = document.querySelector('#header-placeholder #contactButtonMobile'); // Scoped to header
+        const closeContactModalButton = document.getElementById('closeContactModalButton');
+
+        if(contactButton) contactButton.addEventListener('click', () => contactModal.classList.remove('hidden'));
+        if(contactButtonMobile) contactButtonMobile.addEventListener('click', () => {
+            contactModal.classList.remove('hidden');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+            if(dropdownMenu) dropdownMenu.classList.add('hidden');
+        });
+        if(closeContactModalButton) closeContactModalButton.addEventListener('click', () => contactModal.classList.add('hidden'));
+        if(contactModal) contactModal.addEventListener('click', (e) => {
+            if (e.target === contactModal) contactModal.classList.add('hidden');
+        });
+    };
+
+    // Fetch and inject header
+    if (headerPlaceholder) {
+        fetch(`${base}header.html`) // CORRECTED: No underscore
+            .then(response => {
+                if (!response.ok) throw new Error(`Failed to load component from ${base}header.html`);
+                return response.text();
+            })
+            .then(data => {
+                headerPlaceholder.innerHTML = data;
+                
+                // Highlight the active navigation link
+                const navId = `nav-${currentPage.replace('.html', '')}`;
+                const activeLink = document.getElementById(navId);
+                if (activeLink) {
+                    activeLink.classList.remove('bg-blue-900', 'hover:bg-blue-800');
+                    activeLink.classList.add('bg-blue-700', 'font-semibold');
+                }
+                initializeHeaderScripts();
+                initializeFooterScripts(); // Call footer init after header is ready for contact buttons
+            })
+            .catch(error => console.error('Error loading header:', error));
+    }
+
+    // Fetch and inject footer
+    if (footerPlaceholder) {
+        fetch(`${base}footer.html`) // CORRECTED: No underscore
+            .then(response => {
+                if (!response.ok) throw new Error(`Failed to load component from ${base}footer.html`);
+                return response.text();
+            })
+            .then(data => {
+                footerPlaceholder.innerHTML = data;
+                // Footer-specific scripts are already initialized above
+            })
+            .catch(error => console.error('Error loading footer:', error));
+    }
 });
+
