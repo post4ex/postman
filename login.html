@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Postman</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://post4ex.github.io/postman/style.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <div id="header-placeholder"></div>
+
+    <main class="flex-grow w-full p-4 sm:p-8 flex items-center justify-center">
+        <div class="container">
+            <div class="card max-w-md mx-auto">
+                <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">Login</h1>
+                <form id="loginForm" class="space-y-6">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                        <input type="text" id="username" name="username" required
+                            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <input type="password" id="password" name="password" required
+                            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div id="login-error-message" class="hidden text-red-600 text-sm text-center">
+                        Invalid username or password. Please try again.
+                    </div>
+                    <div>
+                        <button type="submit"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Sign in
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://post4ex.github.io/postman/layout.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('login-error-message');
+
+        loginForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Demo credentials
+            if (username === 'test' && password === 'test') {
+                errorMessage.classList.add('hidden');
+                
+                // Set login data with an expiration timestamp (2 hours from now)
+                const expiration = new Date().getTime() + (2 * 60 * 60 * 1000);
+                const loginData = {
+                    user: 'test',
+                    isLoggedIn: true,
+                    expires: expiration
+                };
+
+                // Store in localStorage (browser cache)
+                localStorage.setItem('loginData', JSON.stringify(loginData));
+
+                // Redirect to the main page after successful login
+                window.location.href = 'https://post4ex.github.io/postman/main.html';
+            } else {
+                errorMessage.classList.remove('hidden');
+            }
+        });
+    });
+    </script>
+</body>
+</html>
