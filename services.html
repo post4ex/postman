@@ -11,47 +11,85 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://post4ex.github.io/postman/style.css">
 </head>
-<body class="bg-gray-100 min-h-screen p-4 sm:p-8 flex flex-col items-center relative">
+<body class="bg-gray-100 min-h-screen flex flex-col">
 
     <div id="header-placeholder"></div>
 
-    <main class="container space-y-8 mt-4">
-        <section id="services-section" class="card space-y-8 py-8 px-6">
-            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Our Services</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Service Cards -->
-                <div class="bg-gray-50 p-6 rounded-lg border flex flex-col items-center text-center">
-                    <div class="w-16 h-16 mb-4 text-blue-800"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9m6.75-3.75C19.912 3.474 16.592 2.25 12 2.25s-7.912 1.224-10.5 3.75m21 0c-2.625 2.516-5.912 3.75-10.5 3.75S4.125 8.766 1.5 6m19.5 0v3.75m0 0v3.75h-.75M21 12.75h-.75m0 0H18.75m-2.25-4.5h.75m-7.5 7.5h.75m0 0h.75m-7.5 7.5h.75m0 0H12a6.75 6.75 0 006.75-6.75V6" /></svg></div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">AirLine Services</h3>
-                    <p class="text-gray-600">Fastest way to get your consignments to their destination, ensuring timely and secure delivery across the globe.</p>
+    <main class="w-full flex-grow p-4 sm:p-8">
+        <div class="container">
+            <section id="services-section" class="card space-y-8 py-8 px-6">
+                <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Our Services</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+                    <!-- Service 1: AirLine Services -->
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                        <div class="w-16 h-16 mb-4 text-blue-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9m6.75-3.75C19.912 3.474 16.592 2.25 12 2.25s-7.912 1.224-10.5 3.75m21 0c-2.625 2.516-5.912 3.75-10.5 3.75S4.125 8.766 1.5 6m19.5 0v3.75m0 0v3.75h-.75M21 12.75h-.75m0 0H18.75m-2.25-4.5h.75m-7.5 7.5h.75m0 0h.75m-7.5 7.5h.75m0 0H12a6.75 6.75 0 006.75-6.75V6" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">AirLine Services</h3>
+                        <p class="text-gray-600">Our AirLine Services offer the fastest way to get your consignments to their destination, ensuring timely and secure delivery across the globe.</p>
+                    </div>
+        
+                    <!-- Service 2: Surface Services -->
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                        <div class="w-16 h-16 mb-4 text-blue-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3 0h15a3 3 0 003-3V6a3 3 0 00-3-3H4.5a3 3 0 00-3 3v13.5m15-6l-3-3m0 0l-3 3m3-3v12m-2.25 0h-3.75m-15 0h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Surface Services</h3>
+                        <p class="text-gray-600">For cost-effective and reliable transportation, our Surface Services are the ideal choice. We handle large and heavy shipments with care, ensuring they reach their destination safely.</p>
+                    </div>
+        
+                    <!-- Service 3: Premium Services -->
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                        <div class="w-16 h-16 mb-4 text-blue-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 009-9V6.257l-2.26-1.506C17.427 4.542 16.5 4.755 16.5 5.5v3.25M12 21a9 9 0 01-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m0 0h7.5m-7.5 0v1.5a1.5 1.5 0 001.5 1.5h4.5a1.5 1.5 0 001.5-1.5v-1.5" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Premium Services</h3>
+                        <p class="text-gray-600">Experience the highest standard of service with our Premium Services. Enjoy priority handling, real-time tracking, and dedicated support for your most valuable shipments.</p>
+                    </div>
+        
+                    <!-- Service 4: E-Commerce Services -->
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                        <div class="w-16 h-16 mb-4 text-blue-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.405M21.75 14.25v2.25h-5.25a2.25 2.25 0 01-2.25-2.25V6.75m0 0V6a2.25 2.25 0 012.25-2.25h1.5m0 0V3m0 3.75v3.75m-9-3.75a3 3 0 11-6 0 3 3 0 016 0zm-3 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm12 9a3 3 0 11-6 0 3 3 0 016 0zm-3 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">E-Commerce Services</h3>
+                        <p class="text-gray-600">Tailored solutions for your online business. We handle everything from last-mile delivery to cash-on-delivery and returns, helping your e-commerce store thrive.</p>
+                    </div>
+        
+                    <!-- Service 5: LTL Services -->
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                        <div class="w-16 h-16 mb-4 text-blue-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 4.5a2.25 2.25 0 114.5 0M18.75 9h-1.5m-14.25-3.75h-.75m17.25 10.5H12m14.25 0h-1.5m14.25 0H12m0 0L9.75 15m0 0L7.5 12h-1.5" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">LTL Services</h3>
+                        <p class="text-gray-600">Our Less-than-Truckload (LTL) Services are perfect for shipments that don't require a full truck. We provide flexible and economical options for your partial loads.</p>
+                    </div>
+        
+                    <!-- Service 6: VAS Services -->
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center">
+                        <div class="w-16 h-16 mb-4 text-blue-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 00-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m4.5 12.75a9 9 0 01-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m0 0h7.5m-7.5 0v1.5a1.5 1.5 0 001.5 1.5h4.5a1.5 1.5 0 001.5-1.5v-1.5m-7.5 0H12a6.75 6.75 0 006.75-6.75V6" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">VAS Services</h3>
+                        <p class="text-gray-600">Enhance your logistics with our Value-Added Services (VAS), including special handling, packaging, and customizable solutions to meet your unique business needs.</p>
+                    </div>
+        
                 </div>
-                <div class="bg-gray-50 p-6 rounded-lg border flex flex-col items-center text-center">
-                    <div class="w-16 h-16 mb-4 text-blue-800"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3 0h15a3 3 0 003-3V6a3 3 0 00-3-3H4.5a3 3 0 00-3 3v13.5m15-6l-3-3m0 0l-3 3m3-3v12m-2.25 0h-3.75m-15 0h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0" /></svg></div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Surface Services</h3>
-                    <p class="text-gray-600">Cost-effective and reliable transportation. We handle large and heavy shipments with care, ensuring they reach their destination safely.</p>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-lg border flex flex-col items-center text-center">
-                    <div class="w-16 h-16 mb-4 text-blue-800"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 009-9V6.257l-2.26-1.506C17.427 4.542 16.5 4.755 16.5 5.5v3.25M12 21a9 9 0 01-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m0 0h7.5m-7.5 0v1.5a1.5 1.5 0 001.5 1.5h4.5a1.5 1.5 0 001.5-1.5v-1.5" /></svg></div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Premium Services</h3>
-                    <p class="text-gray-600">Enjoy priority handling, real-time tracking, and dedicated support for your most valuable shipments.</p>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-lg border flex flex-col items-center text-center">
-                     <div class="w-16 h-16 mb-4 text-blue-800"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.405M21.75 14.25v2.25h-5.25a2.25 2.25 0 01-2.25-2.25V6.75m0 0V6a2.25 2.25 0 012.25-2.25h1.5m0 0V3m0 3.75v3.75m-9-3.75a3 3 0 11-6 0 3 3 0 016 0zm-3 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm12 9a3 3 0 11-6 0 3 3 0 016 0zm-3 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z" /></svg></div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">E-Commerce Services</h3>
-                    <p class="text-gray-600">Tailored solutions for your online business. We handle last-mile delivery, cash-on-delivery, and returns.</p>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-lg border flex flex-col items-center text-center">
-                    <div class="w-16 h-16 mb-4 text-blue-800"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 4.5a2.25 2.25 0 114.5 0M18.75 9h-1.5m-14.25-3.75h-.75m17.25 10.5H12m14.25 0h-1.5m14.25 0H12m0 0L9.75 15m0 0L7.5 12h-1.5" /></svg></div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">LTL Services</h3>
-                    <p class="text-gray-600">Our Less-than-Truckload (LTL) Services are perfect for shipments that don't require a full truck.</p>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-lg border flex flex-col items-center text-center">
-                    <div class="w-16 h-16 mb-4 text-blue-800"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-full h-full"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 00-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m4.5 12.75a9 9 0 01-9-9V6.257l2.26-1.506C6.573 4.542 7.5 4.755 7.5 5.5v3.25m0 0h7.5m-7.5 0v1.5a1.5 1.5 0 001.5 1.5h4.5a1.5 1.5 0 001.5-1.5v-1.5m-7.5 0H12a6.75 6.75 0 006.75-6.75V6" /></svg></div>
-                    <h3 class="text-xl font-semibold text-gray-800 mb-2">VAS Services</h3>
-                    <p class="text-gray-600">Enhance your logistics with Value-Added Services (VAS), including special handling and packaging.</p>
-                </div>
-            </div>
-        </section>
+            </section>
+        </div>
     </main>
     
     <div id="footer-placeholder"></div>
