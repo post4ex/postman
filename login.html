@@ -6,77 +6,55 @@
     <title>Login - Postman</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .card {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <div id="header-placeholder"></div>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-    <main class="flex-grow flex items-center justify-center p-4">
-        <div class="card w-full max-w-md">
+    <main class="w-full max-w-md">
+        <!-- The form now submits directly to the script URL and targets the top-level window -->
+        <form class="card" method="POST" action="https://script.google.com/macros/s/AKfycbxZfIBGWi13GE1SXwn7kLhKYKvQS-sEPXE-iuUtCs9RfW7C7zB8yGeRjWxbZRAg54lkEg/exec" target="_top">
             <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Admin Login</h1>
             <div class="space-y-4">
                 <div>
                     <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                    <input type="text" id="username" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700" value="test">
+                    <!-- The 'name' attribute is crucial for form submission -->
+                    <input type="text" id="username" name="username" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700" required>
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="password" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700" value="test">
+                    <input type="password" id="password" name="password" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700" required>
                 </div>
-                <button id="login-form-button" class="w-full px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors">
+                <!-- This is now a submit button -->
+                <button type="submit" id="login-form-button" class="w-full px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors">
                     Login
                 </button>
             </div>
             <div id="login-message" class="mt-4 text-center text-sm text-red-600"></div>
-        </div>
+        </form>
     </main>
 
-    <div id="footer-placeholder"></div>
-
-    <script src="layout.js"></script>
     <script>
+        // This script now only checks for error messages in the URL
         document.addEventListener('DOMContentLoaded', () => {
-            // Wait a moment for layout components to load
-            setTimeout(() => {
-                const loginButton = document.getElementById('login-form-button');
-                const usernameInput = document.getElementById('username');
-                const passwordInput = document.getElementById('password');
-                const messageDiv = document.getElementById('login-message');
-
-                const handleLogin = () => {
-                    const username = usernameInput.value.trim();
-                    const password = passwordInput.value.trim();
-
-                    // Check for demo credentials
-                    if (username === 'test' && password === 'test') {
-                        messageDiv.textContent = 'Login successful! Redirecting...';
-                        messageDiv.classList.remove('text-red-600');
-                        messageDiv.classList.add('text-green-600');
-
-                        const now = new Date();
-                        // Set session to expire in 2 hours
-                        const twoHours = 2 * 60 * 60 * 1000;
-                        const loginData = {
-                            user: username,
-                            expires: now.getTime() + twoHours
-                        };
-                        localStorage.setItem('loginData', JSON.stringify(loginData));
-
-                        // Redirect to the new dashboard page on successful login
-                        setTimeout(() => {
-                            window.location.href = 'https://post4ex.github.io/postman/dashboard.html';
-                        }, 1000);
-
-                    } else {
-                        messageDiv.textContent = 'Invalid username or password.';
-                    }
-                };
-                
-                loginButton.addEventListener('click', handleLogin);
-                passwordInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') handleLogin();
-                });
-            }, 100);
+            const messageDiv = document.getElementById('login-message');
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.has('error')) {
+                const errorType = urlParams.get('error');
+                if (errorType === '1') {
+                    messageDiv.textContent = 'Invalid username or password. Please try again.';
+                } else {
+                    messageDiv.textContent = 'An unexpected error occurred. Please contact support.';
+                }
+            }
         });
     </script>
 </body>
