@@ -1,101 +1,81 @@
-// --- CONFIGURATION ---
-// Add the filenames of all pages that should be protected by the login.
-const protectedPages = [
-    'dashboard.html',
-    'CreateOrder.html', 'PickupRequest.html', 'BookOrder.html', 'AssignCarrier.html', 'EditOrder.html',
-    'Shipments.html',
-    'Pincode.html', 'Calculator.html',
-    'OutMenifest.html', 'InMenifest.html', 'RunSheet.html', 'Update.html', 'POD.html',
-    'CRM.html',
-    'ReportBooking.html', 'ReportMenifest.html', 'ReportUpdate.html', 'ReportRunsheet.html', 'ReportCRM.html',
-    'Billing.html',
-    'LedgerSummary.html', 'LedgerAccounts.html', 'LedgerReceipts.html', 'LedgerPayments.html', 'LedgerExpenseClaims.html', 'LedgerCustomers.html', 'LedgerSalesInvoices.html', 'LedgerCreditNotes.html', 'LedgerDeliveryNotes.html', 'LedgerSuppliers.html', 'LedgerPurchaseInvoices.html', 'LedgerDebitNotes.html','LedgerEmployees.html', 'LedgerJournalEntries.html', 'LedgerReports.html',
-    'Branches.html', 'Customer.html', 'Clients.html', 'Suppliers.html', 'Vendors.html', 'Staff.html', 'Stock.html'
-];
+document.addEventListener("DOMContentLoaded", function() {
+    const headerPlaceholder = document.getElementById('header-placeholder');
+    const footerPlaceholder = document.getElementById('footer-placeholder');
+    const basePath = 'https://post4ex.github.io/postman/';
 
-/**
- * Checks the user's login status from localStorage.
- * This is the primary security check for the application.
- */
-function checkLoginStatus() {
-    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    let loginData = null;
+    // Determine the current page to set the active nav link
+    const currentPage = window.location.pathname.split('/').pop() || 'main.html';
 
-    try {
-        // Safely parse the login data
-        loginData = JSON.parse(localStorage.getItem('loginData'));
-    } catch (e) {
-        console.error("Could not parse login data, clearing session.", e);
-        localStorage.removeItem('loginData');
-        // Fall through to the "not logged in" state
-    }
-
-    if (loginData && new Date().getTime() < loginData.expires) {
-        // --- User is Logged In ---
-        if (currentPage === 'login.html') {
-            // If a logged-in user tries to access the login page, redirect them to the dashboard.
-            window.location.href = 'dashboard.html';
+    const loadComponent = async (url, element) => {
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                const text = await response.text();
+                element.innerHTML = text;
+            } else {
+                element.innerHTML = `<p class="text-red-500 text-center">Failed to load component from ${url}</p>`;
+            }
+        } catch (error) {
+            console.error(`Error fetching component from ${url}:`, error);
+            element.innerHTML = `<p class="text-red-500 text-center">Could not load content.</p>`;
         }
-        return true; // Indicate that the user is authenticated.
+    };
 
-    } else {
-        // --- User is Not Logged In (or session expired) ---
-        localStorage.removeItem('loginData'); // Clean up any expired session data.
+    const setActiveNav = () => {
+        const navLinks = document.querySelectorAll('#main-nav a, #dropdownMenu a');
+        navLinks.forEach(link => {
+            const linkPage = link.href.split('/').pop();
+            // Default 'main.html' for root link
+            const targetPage = (linkPage === '' || linkPage === 'postman') ? 'main.html' : linkPage;
+
+            if (targetPage === currentPage) {
+                link.classList.remove('bg-blue-900', 'hover:bg-blue-800');
+                link.classList.add('bg-blue-700', 'font-semibold');
+            }
+        });
+    };
+
+    const initializeLayoutScripts = () => {
+        const menuButton = document.getElementById('menuButton');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        const contactModal = document.getElementById('contactModal');
         
-        if (protectedPages.includes(currentPage)) {
-            // If they are trying to access a protected page, redirect them to the login page.
-            window.location.href = 'login.html';
-        }
-        return false; // Indicate that the user is not authenticated.
-    }
-}
+        if (contactModal) {
+            const contactButton = document.getElementById('contactButton');
+            const contactButtonMobile = document.getElementById('contactButtonMobile');
+            const closeContactModalButton = document.getElementById('closeContactModalButton');
 
-// --- INITIALIZE ---
-// Run the security check as the very first step when the script loads.
-const isLoggedIn = checkLoginStatus();
-
-
-/**
- * Fetches and injects HTML content into a placeholder element.
- * It now also executes any script tags found within the loaded HTML.
- */
-async function loadComponent(elementId, url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            console.error(`Failed to load component from ${url}. Status: ${response.status}`);
-            return;
-        }
-        const text = await response.text();
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.innerHTML = text;
-            // Find and execute any scripts within the loaded component
-            element.querySelectorAll("script").forEach(script => {
-                const newScript = document.createElement("script");
-                // Copy attributes
-                for (const attr of script.attributes) {
-                    newScript.setAttribute(attr.name, attr.value);
-                }
-                // Copy script content
-                newScript.innerHTML = script.innerHTML;
-                script.parentNode.replaceChild(newScript, script);
+            if (contactButton) contactButton.addEventListener('click', () => contactModal.classList.remove('hidden'));
+            if (contactButtonMobile) contactButtonMobile.addEventListener('click', () => {
+                contactModal.classList.remove('hidden');
+                if (dropdownMenu) dropdownMenu.classList.add('hidden');
+            });
+            if (closeContactModalButton) closeContactModalButton.addEventListener('click', () => contactModal.classList.add('hidden'));
+            contactModal.addEventListener('click', (e) => {
+                if (e.target === contactModal) contactModal.classList.add('hidden');
             });
         }
-    } catch (error) {
-        console.error(`Error loading component from ${url}:`, error);
-    }
-}
 
+        if (menuButton && dropdownMenu) {
+             menuButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                dropdownMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (event) => {
+                if (!menuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                    dropdownMenu.classList.add('hidden');
+                }
+            });
+        }
+        // Set the active navigation link style
+        setActiveNav();
+    };
 
-// --- DOMContentLoaded ---
-// This ensures the rest of the script runs after the basic HTML document is ready.
-document.addEventListener('DOMContentLoaded', () => {
-    // The security check (isLoggedIn) has already run.
-    // Now we load the components for the pages that need them.
-    if (window.location.pathname.split('/').pop() !== 'login.html') {
-        loadComponent('header-placeholder', 'header.html');
-        loadComponent('footer-placeholder', 'footer.html');
-    }
+    // Load header and footer, then initialize their scripts
+    Promise.all([
+        loadComponent(`${basePath}_header.html`, headerPlaceholder),
+        loadComponent(`${basePath}_footer.html`, footerPlaceholder)
+    ]).then(() => {
+        initializeLayoutScripts();
+    });
 });
-
