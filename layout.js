@@ -91,8 +91,8 @@ async function loadComponent(elementId, url) {
 // --- DOMContentLoaded ---
 // This ensures the rest of the script runs after the basic HTML document is ready.
 document.addEventListener('DOMContentLoaded', () => {
-    // Load the header and footer on all relevant pages.
-    // The login page is standalone and does not need these.
+    // The security check (isLoggedIn) has already run.
+    // Now we load the components for the pages that need them.
     if (window.location.pathname.split('/').pop() !== 'login.html') {
         loadComponent('header-placeholder', 'header.html');
         loadComponent('footer-placeholder', 'footer.html');
