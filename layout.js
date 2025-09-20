@@ -19,7 +19,16 @@ const protectedPages = [
  */
 function checkLoginStatus() {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    const loginData = JSON.parse(localStorage.getItem('loginData'));
+    let loginData = null;
+
+    try {
+        // Safely parse the login data
+        loginData = JSON.parse(localStorage.getItem('loginData'));
+    } catch (e) {
+        console.error("Could not parse login data, clearing session.", e);
+        localStorage.removeItem('loginData');
+        // Fall through to the "not logged in" state
+    }
 
     if (loginData && new Date().getTime() < loginData.expires) {
         // --- User is Logged In ---
