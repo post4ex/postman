@@ -144,7 +144,8 @@ function checkLoginStatus() {
         const now = new Date().getTime();
         if (now <= loginData.expires) {
             isLoggedIn = true;
-            userRole = loginData.ROLE; // Get the user's role
+            // **FIX:** Get role, trim whitespace, and convert to uppercase for reliable comparison.
+            userRole = loginData.ROLE ? loginData.ROLE.trim().toUpperCase() : null; 
         } else {
             localStorage.removeItem('loginData'); // Clear expired session
         }
@@ -164,7 +165,8 @@ function checkLoginStatus() {
         
         // --- Role-Based Access Control for Sidebar ---
         if (ledgerMenuItem && mastersMenuItem) {
-            if (userRole === 'Client' || userRole === 'Branch') {
+            // **FIX:** Compare against uppercase roles for consistency.
+            if (userRole === 'CLIENT' || userRole === 'BRANCH') {
                 // Hide for non-admin roles
                 ledgerMenuItem.classList.add('hidden');
                 mastersMenuItem.classList.add('hidden');
@@ -293,4 +295,5 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Failed to initialize page layout:", error);
     });
 });
+
 
