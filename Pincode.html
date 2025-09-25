@@ -3,134 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pincode Finder - Postman</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Login</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Use Inter as the default font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-
-    <div id="header-placeholder"></div>
-
-    <main class="w-full flex-grow p-4 sm:p-8">
-        <div class="container">
-            <div class="card">
-                <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Pincode Serviceability</h1>
-                
-                <!-- Search Section -->
-                <div class="flex flex-col sm:flex-row items-center gap-4 mb-8">
-                    <input type="text" id="pincode-input" placeholder="Enter 6-digit Pincode" maxlength="6" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700 w-full" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
-                    <button id="pincode-search-button" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors w-full sm:w-auto">
-                        Search
-                    </button>
+<body class="bg-gray-100 dark:bg-gray-900">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <!-- Main container -->
+        <div id="main-container" class="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+            
+            <!-- Login View (Visible by default) -->
+            <div id="login-view">
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h1>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to your account</p>
                 </div>
 
-                <!-- Results and Messages Section -->
-                <div id="loading-indicator" class="hidden text-center text-gray-500 mb-4">
-                    <p>Searching for pincode details...</p>
-                </div>
-                <div id="results-container" class="hidden space-y-4">
-                    <!-- Pincode details will be rendered here -->
-                </div>
-                <div id="message-box" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert">
-                    <p id="message-text"></p>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <div id="footer-placeholder"></div>
-
-    <script src="layout.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const pincodeInput = document.getElementById('pincode-input');
-            const searchButton = document.getElementById('pincode-search-button');
-            const resultsContainer = document.getElementById('results-container');
-            const messageBox = document.getElementById('message-box');
-            const messageText = document.getElementById('message-text');
-            const loadingIndicator = document.getElementById('loading-indicator');
-
-            const API_BASE_URL = 'https://api.postalpincode.in/pincode/';
-
-            const handleSearch = async () => {
-                const pincode = pincodeInput.value.trim();
-
-                // Clear previous results and hide messages
-                resultsContainer.innerHTML = '';
-                resultsContainer.classList.add('hidden');
-                messageBox.classList.add('hidden');
-
-                if (pincode.length !== 6) {
-                    showMessage('Please enter a valid 6-digit pincode.', 'error');
-                    return;
-                }
-
-                loadingIndicator.classList.remove('hidden');
-
-                try {
-                    const response = await fetch(`${API_BASE_URL}${pincode}`);
-                    const data = await response.json();
-
-                    if (data && data.length > 0 && data[0].Status === 'Success') {
-                        renderResults(data[0].PostOffice);
-                    } else {
-                        showMessage('Pincode not found or invalid. Please check the number and try again.', 'error');
-                    }
-
-                } catch (error) {
-                    console.error('Pincode API fetch error:', error);
-                    showMessage('An error occurred while fetching data. Please check your network and try again.', 'error');
-                } finally {
-                    loadingIndicator.classList.add('hidden');
-                }
-            };
-
-            const renderResults = (postOffices) => {
-                const firstResult = postOffices[0];
-                let html = `
-                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-2">Details for Pincode: ${firstResult.Pincode}</h2>
-                        <p class="text-gray-600"><strong>District:</strong> ${firstResult.District}</p>
-                        <p class="text-gray-600"><strong>State:</strong> ${firstResult.State}</p>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-700 pt-4">Available Post Offices:</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                `;
-                
-                postOffices.forEach(office => {
-                    html += `
-                        <div class="p-4 border rounded-lg bg-gray-50">
-                            <p class="font-semibold text-gray-800">${office.Name}</p>
-                            <p class="text-sm text-gray-500">${office.BranchType}</p>
+                <form id="login-form" class="space-y-6 mt-6">
+                    <!-- Code Input -->
+                    <div>
+                        <label for="code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Code</label>
+                        <div class="mt-1">
+                            <input id="code" name="code" type="text" required class="w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-300 rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
                         </div>
-                    `;
+                    </div>
+
+                    <!-- Username Input -->
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                        <div class="mt-1">
+                            <input id="username" name="username" type="text" autocomplete="username" required class="w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-300 rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                        </div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                        <div class="mt-1">
+                            <input id="password" name="password" type="password" autocomplete="current-password" required class="w-full px-4 py-3 text-gray-900 bg-gray-50 border border-gray-300 rounded-lg dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div>
+                        <button type="submit" class="w-full px-4 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 transition duration-200 flex items-center justify-center">
+                            <span id="button-text">Log In</span>
+                            <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="http://www.w3.org/2000/svg">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="message-area" class="text-center text-sm font-medium mt-4"></div>
+            </div>
+
+            <!-- Dashboard View (hidden by default) -->
+            <div id="dashboard-view" class="hidden">
+                 <div class="text-center">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Login Successful</h1>
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Here are your details:</p>
+                </div>
+                <div id="user-details" class="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-2 text-sm text-gray-800 dark:text-gray-200">
+                    <!-- User data will be injected here by the script -->
+                </div>
+                 <button id="logout-button" class="mt-6 w-full px-4 py-3 font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300 dark:focus:ring-red-800 transition duration-200">
+                    Log Out
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const loginView = document.getElementById('login-view');
+        const dashboardView = document.getElementById('dashboard-view');
+        const loginForm = document.getElementById('login-form');
+        const messageArea = document.getElementById('message-area');
+        const spinner = document.getElementById('spinner');
+        const buttonText = document.getElementById('button-text');
+        const userDetailsContainer = document.getElementById('user-details');
+        const logoutButton = document.getElementById('logout-button');
+
+        // Your specific Google Apps Script URL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPq1267mnqnaRbBwQqZ87Yvg31sSgXl4aRR1PbTkGthIvJCPdmz6PTkn6iY2sg_rRsDA/exec';
+        const SESSION_KEY = 'userSession';
+
+        // --- NEW ---: Check for existing session when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const sessionData = localStorage.getItem(SESSION_KEY);
+            if (sessionData) {
+                const item = JSON.parse(sessionData);
+                const now = new Date();
+                // Check if the session is expired
+                if (now.getTime() > item.expiry) {
+                    localStorage.removeItem(SESSION_KEY); // Clear expired session
+                } else {
+                    showDashboard(item.userData); // Restore session
+                }
+            }
+        });
+
+        // Event listener for the login form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            setLoading(true);
+            displayMessage('', 'info');
+
+            const code = document.getElementById('code').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!code || !username || !password) {
+                displayMessage('All fields are required.', 'error');
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Send the login data to the Apps Script
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ code: code, username: username, password: password })
                 });
 
-                html += `</div>`;
-                resultsContainer.innerHTML = html;
-                resultsContainer.classList.remove('hidden');
-            };
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const result = await response.json();
 
-            const showMessage = (text, type) => {
-                messageText.textContent = text;
-                messageBox.className = 'p-4 rounded-lg border'; // Reset classes
-                if (type === 'error') {
-                    messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+                if (result.status === 'success') {
+                    displayMessage('Login successful!', 'success');
+                    
+                    // --- NEW ---: Cache user data on successful login
+                    saveUserSession(result.data);
+
+                    showDashboard(result.data);
                 } else {
-                    messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
+                    displayMessage(result.message, 'error');
+                    setLoading(false);
                 }
-                messageBox.classList.remove('hidden');
-            };
 
-            searchButton.addEventListener('click', handleSearch);
-            pincodeInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleSearch();
+            } catch (error) {
+                console.error("Login Error:", error);
+                if (error.details) console.error("Server Details:", error.details);
+                displayMessage('An unexpected error occurred. Please try again.', 'error');
+                setLoading(false);
+            }
+        });
+        
+        // Event listener for the logout button
+        logoutButton.addEventListener('click', () => {
+            // --- NEW ---: Clear session from localStorage
+            localStorage.removeItem(SESSION_KEY);
+
+            loginView.classList.remove('hidden');
+            dashboardView.classList.add('hidden');
+            loginForm.reset();
+            displayMessage('', 'info');
+        });
+
+        // --- NEW ---: Function to save user data to localStorage with a 2-hour expiry
+        function saveUserSession(fullUserData) {
+            const keysToStore = ['CODE', 'ROLE', 'NAME', 'BRANCH', 'EMAIL', 'TOKEN'];
+            const userDataToCache = {};
+
+            keysToStore.forEach(key => {
+                if (fullUserData.hasOwnProperty(key)) {
+                    userDataToCache[key] = fullUserData[key];
                 }
             });
-        });
+
+            const now = new Date();
+            // Set expiry time to 2 hours from now
+            const expiry = now.getTime() + (2 * 60 * 60 * 1000);
+
+            const sessionItem = {
+                userData: userDataToCache,
+                expiry: expiry,
+            };
+
+            localStorage.setItem(SESSION_KEY, JSON.stringify(sessionItem));
+        }
+
+        // Function to hide the login form and display the user data
+        function showDashboard(userData) {
+            loginView.classList.add('hidden');
+            dashboardView.classList.remove('hidden');
+            
+            userDetailsContainer.innerHTML = '';
+
+            for (const [key, value] of Object.entries(userData)) {
+                 const detailElement = document.createElement('p');
+                 detailElement.innerHTML = `<strong class="font-semibold text-gray-900 dark:text-white">${key}:</strong> ${value}`;
+                 userDetailsContainer.appendChild(detailElement);
+            }
+        }
+
+        // Function to manage the loading state of the submit button
+        function setLoading(isLoading) {
+            spinner.classList.toggle('hidden', !isLoading);
+            buttonText.textContent = isLoading ? 'Verifying...' : 'Log In';
+            loginForm.querySelector('button[type="submit"]').disabled = isLoading;
+            document.getElementById('code').disabled = isLoading;
+            document.getElementById('username').disabled = isLoading;
+            document.getElementById('password').disabled = isLoading;
+        }
+
+        // Function to display messages (errors or success) to the user
+        function displayMessage(message, type) {
+            messageArea.textContent = message;
+            messageArea.className = 'text-center text-sm font-medium mt-4'; // Reset classes
+            if (type === 'error') {
+                messageArea.classList.add('text-red-500');
+            } else if (type === 'success') {
+                messageArea.classList.add('text-green-500');
+            }
+        }
     </script>
 </body>
 </html>
+
