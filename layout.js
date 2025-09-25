@@ -1,3 +1,41 @@
+// --- IMMEDIATE SECURITY CHECK ---
+// This IIFE (Immediately Invoked Function Expression) runs instantly, before the rest of the page loads.
+(function() {
+    const path = window.location.pathname;
+    
+    // The comprehensive list of all pages that require a user to be logged in.
+    const protectedPages = [
+        'dashboard.html', 'pincode.html', 'CreateOrder.html', 'PickupRequest.html', 'BookOrder.html', 
+        'AssignCarrier.html', 'EditOrder.html', 'Shipments.html', 'Calculator.html', 'OutMenifest.html', 
+        'InMenifest.html', 'RunSheet.html', 'Update.html', 'POD.html', 'CRM.html', 'ReportBooking.html', 
+        'ReportMenifest.html', 'ReportUpdate.html', 'ReportRunsheet.html', 'ReportCRM.html', 'Billing.html', 
+        'LedgerSummary.html', 'LedgerAccounts.html', 'LedgerReceipts.html', 'LedgerPayments.html', 
+        'LedgerExpenseClaims.html', 'LedgerCustomers.html', 'LedgerSalesInvoices.html', 'LedgerCreditNotes.html', 
+        'LedgerDeliveryNotes.html', 'LedgerSuppliers.html', 'LedgerPurchaseInvoices.html', 'LedgerDebitNotes.html', 
+        'LedgerEmployees.html', 'LedgerJournalEntries.html', 'LedgerReports.html', 'Branches.html', 
+        'Customer.html', 'Clients.html', 'Suppliers.html', 'Vendors.html', 'Staff.html', 'Stock.html'
+    ]; 
+
+    // Check if the current page is in the protected list.
+    const isProtected = protectedPages.some(page => path.includes(page));
+
+    if (isProtected) {
+        const loginDataJSON = localStorage.getItem('loginData');
+        let isLoggedIn = false;
+        if (loginDataJSON) {
+            const loginData = JSON.parse(loginDataJSON);
+            if (new Date().getTime() <= loginData.expires) {
+                isLoggedIn = true;
+            }
+        }
+        if (!isLoggedIn) {
+            // If not logged in, redirect immediately. This prevents the page from rendering.
+            window.location.href = 'https://post4ex.github.io/postman/login.html';
+        }
+    }
+})();
+
+
 /**
  * Fetches and injects HTML content from a component file into a placeholder element,
  * and executes any scripts within the component.
@@ -258,41 +296,9 @@ const setActiveNavOnLoad = () => {
 };
 
 // --- SCRIPT EXECUTION STARTS HERE ---
+// The security check is now handled by the IIFE at the top of this file.
+// This part of the script will only run if the user is authorized or on a public page.
 document.addEventListener('DOMContentLoaded', () => {
-    const path = window.location.pathname;
-    
-    // **FIX:** Create a comprehensive list of all pages that require a user to be logged in.
-    const protectedPages = [
-        'dashboard.html', 'pincode.html', 'CreateOrder.html', 'PickupRequest.html', 'BookOrder.html', 
-        'AssignCarrier.html', 'EditOrder.html', 'Shipments.html', 'Calculator.html', 'OutMenifest.html', 
-        'InMenifest.html', 'RunSheet.html', 'Update.html', 'POD.html', 'CRM.html', 'ReportBooking.html', 
-        'ReportMenifest.html', 'ReportUpdate.html', 'ReportRunsheet.html', 'ReportCRM.html', 'Billing.html', 
-        'LedgerSummary.html', 'LedgerAccounts.html', 'LedgerReceipts.html', 'LedgerPayments.html', 
-        'LedgerExpenseClaims.html', 'LedgerCustomers.html', 'LedgerSalesInvoices.html', 'LedgerCreditNotes.html', 
-        'LedgerDeliveryNotes.html', 'LedgerSuppliers.html', 'LedgerPurchaseInvoices.html', 'LedgerDebitNotes.html', 
-        'LedgerEmployees.html', 'LedgerJournalEntries.html', 'LedgerReports.html', 'Branches.html', 
-        'Customer.html', 'Clients.html', 'Suppliers.html', 'Vendors.html', 'Staff.html', 'Stock.html'
-    ]; 
-
-    // Check if the current page is in the protected list.
-    const isProtected = protectedPages.some(page => path.includes(page));
-
-    if (isProtected) {
-        const loginDataJSON = localStorage.getItem('loginData');
-        let isLoggedIn = false;
-        if (loginDataJSON) {
-            const loginData = JSON.parse(loginDataJSON);
-            if (new Date().getTime() <= loginData.expires) {
-                isLoggedIn = true;
-            }
-        }
-        if (!isLoggedIn) {
-            // Redirect to login page if not logged in
-            window.location.href = 'https://post4ex.github.io/postman/login.html';
-            return; // Stop further script execution for this page
-        }
-    }
-
     // Load header and footer components first
     Promise.all([
         loadComponent('https://post4ex.github.io/postman/header.html', 'header-placeholder'),
@@ -301,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeUI();
         setActiveNavOnLoad();
         
+        const path = window.location.pathname;
         const isMainPage = path.endsWith('/') || path.endsWith('main.html') || path.endsWith('/postman/') || path === '/postman';
         
         if (isMainPage) {
