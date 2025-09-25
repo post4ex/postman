@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pincode Finder - Postman</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <div id="header-placeholder"></div>
+
+    <main class="w-full flex-grow p-4 sm:p-8">
+        <div class="container">
+            <div class="card">
+                <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Pincode Serviceability</h1>
+                
+                <!-- Search Section -->
+                <div class="flex flex-col sm:flex-row items-center gap-4 mb-8">
+                    <input type="text" id="pincode-input" placeholder="Enter 6-digit Pincode" maxlength="6" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700 w-full" oninput="this.value=this.value.replace(/[^0-9]/g,'');">
+                    <button id="pincode-search-button" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors w-full sm:w-auto">
+                        Search
+                    </button>
+                </div>
+
+                <!-- Results and Messages Section -->
+                <div id="loading-indicator" class="hidden text-center text-gray-500 mb-4">
+                    <p>Searching for pincode details...</p>
+                </div>
+                <div id="results-container" class="hidden space-y-4">
+                    <!-- Pincode details will be rendered here -->
+                </div>
+                <div id="message-box" class="hidden p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert">
+                    <p id="message-text"></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pincodeInput = document.getElementById('pincode-input');
+            const searchButton = document.getElementById('pincode-search-button');
+            const resultsContainer = document.getElementById('results-container');
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            const API_BASE_URL = 'https://api.postalpincode.in/pincode/';
+
+            const handleSearch = async () => {
+                const pincode = pincodeInput.value.trim();
+
+                // Clear previous results and hide messages
+                resultsContainer.innerHTML = '';
+                resultsContainer.classList.add('hidden');
+                messageBox.classList.add('hidden');
+
+                if (pincode.length !== 6) {
+                    showMessage('Please enter a valid 6-digit pincode.', 'error');
+                    return;
+                }
+
+                loadingIndicator.classList.remove('hidden');
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}${pincode}`);
+                    const data = await response.json();
+
+                    if (data && data.length > 0 && data[0].Status === 'Success') {
+                        renderResults(data[0].PostOffice);
+                    } else {
+                        showMessage('Pincode not found or invalid. Please check the number and try again.', 'error');
+                    }
+
+                } catch (error) {
+                    console.error('Pincode API fetch error:', error);
+                    showMessage('An error occurred while fetching data. Please check your network and try again.', 'error');
+                } finally {
+                    loadingIndicator.classList.add('hidden');
+                }
+            };
+
+            const renderResults = (postOffices) => {
+                const firstResult = postOffices[0];
+                let html = `
+                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-2">Details for Pincode: ${firstResult.Pincode}</h2>
+                        <p class="text-gray-600"><strong>District:</strong> ${firstResult.District}</p>
+                        <p class="text-gray-600"><strong>State:</strong> ${firstResult.State}</p>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-700 pt-4">Available Post Offices:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                `;
+                
+                postOffices.forEach(office => {
+                    html += `
+                        <div class="p-4 border rounded-lg bg-gray-50">
+                            <p class="font-semibold text-gray-800">${office.Name}</p>
+                            <p class="text-sm text-gray-500">${office.BranchType}</p>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                resultsContainer.innerHTML = html;
+                resultsContainer.classList.remove('hidden');
+            };
+
+            const showMessage = (text, type) => {
+                messageText.textContent = text;
+                messageBox.className = 'p-4 rounded-lg border'; // Reset classes
+                if (type === 'error') {
+                    messageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+                } else {
+                    messageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
+                }
+                messageBox.classList.remove('hidden');
+            };
+
+            searchButton.addEventListener('click', handleSearch);
+            pincodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
