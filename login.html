@@ -6,140 +6,101 @@
     <title>Login - Postman</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://post4ex.github.io/postman/style.css">
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <div id="header-placeholder"></div>
 
     <main class="flex-grow flex items-center justify-center p-4">
-        <div class="card w-full max-w-md">
-            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Login</h1>
-            <form id="login-form" class="space-y-6">
-                <!-- Code Input -->
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+            <h2 class="text-3xl font-bold text-center text-blue-800 mb-6">Login</h2>
+            <form id="loginForm" class="space-y-4">
                 <div class="relative">
-                    <input type="text" id="code" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
-                    <label for="code" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
-                        Code
-                    </label>
+                    <input type="text" id="login-code" placeholder=" " required class="w-full peer p-3 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
+                    <label for="login-code" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-xs peer-focus:-top-1 transition-all left-3 top-3 pointer-events-none">Code</label>
                 </div>
-                <!-- Username Input -->
                 <div class="relative">
-                    <input type="text" id="username" autocomplete="username" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
-                    <label for="username" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
-                        Username
-                    </label>
+                    <input type="text" id="login-username" placeholder=" " required class="w-full peer p-3 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
+                    <label for="login-username" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-xs peer-focus:-top-1 transition-all left-3 top-3 pointer-events-none">Username</label>
                 </div>
-                <!-- Password Input -->
                 <div class="relative">
-                    <input type="password" id="password" autocomplete="current-password" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
-                    <label for="password" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
-                        Password
-                    </label>
+                    <input type="password" id="login-password" placeholder=" " required class="w-full peer p-3 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
+                    <label for="login-password" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-xs peer-focus:-top-1 transition-all left-3 top-3 pointer-events-none">Password</label>
                 </div>
-                <!-- Submit Button -->
-                <button type="submit" class="w-full py-4 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors mt-6 flex items-center justify-center">
-                    <span id="button-text">Log In</span>
-                    <svg id="spinner" class="animate-spin h-5 w-5 text-white ml-3 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                <button type="submit" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-full shadow-lg hover:bg-blue-700 transition-colors mt-6">
+                    Log In
                 </button>
             </form>
-            <div id="message-area" class="text-center font-medium mt-4 text-sm"></div>
+            <p id="status" class="text-center mt-6 font-medium text-sm"></p>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
 
-    <script src="layout.js"></script>
+    <script src="https://post4ex.github.io/postman/layout.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-             // --- DOM Elements ---
-            const loginForm = document.getElementById('login-form');
-            const messageArea = document.getElementById('message-area');
-            const spinner = document.getElementById('spinner');
-            const buttonText = document.getElementById('button-text');
-
-            // --- Configuration ---
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPq1267mnqnaRbBwQqZ87Yvg31sSgXl4aRR1PbTkGthIvJCPdmz6PTkn6iY2sg_rRsDA/exec';
-            const SESSION_KEY = 'loginData'; // Use 'loginData' to match layout.js
-
-            // --- Session Function ---
-            function saveUserSession(fullUserData) {
-                const expiry = new Date().getTime() + (2 * 60 * 60 * 1000); // 2 hours
-                
-                // Combine user data with the expiry timestamp required by layout.js
-                const sessionItem = {
-                    ...fullUserData, // Spread all properties like NAME, ROLE, etc.
-                    expires: expiry 
-                };
-                
-                localStorage.setItem(SESSION_KEY, JSON.stringify(sessionItem));
+            const loginForm = document.getElementById('loginForm');
+            const statusDiv = document.getElementById('status');
+            
+            // Check if user is already logged in and redirect to the absolute dashboard URL
+            const loggedInUser = localStorage.getItem('loginData');
+            if (loggedInUser && new Date().getTime() <= JSON.parse(loggedInUser).expires) {
+                 window.location.href = 'https://post4ex.github.io/postman/dashboard.html';
+                 return;
             }
 
-            // --- Event Listener ---
             loginForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                setLoading(true);
-                displayMessage('', 'info');
-
-                const formData = {
-                    code: document.getElementById('code').value.trim(),
-                    username: document.getElementById('username').value.trim(),
-                    password: document.getElementById('password').value.trim(),
-                };
-
-                if (!formData.code || !formData.username || !formData.password) {
-                    displayMessage('All fields are required.', 'error');
-                    setLoading(false);
-                    return;
-                }
+                const code = document.getElementById('login-code').value;
+                const user = document.getElementById('login-username').value;
+                const pass = document.getElementById('login-password').value;
+                
+                statusDiv.textContent = 'Authenticating...';
+                statusDiv.className = "text-center mt-6 font-medium text-sm text-gray-600";
 
                 try {
                     const response = await fetch(WEB_APP_URL, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(formData)
+                        mode: 'cors',
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8',
+                        },
+                        body: JSON.stringify({ action: 'login', code, user, pass })
                     });
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
                     const result = await response.json();
 
-                    if (result.status === 'success') {
-                        displayMessage('Login successful! Redirecting...', 'success');
-                        saveUserSession(result.data);
+                    if (result.success) {
+                        statusDiv.textContent = result.message;
+                        statusDiv.className = "text-center mt-6 font-medium text-sm text-green-500";
+                        
+                        // Store user data in localStorage
+                        const twoHours = 2 * 60 * 60 * 1000;
+                        const loginData = {
+                            ...result.data,
+                            expires: new Date().getTime() + twoHours
+                        };
+                        localStorage.setItem('loginData', JSON.stringify(loginData));
+
                         setTimeout(() => {
+                            // Redirect to the absolute dashboard URL
                             window.location.href = 'https://post4ex.github.io/postman/dashboard.html';
                         }, 1000);
 
                     } else {
-                        displayMessage(result.message, 'error');
-                        setLoading(false);
+                        statusDiv.textContent = result.message || 'Invalid credentials.';
+                        statusDiv.className = "text-center mt-6 font-medium text-sm text-red-500";
                     }
                 } catch (error) {
-                    console.error("Login Error:", error);
-                    displayMessage('An unexpected error occurred. Please try again.', 'error');
-                    setLoading(false);
+                    console.error('Login error:', error);
+                    statusDiv.textContent = 'An error occurred. Please try again.';
+                    statusDiv.className = "text-center mt-6 font-medium text-sm text-red-500";
                 }
             });
-
-            // --- UI Functions ---
-            function setLoading(isLoading) {
-                spinner.classList.toggle('hidden', !isLoading);
-                buttonText.textContent = isLoading ? 'Verifying...' : 'Log In';
-                loginForm.querySelector('button[type="submit"]').disabled = isLoading;
-                ['code', 'username', 'password'].forEach(id => {
-                    document.getElementById(id).disabled = isLoading;
-                });
-            }
-
-            function displayMessage(message, type) {
-                messageArea.textContent = message;
-                messageArea.className = 'text-center font-medium mt-4 text-sm';
-                if (type === 'error') messageArea.classList.add('text-red-600');
-                else if (type === 'success') messageArea.classList.add('text-green-600');
-                else if (type === 'info') messageArea.classList.add('text-gray-600');
-            }
         });
     </script>
 </body>
 </html>
+
