@@ -29,8 +29,8 @@
             }
         }
         if (!isLoggedIn) {
-            // If not logged in, redirect immediately. This prevents the page from rendering.
-            window.location.href = 'https://post4ex.github.io/postman/login.html';
+            // If not logged in, redirect immediately to the correct relative login page.
+            window.location.href = 'login.html';
         }
     }
 })();
@@ -198,8 +198,8 @@ function checkLoginStatus() {
         
         sidebarToggleContainer.classList.remove('hidden');
         // Update home links to point to the dashboard
-        if (homeLink) homeLink.href = 'https://post4ex.github.io/postman/dashboard.html';
-        if (homeLinkMobile) homeLinkMobile.href = 'https://post4ex.github.io/postman/dashboard.html';
+        if (homeLink) homeLink.href = 'dashboard.html';
+        if (homeLinkMobile) homeLinkMobile.href = 'dashboard.html';
         
         // --- Role-Based Access Control for Sidebar ---
         if (ledgerMenuItem && mastersMenuItem) {
@@ -224,8 +224,8 @@ function checkLoginStatus() {
 
         sidebarToggleContainer.classList.add('hidden');
         // Update home links to point to the main public page
-        if (homeLink) homeLink.href = 'https://post4ex.github.io/postman/main.html';
-        if (homeLinkMobile) homeLinkMobile.href = 'https://post4ex.github.io/postman/main.html';
+        if (homeLink) homeLink.href = 'main.html';
+        if (homeLinkMobile) homeLinkMobile.href = 'main.html';
 
         // Ensure sidebar menus are hidden if logged out
         if (ledgerMenuItem) ledgerMenuItem.classList.add('hidden');
@@ -264,7 +264,7 @@ function initializeUI() {
 
     const handleLogout = () => {
         localStorage.removeItem('loginData');
-        window.location.href = 'https://post4ex.github.io/postman/login.html';
+        window.location.href = 'login.html';
     };
     if (logoutButton) logoutButton.addEventListener('click', handleLogout);
     if (logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
@@ -301,8 +301,8 @@ const setActiveNavOnLoad = () => {
 document.addEventListener('DOMContentLoaded', () => {
     // Load header and footer components first
     Promise.all([
-        loadComponent('https://post4ex.github.io/postman/header.html', 'header-placeholder'),
-        loadComponent('https://post4ex.github.io/postman/footer.html', 'footer-placeholder')
+        loadComponent('header.html', 'header-placeholder'),
+        loadComponent('footer.html', 'footer-placeholder')
     ]).then(() => {
         initializeUI();
         setActiveNavOnLoad();
@@ -311,8 +311,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const isMainPage = path.endsWith('/') || path.endsWith('main.html') || path.endsWith('/postman/') || path === '/postman';
         
         if (isMainPage) {
-            loadDynamicContent('https://post4ex.github.io/postman/tracking.html', 'tracking-content-area');
-            loadDynamicContent('https://post4ex.github.io/postman/services.html', 'services-content-area');
+            loadDynamicContent('tracking.html', 'tracking-content-area');
+            loadDynamicContent('services.html', 'services-content-area');
         }
     }).catch(error => {
         console.error("Failed to initialize page layout:", error);
