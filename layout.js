@@ -144,7 +144,7 @@ function checkLoginStatus() {
         const now = new Date().getTime();
         if (now <= loginData.expires) {
             isLoggedIn = true;
-            // **FIX:** Get role, trim whitespace, and convert to uppercase for reliable comparison.
+            // Get role, trim whitespace, and convert to uppercase for reliable comparison.
             userRole = loginData.ROLE ? loginData.ROLE.trim().toUpperCase() : null; 
         } else {
             localStorage.removeItem('loginData'); // Clear expired session
@@ -165,7 +165,7 @@ function checkLoginStatus() {
         
         // --- Role-Based Access Control for Sidebar ---
         if (ledgerMenuItem && mastersMenuItem) {
-            // **FIX:** Compare against uppercase roles for consistency.
+            // Compare against uppercase roles for consistency.
             if (userRole === 'CLIENT' || userRole === 'BRANCH') {
                 // Hide for non-admin roles
                 ledgerMenuItem.classList.add('hidden');
@@ -259,9 +259,25 @@ const setActiveNavOnLoad = () => {
 
 // --- SCRIPT EXECUTION STARTS HERE ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Protect the dashboard page from unauthorized access
     const path = window.location.pathname;
-    if (path.includes('dashboard.html')) {
+    
+    // **FIX:** Create a comprehensive list of all pages that require a user to be logged in.
+    const protectedPages = [
+        'dashboard.html', 'pincode.html', 'CreateOrder.html', 'PickupRequest.html', 'BookOrder.html', 
+        'AssignCarrier.html', 'EditOrder.html', 'Shipments.html', 'Calculator.html', 'OutMenifest.html', 
+        'InMenifest.html', 'RunSheet.html', 'Update.html', 'POD.html', 'CRM.html', 'ReportBooking.html', 
+        'ReportMenifest.html', 'ReportUpdate.html', 'ReportRunsheet.html', 'ReportCRM.html', 'Billing.html', 
+        'LedgerSummary.html', 'LedgerAccounts.html', 'LedgerReceipts.html', 'LedgerPayments.html', 
+        'LedgerExpenseClaims.html', 'LedgerCustomers.html', 'LedgerSalesInvoices.html', 'LedgerCreditNotes.html', 
+        'LedgerDeliveryNotes.html', 'LedgerSuppliers.html', 'LedgerPurchaseInvoices.html', 'LedgerDebitNotes.html', 
+        'LedgerEmployees.html', 'LedgerJournalEntries.html', 'LedgerReports.html', 'Branches.html', 
+        'Customer.html', 'Clients.html', 'Suppliers.html', 'Vendors.html', 'Staff.html', 'Stock.html'
+    ]; 
+
+    // Check if the current page is in the protected list.
+    const isProtected = protectedPages.some(page => path.includes(page));
+
+    if (isProtected) {
         const loginDataJSON = localStorage.getItem('loginData');
         let isLoggedIn = false;
         if (loginDataJSON) {
@@ -295,5 +311,4 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Failed to initialize page layout:", error);
     });
 });
-
 
