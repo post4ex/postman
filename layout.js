@@ -29,16 +29,15 @@
             }
         }
         if (!isLoggedIn) {
-            // If not logged in, redirect immediately to the correct relative login page.
-            window.location.href = 'login.html';
+            // If not logged in, redirect immediately to the absolute login page URL.
+            window.location.href = 'https://post4ex.github.io/postman/login.html';
         }
     }
 })();
 
 
 /**
- * Fetches and injects HTML content from a component file into a placeholder element,
- * and executes any scripts within the component.
+ * Fetches and injects HTML content from a component file into a placeholder element.
  * @param {string} componentUrl - The URL of the HTML component to load.
  * @param {string} placeholderId - The ID of the element to inject the content into.
  * @returns {Promise<void>}
@@ -52,39 +51,19 @@ async function loadComponent(componentUrl, placeholderId) {
         const text = await response.text();
         const placeholder = document.getElementById(placeholderId);
         if (placeholder) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(text, 'text/html');
-            const componentBody = doc.body;
-
-            // Find and execute any script tags within the component
-            const scripts = componentBody.querySelectorAll('script');
-            scripts.forEach(script => {
-                const newScript = document.createElement('script');
-                if (script.src) {
-                    newScript.src = script.src;
-                } else {
-                    newScript.textContent = script.textContent;
-                }
-                document.body.appendChild(newScript).remove();
-            });
-
-            // Append the component's HTML content to the placeholder
-            while (componentBody.firstChild) {
-                placeholder.appendChild(componentBody.firstChild);
-            }
+            placeholder.innerHTML = text;
         }
     } catch (error) {
         console.error(error);
-        const placeholder = document.getElementById(placeholderId);
-        if (placeholder) {
-            placeholder.innerHTML = `<p class="text-red-500 text-center">Failed to load component.</p>`;
+        if (document.getElementById(placeholderId)) {
+            document.getElementById(placeholderId).innerHTML = `<p class="text-red-500 text-center">Failed to load component.</p>`;
         }
     }
 }
 
 
 /**
- * Fetches, injects, and initializes dynamic page content (like tracking, services).
+ * Fetches and injects dynamic page content.
  * @param {string} url - The URL of the page to load.
  * @param {string} targetElementId - The ID of the element to inject the content into.
  */
@@ -94,7 +73,6 @@ async function loadDynamicContent(url, targetElementId) {
 
     try {
         targetElement.innerHTML = `<div class="card text-center"><p class="text-gray-500">Loading...</p></div>`;
-
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Failed to load content. Status: ${response.status}`);
         
@@ -103,22 +81,13 @@ async function loadDynamicContent(url, targetElementId) {
         const doc = parser.parseFromString(htmlText, 'text/html');
         
         const mainContent = doc.querySelector('main .container');
-        const pageScriptTag = doc.querySelector('body > script:last-of-type');
-        
         if (mainContent) {
             targetElement.innerHTML = mainContent.innerHTML;
-
+            // Re-run the script logic for the dynamically loaded content
+            const pageScriptTag = doc.querySelector('body > script:last-of-type');
             if (pageScriptTag && pageScriptTag.textContent) {
-                let scriptContent = pageScriptTag.textContent;
-                const regex = /document\.addEventListener\(\s*['"]DOMContentLoaded['"]\s*,\s*(?:function\s*\(\s*\)\s*\{|(?:\(\s*\)\s*=>\s*\{))([\s\S]*)\}\s*\)\s*;/;
-                const match = scriptContent.match(regex);
-                
-                if (match && match[1]) {
-                    scriptContent = match[1];
-                }
-
                 const script = document.createElement('script');
-                script.textContent = scriptContent;
+                script.textContent = pageScriptTag.textContent;
                 document.body.appendChild(script).remove();
             }
         } else {
@@ -132,143 +101,107 @@ async function loadDynamicContent(url, targetElementId) {
 
 
 /**
- * Sets the active state for a navigation link based on a page identifier.
+ * Sets the active state for a navigation link.
  * @param {string} pageId - Identifier for the page (e.g., 'main', 'tracking').
  */
 const setActiveNav = (pageId) => {
     setTimeout(() => {
-        const navLinks = document.querySelectorAll('#main-nav a, #dropdownMenu a');
-        navLinks.forEach(link => {
+        document.querySelectorAll('#main-nav a, #dropdownMenu a').forEach(link => {
             link.classList.remove('bg-gray-600', 'font-bold');
             link.classList.add('bg-blue-900');
-            
-            const linkPage = link.id ? link.id.split('-')[1] : '';
-            if (linkPage === pageId) {
+            if (link.id && link.id.split('-')[1] === pageId) {
                 link.classList.remove('bg-blue-900');
                 link.classList.add('bg-gray-600', 'font-bold');
             }
         });
     }, 100);
 };
-window.setActiveNav = setActiveNav;
+
 
 /**
- * Checks login status from localStorage and updates the UI accordingly, including role-based permissions.
+ * Checks login status and updates UI, including role-based permissions.
  */
 function checkLoginStatus() {
     const loginDataJSON = localStorage.getItem('loginData');
-    const loginButton = document.getElementById('login-button');
-    const logoutButton = document.getElementById('logout-button');
-    const sidebarToggleContainer = document.getElementById('sidebar-toggle-container');
-    
-    // Get home links to make them dynamic
-    const homeLink = document.getElementById('nav-main');
-    const homeLinkMobile = document.getElementById('dropdown-main');
-    
-    // Mobile auth buttons
-    const loginButtonMobile = document.getElementById('login-button-mobile');
-    const logoutButtonMobile = document.getElementById('logout-button-mobile');
-
-    // Sidebar menu items for role-based access
-    const ledgerMenuItem = document.getElementById('ledger-menu-item');
-    const mastersMenuItem = document.getElementById('masters-menu-item');
-
-    if (!loginButton || !logoutButton || !sidebarToggleContainer) return;
+    const elements = {
+        loginButton: document.getElementById('login-button'),
+        logoutButton: document.getElementById('logout-button'),
+        sidebarToggle: document.getElementById('sidebar-toggle-container'),
+        homeLink: document.getElementById('nav-main'),
+        homeLinkMobile: document.getElementById('dropdown-main'),
+        loginButtonMobile: document.getElementById('login-button-mobile'),
+        logoutButtonMobile: document.getElementById('logout-button-mobile'),
+        ledgerMenu: document.getElementById('ledger-menu-item'),
+        mastersMenu: document.getElementById('masters-menu-item')
+    };
 
     let isLoggedIn = false;
     let userRole = null;
     if (loginDataJSON) {
         const loginData = JSON.parse(loginDataJSON);
-        const now = new Date().getTime();
-        if (now <= loginData.expires) {
+        if (new Date().getTime() <= loginData.expires) {
             isLoggedIn = true;
-            // Get role, trim whitespace, and convert to uppercase for reliable comparison.
-            userRole = loginData.ROLE ? loginData.ROLE.trim().toUpperCase() : null; 
+            userRole = loginData.ROLE ? loginData.ROLE.trim().toUpperCase() : null;
         } else {
-            localStorage.removeItem('loginData'); // Clear expired session
+            localStorage.removeItem('loginData');
         }
     }
 
+    const base_url = 'https://post4ex.github.io/postman/';
     if (isLoggedIn) {
-        // --- UI for LOGGED IN user ---
-        loginButton.classList.add('hidden');
-        logoutButton.classList.remove('hidden');
-        if(loginButtonMobile) loginButtonMobile.classList.add('hidden');
-        if(logoutButtonMobile) logoutButtonMobile.classList.remove('hidden');
-        
-        sidebarToggleContainer.classList.remove('hidden');
-        // Update home links to point to the dashboard
-        if (homeLink) homeLink.href = 'dashboard.html';
-        if (homeLinkMobile) homeLinkMobile.href = 'dashboard.html';
-        
-        // --- Role-Based Access Control for Sidebar ---
-        if (ledgerMenuItem && mastersMenuItem) {
-            // Compare against uppercase roles for consistency.
-            if (userRole === 'CLIENT' || userRole === 'BRANCH') {
-                // Hide for non-admin roles
-                ledgerMenuItem.classList.add('hidden');
-                mastersMenuItem.classList.add('hidden');
-            } else {
-                // Show for Admin or other roles
-                ledgerMenuItem.classList.remove('hidden');
-                mastersMenuItem.classList.remove('hidden');
-            }
+        elements.loginButton?.classList.add('hidden');
+        elements.logoutButton?.classList.remove('hidden');
+        elements.loginButtonMobile?.classList.add('hidden');
+        elements.logoutButtonMobile?.classList.remove('hidden');
+        elements.sidebarToggle?.classList.remove('hidden');
+        if (elements.homeLink) elements.homeLink.href = `${base_url}dashboard.html`;
+        if (elements.homeLinkMobile) elements.homeLinkMobile.href = `${base_url}dashboard.html`;
+
+        if (elements.ledgerMenu && elements.mastersMenu) {
+            const isRestricted = userRole === 'CLIENT' || userRole === 'BRANCH';
+            elements.ledgerMenu.classList.toggle('hidden', isRestricted);
+            elements.mastersMenu.classList.toggle('hidden', isRestricted);
         }
-
     } else {
-        // --- UI for LOGGED OUT user ---
-        loginButton.classList.remove('hidden');
-        logoutButton.classList.add('hidden');
-        if(loginButtonMobile) loginButtonMobile.classList.remove('hidden');
-        if(logoutButtonMobile) logoutButtonMobile.classList.add('hidden');
-
-        sidebarToggleContainer.classList.add('hidden');
-        // Update home links to point to the main public page
-        if (homeLink) homeLink.href = 'main.html';
-        if (homeLinkMobile) homeLinkMobile.href = 'main.html';
-
-        // Ensure sidebar menus are hidden if logged out
-        if (ledgerMenuItem) ledgerMenuItem.classList.add('hidden');
-        if (mastersMenuItem) mastersMenuItem.classList.add('hidden');
+        elements.loginButton?.classList.remove('hidden');
+        elements.logoutButton?.classList.add('hidden');
+        elements.loginButtonMobile?.classList.remove('hidden');
+        elements.logoutButtonMobile?.classList.add('hidden');
+        elements.sidebarToggle?.classList.add('hidden');
+        if (elements.homeLink) elements.homeLink.href = `${base_url}main.html`;
+        if (elements.homeLinkMobile) elements.homeLinkMobile.href = `${base_url}main.html`;
+        elements.ledgerMenu?.classList.add('hidden');
+        elements.mastersMenu?.classList.add('hidden');
     }
 }
 
 
 /**
- * Main function to initialize the UI event listeners after components are loaded.
+ * Main function to initialize the UI event listeners.
  */
 function initializeUI() {
     const menuButton = document.getElementById('menuButton');
     const dropdownMenu = document.getElementById('dropdownMenu');
-    const logoutButton = document.getElementById('logout-button');
-    const logoutButtonMobile = document.getElementById('logout-button-mobile');
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
     
     if (menuButton && dropdownMenu) {
-        menuButton.addEventListener('click', (event) => {
-            event.stopPropagation();
+        menuButton.addEventListener('click', e => {
+            e.stopPropagation();
             dropdownMenu.classList.toggle('hidden');
         });
-        dropdownMenu.addEventListener('click', () => dropdownMenu.classList.add('hidden'));
     }
 
-    document.addEventListener('click', (event) => {
-        const isClickInsideMenuButton = menuButton ? menuButton.contains(event.target) : false;
-        const isClickInsideDropdownMenu = dropdownMenu ? dropdownMenu.contains(event.target) : false;
-        if (!isClickInsideMenuButton && !isClickInsideDropdownMenu && dropdownMenu) {
-            dropdownMenu.classList.add('hidden');
-        }
-    });
+    document.addEventListener('click', () => dropdownMenu?.classList.add('hidden'));
 
     const handleLogout = () => {
         localStorage.removeItem('loginData');
-        window.location.href = 'login.html';
+        window.location.href = 'https://post4ex.github.io/postman/login.html';
     };
-    if (logoutButton) logoutButton.addEventListener('click', handleLogout);
-    if (logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
-
+    document.getElementById('logout-button')?.addEventListener('click', handleLogout);
+    document.getElementById('logout-button-mobile')?.addEventListener('click', handleLogout);
+    
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
     if (sidebar && sidebarToggle && sidebarOverlay) {
         const toggleSidebar = () => {
             sidebar.classList.toggle('-translate-x-full');
@@ -286,36 +219,30 @@ function initializeUI() {
  */
 const setActiveNavOnLoad = () => {
     const path = window.location.pathname;
-    let pageId = 'main'; // Default to main
-    if (path.includes('dashboard.html')) pageId = 'main'; // Treat dashboard as home
-    if (path.includes('tracking.html')) pageId = 'tracking';
-    if (path.includes('services.html')) pageId = 'services';
-    if (path.includes('complaint.html')) pageId = 'complaint';
-    
+    let pageId = 'main';
+    if (path.includes('dashboard.html')) pageId = 'main';
+    else if (path.includes('tracking.html')) pageId = 'tracking';
+    else if (path.includes('services.html')) pageId = 'services';
+    else if (path.includes('complaint.html')) pageId = 'complaint';
     setActiveNav(pageId);
 };
 
 // --- SCRIPT EXECUTION STARTS HERE ---
-// The security check is now handled by the IIFE at the top of this file.
-// This part of the script will only run if the user is authorized or on a public page.
 document.addEventListener('DOMContentLoaded', () => {
-    // Load header and footer components first
+    const base_url = 'https://post4ex.github.io/postman/';
     Promise.all([
-        loadComponent('header.html', 'header-placeholder'),
-        loadComponent('footer.html', 'footer-placeholder')
+        loadComponent(`${base_url}header.html`, 'header-placeholder'),
+        loadComponent(`${base_url}footer.html`, 'footer-placeholder')
     ]).then(() => {
         initializeUI();
         setActiveNavOnLoad();
         
         const path = window.location.pathname;
-        const isMainPage = path.endsWith('/') || path.endsWith('main.html') || path.endsWith('/postman/') || path === '/postman';
-        
+        const isMainPage = path.endsWith('/') || path.endsWith('main.html') || path.endsWith('/postman/');
         if (isMainPage) {
-            loadDynamicContent('tracking.html', 'tracking-content-area');
-            loadDynamicContent('services.html', 'services-content-area');
+            loadDynamicContent(`${base_url}tracking.html`, 'tracking-content-area');
+            loadDynamicContent(`${base_url}services.html`, 'services-content-area');
         }
-    }).catch(error => {
-        console.error("Failed to initialize page layout:", error);
-    });
+    }).catch(error => console.error("Failed to initialize page layout:", error));
 });
 
