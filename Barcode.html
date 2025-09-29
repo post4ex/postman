@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Uploader with Barcode Scanner</title>
+    <title>Uploader with Barcode & OCR</title>
     <!-- Cropper.js CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <style>
@@ -13,7 +13,7 @@
         }
         .uploader-container {
             display: flex; flex-direction: column; align-items: center; gap: 15px;
-            width: 100%; max-width: 600px; padding: 0 10px; box-sizing: border-box;
+            width: 100%; max-width: 800px; padding: 0 15px; box-sizing: border-box;
         }
         /* Scroller Styles */
         #image-scroller-container {
@@ -30,13 +30,23 @@
         .scroller-img.active { border-color: #007bff; }
         
         #image-view-area {
-            border: 2px dashed #ccc; width: 100%; aspect-ratio: 1 / 1; display: flex;
+            border: 2px dashed #ccc; width: 100%; aspect-ratio: 4 / 3; display: flex;
             justify-content: center; align-items: center; text-align: center; color: #888;
             position: relative; overflow: hidden; background-color: #f0f0f0;
+            cursor: default;
         }
-        #image-preview, #camera-feed {
-            width: 100%; height: 100%; object-fit: contain; display: none; transition: transform 0.3s ease;
+        #image-view-area.selectable {
+            cursor: crosshair;
         }
+        /* Hide the original image, we will draw it on the canvas */
+        #image-preview { 
+            display: none;
+        }
+        #camera-feed, #preview-canvas {
+            width: 100%; height: 100%; object-fit: contain;
+        }
+        #preview-canvas { display: none; }
+
         .button-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
         button {
             padding: 8px 16px; border: 1px solid #ccc; background-color: #fff; border-radius: 4px; cursor: pointer;
@@ -61,15 +71,39 @@
             padding: 10px;
             box-sizing: border-box;
             background-color: #f0f0f0;
-            border: 2px dashed #007bff; /* Blue border to indicate active cropping */
+            border: 2px dashed #007bff; 
         }
         #cropper-container {
             width: 100%;
-            max-height: 450px; /* Set a max-height for the cropper */
+            height: 60vh;
         }
         #cropper-image {
             display: block;
             max-width: 100%;
+        }
+        
+        /* OCR Selection Canvas */
+        #selection-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            display: none; /* Hidden by default */
+            z-index: 10;
+        }
+        
+        /* Status Bar */
+        #status-bar {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            min-height: 2.5em;
+            text-align: center;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            color: #495057;
+        }
+        #status-bar.error {
+            color: #dc3545;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -95,6 +129,7 @@
                 <img id="cropper-image" src="">
             </div>
             <div class="button-group" style="margin-top: 10px;">
+                <button id="crop-rotate-btn">Rotate</button>
                 <button id="crop-confirm-btn">Crop</button>
                 <button id="crop-cancel-btn">Cancel</button>
             </div>
@@ -104,8 +139,13 @@
         <div id="image-view-area">
             <span id="placeholder">Image preview area</span>
             <img id="image-preview" src="" alt="Image preview"/>
+            <canvas id="preview-canvas"></canvas>
+            <canvas id="selection-canvas"></canvas>
             <video id="camera-feed" autoplay playsinline></video>
         </div>
+        
+        <!-- Status Bar -->
+        <div id="status-bar"></div>
 
         <!-- Inputs -->
         <div class="entry-input-group">
@@ -128,13 +168,16 @@
         </div>
     </div>
     
-    <!-- Cropper.js JS -->
+    <!-- Third-party libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+
     <script>
         // DOM Elements
         const cameraBtn = document.getElementById('camera-btn'), uploadBtn = document.getElementById('upload-btn'),
               fileInput = document.getElementById('file-input'), placeholder = document.getElementById('placeholder'),
               imagePreview = document.getElementById('image-preview'), cameraFeed = document.getElementById('camera-feed'),
+              previewCanvas = document.getElementById('preview-canvas'),
               rotateBtn = document.getElementById('rotate-btn'), lockBtn = document.getElementById('lock-btn'),
               cancelBtn = document.getElementById('cancel-btn'), cancelAllBtn = document.getElementById('cancel-all-btn'),
               pickBtn = document.getElementById('pick-btn'), tableBody = document.getElementById('data-table-body'),
@@ -145,7 +188,11 @@
               inlineCropperWrapper = document.getElementById('inline-cropper-wrapper'),
               imageViewArea = document.getElementById('image-view-area'),
               cropperImage = document.getElementById('cropper-image'), cropConfirmBtn = document.getElementById('crop-confirm-btn'),
-              cropCancelBtn = document.getElementById('crop-cancel-btn');
+              cropCancelBtn = document.getElementById('crop-cancel-btn'),
+              cropRotateBtn = document.getElementById('crop-rotate-btn'),
+              selectionCanvas = document.getElementById('selection-canvas'),
+              statusBar = document.getElementById('status-bar');
+
 
         // State Variables
         let stream = null, currentRotation = 0, isImageLocked = false, cropper = null;
@@ -153,10 +200,15 @@
         let barcodeDetector;
         const MAX_FILES = 50, MAX_ROWS = 20;
 
+        // OCR Selection State
+        let isSelecting = false, selectionRect = {};
+        const selectionCtx = selectionCanvas.getContext('2d');
+        const previewCtx = previewCanvas.getContext('2d');
+
+
         // --- Barcode Detector Initialization ---
         if (!('BarcodeDetector' in window)) {
             console.log('Barcode Detector is not supported by this browser.');
-            showError('Barcode Detector is not supported by this browser.');
         } else {
             console.log('Barcode Detector supported!');
             try {
@@ -167,29 +219,34 @@
                 console.error('Barcode Detector could not be instantiated.', e);
             }
         }
+        
+        // --- Status Update Logic ---
+        function updateStatus(message, isError = false) {
+            statusBar.textContent = message;
+            statusBar.classList.toggle('error', isError);
+        }
 
-        // --- Barcode Scanning Logic ---
+        // --- Scanning Logic ---
         async function scanBarcodeFromPreview() {
             if (!barcodeDetector) {
-                console.log("Barcode Detector not available or initialized.");
+                updateStatus("Barcode detection not supported. Select area for OCR.", true);
                 return;
             }
-            if (!imagePreview.src || !imagePreview.src.startsWith('data:')) {
-                console.log("Preview image not available for scanning.");
-                return;
-            }
+            if (!imagePreview.src || !imagePreview.src.startsWith('data:')) return;
 
             try {
-                const barcodes = await barcodeDetector.detect(imagePreview);
+                updateStatus("Attempting barcode scan...");
+                const barcodes = await barcodeDetector.detect(imagePreview); // Scan original, un-rotated image
                 if (barcodes.length > 0) {
                     const barcodeValue = barcodes[0].rawValue;
-                    console.log(`Barcode detected: ${barcodeValue}`);
                     awbInput.value = barcodeValue;
+                    updateStatus(`Barcode detected: ${barcodeValue}`);
                 } else {
-                    console.log("No barcode found in the image.");
+                    updateStatus("No barcode found. Please select an area for OCR.");
                 }
             } catch (err) {
-                console.error("Error scanning barcode:", err);
+                console.error("Barcode scan failed:", err);
+                updateStatus("Barcode scan failed. Select area for OCR.", true);
             }
         }
 
@@ -198,12 +255,16 @@
             cameraBtn.style.display='inline-block'; uploadBtn.style.display='inline-block';
             rotateBtn.style.display='none'; lockBtn.style.display='none';
             cancelBtn.style.display='none'; cancelAllBtn.style.display='none';
+            imageViewArea.classList.remove('selectable');
 
             if (state === 'streaming') {
                 cameraBtn.textContent = 'Capture'; uploadBtn.style.display = 'none'; cancelBtn.style.display = 'inline-block';
+                previewCanvas.style.display = 'none';
+                cameraFeed.style.display = 'block';
             } else if (state === 'preview') {
                 cameraBtn.style.display='none'; uploadBtn.style.display='none';
                 rotateBtn.style.display='inline-block'; lockBtn.style.display='inline-block';
+                imageViewArea.classList.add('selectable');
                 if(imageQueue.length > 0) {
                     cancelBtn.style.display='inline-block'; cancelAllBtn.style.display='inline-block';
                 } else {
@@ -214,15 +275,19 @@
 
         function resetUploader() {
             stopCamera();
-            placeholder.style.display = 'block'; placeholder.textContent = "Image preview area";
-            imagePreview.style.display = 'none'; cameraFeed.style.display = 'none'; imagePreview.src = '';
-            fileInput.value = ''; currentRotation = 0; imagePreview.style.transform = 'rotate(0deg)';
+            placeholder.style.display = 'block';
+            previewCanvas.style.display = 'none';
+            cameraFeed.style.display = 'none'; 
+            imagePreview.src = ''; // Clear image source
+            fileInput.value = ''; currentRotation = 0;
             isImageLocked = false; lockBtn.textContent = 'Lock'; lockBtn.style.backgroundColor = '';
             imageQueue = []; currentImageIndex = -1;
             scroller.innerHTML = ''; scrollerContainer.style.display = 'none';
             
             inlineCropperWrapper.style.display = 'none';
             imageViewArea.style.display = 'flex';
+            selectionCanvas.style.display = 'none';
+            updateStatus('');
 
             setInterfaceState('idle');
         }
@@ -265,12 +330,20 @@
             cropperImage.src = imageSrc;
             if (cropper) cropper.destroy();
             cropper = new Cropper(cropperImage, {
-                viewMode: 1,
+                viewMode: 1, // Allow freeform cropping
                 background: false,
             });
             
             const confirmCropHandler = async () => {
-                const croppedCanvas = cropper.getCroppedCanvas();
+                const croppedCanvas = cropper.getCroppedCanvas({
+                    minWidth: 256,
+                    minHeight: 256,
+                    maxWidth: 4096,
+                    maxHeight: 4096,
+                    fillColor: '#fff',
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high',
+                });
                 if (!croppedCanvas) { return; }
                 const croppedDataUrl = croppedCanvas.toDataURL('image/png');
                 
@@ -278,18 +351,17 @@
                 imageViewArea.style.display = 'flex';
                 if (imageQueue.length > 1) scrollerContainer.style.display = 'block';
 
-                // Set up the onload event BEFORE setting the src to trigger the scan
                 imagePreview.onload = () => {
+                    drawPreview();
                     scanBarcodeFromPreview();
-                    imagePreview.onload = null; // Clean up listener to prevent re-firing
+                    imagePreview.onload = null;
                 };
-                imagePreview.src = croppedDataUrl; // Setting src triggers the load and then the scan
+                imagePreview.src = croppedDataUrl; 
 
                 placeholder.style.display = 'none';
-                imagePreview.style.display = 'block';
                 cameraFeed.style.display = 'none';
+                previewCanvas.style.display = 'block';
                 currentRotation = 0;
-                imagePreview.style.transform = 'rotate(0deg)';
 
                 if (currentImageIndex !== -1) {
                     const newFile = await dataURLtoFile(croppedDataUrl, originalFileName);
@@ -308,10 +380,49 @@
             imageViewArea.style.display = 'flex';
             if (imageQueue.length > 1) scrollerContainer.style.display = 'block';
             if (cropper) cropper.destroy();
-            if (!imagePreview.src || !imagePreview.src.startsWith('data:')) {
+            if (!imagePreview.src) {
                 resetUploader();
             }
         });
+        
+        cropRotateBtn.addEventListener('click', () => {
+            if (cropper) {
+                cropper.rotate(90);
+            }
+        });
+
+        function drawPreview() {
+            if (!imagePreview.src) return;
+            const dpr = window.devicePixelRatio || 1;
+            const containerW = imageViewArea.clientWidth;
+            const containerH = imageViewArea.clientHeight;
+            
+            previewCanvas.width = containerW * dpr;
+            previewCanvas.height = containerH * dpr;
+            previewCanvas.style.width = `${containerW}px`;
+            previewCanvas.style.height = `${containerH}px`;
+            
+            previewCtx.scale(dpr, dpr);
+            
+            const naturalW = imagePreview.naturalWidth;
+            const naturalH = imagePreview.naturalHeight;
+            const imgAspect = naturalW / naturalH;
+            const contAspect = containerW / containerH;
+            let renderedW, renderedH;
+
+            if (imgAspect > contAspect) {
+                renderedW = containerW; renderedH = containerW / imgAspect;
+            } else {
+                renderedH = containerH; renderedW = containerH * imgAspect;
+            }
+            
+            previewCtx.clearRect(0, 0, containerW, containerH);
+            previewCtx.save();
+            previewCtx.translate(containerW / 2, containerH / 2);
+            previewCtx.rotate(currentRotation * Math.PI / 180);
+            previewCtx.drawImage(imagePreview, -renderedW / 2, -renderedH / 2, renderedW, renderedH);
+            previewCtx.restore();
+        }
 
         // --- Event Listeners ---
         cameraBtn.addEventListener('click', async () => {
@@ -327,9 +438,11 @@
                 resetUploader();
                 const constraints = { video: { facingMode: { exact: "environment" } } };
                 try { stream = await navigator.mediaDevices.getUserMedia(constraints); } 
-                catch { try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); } catch (e) { return; } }
-                placeholder.style.display = 'none'; cameraFeed.style.display = 'block';
-                cameraFeed.srcObject = stream; cameraFeed.play(); setInterfaceState('streaming');
+                catch { try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); } catch (e) { updateStatus("Could not access camera.", true); return; } }
+                placeholder.style.display = 'none';
+                cameraFeed.style.display = 'block';
+                cameraFeed.srcObject = stream; cameraFeed.play(); 
+                setInterfaceState('streaming');
             }
         });
 
@@ -345,9 +458,9 @@
         });
 
         rotateBtn.addEventListener('click', () => {
-            if (imagePreview.style.display === 'block') {
+            if (previewCanvas.style.display === 'block') {
                 currentRotation = (currentRotation + 90) % 360;
-                imagePreview.style.transform = `rotate(${currentRotation}deg)`;
+                drawPreview();
             }
         });
         
@@ -367,12 +480,97 @@
         });
         
         cancelAllBtn.addEventListener('click', resetUploader);
+        
+        // --- OCR Area Selection Listeners ---
+        imageViewArea.addEventListener('mousedown', (e) => {
+            if (previewCanvas.style.display !== 'block' || isSelecting) return;
+            e.preventDefault();
+            
+            const rect = imageViewArea.getBoundingClientRect();
+            selectionCanvas.width = rect.width;
+            selectionCanvas.height = rect.height;
+            selectionCanvas.style.display = 'block';
+
+            isSelecting = true;
+            selectionRect.startX = e.clientX - rect.left;
+            selectionRect.startY = e.clientY - rect.top;
+
+            window.addEventListener('mousemove', onSelectionMove);
+            window.addEventListener('mouseup', onSelectionUp, { once: true });
+        });
+
+        function onSelectionMove(e) {
+            if (!isSelecting) return;
+            const rect = imageViewArea.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            const width = currentX - selectionRect.startX;
+            const height = currentY - selectionRect.startY;
+
+            selectionCtx.clearRect(0, 0, selectionCanvas.width, selectionCanvas.height);
+            selectionCtx.strokeStyle = 'red';
+            selectionCtx.lineWidth = 2;
+            selectionCtx.strokeRect(selectionRect.startX, selectionRect.startY, width, height);
+        }
+
+        async function onSelectionUp(e) {
+            isSelecting = false;
+            window.removeEventListener('mousemove', onSelectionMove);
+            
+            selectionCanvas.style.display = 'none';
+            selectionCtx.clearRect(0, 0, selectionCanvas.width, selectionCanvas.height);
+            
+            const rect = imageViewArea.getBoundingClientRect();
+            const selectionEndX = e.clientX - rect.left;
+            const selectionEndY = e.clientY - rect.top;
+
+            const dpr = window.devicePixelRatio || 1;
+            const selRect = {
+                x: Math.min(selectionRect.startX, selectionEndX) * dpr,
+                y: Math.min(selectionRect.startY, selectionEndY) * dpr,
+                width: Math.abs(selectionRect.startX - selectionEndX) * dpr,
+                height: Math.abs(selectionRect.startY - selectionEndY) * dpr,
+            };
+
+            if (selRect.width < 10 || selRect.height < 10) return;
+            
+            const cropCanvas = document.createElement('canvas');
+            const cropCtx = cropCanvas.getContext('2d');
+            cropCanvas.width = selRect.width;
+            cropCanvas.height = selRect.height;
+            
+            cropCtx.drawImage(previewCanvas, selRect.x, selRect.y, selRect.width, selRect.height, 0, 0, selRect.width, selRect.height);
+            
+            updateStatus("Running OCR on selected area...");
+            try {
+                const { data: { text } } = await Tesseract.recognize(cropCanvas, 'eng');
+                const ocrText = text.trim().replace(/\s+/g, ' ');
+                if (ocrText) {
+                    awbInput.value = ocrText;
+                    updateStatus(`OCR successful: "${ocrText}"`);
+                } else {
+                    updateStatus("OCR could not find any text.");
+                }
+            } catch (err) {
+                updateStatus("OCR failed on selection.", true);
+            }
+        }
 
         pickBtn.addEventListener('click', async () => {
-            if (!imagePreview.src.startsWith('data:')) { showError("No image to pick."); return; }
+            if (!imagePreview.src) { 
+                updateStatus("No image to pick.", true); 
+                return; 
+            }
             const awbValue = awbInput.value.trim();
-            if (awbValue === '') { showError("Please enter AWB / Ref."); awbInput.focus(); return; }
-            if (tableBody.rows.length >= MAX_ROWS) { showError("Table is full."); return; }
+            if (awbValue === '') { 
+                updateStatus("Please enter AWB / Ref.", true); 
+                awbInput.focus(); 
+                return; 
+            }
+            if (tableBody.rows.length >= MAX_ROWS) { 
+                updateStatus("Table is full.", true); 
+                return; 
+            }
 
             const rotatedImageSrc = await getRotatedImage(imagePreview.src, currentRotation);
             const newRow = tableBody.insertRow();
@@ -398,7 +596,7 @@
         // --- Table & Utility Functions ---
         deleteLastBtn.addEventListener('click', () => { if (tableBody.rows.length > 0) tableBody.deleteRow(-1); });
         clearAllBtn.addEventListener('click', () => { tableBody.innerHTML = ''; });
-        submitBtn.addEventListener('click', () => { showError("Submit functionality not yet implemented."); });
+        submitBtn.addEventListener('click', () => { updateStatus("Submit functionality not yet implemented."); });
 
         async function dataURLtoFile(dataUrl, fileName) {
             const res = await fetch(dataUrl); const blob = await res.blob();
@@ -419,7 +617,6 @@
                 img.src = src;
             });
         }
-        function showError(message) { placeholder.textContent = message; placeholder.style.display = 'block'; }
         
         resetUploader();
     </script>
