@@ -3,230 +3,426 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Improved Barcode Scanner</title>
+    <title>Uploader with Barcode Scanner</title>
+    <!-- Cropper.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f0f2f5;
-            color: #333;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            margin: 0; padding: 20px 0; background-color: #f9f9f9; font-family: sans-serif; flex-direction: column;
         }
-        .container {
-            background: #ffffff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 90%;
-            max-width: 500px;
+        .uploader-container {
+            display: flex; flex-direction: column; align-items: center; gap: 15px;
+            width: 100%; max-width: 600px; padding: 0 10px; box-sizing: border-box;
         }
-        h1 {
-            margin-top: 0;
-            color: #1c1e21;
+        /* Scroller Styles */
+        #image-scroller-container {
+            width: 100%; height: 80px; background-color: #eee; border: 1px solid #ddd;
+            border-radius: 4px; padding: 5px; box-sizing: border-box; display: none;
         }
-        #controls {
-            margin: 1.5rem 0;
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
+        #image-scroller {
+            height: 100%; display: flex; gap: 5px; overflow-x: auto; white-space: nowrap;
         }
-        button, .file-upload-label {
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s;
+        .scroller-img {
+            height: 100%; width: 70px; object-fit: cover; cursor: pointer;
+            border: 2px solid transparent; border-radius: 2px; transition: border-color 0.2s;
         }
-        #startCameraBtn {
-            background-color: #007bff;
-            color: white;
+        .scroller-img.active { border-color: #007bff; }
+        
+        #image-view-area {
+            border: 2px dashed #ccc; width: 100%; aspect-ratio: 1 / 1; display: flex;
+            justify-content: center; align-items: center; text-align: center; color: #888;
+            position: relative; overflow: hidden; background-color: #f0f0f0;
         }
-        #startCameraBtn:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
+        #image-preview, #camera-feed {
+            width: 100%; height: 100%; object-fit: contain; display: none; transition: transform 0.3s ease;
         }
-        .file-upload-label {
-            background-color: #28a745;
-            color: white;
+        .button-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        button {
+            padding: 8px 16px; border: 1px solid #ccc; background-color: #fff; border-radius: 4px; cursor: pointer;
         }
-        .file-upload-label:hover {
-            background-color: #1e7e34;
-            transform: translateY(-2px);
-        }
-        #scanner-container {
-            margin-top: 1rem;
+        #rotate-btn, #lock-btn, #cancel-btn, #cancel-all-btn, #file-input { display: none; }
+        .entry-input-group { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; align-items: center; }
+        .entry-input-group input { padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; flex-grow: 1; }
+        
+        /* Table Styles */
+        .data-table-container { width: 100%; margin-top: 5px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 14px; }
+        th { background-color: #f0f0f0; }
+        td .image-cell-content { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; }
+        td .image-cell-content img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        #table-actions { width: 100%; margin-top: 15px; }
+
+        /* Inline Cropper Styles */
+        #inline-cropper-wrapper {
+            display: none; /* Hidden by default */
             width: 100%;
-            min-height: 250px;
-            background: #e9ecef;
-            border: 2px dashed #ced4da;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #f0f0f0;
+            border: 2px dashed #007bff; /* Blue border to indicate active cropping */
         }
-        video, img {
+        #cropper-container {
+            width: 100%;
+            max-height: 450px; /* Set a max-height for the cropper */
+        }
+        #cropper-image {
+            display: block;
             max-width: 100%;
-            max-height: 400px;
-            display: none; /* Hide both initially */
-        }
-        #result {
-            margin-top: 1.5rem;
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #dc3545;
-            min-height: 24px;
-            word-wrap: break-word;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Improved Barcode Scanner</h1>
-        <p>Use your camera or upload an image to scan a barcode.</p>
-
-        <!-- Controls for switching between modes -->
-        <div id="controls">
-            <button id="startCameraBtn">Scan with Camera</button>
-            <label for="imageInput" class="file-upload-label">Upload Image</label>
-            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+    <div class="uploader-container">
+        <!-- Buttons -->
+        <div class="button-group">
+            <button id="camera-btn">Camera</button>
+            <button id="upload-btn">Upload</button>
+            <button id="rotate-btn">Rotate</button>
+            <button id="lock-btn">Lock</button>
+            <button id="cancel-btn">Cancel</button>
+            <button id="cancel-all-btn">Cancel All</button>
+            <input type="file" id="file-input" accept="image/*" multiple>
+        </div>
+        <!-- Scroller -->
+        <div id="image-scroller-container"><div id="image-scroller"></div></div>
+        
+        <!-- Inline Cropper -->
+        <div id="inline-cropper-wrapper">
+            <div id="cropper-container">
+                <img id="cropper-image" src="">
+            </div>
+            <div class="button-group" style="margin-top: 10px;">
+                <button id="crop-confirm-btn">Crop</button>
+                <button id="crop-cancel-btn">Cancel</button>
+            </div>
         </div>
 
-        <!-- This container will hold either the video stream or the uploaded image -->
-        <div id="scanner-container">
-            <video id="video" autoplay playsinline></video>
-            <img id="uploadedImage" alt="Uploaded Barcode Image">
+        <!-- Preview Area -->
+        <div id="image-view-area">
+            <span id="placeholder">Image preview area</span>
+            <img id="image-preview" src="" alt="Image preview"/>
+            <video id="camera-feed" autoplay playsinline></video>
         </div>
 
-        <!-- The result will be displayed here -->
-        <p id="result">Select a scanning method to begin.</p>
+        <!-- Inputs -->
+        <div class="entry-input-group">
+            <input type="text" id="awb-input" placeholder="Enter AWB / Ref (Required)">
+            <input type="text" id="remark-input" placeholder="Enter Status Remark (Optional)">
+            <button id="pick-btn">Pick</button>
+        </div>
+        <!-- Table -->
+        <div class="data-table-container">
+            <table>
+                <thead><tr><th>Sl No</th><th>AWB / Ref</th><th>Status Remark</th><th>Image</th></tr></thead>
+                <tbody id="data-table-body"></tbody>
+            </table>
+        </div>
+        <!-- Table Actions -->
+        <div class="button-group" id="table-actions">
+            <button id="delete-last-btn">Delete Last</button>
+            <button id="clear-all-btn">Clear All</button>
+            <button id="submit-btn">Submit</button>
+        </div>
     </div>
-
+    
+    <!-- Cropper.js JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script>
-        // DOM Element References
-        const startCameraBtn = document.getElementById('startCameraBtn');
-        const imageInput = document.getElementById('imageInput');
-        const videoElem = document.getElementById('video');
-        const uploadedImage = document.getElementById('uploadedImage');
-        const resultElem = document.getElementById('result');
+        // DOM Elements
+        const cameraBtn = document.getElementById('camera-btn'), uploadBtn = document.getElementById('upload-btn'),
+              fileInput = document.getElementById('file-input'), placeholder = document.getElementById('placeholder'),
+              imagePreview = document.getElementById('image-preview'), cameraFeed = document.getElementById('camera-feed'),
+              rotateBtn = document.getElementById('rotate-btn'), lockBtn = document.getElementById('lock-btn'),
+              cancelBtn = document.getElementById('cancel-btn'), cancelAllBtn = document.getElementById('cancel-all-btn'),
+              pickBtn = document.getElementById('pick-btn'), tableBody = document.getElementById('data-table-body'),
+              awbInput = document.getElementById('awb-input'), remarkInput = document.getElementById('remark-input'),
+              deleteLastBtn = document.getElementById('delete-last-btn'), clearAllBtn = document.getElementById('clear-all-btn'),
+              submitBtn = document.getElementById('submit-btn'), scrollerContainer = document.getElementById('image-scroller-container'),
+              scroller = document.getElementById('image-scroller'), 
+              inlineCropperWrapper = document.getElementById('inline-cropper-wrapper'),
+              imageViewArea = document.getElementById('image-view-area'),
+              cropperImage = document.getElementById('cropper-image'), cropConfirmBtn = document.getElementById('crop-confirm-btn'),
+              cropCancelBtn = document.getElementById('crop-cancel-btn');
 
-        let stream = null;
-        let intervalId = null;
+        // State Variables
+        let stream = null, currentRotation = 0, isImageLocked = false, cropper = null;
+        let imageQueue = [], currentImageIndex = -1;
         let barcodeDetector;
+        const MAX_FILES = 50, MAX_ROWS = 20;
 
-        // Check for browser support and initialize the BarcodeDetector
+        // --- Barcode Detector Initialization ---
         if (!('BarcodeDetector' in window)) {
-            resultElem.textContent = 'Barcode Detector is not supported by this browser.';
-            startCameraBtn.disabled = true;
-            imageInput.disabled = true;
+            console.log('Barcode Detector is not supported by this browser.');
+            showError('Barcode Detector is not supported by this browser.');
         } else {
             console.log('Barcode Detector supported!');
-            barcodeDetector = new BarcodeDetector({
-                formats: ['qr_code', 'ean_13', 'code_128', 'upc_a']
-            });
+            try {
+                barcodeDetector = new BarcodeDetector({
+                    formats: ['code_128', 'code_39', 'ean_13', 'qr_code', 'upc_a', 'itf']
+                });
+            } catch (e) {
+                console.error('Barcode Detector could not be instantiated.', e);
+            }
         }
 
-        /**
-         * Stops the camera stream and scanning interval.
-         */
-        const stopScan = () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
+        // --- Barcode Scanning Logic ---
+        async function scanBarcodeFromPreview() {
+            if (!barcodeDetector) {
+                console.log("Barcode Detector not available or initialized.");
+                return;
             }
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
+            if (!imagePreview.src || !imagePreview.src.startsWith('data:')) {
+                console.log("Preview image not available for scanning.");
+                return;
             }
-            videoElem.style.display = 'none';
-            videoElem.srcObject = null;
-        };
-
-        /**
-         * Starts the camera scan.
-         */
-        const startCameraScan = async () => {
-            stopScan();
-            uploadedImage.style.display = 'none';
-            videoElem.style.display = 'block';
-            resultElem.textContent = "Requesting camera access...";
 
             try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
-                });
-                videoElem.srcObject = stream;
-                resultElem.textContent = "Scanning...";
-
-                intervalId = setInterval(async () => {
-                    try {
-                        const barcodes = await barcodeDetector.detect(videoElem);
-                        if (barcodes.length > 0) {
-                            resultElem.textContent = `Found: ${barcodes[0].rawValue}`;
-                            stopScan();
-                        }
-                    } catch (err) {
-                        // This can happen if the video stream is closed, safe to ignore.
-                    }
-                }, 200);
-            } catch (err) {
-                resultElem.textContent = "Could not access the camera. Please grant permission.";
-                console.error("Error accessing camera:", err);
-            }
-        };
-
-        /**
-         * Handles the file upload and scans the selected image after it loads.
-         * This is the corrected function.
-         */
-        const handleImageUpload = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            // --- Step 1: Immediately reset the UI ---
-            stopScan();
-            videoElem.style.display = 'none';
-            uploadedImage.style.display = 'block';
-            resultElem.textContent = "Loading image..."; // Clear previous result
-
-            // --- Step 2: Set up an onload event listener ---
-            // This ensures we only scan after the image is fully loaded.
-            uploadedImage.onload = async () => {
-                resultElem.textContent = "Scanning image...";
-                try {
-                    const barcodes = await barcodeDetector.detect(uploadedImage);
-                    if (barcodes.length > 0) {
-                        resultElem.textContent = `Found: ${barcodes[0].rawValue}`;
-                    } else {
-                        resultElem.textContent = "No barcode found in the image.";
-                    }
-                } catch (err) {
-                    resultElem.textContent = "Error scanning the image.";
-                    console.error("Error during image detection:", err);
+                const barcodes = await barcodeDetector.detect(imagePreview);
+                if (barcodes.length > 0) {
+                    const barcodeValue = barcodes[0].rawValue;
+                    console.log(`Barcode detected: ${barcodeValue}`);
+                    awbInput.value = barcodeValue;
+                } else {
+                    console.log("No barcode found in the image.");
                 }
+            } catch (err) {
+                console.error("Error scanning barcode:", err);
+            }
+        }
+
+        // --- Main App Logic ---
+        function setInterfaceState(state) {
+            cameraBtn.style.display='inline-block'; uploadBtn.style.display='inline-block';
+            rotateBtn.style.display='none'; lockBtn.style.display='none';
+            cancelBtn.style.display='none'; cancelAllBtn.style.display='none';
+
+            if (state === 'streaming') {
+                cameraBtn.textContent = 'Capture'; uploadBtn.style.display = 'none'; cancelBtn.style.display = 'inline-block';
+            } else if (state === 'preview') {
+                cameraBtn.style.display='none'; uploadBtn.style.display='none';
+                rotateBtn.style.display='inline-block'; lockBtn.style.display='inline-block';
+                if(imageQueue.length > 0) {
+                    cancelBtn.style.display='inline-block'; cancelAllBtn.style.display='inline-block';
+                } else {
+                    cancelBtn.style.display='inline-block';
+                }
+            }
+        }
+
+        function resetUploader() {
+            stopCamera();
+            placeholder.style.display = 'block'; placeholder.textContent = "Image preview area";
+            imagePreview.style.display = 'none'; cameraFeed.style.display = 'none'; imagePreview.src = '';
+            fileInput.value = ''; currentRotation = 0; imagePreview.style.transform = 'rotate(0deg)';
+            isImageLocked = false; lockBtn.textContent = 'Lock'; lockBtn.style.backgroundColor = '';
+            imageQueue = []; currentImageIndex = -1;
+            scroller.innerHTML = ''; scrollerContainer.style.display = 'none';
+            
+            inlineCropperWrapper.style.display = 'none';
+            imageViewArea.style.display = 'flex';
+
+            setInterfaceState('idle');
+        }
+
+        function stopCamera() { if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; } }
+
+        function displayImage(index) {
+            if (index < 0 || index >= imageQueue.length) { resetUploader(); return; }
+            currentImageIndex = index;
+            const file = imageQueue[index];
+            const reader = new FileReader();
+            reader.onload = (e) => initCropper(e.target.result, file.name);
+            reader.readAsDataURL(file);
+        }
+
+        function renderScroller() {
+            scroller.innerHTML = '';
+            imageQueue.forEach((file, index) => {
+                const thumb = document.createElement('img');
+                try { thumb.src = URL.createObjectURL(file); } catch(e) { console.error("Could not create object URL for", file); }
+                thumb.className = 'scroller-img'; thumb.dataset.index = index;
+                thumb.onclick = () => displayImage(index);
+                scroller.appendChild(thumb);
+            });
+            updateActiveThumbnail();
+        }
+
+        function updateActiveThumbnail() {
+            document.querySelectorAll('.scroller-img').forEach((img, index) => {
+                img.classList.toggle('active', index === currentImageIndex);
+            });
+        }
+        
+        // --- Cropper Logic ---
+        function initCropper(imageSrc, originalFileName) {
+            inlineCropperWrapper.style.display = 'block';
+            imageViewArea.style.display = 'none';
+            scrollerContainer.style.display = 'none'; 
+
+            cropperImage.src = imageSrc;
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(cropperImage, {
+                viewMode: 1,
+                background: false,
+            });
+            
+            const confirmCropHandler = async () => {
+                const croppedCanvas = cropper.getCroppedCanvas();
+                if (!croppedCanvas) { return; }
+                const croppedDataUrl = croppedCanvas.toDataURL('image/png');
+                
+                inlineCropperWrapper.style.display = 'none';
+                imageViewArea.style.display = 'flex';
+                if (imageQueue.length > 1) scrollerContainer.style.display = 'block';
+
+                // Set up the onload event BEFORE setting the src to trigger the scan
+                imagePreview.onload = () => {
+                    scanBarcodeFromPreview();
+                    imagePreview.onload = null; // Clean up listener to prevent re-firing
+                };
+                imagePreview.src = croppedDataUrl; // Setting src triggers the load and then the scan
+
+                placeholder.style.display = 'none';
+                imagePreview.style.display = 'block';
+                cameraFeed.style.display = 'none';
+                currentRotation = 0;
+                imagePreview.style.transform = 'rotate(0deg)';
+
+                if (currentImageIndex !== -1) {
+                    const newFile = await dataURLtoFile(croppedDataUrl, originalFileName);
+                    imageQueue[currentImageIndex] = newFile;
+                    renderScroller();
+                }
+
+                setInterfaceState('preview');
+                cropConfirmBtn.removeEventListener('click', confirmCropHandler);
             };
+            cropConfirmBtn.addEventListener('click', confirmCropHandler, { once: true });
+        }
+        
+        cropCancelBtn.addEventListener('click', () => {
+            inlineCropperWrapper.style.display = 'none';
+            imageViewArea.style.display = 'flex';
+            if (imageQueue.length > 1) scrollerContainer.style.display = 'block';
+            if (cropper) cropper.destroy();
+            if (!imagePreview.src || !imagePreview.src.startsWith('data:')) {
+                resetUploader();
+            }
+        });
 
-            // --- Step 3: Set the image source ---
-            // This triggers the 'onload' event listener we just set up.
-            uploadedImage.src = URL.createObjectURL(file);
-        };
+        // --- Event Listeners ---
+        cameraBtn.addEventListener('click', async () => {
+            if (stream) {
+                const canvas = document.createElement('canvas');
+                canvas.width = cameraFeed.videoWidth; canvas.height = cameraFeed.videoHeight;
+                canvas.getContext('2d').drawImage(cameraFeed, 0, 0);
+                const dataUrl = canvas.toDataURL('image/png');
+                stopCamera();
+                imageQueue = []; currentImageIndex = -1; scrollerContainer.style.display = 'none';
+                initCropper(dataUrl, `capture-${Date.now()}.png`);
+            } else {
+                resetUploader();
+                const constraints = { video: { facingMode: { exact: "environment" } } };
+                try { stream = await navigator.mediaDevices.getUserMedia(constraints); } 
+                catch { try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); } catch (e) { return; } }
+                placeholder.style.display = 'none'; cameraFeed.style.display = 'block';
+                cameraFeed.srcObject = stream; cameraFeed.play(); setInterfaceState('streaming');
+            }
+        });
 
-        // Attach event listeners to the controls
-        startCameraBtn.addEventListener('click', startCameraScan);
-        imageInput.addEventListener('change', handleImageUpload);
+        uploadBtn.addEventListener('click', () => { resetUploader(); fileInput.click(); });
+        
+        fileInput.addEventListener('change', (event) => {
+            const files = Array.from(event.target.files).slice(0, MAX_FILES);
+            if (files.length === 0) return;
+            imageQueue = files;
+            scrollerContainer.style.display = imageQueue.length > 1 ? 'block' : 'none';
+            if (imageQueue.length > 1) renderScroller();
+            displayImage(0);
+        });
 
+        rotateBtn.addEventListener('click', () => {
+            if (imagePreview.style.display === 'block') {
+                currentRotation = (currentRotation + 90) % 360;
+                imagePreview.style.transform = `rotate(${currentRotation}deg)`;
+            }
+        });
+        
+        lockBtn.addEventListener('click', () => {
+            isImageLocked = !isImageLocked;
+            lockBtn.textContent = isImageLocked ? 'Unlock' : 'Lock';
+            lockBtn.style.backgroundColor = isImageLocked ? '#d4edda' : '';
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            if (isImageLocked) { resetUploader(); return; }
+            if (imageQueue.length > 0) {
+                 imageQueue.splice(currentImageIndex, 1);
+                 renderScroller();
+                 displayImage(currentImageIndex < imageQueue.length ? currentImageIndex : 0);
+            } else { resetUploader(); }
+        });
+        
+        cancelAllBtn.addEventListener('click', resetUploader);
+
+        pickBtn.addEventListener('click', async () => {
+            if (!imagePreview.src.startsWith('data:')) { showError("No image to pick."); return; }
+            const awbValue = awbInput.value.trim();
+            if (awbValue === '') { showError("Please enter AWB / Ref."); awbInput.focus(); return; }
+            if (tableBody.rows.length >= MAX_ROWS) { showError("Table is full."); return; }
+
+            const rotatedImageSrc = await getRotatedImage(imagePreview.src, currentRotation);
+            const newRow = tableBody.insertRow();
+            newRow.insertCell(0).textContent = tableBody.rows.length;
+            newRow.insertCell(1).textContent = awbValue;
+            newRow.insertCell(2).textContent = remarkInput.value.trim();
+            const thumb = document.createElement('img'); thumb.src = rotatedImageSrc;
+            const cellDiv = document.createElement('div'); cellDiv.className = 'image-cell-content';
+            cellDiv.appendChild(thumb);
+            newRow.insertCell(3).appendChild(cellDiv);
+            
+            awbInput.value = ''; remarkInput.value = '';
+            
+            if (!isImageLocked) {
+                if (imageQueue.length > 0) {
+                    imageQueue.splice(currentImageIndex, 1);
+                    renderScroller();
+                    displayImage(currentImageIndex < imageQueue.length ? currentImageIndex : 0);
+                } else { resetUploader(); }
+            } else { awbInput.focus(); }
+        });
+        
+        // --- Table & Utility Functions ---
+        deleteLastBtn.addEventListener('click', () => { if (tableBody.rows.length > 0) tableBody.deleteRow(-1); });
+        clearAllBtn.addEventListener('click', () => { tableBody.innerHTML = ''; });
+        submitBtn.addEventListener('click', () => { showError("Submit functionality not yet implemented."); });
+
+        async function dataURLtoFile(dataUrl, fileName) {
+            const res = await fetch(dataUrl); const blob = await res.blob();
+            return new File([blob], fileName, { type: blob.type || 'image/png' });
+        }
+        
+        function getRotatedImage(src, rotation) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d'), angle = rotation * Math.PI / 180;
+                    if (rotation % 180 !== 0) { canvas.width = img.height; canvas.height = img.width; } 
+                    else { canvas.width = img.width; canvas.height = img.height; }
+                    ctx.translate(canvas.width / 2, canvas.height / 2); ctx.rotate(angle);
+                    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                    resolve(canvas.toDataURL());
+                };
+                img.src = src;
+            });
+        }
+        function showError(message) { placeholder.textContent = message; placeholder.style.display = 'block'; }
+        
+        resetUploader();
     </script>
-
 </body>
 </html>
-
 
