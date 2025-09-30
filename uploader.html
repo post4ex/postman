@@ -38,9 +38,14 @@
         #image-view-area.selectable {
             cursor: crosshair;
         }
-        /* Hide the original image, we will draw it on the canvas */
+        
         #image-preview { 
-            display: none;
+            position: absolute;
+            opacity: 0;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         #camera-feed, #preview-canvas {
             width: 100%; height: 100%; object-fit: contain;
@@ -278,7 +283,7 @@
 
             try {
                 updateStatus("Attempting barcode scan...");
-                const barcodes = await barcodeDetector.detect(imagePreview); // Scan original, un-rotated image
+                const barcodes = await barcodeDetector.detect(imagePreview); // Scan the original, un-rotated image
                 if (barcodes.length > 0) {
                     const barcodeValue = barcodes[0].rawValue;
                     awbInput.value = barcodeValue;
@@ -293,7 +298,7 @@
         }
 
         // --- Image Compression Logic ---
-        async function compressAndResizeImage(dataUrl, targetSizeKB = 100, maxDimension = 1280) {
+        async function compressImage(dataUrl, targetSizeKB, maxDimension) {
             const targetSizeBytes = targetSizeKB * 1024;
 
             const img = await new Promise(resolve => {
@@ -332,7 +337,7 @@
             } while (sizeInBytes > targetSizeBytes && quality > 0.1);
             
             const finalSize = (sizeInBytes / 1024).toFixed(2);
-            updateStatus(`Image compressed to ${finalSize} KB.`);
+            console.log(`Image compressed to ${finalSize} KB for target of ${targetSizeKB} KB.`);
             return compressedDataUrl;
         }
 
@@ -434,8 +439,8 @@
                 if (!croppedCanvas) { return; }
                 let croppedDataUrl = croppedCanvas.toDataURL('image/png');
                 
-                // Compress and resize the image
-                croppedDataUrl = await compressAndResizeImage(croppedDataUrl);
+                // Compress for preview quality (~1MB)
+                const previewDataUrl = await compressImage(croppedDataUrl, 1024, 1920);
                 
                 inlineCropperWrapper.style.display = 'none';
                 imageViewArea.style.display = 'flex';
@@ -446,7 +451,7 @@
                     scanBarcodeFromPreview();
                     imagePreview.onload = null;
                 };
-                imagePreview.src = croppedDataUrl; 
+                imagePreview.src = previewDataUrl; 
 
                 placeholder.style.display = 'none';
                 cameraFeed.style.display = 'none';
@@ -454,7 +459,7 @@
                 currentRotation = 0;
 
                 if (currentImageIndex !== -1) {
-                    const newFile = await dataURLtoFile(croppedDataUrl, originalFileName.replace(/\.\w+$/, '.jpg'));
+                    const newFile = await dataURLtoFile(previewDataUrl, originalFileName.replace(/\.\w+$/, '.jpg'));
                     imageQueue[currentImageIndex] = newFile;
                     renderScroller();
                 }
@@ -551,6 +556,7 @@
             if (previewCanvas.style.display === 'block') {
                 currentRotation = (currentRotation + 90) % 360;
                 drawPreview();
+                scanBarcodeFromPreview(); // Re-scan after rotation
             }
         });
         
@@ -673,12 +679,17 @@
                 return; 
             }
 
+            // Get rotated image first (high quality)
             const rotatedImageSrc = await getRotatedImage(imagePreview.src, currentRotation);
+            
+            // Now compress the rotated image for the table
+            const finalImageSrc = await compressImage(rotatedImageSrc, 100, 1024);
+
             const newRow = tableBody.insertRow();
             newRow.insertCell(0).textContent = tableBody.rows.length;
             newRow.insertCell(1).textContent = awbValue;
             newRow.insertCell(2).textContent = remarkInput.value.trim();
-            const thumb = document.createElement('img'); thumb.src = rotatedImageSrc;
+            const thumb = document.createElement('img'); thumb.src = finalImageSrc;
             const cellDiv = document.createElement('div'); cellDiv.className = 'image-cell-content';
             cellDiv.appendChild(thumb);
             newRow.insertCell(3).appendChild(cellDiv);
@@ -739,7 +750,7 @@
                     else { canvas.width = img.width; canvas.height = img.height; }
                     ctx.translate(canvas.width / 2, canvas.height / 2); ctx.rotate(angle);
                     ctx.drawImage(img, -img.width / 2, -img.height / 2);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8)); // Output compressed JPEG
+                    resolve(canvas.toDataURL('image/png')); // Output high quality PNG for further compression
                 };
                 img.src = src;
             });
