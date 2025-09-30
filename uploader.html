@@ -249,6 +249,7 @@
 
         // OCR Selection State
         let isSelecting = false, selectionRect = {};
+        let isProcessingOCR = false;
         const selectionCtx = selectionCanvas.getContext('2d');
         const previewCtx = previewCanvas.getContext('2d');
 
@@ -283,7 +284,7 @@
 
             try {
                 updateStatus("Attempting barcode scan...");
-                const barcodes = await barcodeDetector.detect(imagePreview); // Scan the original, un-rotated image
+                const barcodes = await barcodeDetector.detect(imagePreview); // Scan the original image element
                 if (barcodes.length > 0) {
                     const barcodeValue = barcodes[0].rawValue;
                     awbInput.value = barcodeValue;
@@ -579,7 +580,7 @@
         
         // --- OCR Area Selection Listeners ---
         function onSelectionStart(e) {
-            if (previewCanvas.style.display !== 'block' || isSelecting) return;
+            if (previewCanvas.style.display !== 'block' || isSelecting || isProcessingOCR) return;
             e.preventDefault();
             
             const rect = imageViewArea.getBoundingClientRect();
@@ -615,6 +616,7 @@
         }
 
         async function onSelectionUp(e) {
+            if (!isSelecting) return; // Prevent re-triggering
             isSelecting = false;
             window.removeEventListener('mousemove', onSelectionMove);
             window.removeEventListener('touchmove', onSelectionMove);
@@ -644,6 +646,7 @@
             
             cropCtx.drawImage(previewCanvas, selRect.x, selRect.y, selRect.width, selRect.height, 0, 0, selRect.width, selRect.height);
             
+            isProcessingOCR = true;
             updateStatus("Running OCR on selected area...");
             try {
                 const { data: { text } } = await Tesseract.recognize(cropCanvas, 'eng');
@@ -656,6 +659,9 @@
                 }
             } catch (err) {
                 updateStatus("OCR failed on selection.", true);
+            } finally {
+                // Add a small delay before allowing another OCR operation
+                setTimeout(() => { isProcessingOCR = false; }, 300);
             }
         }
 
