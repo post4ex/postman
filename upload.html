@@ -250,6 +250,51 @@
             }
         }
 
+        // --- Image Compression Logic ---
+        async function compressAndResizeImage(dataUrl, targetSizeKB = 100, maxDimension = 1280) {
+            const targetSizeBytes = targetSizeKB * 1024;
+
+            const img = await new Promise(resolve => {
+                const image = new Image();
+                image.onload = () => resolve(image);
+                image.src = dataUrl;
+            });
+
+            let { width, height } = img;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = Math.round(height * (maxDimension / width));
+                    width = maxDimension;
+                } else {
+                    width = Math.round(width * (maxDimension / height));
+                    height = maxDimension;
+                }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            let quality = 0.95;
+            let compressedDataUrl;
+            let sizeInBytes;
+
+            do {
+                compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                sizeInBytes = atob(compressedDataUrl.split(',')[1]).length;
+                if (sizeInBytes > targetSizeBytes && quality > 0.1) {
+                    quality -= 0.05; // Decrease quality for the next iteration
+                }
+            } while (sizeInBytes > targetSizeBytes && quality > 0.1);
+            
+            const finalSize = (sizeInBytes / 1024).toFixed(2);
+            updateStatus(`Image compressed to ${finalSize} KB.`);
+            return compressedDataUrl;
+        }
+
+
         // --- Main App Logic ---
         function setInterfaceState(state) {
             cameraBtn.style.display='inline-block'; uploadBtn.style.display='inline-block';
@@ -345,7 +390,10 @@
                     imageSmoothingQuality: 'high',
                 });
                 if (!croppedCanvas) { return; }
-                const croppedDataUrl = croppedCanvas.toDataURL('image/png');
+                let croppedDataUrl = croppedCanvas.toDataURL('image/png');
+                
+                // Compress and resize the image
+                croppedDataUrl = await compressAndResizeImage(croppedDataUrl);
                 
                 inlineCropperWrapper.style.display = 'none';
                 imageViewArea.style.display = 'flex';
@@ -364,7 +412,7 @@
                 currentRotation = 0;
 
                 if (currentImageIndex !== -1) {
-                    const newFile = await dataURLtoFile(croppedDataUrl, originalFileName);
+                    const newFile = await dataURLtoFile(croppedDataUrl, originalFileName.replace(/\.\w+$/, '.jpg'));
                     imageQueue[currentImageIndex] = newFile;
                     renderScroller();
                 }
@@ -607,11 +655,37 @@
         // --- Table & Utility Functions ---
         deleteLastBtn.addEventListener('click', () => { if (tableBody.rows.length > 0) tableBody.deleteRow(-1); });
         clearAllBtn.addEventListener('click', () => { tableBody.innerHTML = ''; });
-        submitBtn.addEventListener('click', () => { updateStatus("Submit functionality not yet implemented."); });
+        
+        submitBtn.addEventListener('click', async () => {
+            const rows = tableBody.rows;
+            if (rows.length === 0) {
+                updateStatus("No images in the table to submit.", true);
+                return;
+            }
+
+            updateStatus(`Downloading ${rows.length} images...`);
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const awbRef = row.cells[1].textContent.trim().replace(/[/\\?%*:|"<>]/g, '-') || `image_${i + 1}`;
+                const imgElement = row.cells[3].querySelector('img');
+                if (imgElement && imgElement.src) {
+                    const link = document.createElement('a');
+                    link.href = imgElement.src;
+                    link.download = `${awbRef}.jpg`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    await new Promise(resolve => setTimeout(resolve, 300)); // Brief delay
+                }
+            }
+            tableBody.innerHTML = '';
+            updateStatus("All images downloaded and table cleared.");
+        });
 
         async function dataURLtoFile(dataUrl, fileName) {
             const res = await fetch(dataUrl); const blob = await res.blob();
-            return new File([blob], fileName, { type: blob.type || 'image/png' });
+            return new File([blob], fileName, { type: 'image/jpeg' });
         }
         
         function getRotatedImage(src, rotation) {
@@ -623,7 +697,7 @@
                     else { canvas.width = img.width; canvas.height = img.height; }
                     ctx.translate(canvas.width / 2, canvas.height / 2); ctx.rotate(angle);
                     ctx.drawImage(img, -img.width / 2, -img.height / 2);
-                    resolve(canvas.toDataURL());
+                    resolve(canvas.toDataURL('image/jpeg', 0.8)); // Output compressed JPEG
                 };
                 img.src = src;
             });
