@@ -13,7 +13,7 @@
         }
         .uploader-container {
             display: flex; flex-direction: column; align-items: center; gap: 15px;
-            width: 100%; max-width: 800px; padding: 0 15px; box-sizing: border-box;
+            width: 100%; max-width: 1200px; padding: 0 15px; box-sizing: border-box;
         }
         /* Scroller Styles */
         #image-scroller-container {
@@ -105,6 +105,43 @@
             color: #dc3545;
             font-weight: bold;
         }
+
+        /* Responsive Layout Styles */
+        .main-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 15px;
+        }
+        .preview-column, .controls-column {
+            width: 100%;
+        }
+        .controls-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @media (min-width: 1024px) {
+            .main-content-wrapper {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+            .preview-column {
+                flex: 1.5; /* Give preview more space */
+                min-width: 0;
+            }
+            .controls-column {
+                flex: 1;
+                min-width: 0;
+            }
+            .data-table-container {
+                margin-top: 0;
+            }
+            #table-actions {
+                margin-top: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -123,48 +160,53 @@
         <!-- Scroller -->
         <div id="image-scroller-container"><div id="image-scroller"></div></div>
         
-        <!-- Inline Cropper -->
-        <div id="inline-cropper-wrapper">
-            <div id="cropper-container">
-                <img id="cropper-image" src="">
-            </div>
-            <div class="button-group" style="margin-top: 10px;">
-                <button id="crop-rotate-btn">Rotate</button>
-                <button id="crop-confirm-btn">Crop</button>
-                <button id="crop-cancel-btn">Cancel</button>
-            </div>
-        </div>
+        <div class="main-content-wrapper">
+            <div class="preview-column">
+                <!-- Inline Cropper -->
+                <div id="inline-cropper-wrapper">
+                    <div id="cropper-container">
+                        <img id="cropper-image" src="">
+                    </div>
+                    <div class="button-group" style="margin-top: 10px;">
+                        <button id="crop-rotate-btn">Rotate</button>
+                        <button id="crop-confirm-btn">Crop</button>
+                        <button id="crop-cancel-btn">Cancel</button>
+                    </div>
+                </div>
 
-        <!-- Preview Area -->
-        <div id="image-view-area">
-            <span id="placeholder">Image preview area</span>
-            <img id="image-preview" src="" alt="Image preview"/>
-            <canvas id="preview-canvas"></canvas>
-            <canvas id="selection-canvas"></canvas>
-            <video id="camera-feed" autoplay playsinline></video>
-        </div>
-        
-        <!-- Status Bar -->
-        <div id="status-bar"></div>
+                <!-- Preview Area -->
+                <div id="image-view-area">
+                    <span id="placeholder">Image preview area</span>
+                    <img id="image-preview" src="" alt="Image preview"/>
+                    <canvas id="preview-canvas"></canvas>
+                    <canvas id="selection-canvas"></canvas>
+                    <video id="camera-feed" autoplay playsinline></video>
+                </div>
+            </div>
+            <div class="controls-column">
+                <!-- Status Bar -->
+                <div id="status-bar"></div>
 
-        <!-- Inputs -->
-        <div class="entry-input-group">
-            <input type="text" id="awb-input" placeholder="Enter AWB / Ref (Required)">
-            <input type="text" id="remark-input" placeholder="Enter Status Remark (Optional)">
-            <button id="pick-btn">Pick</button>
-        </div>
-        <!-- Table -->
-        <div class="data-table-container">
-            <table>
-                <thead><tr><th>Sl No</th><th>AWB / Ref</th><th>Status Remark</th><th>Image</th></tr></thead>
-                <tbody id="data-table-body"></tbody>
-            </table>
-        </div>
-        <!-- Table Actions -->
-        <div class="button-group" id="table-actions">
-            <button id="delete-last-btn">Delete Last</button>
-            <button id="clear-all-btn">Clear All</button>
-            <button id="submit-btn">Submit</button>
+                <!-- Inputs -->
+                <div class="entry-input-group">
+                    <input type="text" id="awb-input" placeholder="Enter AWB / Ref (Required)">
+                    <input type="text" id="remark-input" placeholder="Enter Status Remark (Optional)">
+                    <button id="pick-btn">Pick</button>
+                </div>
+                <!-- Table -->
+                <div class="data-table-container">
+                    <table>
+                        <thead><tr><th>Sl No</th><th>AWB / Ref</th><th>Status Remark</th><th>Image</th></tr></thead>
+                        <tbody id="data-table-body"></tbody>
+                    </table>
+                </div>
+                <!-- Table Actions -->
+                <div class="button-group" id="table-actions">
+                    <button id="delete-last-btn">Delete Last</button>
+                    <button id="clear-all-btn">Clear All</button>
+                    <button id="submit-btn">Submit</button>
+                </div>
+            </div>
         </div>
     </div>
     
