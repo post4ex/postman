@@ -482,7 +482,7 @@
         cancelAllBtn.addEventListener('click', resetUploader);
         
         // --- OCR Area Selection Listeners ---
-        imageViewArea.addEventListener('mousedown', (e) => {
+        function onSelectionStart(e) {
             if (previewCanvas.style.display !== 'block' || isSelecting) return;
             e.preventDefault();
             
@@ -492,18 +492,23 @@
             selectionCanvas.style.display = 'block';
 
             isSelecting = true;
-            selectionRect.startX = e.clientX - rect.left;
-            selectionRect.startY = e.clientY - rect.top;
+            const point = e.touches ? e.touches[0] : e;
+            selectionRect.startX = point.clientX - rect.left;
+            selectionRect.startY = point.clientY - rect.top;
 
             window.addEventListener('mousemove', onSelectionMove);
+            window.addEventListener('touchmove', onSelectionMove, { passive: false });
             window.addEventListener('mouseup', onSelectionUp, { once: true });
-        });
+            window.addEventListener('touchend', onSelectionUp, { once: true });
+        }
 
         function onSelectionMove(e) {
             if (!isSelecting) return;
+            e.preventDefault();
             const rect = imageViewArea.getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
+            const point = e.touches ? e.touches[0] : e;
+            const currentX = point.clientX - rect.left;
+            const currentY = point.clientY - rect.top;
             const width = currentX - selectionRect.startX;
             const height = currentY - selectionRect.startY;
 
@@ -516,13 +521,15 @@
         async function onSelectionUp(e) {
             isSelecting = false;
             window.removeEventListener('mousemove', onSelectionMove);
+            window.removeEventListener('touchmove', onSelectionMove);
             
             selectionCanvas.style.display = 'none';
             selectionCtx.clearRect(0, 0, selectionCanvas.width, selectionCanvas.height);
             
             const rect = imageViewArea.getBoundingClientRect();
-            const selectionEndX = e.clientX - rect.left;
-            const selectionEndY = e.clientY - rect.top;
+            const point = e.changedTouches ? e.changedTouches[0] : e;
+            const selectionEndX = point.clientX - rect.left;
+            const selectionEndY = point.clientY - rect.top;
 
             const dpr = window.devicePixelRatio || 1;
             const selRect = {
@@ -549,12 +556,16 @@
                     awbInput.value = ocrText;
                     updateStatus(`OCR successful: "${ocrText}"`);
                 } else {
-                    updateStatus("OCR could not find any text.");
+                    updateStatus("OCR could not find any text in the selected area.");
                 }
             } catch (err) {
                 updateStatus("OCR failed on selection.", true);
             }
         }
+
+        imageViewArea.addEventListener('mousedown', onSelectionStart);
+        imageViewArea.addEventListener('touchstart', onSelectionStart, { passive: false });
+
 
         pickBtn.addEventListener('click', async () => {
             if (!imagePreview.src) { 
