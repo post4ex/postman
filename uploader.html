@@ -176,7 +176,7 @@
             <button id="lock-btn">Lock</button>
             <button id="cancel-btn">Cancel</button>
             <button id="cancel-all-btn">Cancel All</button>
-            <input type="file" id="file-input" accept="image/*" multiple>
+            <input type="file" id="file-input" accept="image/*,application/pdf" multiple>
         </div>
         <!-- Scroller -->
         <div id="image-scroller-container"><div id="image-scroller"></div></div>
@@ -252,11 +252,15 @@
     </div>
     
     <!-- Third-party libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
 
     <script>
+        // Set up PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js`;
+
         // DOM Elements
         const cameraBtn = document.getElementById('camera-btn'), uploadBtn = document.getElementById('upload-btn'),
               fileInput = document.getElementById('file-input'), placeholder = document.getElementById('placeholder'),
@@ -603,14 +607,84 @@
 
         uploadBtn.addEventListener('click', () => { resetUploader(); fileInput.click(); });
         
-        fileInput.addEventListener('change', (event) => {
-            const files = Array.from(event.target.files).slice(0, MAX_FILES);
+        fileInput.addEventListener('change', async (event) => {
+            const files = Array.from(event.target.files);
             if (files.length === 0) return;
-            imageQueue = files;
+
+            updateStatus('Processing uploaded files...');
+            let processedFiles = [];
+
+            for (const file of files) {
+                if (file.type === 'application/pdf') {
+                    try {
+                        const pdfImages = await handlePdfFile(file);
+                        processedFiles.push(...pdfImages);
+                    } catch (error) {
+                        console.error("Error processing PDF:", error);
+                        updateStatus(`Failed to process PDF: ${file.name}`, true);
+                    }
+                } else if (file.type.startsWith('image/')) {
+                    processedFiles.push(file);
+                }
+            }
+
+            if (processedFiles.length > MAX_FILES) {
+                updateStatus(`Too many pages/images. Max is ${MAX_FILES}. Only the first ${MAX_FILES} will be loaded.`, true);
+                processedFiles = processedFiles.slice(0, MAX_FILES);
+            }
+            
+            if (processedFiles.length === 0) {
+                updateStatus('No valid images found or processed.', true);
+                return;
+            }
+
+            imageQueue = processedFiles;
             scrollerContainer.style.display = imageQueue.length > 1 ? 'block' : 'none';
             if (imageQueue.length > 1) renderScroller();
             displayImage(0);
+            updateStatus(`${imageQueue.length} image(s) loaded.`);
         });
+
+        async function handlePdfFile(file) {
+            const fileReader = new FileReader();
+            
+            return new Promise((resolve, reject) => {
+                fileReader.onload = async (e) => {
+                    try {
+                        const typedarray = new Uint8Array(e.target.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        const imageFiles = [];
+                        const scale = 2.0; // Render at a higher resolution
+
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            updateStatus(`Processing PDF page ${i} of ${pdf.numPages}...`);
+                            const page = await pdf.getPage(i);
+                            const viewport = page.getViewport({ scale });
+
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: viewport
+                            };
+                            await page.render(renderContext).promise;
+                            
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.9); // Use jpeg for smaller size
+                            const pageFile = await dataURLtoFile(dataUrl, `${file.name}-page-${i}.jpg`);
+                            imageFiles.push(pageFile);
+                        }
+                        resolve(imageFiles);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                fileReader.onerror = reject;
+                fileReader.readAsArrayBuffer(file);
+            });
+        }
 
         rotateBtn.addEventListener('click', () => {
             if (previewCanvas.style.display === 'block') {
