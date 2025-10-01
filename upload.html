@@ -15,6 +15,10 @@
             display: flex; flex-direction: column; align-items: center; gap: 15px;
             width: 100%; max-width: 1200px; padding: 0 15px; box-sizing: border-box;
         }
+        #gscript-container {
+            width: 100%; padding: 10px; background-color: #fffbe6; border-radius: 8px; border: 1px solid #ffeeba;
+        }
+        #gscript-container input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         /* Main Controls Strip */
         #main-controls-strip {
             width: 100%;
@@ -210,6 +214,12 @@
 <body>
 
     <div class="uploader-container">
+        <!-- Google Apps Script URL Input -->
+        <div id="gscript-container" style="display: none;">
+            <label for="gscript-url"><b>Paste your Google Apps Script Web App URL here:</b></label>
+            <input type="text" id="gscript-url" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbwkC3OXNACPPH-LLPJyhkZKaDh6VtNgGbp8lMQbzz1XF327IN_OhFEEapOzNm3REbn5/exec">
+        </div>
+
         <!-- Main Controls -->
         <div id="main-controls-strip">
             <div class="upload-type-strip">
@@ -332,6 +342,7 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js`;
 
         // DOM Elements
+        const gscriptUrlInput = document.getElementById('gscript-url');
         const cameraBtn = document.getElementById('camera-btn'), uploadBtn = document.getElementById('upload-btn'),
               fileInput = document.getElementById('file-input'), placeholder = document.getElementById('placeholder'),
               imagePreview = document.getElementById('image-preview'), cameraFeed = document.getElementById('camera-feed'),
@@ -1084,33 +1095,94 @@
         }
 
         deleteLastBtn.addEventListener('click', () => { if (tableBody.rows.length > 0) tableBody.deleteRow(-1); });
-        clearAllBtn.addEventListener('click', () => { tableBody.innerHTML = ''; });
+        clearAllBtn.addEventListener('click', () => { 
+            tableBody.innerHTML = ''; 
+            if (currentUploadType === 'Product') {
+                isAwbLockedForProduct = false;
+                awbInput.disabled = false;
+                awbInput.value = '';
+            }
+        });
         
         submitBtn.addEventListener('click', async () => {
             const rows = tableBody.rows;
+            const gscriptUrl = gscriptUrlInput.value.trim();
+
             if (rows.length === 0) {
-                updateStatus("No images in the table to submit.", true);
+                updateStatus("No data in the table to submit.", true);
+                return;
+            }
+            if (!gscriptUrl || !gscriptUrl.startsWith('https://script.google.com/macros/s/')) {
+                updateStatus("Please provide a valid Google Apps Script Web App URL.", true);
+                gscriptUrlInput.focus();
                 return;
             }
 
-            updateStatus(`Downloading ${rows.length} images...`);
-
+            submitBtn.disabled = true;
+            let successCount = 0;
+            
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
-                const awbRef = row.cells[1].textContent.trim().replace(/[/\\?%*:|"<>]/g, '-') || `image_${i + 1}`;
-                const imgElement = row.cells[row.cells.length -1].querySelector('img'); // last cell is always image
-                if (imgElement && imgElement.src) {
-                    const link = document.createElement('a');
-                    link.href = imgElement.src;
-                    link.download = `${awbRef}.jpg`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    await new Promise(resolve => setTimeout(resolve, 300)); // Brief delay
+                updateStatus(`Submitting row ${i + 1} of ${rows.length}...`);
+
+                const rowUploadType = row.cells[row.cells.length - 2].textContent;
+                const imgElement = row.cells[row.cells.length - 1].querySelector('img');
+                if (!imgElement) continue;
+
+                const rowData = {};
+                rowData.uploadType = rowUploadType;
+                
+                if (rowUploadType === 'KYC') {
+                    rowData.kycNumber = row.cells[1].textContent;
+                    rowData.customerName = row.cells[2].textContent;
+                    rowData.statusRemark = row.cells[3].textContent;
+                } else if (rowUploadType === 'Product') {
+                    rowData.awbNumber = row.cells[1].textContent;
+                    rowData.docType = row.cells[2].textContent;
+                    rowData.docNumber = row.cells[3].textContent;
+                    rowData.refNumber = row.cells[3].textContent;
+                } else {
+                    rowData.awbNumber = row.cells[1].textContent;
+                    rowData.statusRemark = row.cells[2].textContent;
+                }
+
+                const payload = {
+                    imageData: imgElement.src,
+                    fileName: `${rowData.awbNumber || rowData.kycNumber || rowData.refNumber}-${Date.now()}.jpg`,
+                    rowData: rowData,
+                };
+                
+                try {
+                    const response = await fetch(gscriptUrl, {
+                        method: 'POST',
+                        body: JSON.stringify(payload),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Required for Apps Script
+                        mode: 'cors',
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        successCount++;
+                         row.style.backgroundColor = '#d4edda'; // Mark as successful
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    console.error('Submission error:', error);
+                    row.style.backgroundColor = '#f8d7da'; // Mark as failed
+                    updateStatus(`Error submitting row ${i + 1}: ${error.message}`, true);
+                    submitBtn.disabled = false;
+                    return; // Stop on first error
                 }
             }
-            tableBody.innerHTML = '';
-            updateStatus("All images downloaded and table cleared.");
+
+            updateStatus(`Successfully submitted ${successCount} of ${rows.length} rows.`, false);
+            setTimeout(() => {
+                clearAllBtn.click();
+                 updateStatus('All data submitted and table cleared.');
+            }, 2000);
+            submitBtn.disabled = false;
         });
 
         async function dataURLtoFile(dataUrl, fileName) {
@@ -1233,3 +1305,5 @@
     </script>
 </body>
 </html>
+
+
