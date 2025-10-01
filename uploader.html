@@ -38,7 +38,7 @@
         #image-view-area.selectable {
             cursor: crosshair;
         }
-        
+        /* Hide the original image, we will draw it on the canvas */
         #image-preview { 
             display: none;
         }
@@ -106,6 +106,27 @@
             font-weight: bold;
         }
 
+        /* Enhancement Controls */
+        .slider-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 280px;
+            justify-content: center;
+        }
+        .enhancement-sliders {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+        }
+
+
         /* Responsive Layout Styles */
         .main-content-wrapper {
             display: flex;
@@ -169,8 +190,28 @@
                     </div>
                     <div class="button-group" style="margin-top: 10px;">
                         <button id="crop-rotate-btn">Rotate</button>
+                        <button id="enhance-btn">Enhance</button>
                         <button id="crop-confirm-btn">Crop</button>
                         <button id="crop-cancel-btn">Cancel</button>
+                    </div>
+                    <div id="enhancement-controls" style="display:none; margin-top:10px; padding-top:10px; border-top: 1px solid #ccc;">
+                        <div class="button-group">
+                             <button id="auto-enhance-btn">Auto</button>
+                            <button id="greyscale-btn">Greyscale</button>
+                            <button id="bw-btn">B&W Doc</button>
+                            <button id="sharpen-btn">Sharpen</button>
+                            <button id="reset-enhance-btn" style="background-color: #f8d7da;">Reset</button>
+                        </div>
+                        <div class="enhancement-sliders">
+                            <div class="slider-control">
+                                <label for="brightness-slider">Brightness</label>
+                                <input type="range" id="brightness-slider" min="-50" max="50" value="0">
+                            </div>
+                            <div class="slider-control">
+                                <label for="contrast-slider">Contrast</label>
+                                <input type="range" id="contrast-slider" min="-50" max="50" value="0">
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -212,8 +253,8 @@
     
     <!-- Third-party libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
-    <script src='./tesseract.js'></script>
-    <script src="./zxing.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
 
     <script>
         // DOM Elements
@@ -234,12 +275,24 @@
               cropCancelBtn = document.getElementById('crop-cancel-btn'),
               cropRotateBtn = document.getElementById('crop-rotate-btn'),
               selectionCanvas = document.getElementById('selection-canvas'),
-              statusBar = document.getElementById('status-bar');
+              statusBar = document.getElementById('status-bar'),
+              // Enhancement DOM Elements
+              enhanceBtn = document.getElementById('enhance-btn'),
+              enhancementControls = document.getElementById('enhancement-controls'),
+              autoEnhanceBtn = document.getElementById('auto-enhance-btn'),
+              greyscaleBtn = document.getElementById('greyscale-btn'),
+              bwBtn = document.getElementById('bw-btn'),
+              sharpenBtn = document.getElementById('sharpen-btn'),
+              resetEnhanceBtn = document.getElementById('reset-enhance-btn'),
+              brightnessSlider = document.getElementById('brightness-slider'),
+              contrastSlider = document.getElementById('contrast-slider');
 
 
         // State Variables
         let stream = null, currentRotation = 0, isImageLocked = false, cropper = null;
         let imageQueue = [], currentImageIndex = -1;
+        let barcodeDetector;
+        let originalCropperSrc = null; // For image enhancement reset
         const MAX_FILES = 50, MAX_ROWS = 20;
 
         // OCR Selection State
@@ -247,6 +300,21 @@
         let isProcessingOCR = false;
         const selectionCtx = selectionCanvas.getContext('2d');
         const previewCtx = previewCanvas.getContext('2d');
+
+
+        // --- Barcode Detector Initialization ---
+        if (!('BarcodeDetector' in window)) {
+            console.log('Barcode Detector is not supported by this browser.');
+        } else {
+            console.log('Barcode Detector supported!');
+            try {
+                barcodeDetector = new BarcodeDetector({
+                    formats: ['code_128', 'code_39', 'ean_13', 'qr_code', 'upc_a', 'itf']
+                });
+            } catch (e) {
+                console.error('Barcode Detector could not be instantiated.', e);
+            }
+        }
         
         // --- Status Update Logic ---
         function updateStatus(message, isError = false) {
@@ -256,36 +324,27 @@
 
         // --- Scanning Logic ---
         async function scanBarcodeFromPreview() {
-            if (previewCanvas.style.display !== 'block') return;
-            
-            if (typeof ZXing === 'undefined') {
-                 updateStatus("Barcode library could not load. Select area for OCR.", true);
-                 return;
+            if (!barcodeDetector) {
+                updateStatus("Barcode detection not supported. Select area for OCR.", true);
+                return;
             }
+            if (!imagePreview.src || !imagePreview.src.startsWith('data:')) return;
 
             try {
                 updateStatus("Attempting barcode scan...");
-                const codeReader = new ZXing.BrowserMultiFormatReader();
-                // Use a temporary canvas with the original, un-rotated image for max reliability
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = imagePreview.naturalWidth;
-                tempCanvas.height = imagePreview.naturalHeight;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(imagePreview, 0, 0);
-
-                const result = await codeReader.decodeFromCanvas(tempCanvas);
-                if (result) {
-                    awbInput.value = result.getText();
-                    updateStatus(`Barcode detected: ${result.getText()}`);
-                    return;
+                const barcodes = await barcodeDetector.detect(imagePreview); // Scan the original image element
+                if (barcodes.length > 0) {
+                    const barcodeValue = barcodes[0].rawValue;
+                    awbInput.value = barcodeValue;
+                    updateStatus(`Barcode detected: ${barcodeValue}`);
+                } else {
+                    updateStatus("No barcode found. Please select an area for OCR.");
                 }
             } catch (err) {
-                console.log("ZXing did not find a barcode.");
+                console.error("Barcode scan failed:", err);
+                updateStatus("Barcode scan failed. Select area for OCR.", true);
             }
-            
-            updateStatus("No barcode found. Please select an area for OCR.");
         }
-
 
         // --- Image Compression Logic ---
         async function compressImage(dataUrl, targetSizeKB, maxDimension) {
@@ -405,6 +464,17 @@
         
         // --- Cropper Logic ---
         function initCropper(imageSrc, originalFileName) {
+            originalCropperSrc = imageSrc; // Save the original source for resetting enhancements
+            
+            // Manually reset state and UI for the new image
+            currentEnhancements = { brightness: 0, contrast: 0, sharpen: false, greyscale: false, bw: false };
+            if (brightnessSlider) brightnessSlider.value = 0;
+            if (contrastSlider) contrastSlider.value = 0;
+            if (sharpenBtn) sharpenBtn.style.backgroundColor = '';
+            if (greyscaleBtn) greyscaleBtn.style.backgroundColor = '';
+            if (bwBtn) bwBtn.style.backgroundColor = '';
+            if (enhancementControls) enhancementControls.style.display = 'none';
+
             inlineCropperWrapper.style.display = 'block';
             imageViewArea.style.display = 'none';
             scrollerContainer.style.display = 'none'; 
@@ -751,7 +821,141 @@
             });
         }
         
+        // --- Image Enhancement Logic ---
+
+        // State to track current enhancement values
+        let currentEnhancements = {
+            brightness: 0,
+            contrast: 0,
+            sharpen: false,
+            greyscale: false,
+            bw: false,
+        };
+
+        // Toggle enhancement controls visibility
+        enhanceBtn.addEventListener('click', () => {
+            enhancementControls.style.display = enhancementControls.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Resets all enhancements and UI to default state
+        function resetEnhancements() {
+            if (!cropper) return;
+            updateStatus("Resetting enhancements...");
+            
+            currentEnhancements = { brightness: 0, contrast: 0, sharpen: false, greyscale: false, bw: false };
+            
+            brightnessSlider.value = 0;
+            contrastSlider.value = 0;
+
+            // Remove active styles from buttons
+            sharpenBtn.style.backgroundColor = '';
+            greyscaleBtn.style.backgroundColor = '';
+            bwBtn.style.backgroundColor = '';
+
+            cropper.replace(originalCropperSrc);
+            updateStatus("Enhancements reset.");
+        }
+
+        // Applies all current enhancements from the state object
+        function applyEnhancements() {
+            if (!cropper || !originalCropperSrc) return;
+            updateStatus("Applying enhancements...");
+
+            // Use a temporary canvas to apply Caman effects
+            const tempCanvas = document.createElement('canvas');
+            const tempImg = new Image();
+            tempImg.crossOrigin = "Anonymous";
+            tempImg.onload = () => {
+                tempCanvas.width = tempImg.width;
+                tempCanvas.height = tempImg.height;
+                tempCanvas.getContext('2d').drawImage(tempImg, 0, 0);
+
+                Caman(tempCanvas, function () {
+                    this.revert(false); // Revert to the clean state on the canvas
+
+                    if (currentEnhancements.bw) {
+                        this.greyscale().contrast(70).brightness(5);
+                    } else if (currentEnhancements.greyscale) {
+                        this.greyscale();
+                    }
+                    if (currentEnhancements.sharpen) {
+                        this.sharpen(10); // A moderate sharpen value
+                    }
+                    this.brightness(parseInt(currentEnhancements.brightness, 10));
+                    this.contrast(parseInt(currentEnhancements.contrast, 10));
+
+                    this.render(() => {
+                        const newDataUrl = this.toBase64();
+                        cropper.replace(newDataUrl);
+                        updateStatus('Enhancements applied.');
+                    });
+                });
+            };
+            tempImg.src = originalCropperSrc; // Always start from the original image
+        }
+
+        // Event listeners for enhancement controls
+        resetEnhanceBtn.addEventListener('click', resetEnhancements);
+
+        brightnessSlider.addEventListener('input', () => {
+            currentEnhancements.brightness = brightnessSlider.value;
+            applyEnhancements();
+        });
+
+        contrastSlider.addEventListener('input', () => {
+            currentEnhancements.contrast = contrastSlider.value;
+            applyEnhancements();
+        });
+
+        sharpenBtn.addEventListener('click', () => {
+            currentEnhancements.sharpen = !currentEnhancements.sharpen;
+            sharpenBtn.style.backgroundColor = currentEnhancements.sharpen ? '#d4edda' : '';
+            applyEnhancements();
+        });
+
+        greyscaleBtn.addEventListener('click', () => {
+            currentEnhancements.greyscale = !currentEnhancements.greyscale;
+            // Greyscale and B&W are mutually exclusive
+            if (currentEnhancements.greyscale) {
+                currentEnhancements.bw = false;
+                bwBtn.style.backgroundColor = '';
+            }
+            greyscaleBtn.style.backgroundColor = currentEnhancements.greyscale ? '#d4edda' : '';
+            applyEnhancements();
+        });
+
+        bwBtn.addEventListener('click', () => {
+            currentEnhancements.bw = !currentEnhancements.bw;
+            // Greyscale and B&W are mutually exclusive
+            if (currentEnhancements.bw) {
+                currentEnhancements.greyscale = false;
+                greyscaleBtn.style.backgroundColor = '';
+            }
+            bwBtn.style.backgroundColor = currentEnhancements.bw ? '#d4edda' : '';
+            applyEnhancements();
+        });
+
+        autoEnhanceBtn.addEventListener('click', () => {
+            // User requested: 1 point sharpen, 2 point brighter, 2 point contrast
+            currentEnhancements.sharpen = true;
+            currentEnhancements.brightness = 10;
+            currentEnhancements.contrast = 10;
+            
+            currentEnhancements.greyscale = false;
+            currentEnhancements.bw = false;
+
+            // Update UI to reflect state
+            brightnessSlider.value = currentEnhancements.brightness;
+            contrastSlider.value = currentEnhancements.contrast;
+            sharpenBtn.style.backgroundColor = '#d4edda';
+            greyscaleBtn.style.backgroundColor = '';
+            bwBtn.style.backgroundColor = '';
+            
+            applyEnhancements();
+        });
+
         resetUploader();
     </script>
 </body>
 </html>
+
