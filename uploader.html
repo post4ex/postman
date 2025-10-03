@@ -295,6 +295,23 @@
                 <div class="entry-input-group">
                     <input type="text" id="awb-input" placeholder="Enter AWB / Ref (Required)">
                     <input type="text" id="customer-name-input" placeholder="Enter Customer Name" style="display: none;">
+                    <select id="kyc-type-select" style="display: none;">
+                        <optgroup label="Individual">
+                            <option value="Aadhaar Card">Aadhaar Card</option>
+                            <option value="PAN Card">PAN Card</option>
+                            <option value="Indian Passport">Indian Passport</option>
+                            <option value="Voter ID Card">Voter ID Card</option>
+                            <option value="Driving License">Driving License</option>
+                            <option value="NREGA Job Card">NREGA Job Card</option>
+                        </optgroup>
+                        <optgroup label="Business">
+                            <option value="Partnership Deed">Partnership Deed</option>
+                            <option value="Certificate of Incorporation">Certificate of Incorporation</option>
+                            <option value="GST Registration">GST Registration</option>
+                            <option value="MoA & AoA">MoA & AoA</option>
+                            <option value="Board Resolution">Board Resolution</option>
+                        </optgroup>
+                    </select>
                     <select id="doc-type-select" style="display: none;">
                         <option value="CLN">CLN</option>
                         <option value="ADH">ADH</option>
@@ -352,6 +369,7 @@
               pickBtn = document.getElementById('pick-btn'), tableBody = document.getElementById('data-table-body'),
               awbInput = document.getElementById('awb-input'), remarkInput = document.getElementById('remark-input'),
               customerNameInput = document.getElementById('customer-name-input'),
+              kycTypeSelect = document.getElementById('kyc-type-select'),
               docTypeSelect = document.getElementById('doc-type-select'),
               docNumberInput = document.getElementById('doc-number-input'),
               deleteLastBtn = document.getElementById('delete-last-btn'), clearAllBtn = document.getElementById('clear-all-btn'),
@@ -427,7 +445,9 @@
                 const barcodes = await barcodeDetector.detect(imagePreview);
                 if (barcodes.length > 0) {
                     const barcodeValue = barcodes[0].rawValue;
-                    if (currentUploadType === 'Product') {
+                    if (currentUploadType === 'MultiBox' && awbInput.disabled) {
+                        remarkInput.value = barcodeValue;
+                    } else if (currentUploadType === 'Product') {
                         docNumberInput.value = barcodeValue;
                     } else {
                         awbInput.value = barcodeValue;
@@ -612,8 +632,8 @@
                 if (!croppedCanvas) { return; }
                 let croppedDataUrl = croppedCanvas.toDataURL('image/png');
                 
-                // Compress for preview quality (~1MB)
-                const previewDataUrl = await compressImage(croppedDataUrl, 1024, 1920);
+                // Keep cropped image at high quality for OCR/barcode scanning
+                // Compression will happen when 'Pick' is clicked
                 
                 inlineCropperWrapper.style.display = 'none';
                 imageViewArea.style.display = 'flex';
@@ -624,7 +644,7 @@
                     scanBarcodeFromPreview();
                     imagePreview.onload = null;
                 };
-                imagePreview.src = previewDataUrl; 
+                imagePreview.src = croppedDataUrl; // Use high-quality data URL
 
                 placeholder.style.display = 'none';
                 cameraFeed.style.display = 'none';
@@ -632,7 +652,7 @@
                 currentRotation = 0;
 
                 if (currentImageIndex !== -1) {
-                    const newFile = await dataURLtoFile(previewDataUrl, originalFileName.replace(/\.\w+$/, '.jpg'));
+                    const newFile = await dataURLtoFile(croppedDataUrl, originalFileName.replace(/\.\w+$/, '.png'));
                     imageQueue[currentImageIndex] = newFile;
                     renderScroller();
                 }
@@ -697,9 +717,11 @@
             tableHeaderRow.innerHTML = ''; // Clear existing header
             let headers = [];
             if (uploadType === 'KYC') {
-                headers = ['Sl No', 'KYC Number', 'Customer Name', 'Status Remark', 'Type', 'Image'];
+                headers = ['Sl No', 'KYC Number', 'Customer Name', 'KYC Type', 'Type', 'Image'];
             } else if (uploadType === 'Product') {
                 headers = ['Sl No', 'AWB / Ref', 'Doc Type', 'Doc Number', 'Type', 'Image'];
+            } else if (uploadType === 'MultiBox') {
+                headers = ['Sl No', 'AWB / Ref', 'Child Awb', 'Type', 'Image'];
             } else {
                 headers = ['Sl No', 'AWB / Ref', 'Status Remark', 'Type', 'Image'];
             }
@@ -713,6 +735,7 @@
         function updateUIForUploadType(uploadType) {
             // Reset common fields
             customerNameInput.style.display = 'none';
+            kycTypeSelect.style.display = 'none';
             docTypeSelect.style.display = 'none';
             docNumberInput.style.display = 'none';
             remarkInput.style.display = 'inline-block';
@@ -721,20 +744,21 @@
 
             if (uploadType === 'KYC') {
                 awbInput.placeholder = "Enter KYC Number";
-                remarkInput.placeholder = "Status Remark (Default: KYC Submitted)";
+                remarkInput.style.display = 'none';
+                kycTypeSelect.style.display = 'inline-block';
                 customerNameInput.style.display = 'inline-block';
             } else if (uploadType === 'Reciept') {
                 awbInput.placeholder = "Enter AWB / Ref (Required)";
                 remarkInput.placeholder = "Status Remark (Default: Booked)";
             } else if (uploadType === 'MultiBox') {
                 awbInput.placeholder = "Enter AWB / Ref (Required)";
-                remarkInput.placeholder = "Status Remark (Default: Package image)";
+                remarkInput.placeholder = "Child Awb";
             } else if (uploadType === 'Product') {
                 awbInput.placeholder = "Enter AWB / Ref (Required)";
                 docNumberInput.placeholder = "Scan/Enter Doc Number";
                 docTypeSelect.style.display = 'inline-block';
                 docNumberInput.style.display = 'inline-block';
-                remarkInput.style.display = 'none'; // Hide remark for Product
+                remarkInput.style.display = 'none';
             } else { // POD
                 awbInput.placeholder = "Enter AWB / Ref (Required)";
                 remarkInput.placeholder = "Status Remark (Default: Delivered)";
@@ -773,12 +797,39 @@
                 initCropper(dataUrl, `capture-${Date.now()}.png`);
             } else {
                 resetUploader();
-                const constraints = { video: { facingMode: { exact: "environment" } } };
-                try { stream = await navigator.mediaDevices.getUserMedia(constraints); } 
-                catch { try { stream = await navigator.mediaDevices.getUserMedia({ video: true }); } catch (e) { updateStatus("Could not access camera.", true); return; } }
+                // Request high resolution, browser will fallback if not available
+                const highResConstraints = { 
+                    video: { 
+                        facingMode: { ideal: "environment" },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    } 
+                };
+                const fallbackConstraints = { video: { facingMode: { ideal: "environment" } } };
+                const finalFallback = { video: true };
+
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(highResConstraints);
+                    console.log("Using high resolution camera stream.");
+                } catch (err) {
+                    console.warn("High resolution failed, trying default environment camera.", err);
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+                    } catch (err2) {
+                        console.warn("Environment camera failed, trying any camera.", err2);
+                        try {
+                           stream = await navigator.mediaDevices.getUserMedia(finalFallback);
+                        } catch (e) {
+                           updateStatus("Could not access camera.", true);
+                           return;
+                        }
+                    }
+                }
+                
                 placeholder.style.display = 'none';
                 cameraFeed.style.display = 'block';
-                cameraFeed.srcObject = stream; cameraFeed.play(); 
+                cameraFeed.srcObject = stream;
+                cameraFeed.play(); 
                 setInterfaceState('streaming');
             }
         });
@@ -940,30 +991,66 @@
             const selectionEndX = point.clientX - rect.left;
             const selectionEndY = point.clientY - rect.top;
 
-            const dpr = window.devicePixelRatio || 1;
-            const selRect = {
-                x: Math.min(selectionRect.startX, selectionEndX) * dpr,
-                y: Math.min(selectionRect.startY, selectionEndY) * dpr,
-                width: Math.abs(selectionRect.startX - selectionEndX) * dpr,
-                height: Math.abs(selectionRect.startY - selectionEndY) * dpr,
-            };
+            const selX = Math.min(selectionRect.startX, selectionEndX);
+            const selY = Math.min(selectionRect.startY, selectionEndY);
+            const selW = Math.abs(selectionRect.startX - selectionEndX);
+            const selH = Math.abs(selectionRect.startY - selectionEndY);
 
-            if (selRect.width < 10 || selRect.height < 10) return;
+            if (selW < 10 || selH < 10) return;
+
+            // --- OCR FIX START ---
+            // Calculate scaling and offsets of the previewed image relative to its container
+            const naturalW = imagePreview.naturalWidth;
+            const naturalH = imagePreview.naturalHeight;
+            const containerW = imageViewArea.clientWidth;
+            const containerH = imageViewArea.clientHeight;
+            const imgAspect = naturalW / naturalH;
+            const contAspect = containerW / containerH;
+            let renderedW, renderedH;
+
+            if (imgAspect > contAspect) {
+                renderedW = containerW;
+                renderedH = containerW / imgAspect;
+            } else {
+                renderedH = containerH;
+                renderedW = containerH * imgAspect;
+            }
+
+            const offsetX = (containerW - renderedW) / 2;
+            const offsetY = (containerH - renderedH) / 2;
+            const scaleFactor = naturalW / renderedW;
+
+            // Translate selection coordinates from preview space to original image space
+            const sourceX = (selX - offsetX) * scaleFactor;
+            const sourceY = (selY - offsetY) * scaleFactor;
+            const sourceWidth = selW * scaleFactor;
+            const sourceHeight = selH * scaleFactor;
             
+            // Check if selection is within the actual image bounds
+            if (sourceX < 0 || sourceY < 0 || sourceX + sourceWidth > naturalW || sourceY + sourceHeight > naturalH) {
+                updateStatus("Selection was outside the image area.", true);
+                isProcessingOCR = false; 
+                return;
+            }
+
             const cropCanvas = document.createElement('canvas');
             const cropCtx = cropCanvas.getContext('2d');
-            cropCanvas.width = selRect.width;
-            cropCanvas.height = selRect.height;
-            
-            cropCtx.drawImage(previewCanvas, selRect.x, selRect.y, selRect.width, selRect.height, 0, 0, selRect.width, selRect.height);
-            
+            cropCanvas.width = sourceWidth;
+            cropCanvas.height = sourceHeight;
+
+            // Draw the selected part from the FULL RESOLUTION image for OCR
+            cropCtx.drawImage(imagePreview, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+            // --- OCR FIX END ---
+
             isProcessingOCR = true;
             updateStatus("Running OCR on selected area...");
             try {
                 const { data: { text } } = await Tesseract.recognize(cropCanvas, 'eng');
                 const ocrText = text.trim().replace(/\s+/g, '');
                 if (ocrText) {
-                    if (currentUploadType === 'Product') {
+                    if (currentUploadType === 'MultiBox' && awbInput.disabled) {
+                        remarkInput.value = ocrText;
+                    } else if (currentUploadType === 'Product') {
                         docNumberInput.value = ocrText;
                     } else {
                         awbInput.value = ocrText;
@@ -987,8 +1074,7 @@
             switch (uploadType) {
                 case 'Reciept': return 'Booked';
                 case 'KYC': return 'KYC Submitted';
-                case 'MultiBox': return 'Package image';
-                default: return 'Delivered'; // Also for Product, but it's hidden
+                default: return 'Delivered'; // Covers POD
             }
         }
 
@@ -1030,7 +1116,8 @@
                     customerNameInput.focus();
                     return;
                 }
-                rowData = [ tableBody.rows.length + 1, awbValue, customerName, getDefaultRemark(currentUploadType), currentUploadType ];
+                const kycType = kycTypeSelect.value;
+                rowData = [ tableBody.rows.length + 1, awbValue, customerName, kycType, currentUploadType ];
             } else if (currentUploadType === 'Product') {
                  const docNumber = docNumberInput.value.trim();
                  if (!docNumber) {
@@ -1040,7 +1127,12 @@
                  }
                 rowData = [ tableBody.rows.length + 1, awbValue, docTypeSelect.value, docNumber, currentUploadType ];
             } else {
-                const remarkValue = remarkInput.value.trim() || getDefaultRemark(currentUploadType);
+                 let remarkValue;
+                if (currentUploadType === 'MultiBox') {
+                    remarkValue = remarkInput.value.trim() || awbValue; // Default to awbValue if empty
+                } else {
+                    remarkValue = remarkInput.value.trim() || getDefaultRemark(currentUploadType);
+                }
                 rowData = [ tableBody.rows.length + 1, awbValue, remarkValue, currentUploadType ];
             }
 
@@ -1057,8 +1149,8 @@
             cellDiv.appendChild(thumb);
             imageCell.appendChild(cellDiv);
             
-            // Lock AWB for product after first pick
-            if (currentUploadType === 'Product' && !isAwbLockedForProduct) {
+            // Lock AWB for product or multibox after first pick
+            if ((currentUploadType === 'Product' || currentUploadType === 'MultiBox') && !isAwbLockedForProduct) {
                 isAwbLockedForProduct = true;
                 awbInput.disabled = true;
             }
@@ -1079,6 +1171,7 @@
                 }
             } else {
                 if(currentUploadType === 'Product') docNumberInput.focus();
+                else if(currentUploadType === 'MultiBox') remarkInput.focus();
                 else awbInput.focus();
             }
         });
@@ -1097,7 +1190,7 @@
         deleteLastBtn.addEventListener('click', () => { if (tableBody.rows.length > 0) tableBody.deleteRow(-1); });
         clearAllBtn.addEventListener('click', () => { 
             tableBody.innerHTML = ''; 
-            if (currentUploadType === 'Product') {
+            if (currentUploadType === 'Product' || currentUploadType === 'MultiBox') {
                 isAwbLockedForProduct = false;
                 awbInput.disabled = false;
                 awbInput.value = '';
@@ -1135,20 +1228,22 @@
                 if (rowUploadType === 'KYC') {
                     rowData.kycNumber = row.cells[1].textContent;
                     rowData.customerName = row.cells[2].textContent;
-                    rowData.statusRemark = row.cells[3].textContent;
+                    rowData.kycType = row.cells[3].textContent;
                 } else if (rowUploadType === 'Product') {
                     rowData.awbNumber = row.cells[1].textContent;
                     rowData.docType = row.cells[2].textContent;
                     rowData.docNumber = row.cells[3].textContent;
-                    rowData.refNumber = row.cells[3].textContent;
-                } else {
+                } else if (rowUploadType === 'MultiBox') {
+                    rowData.awbNumber = row.cells[1].textContent;
+                    rowData.childAwb = row.cells[2].textContent; 
+                } else { // Covers POD, Reciept
                     rowData.awbNumber = row.cells[1].textContent;
                     rowData.statusRemark = row.cells[2].textContent;
                 }
 
                 const payload = {
                     imageData: imgElement.src,
-                    fileName: `${rowData.awbNumber || rowData.kycNumber || rowData.refNumber}-${Date.now()}.jpg`,
+                    fileName: `${rowData.awbNumber || rowData.kycNumber || rowData.docNumber}-${Date.now()}.jpg`,
                     rowData: rowData,
                 };
                 
@@ -1299,11 +1394,60 @@
             applyEnhancements();
         });
 
+        // --- Keyboard Navigation ---
+        const inputFields = [
+            awbInput,
+            customerNameInput,
+            kycTypeSelect,
+            docTypeSelect,
+            docNumberInput,
+            remarkInput
+        ];
+
+        function handleEnterKey(e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+
+            const currentField = e.target;
+            const isRequiredAndEmpty = (field) => {
+                if (field.style.display === 'none' || field.disabled) return false;
+
+                const value = field.value.trim();
+                if (value === '') {
+                    if (field === awbInput) return true;
+                    if (field === customerNameInput && currentUploadType === 'KYC') return true;
+                    if (field === docNumberInput && currentUploadType === 'Product') return true;
+                }
+                return false;
+            };
+
+            if (isRequiredAndEmpty(currentField)) {
+                let fieldName = "This field";
+                if(currentField.placeholder) fieldName = currentField.placeholder.replace('(Required)','').trim();
+                updateStatus(`${fieldName} is a required field.`, true);
+                return; // Stop navigation
+            }
+
+
+            const visibleFields = inputFields.filter(field => field.style.display !== 'none' && !field.disabled);
+            const currentIndex = visibleFields.indexOf(e.target);
+
+            if (currentIndex > -1 && currentIndex < visibleFields.length - 1) {
+                // If it's not the last visible field, focus the next one
+                visibleFields[currentIndex + 1].focus();
+            } else {
+                // If it's the last visible field or not in the list, click the pick button
+                pickBtn.click();
+            }
+        }
+
+        inputFields.forEach(field => {
+            field.addEventListener('keydown', handleEnterKey);
+        });
+
         // Initialize UI for the default type
         updateUIForUploadType(currentUploadType);
         resetUploader();
     </script>
 </body>
 </html>
-
-
