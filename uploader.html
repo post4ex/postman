@@ -632,9 +632,6 @@
                 if (!croppedCanvas) { return; }
                 let croppedDataUrl = croppedCanvas.toDataURL('image/png');
                 
-                // Keep cropped image at high quality for OCR/barcode scanning
-                // Compression will happen when 'Pick' is clicked
-                
                 inlineCropperWrapper.style.display = 'none';
                 imageViewArea.style.display = 'flex';
                 if (imageQueue.length > 1) scrollerContainer.style.display = 'block';
@@ -644,7 +641,7 @@
                     scanBarcodeFromPreview();
                     imagePreview.onload = null;
                 };
-                imagePreview.src = croppedDataUrl; // Use high-quality data URL
+                imagePreview.src = croppedDataUrl; 
 
                 placeholder.style.display = 'none';
                 cameraFeed.style.display = 'none';
@@ -789,7 +786,8 @@
         cameraBtn.addEventListener('click', async () => {
             if (stream) {
                 const canvas = document.createElement('canvas');
-                canvas.width = cameraFeed.videoWidth; canvas.height = cameraFeed.videoHeight;
+                canvas.width = cameraFeed.videoWidth;
+                canvas.height = cameraFeed.videoHeight;
                 canvas.getContext('2d').drawImage(cameraFeed, 0, 0);
                 const dataUrl = canvas.toDataURL('image/png');
                 stopCamera();
@@ -797,22 +795,22 @@
                 initCropper(dataUrl, `capture-${Date.now()}.png`);
             } else {
                 resetUploader();
-                // Request high resolution, browser will fallback if not available
-                const highResConstraints = { 
+                const portraitConstraints = { 
                     video: { 
                         facingMode: { ideal: "environment" },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        width: { ideal: 1080 },
+                        height: { ideal: 1920 },
+                        aspectRatio: { ideal: 3/4 }
                     } 
                 };
                 const fallbackConstraints = { video: { facingMode: { ideal: "environment" } } };
                 const finalFallback = { video: true };
 
                 try {
-                    stream = await navigator.mediaDevices.getUserMedia(highResConstraints);
-                    console.log("Using high resolution camera stream.");
+                    stream = await navigator.mediaDevices.getUserMedia(portraitConstraints);
+                    console.log("Using portrait 3:4 camera stream.");
                 } catch (err) {
-                    console.warn("High resolution failed, trying default environment camera.", err);
+                    console.warn("Portrait 3:4 failed, trying default environment camera.", err);
                     try {
                         stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
                     } catch (err2) {
@@ -1073,7 +1071,6 @@
         function getDefaultRemark(uploadType) {
             switch (uploadType) {
                 case 'Reciept': return 'Booked';
-                case 'KYC': return 'KYC Submitted';
                 default: return 'Delivered'; // Covers POD
             }
         }
@@ -1451,3 +1448,4 @@
     </script>
 </body>
 </html>
+
