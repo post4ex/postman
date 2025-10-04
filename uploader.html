@@ -92,6 +92,9 @@
         #camera-feed, #preview-canvas {
             width: 100%; height: 100%; object-fit: contain;
         }
+        #camera-feed.active-capture {
+            cursor: pointer;
+        }
         #preview-canvas { display: none; }
 
         button {
@@ -519,6 +522,7 @@
             cancelBtn.style.display = 'none';
             cancelAllBtn.style.display = 'none';
             imageViewArea.classList.remove('selectable');
+            cameraFeed.classList.remove('active-capture');
 
             if (state === 'streaming') {
                 cameraBtn.textContent = 'Capture';
@@ -526,6 +530,7 @@
                 cancelBtn.style.display = 'inline-block';
                 previewCanvas.style.display = 'none';
                 cameraFeed.style.display = 'block';
+                cameraFeed.classList.add('active-capture');
                 uploadTypeStrip.style.display = 'none'; // Hide type strip
             } else if (state === 'preview') {
                 cameraBtn.style.display = 'none';
@@ -566,10 +571,21 @@
             isCustomerNameLockedForKyc = false;
             customerNameInput.disabled = false;
 
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.backgroundColor = '';
+            cancelBtn.style.borderColor = '';
+            cancelBtn.style.color = '';
+
             setInterfaceState('idle');
         }
 
-        function stopCamera() { if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; } }
+        function stopCamera() { 
+            if (stream) { 
+                stream.getTracks().forEach(track => track.stop()); 
+                stream = null; 
+            }
+            cameraFeed.removeEventListener('click', handleVideoStreamClick);
+        }
 
         function displayImage(index) {
             if (index < 0 || index >= imageQueue.length) { resetUploader(); return; }
@@ -834,6 +850,7 @@
                 cameraFeed.srcObject = stream;
                 cameraFeed.play(); 
                 setInterfaceState('streaming');
+                cameraFeed.addEventListener('click', handleVideoStreamClick);
             }
         });
 
@@ -933,6 +950,24 @@
         });
 
         cancelBtn.addEventListener('click', () => {
+            // Case 1: In streaming mode (camera is on)
+            if (stream) {
+                if (cancelBtn.textContent === 'Done') {
+                    // This is the "Done" button for multi-capture
+                    stopCamera();
+                    if (imageQueue.length > 0) {
+                        displayImage(0);
+                    } else {
+                        resetUploader();
+                    }
+                } else {
+                    // This is the "Cancel" button for starting the camera
+                    resetUploader();
+                }
+                return; // Exit after handling streaming case
+            }
+            
+            // Case 2: In preview mode (original logic for deleting one image)
             if (isImageLocked) { resetUploader(); return; }
             if (imageQueue.length > 0) {
                  imageQueue.splice(currentImageIndex, 1);
@@ -1073,6 +1108,35 @@
         imageViewArea.addEventListener('mousedown', onSelectionStart);
         imageViewArea.addEventListener('touchstart', onSelectionStart, { passive: false });
         
+        async function handleVideoStreamClick() {
+            if (!stream) return;
+
+            if (imageQueue.length >= MAX_FILES) {
+                updateStatus(`Maximum of ${MAX_FILES} images reached.`, true);
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = cameraFeed.videoWidth;
+            canvas.height = cameraFeed.videoHeight;
+            canvas.getContext('2d').drawImage(cameraFeed, 0, 0);
+            const dataUrl = canvas.toDataURL('image/png');
+            const newFile = await dataURLtoFile(dataUrl, `capture-${Date.now()}.png`);
+
+            imageQueue.push(newFile);
+            scrollerContainer.style.display = 'block';
+            renderScroller();
+            updateStatus(`${imageQueue.length} image(s) captured.`);
+            
+            // Update cancel button to "Done"
+            if (cancelBtn.textContent !== 'Done') {
+                cancelBtn.textContent = 'Done';
+                cancelBtn.style.backgroundColor = '#28a745';
+                cancelBtn.style.borderColor = '#28a745';
+                cancelBtn.style.color = 'white';
+            }
+        }
+
         function getDefaultRemark(uploadType) {
             switch (uploadType) {
                 case 'Reciept': return 'Booked';
@@ -1497,4 +1561,6 @@
     </script>
 </body>
 </html>
+
+
 
