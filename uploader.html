@@ -403,6 +403,7 @@
         let originalCropperSrc = null; // For image enhancement reset
         let currentUploadType = 'POD'; // Default upload type
         let isAwbLockedForProduct = false;
+        let isCustomerNameLockedForKyc = false;
         const MAX_FILES = 50, MAX_ROWS = 20;
 
         // OCR Selection State
@@ -562,6 +563,8 @@
 
             isAwbLockedForProduct = false;
             awbInput.disabled = false;
+            isCustomerNameLockedForKyc = false;
+            customerNameInput.disabled = false;
 
             setInterfaceState('idle');
         }
@@ -738,6 +741,8 @@
             remarkInput.style.display = 'inline-block';
             isAwbLockedForProduct = false;
             awbInput.disabled = false;
+            isCustomerNameLockedForKyc = false;
+            customerNameInput.disabled = false;
 
             if (uploadType === 'KYC') {
                 awbInput.placeholder = "Enter KYC Number";
@@ -1092,10 +1097,8 @@
                 awbInput.focus();
                 return;
             }
-            if (currentUploadType !== 'MultiBox' && currentUploadType !== 'Product' && isDuplicateAwb(awbValue)) {
-                updateStatus(`Duplicate AWB / Ref found: ${awbValue}`, true);
-                awbInput.focus();
-                return;
+            if (isDuplicateEntry()) {
+                return; // Stop if a duplicate is found based on the new rules
             }
             if (tableBody.rows.length >= MAX_ROWS) {
                 updateStatus("Table is full.", true);
@@ -1152,9 +1155,15 @@
                 awbInput.disabled = true;
             }
 
+            // Lock Customer Name for KYC after first pick
+            if (currentUploadType === 'KYC' && !isCustomerNameLockedForKyc) {
+                isCustomerNameLockedForKyc = true;
+                customerNameInput.disabled = true;
+            }
+
             awbInput.value = isAwbLockedForProduct ? awbInput.value : '';
             remarkInput.value = '';
-            customerNameInput.value = '';
+            customerNameInput.value = isCustomerNameLockedForKyc ? customerNameInput.value : '';
             docNumberInput.value = '';
 
 
@@ -1174,11 +1183,45 @@
         });
         
         // --- Table & Utility Functions ---
-        function isDuplicateAwb(awbValue) {
+        function isDuplicateEntry() {
             const rows = tableBody.rows;
+            const awbValue = awbInput.value.trim();
+            
             for (let i = 0; i < rows.length; i++) {
-                if (rows[i].cells[1].textContent === awbValue) {
-                    return true;
+                const row = rows[i];
+                switch (currentUploadType) {
+                    case 'POD':
+                    case 'Reciept':
+                        if (row.cells[1].textContent === awbValue) {
+                            updateStatus(`Duplicate AWB / Ref found: ${awbValue}`, true);
+                            awbInput.focus();
+                            return true;
+                        }
+                        break;
+                    case 'KYC':
+                         if (row.cells[1].textContent === awbValue) { // awbInput holds KYC number
+                            updateStatus(`Duplicate KYC Number found: ${awbValue}`, true);
+                            awbInput.focus();
+                            return true;
+                        }
+                        break;
+                    case 'Product':
+                        const docNumber = docNumberInput.value.trim();
+                        if (docNumber && row.cells[3].textContent === docNumber) {
+                            updateStatus(`Duplicate Doc Number found: ${docNumber}`, true);
+                            docNumberInput.focus();
+                            return true;
+                        }
+                        break;
+                    case 'MultiBox':
+                        const childAwb = remarkInput.value.trim();
+                        // Check only if childAwb is entered and is not the same as the parent AWB
+                        if (childAwb && childAwb !== awbValue && row.cells[2].textContent === childAwb) {
+                             updateStatus(`Duplicate Child Awb found: ${childAwb}`, true);
+                             remarkInput.focus();
+                             return true;
+                        }
+                        break;
                 }
             }
             return false;
@@ -1190,6 +1233,12 @@
             if (currentUploadType === 'Product' || currentUploadType === 'MultiBox') {
                 isAwbLockedForProduct = false;
                 awbInput.disabled = false;
+                awbInput.value = '';
+            }
+            if (currentUploadType === 'KYC') {
+                isCustomerNameLockedForKyc = false;
+                customerNameInput.disabled = false;
+                customerNameInput.value = '';
                 awbInput.value = '';
             }
         });
