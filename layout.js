@@ -103,6 +103,7 @@ function checkLoginStatus() {
     const profileSection = document.getElementById('profile-section');
     const loginButtonMobile = document.getElementById('login-button-mobile');
     const profileSectionMobile = document.getElementById('profile-section-mobile');
+    const searchButtonPrivate = document.getElementById('nav-search-private');
 
     // Navigation sections
     const mainNavPublic = document.getElementById('main-nav-public');
@@ -137,6 +138,7 @@ function checkLoginStatus() {
         // --- UI for LOGGED IN user ---
         loginButton.classList.add('hidden');
         profileSection.classList.remove('hidden');
+        searchButtonPrivate.classList.remove('hidden');
         loginButtonMobile.classList.add('hidden');
         profileSectionMobile.classList.remove('hidden');
         
@@ -193,6 +195,7 @@ function checkLoginStatus() {
         // --- UI for LOGGED OUT user ---
         loginButton.classList.remove('hidden');
         profileSection.classList.add('hidden');
+        searchButtonPrivate.classList.add('hidden');
         loginButtonMobile.classList.remove('hidden');
         profileSectionMobile.classList.add('hidden');
 
