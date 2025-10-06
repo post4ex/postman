@@ -210,6 +210,7 @@ function checkLoginStatus() {
     }
 }
 
+let silentRefreshInterval = null; // Variable to hold the interval ID
 
 /**
  * Main function to initialize the UI event listeners after components are loaded.
@@ -253,6 +254,10 @@ function initializeUI() {
 
     const handleLogout = () => {
         localStorage.removeItem('loginData');
+        localStorage.removeItem('appData');
+        if (silentRefreshInterval) {
+            clearInterval(silentRefreshInterval); // Stop the refresh on logout
+        }
         window.location.href = 'https://post4ex.github.io/postman/login.html';
     };
     if (profileLogoutButton) profileLogoutButton.addEventListener('click', handleLogout);
@@ -305,6 +310,117 @@ const setActiveNavOnLoad = () => {
     }, 150);
 };
 
+/**
+ * Verifies the user's session token and fetches filtered application data from Google Sheets.
+ * Manages caching and silent refresh.
+ */
+async function verifyAndFetchAppData() {
+    const loginDataJSON = localStorage.getItem('loginData');
+    if (!loginDataJSON) return;
+    
+    const appDataJSON = localStorage.getItem('appData');
+    if (appDataJSON) {
+        try {
+            const appData = JSON.parse(appDataJSON);
+            if (new Date().getTime() < appData.expires) {
+                console.log('App data exists and is valid. Skipping fetch.');
+                startSilentRefresh(); // Ensure refresh is running
+                return;
+            }
+        } catch (e) {
+            console.error('Could not parse appData from localStorage.', e);
+        }
+    }
+
+    try {
+        const loginData = JSON.parse(loginDataJSON);
+        const code = loginData.CODE || loginData.code;
+        const token = loginData.TOKEN || loginData.token;
+
+        if (!code || !token) {
+            console.error('Code or Token is missing from login data.');
+            return;
+        }
+
+        const DATA_LOADER_URL = 'https://script.google.com/macros/s/AKfycbwq2ZIniCkLN-3SCaPKgVhy74Rqpt9b9Kovz1ANj2z0Iwg-Ad3jHC9N3xrYatDnbpwR5A/exec';
+        
+        console.log('Verifying token and fetching initial application data...');
+        const response = await fetch(`${DATA_LOADER_URL}?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`);
+
+        if (!response.ok) {
+            throw new Error(`Network error while fetching app data: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            const expiry = new Date().getTime() + (2 * 60 * 60 * 1000); // 2 hours
+            const appDataToStore = {
+                data: result.data,
+                expires: expiry
+            };
+            localStorage.setItem('appData', JSON.stringify(appDataToStore));
+            console.log('App data was fetched and stored successfully.');
+            
+            startSilentRefresh(); // Start the background refresh process
+            
+            window.dispatchEvent(new CustomEvent('appDataLoaded', { detail: result.data }));
+        } else {
+            console.error('Failed to verify and fetch app data:', result.message);
+        }
+
+    } catch (error) {
+        console.error('An unexpected error occurred during app data fetch:', error);
+    }
+}
+
+/**
+ * Starts a silent, periodic refresh of the application data in the background.
+ */
+function startSilentRefresh() {
+    // Prevent multiple intervals from running
+    if (silentRefreshInterval) {
+        clearInterval(silentRefreshInterval);
+    }
+
+    const FIVE_MINUTES = 5 * 60 * 1000;
+    
+    silentRefreshInterval = setInterval(async () => {
+        const loginDataJSON = localStorage.getItem('loginData');
+        if (!loginDataJSON) {
+            clearInterval(silentRefreshInterval);
+            return;
+        }
+
+        try {
+            const loginData = JSON.parse(loginDataJSON);
+            const code = loginData.CODE || loginData.code;
+            const token = loginData.TOKEN || loginData.token;
+            if (!code || !token) return;
+
+            console.log('Performing silent data refresh...');
+            const DATA_LOADER_URL = 'https://script.google.com/macros/s/AKfycbwq2ZIniCkLN-3SCaPKgVhy74Rqpt9b9Kovz1ANj2z0Iwg-Ad3jHC9N3xrYatDnbpwR5A/exec';
+            const response = await fetch(`${DATA_LOADER_URL}?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`);
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    const appDataJSON = localStorage.getItem('appData');
+                    if (appDataJSON) {
+                        const existingAppData = JSON.parse(appDataJSON);
+                        existingAppData.data = result.data; // Update data but keep original expiry
+                        localStorage.setItem('appData', JSON.stringify(existingAppData));
+                        console.log('Silent data refresh successful.');
+                         window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: result.data }));
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Silent refresh failed:', error);
+        }
+    }, FIVE_MINUTES);
+}
+
 // --- SCRIPT EXECUTION STARTS HERE ---
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
@@ -314,19 +430,18 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     const isProtected = protectedPages.some(page => path.includes(page));
 
-    if (isProtected) {
-        const loginDataJSON = localStorage.getItem('loginData');
-        let isLoggedIn = false;
-        if (loginDataJSON) {
-            const loginData = JSON.parse(loginDataJSON);
-            if (new Date().getTime() <= loginData.expires) {
-                isLoggedIn = true;
-            }
+    let isLoggedIn = false;
+    const loginDataJSON = localStorage.getItem('loginData');
+    if (loginDataJSON) {
+        const loginData = JSON.parse(loginDataJSON);
+        if (new Date().getTime() <= loginData.expires) {
+            isLoggedIn = true;
         }
-        if (!isLoggedIn) {
-            window.location.href = 'https://post4ex.github.io/postman/login.html';
-            return; 
-        }
+    }
+
+    if (isProtected && !isLoggedIn) {
+        window.location.href = 'https://post4ex.github.io/postman/login.html';
+        return; 
     }
 
     Promise.all([
@@ -335,6 +450,10 @@ document.addEventListener('DOMContentLoaded', () => {
     ]).then(() => {
         initializeUI();
         setActiveNavOnLoad();
+        
+        if (isLoggedIn) {
+            verifyAndFetchAppData();
+        }
         
         if (path.includes('main.html') || path.endsWith('/postman/') || path.endsWith('/')) {
             loadDynamicContent('https://post4ex.github.io/postman/tracking.html', 'tracking-content-area');
