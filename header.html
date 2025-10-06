@@ -1,5 +1,5 @@
 <!-- Header -->
-<header class="w-full bg-white text-blue-900 shadow-md py-4 px-6 sticky top-0 z-40">
+<header class="w-full bg-white text-blue-900 shadow-md py-4 px-6 sticky top-0 z-30">
     <div class="container-fluid mx-auto flex items-center justify-between relative">
         <!-- Sidebar Toggle and Logo -->
         <div class="flex items-center space-x-4">
@@ -18,27 +18,30 @@
         </div>
 
         <!-- Main Navigation (Desktop) -->
-        <nav class="hidden sm:flex items-center space-x-2 text-sm font-semibold">
-            <!-- Public Links -->
-            <div id="main-nav-public" class="flex items-center space-x-2">
-                <a id="nav-home-public" href="https://post4ex.github.io/postman/main.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-                <a id="nav-pincode-public" href="https://post4ex.github.io/postman/Pincode.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Pincode</a>
-                <a id="nav-complaint-public" href="https://post4ex.github.io/postman/complaint.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
-            </div>
-            <!-- Private (Logged-in) Links -->
-            <div id="main-nav-private" class="hidden items-center space-x-2">
-                <a id="nav-bookorder-private" href="https://post4ex.github.io/postman/BookOrder.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Book Order</a>
-                <a id="nav-tracking-private" href="https://post4ex.github.io/postman/tracking.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
-                <a id="nav-calculator-private" href="https://post4ex.github.io/postman/Calculator.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Calculator</a>
-                <a id="nav-ticket-private" href="https://post4ex.github.io/postman/ticket.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Ticket</a>
-                <a id="nav-task-private" href="https://post4ex.github.io/postman/task.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Task</a>
-                <a id="nav-wallet-private" href="https://post4ex.github.io/postman/wallet.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Wallet</a>
-                <a id="nav-search-private" href="https://post4ex.github.io/postman/search.html" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
-                </a>
+        <nav class="hidden sm:flex items-center justify-between flex-grow ml-8 text-sm font-semibold">
+            <!-- Navigation Links -->
+            <div class="flex items-center space-x-2">
+                <!-- Public Links -->
+                <div id="main-nav-public" class="flex items-center space-x-2">
+                    <a id="nav-home-public" href="https://post4ex.github.io/postman/main.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
+                    <a id="nav-pincode-public" href="https://post4ex.github.io/postman/Pincode.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Pincode</a>
+                    <a id="nav-complaint-public" href="https://post4ex.github.io/postman/complaint.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
+                </div>
+                <!-- Private (Logged-in) Links -->
+                <div id="main-nav-private" class="hidden items-center space-x-2">
+                    <a id="nav-bookorder-private" href="https://post4ex.github.io/postman/BookOrder.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Book Order</a>
+                    <a id="nav-tracking-private" href="https://post4ex.github.io/postman/tracking.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
+                    <a id="nav-calculator-private" href="https://post4ex.github.io/postman/Calculator.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Calculator</a>
+                    <a id="nav-ticket-private" href="https://post4ex.github.io/postman/ticket.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Ticket</a>
+                    <a id="nav-task-private" href="https://post4ex.github.io/postman/task.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Task</a>
+                    <a id="nav-wallet-private" href="https://post4ex.github.io/postman/wallet.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Wallet</a>
+                </div>
             </div>
              <!-- Auth Controls -->
-            <div class="flex items-center ml-4">
+            <div class="flex items-center space-x-4">
+                 <a id="nav-search-private" href="https://post4ex.github.io/postman/search.html" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                </a>
                  <a id="login-button" href="https://post4ex.github.io/postman/login.html" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
                  <!-- Profile Section (Hidden by default) -->
                  <div id="profile-section" class="relative hidden">
@@ -64,7 +67,7 @@
         </button>
 
         <!-- Mobile Dropdown Menu -->
-        <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden w-48">
+        <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden w-48 z-40">
              <!-- Public Links -->
             <div id="dropdown-public-links">
                 <a id="dropdown-home-public" href="https://post4ex.github.io/postman/main.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
@@ -168,7 +171,7 @@
             <!-- Billing -->
              <a href="https://post4ex.github.io/postman/Billing.html" class="block p-2 rounded hover:bg-gray-700">Billing</a>
             <!-- Ledger (Role-based) -->
-            <div id="ledger-menu-item" class="hidden">
+            <div id="ledger-menu-item">
                 <button onclick="toggleSubmenu('ledger-submenu')" class="w-full text-left flex justify-between items-center p-2 rounded hover:bg-gray-700 focus:outline-none">
                     <span>Ledger</span>
                     <svg class="w-4 h-4 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -176,10 +179,23 @@
                 <div id="ledger-submenu" class="hidden pl-4 mt-1 space-y-1">
                     <a href="https://post4ex.github.io/postman/LedgerSummary.html" class="block p-2 rounded hover:bg-gray-600">Summary</a>
                     <a href="https://post4ex.github.io/postman/LedgerAccounts.html" class="block p-2 rounded hover:bg-gray-600">Accounts</a>
+                    <a href="https://post4ex.github.io/postman/LedgerReceipts.html" class="block p-2 rounded hover:bg-gray-600">Receipts</a>
+                    <a href="https://post4ex.github.io/postman/LedgerPayments.html" class="block p-2 rounded hover:bg-gray-600">Payments</a>
+                    <a href="https://post4ex.github.io/postman/LedgerExpenseClaims.html" class="block p-2 rounded hover:bg-gray-600">Expense Claims</a>
+                    <a href="https://post4ex.github.io/postman/LedgerCustomers.html" class="block p-2 rounded hover:bg-gray-600">Customers</a>
+                    <a href="https://post4ex.github.io/postman/LedgerSalesInvoices.html" class="block p-2 rounded hover:bg-gray-600">Sales Invoices</a>
+                    <a href="https://post4ex.github.io/postman/LedgerCreditNotes.html" class="block p-2 rounded hover:bg-gray-600">Credit Notes</a>
+                    <a href="https://post4ex.github.io/postman/LedgerDeliveryNotes.html" class="block p-2 rounded hover:bg-gray-600">Delivery Notes</a>
+                    <a href="https://post4ex.github.io/postman/LedgerSuppliers.html" class="block p-2 rounded hover:bg-gray-600">Suppliers</a>
+                    <a href="https://post4ex.github.io/postman/LedgerPurchaseInvoices.html" class="block p-2 rounded hover:bg-gray-600">Purchase Invoices</a>
+                    <a href="https://post4ex.github.io/postman/LedgerDebitNotes.html" class="block p-2 rounded hover:bg-gray-600">Debit Notes</a>
+                    <a href="https://post4ex.github.io/postman/LedgerEmployees.html" class="block p-2 rounded hover:bg-gray-600">Employees</a>
+                    <a href="https://post4ex.github.io/postman/LedgerJournalEntries.html" class="block p-2 rounded hover:bg-gray-600">Journal Entries</a>
+                    <a href="https://post4ex.github.io/postman/LedgerReports.html" class="block p-2 rounded hover:bg-gray-600">Ledger Reports</a>
                 </div>
             </div>
             <!-- Masters (Role-based) -->
-            <div id="masters-menu-item" class="hidden">
+            <div id="masters-menu-item">
                 <button onclick="toggleSubmenu('masters-submenu')" class="w-full text-left flex justify-between items-center p-2 rounded hover:bg-gray-700 focus:outline-none">
                     <span>Masters</span>
                     <svg class="w-4 h-4 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
@@ -187,6 +203,11 @@
                 <div id="masters-submenu" class="hidden pl-4 mt-1 space-y-1">
                     <a href="https://post4ex.github.io/postman/Branches.html" class="block p-2 rounded hover:bg-gray-600">Branches</a>
                     <a href="https://post4ex.github.io/postman/Customer.html" class="block p-2 rounded hover:bg-gray-600">Customer</a>
+                    <a href="https://post4ex.github.io/postman/Clients.html" class="block p-2 rounded hover:bg-gray-600">Clients</a>
+                    <a href="https://post4ex.github.io/postman/Suppliers.html" class="block p-2 rounded hover:bg-gray-600">Suppliers</a>
+                    <a href="https://post4ex.github.io/postman/Vendors.html" class="block p-2 rounded hover:bg-gray-600">Vendors</a>
+                    <a href="https://post4ex.github.io/postman/Staff.html" class="block p-2 rounded hover:bg-gray-600">Staff</a>
+                    <a href="https://post4ex.github.io/postman/Stock.html" class="block p-2 rounded hover:bg-gray-600">Stock</a>
                 </div>
             </div>
         </nav>
