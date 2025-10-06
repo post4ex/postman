@@ -126,27 +126,12 @@ function checkLoginStatus() {
     const loginButtonMobile = document.getElementById('login-button-mobile');
     const profileSectionMobile = document.getElementById('profile-section-mobile');
 
-    // Nav Items
-    const publicNavItems = [
-        document.getElementById('nav-home-public'),
-        document.getElementById('nav-services-public'),
-        document.getElementById('nav-complaint-public'),
-        document.getElementById('dropdown-home-public'),
-        document.getElementById('dropdown-services-public'),
-        document.getElementById('dropdown-complaint-public')
-    ];
-    const privateNavItems = [
-        document.getElementById('nav-bookorder-private'),
-        document.getElementById('nav-calculator-private'),
-        document.getElementById('nav-ticket-private'),
-        document.getElementById('nav-task-private'),
-        document.getElementById('nav-search'),
-        document.getElementById('dropdown-bookorder-private'),
-        document.getElementById('dropdown-calculator-private'),
-        document.getElementById('dropdown-ticket-private'),
-        document.getElementById('dropdown-task-private'),
-        document.getElementById('dropdown-search-private')
-    ];
+    // Nav containers
+    const publicNav = document.getElementById('main-nav-public');
+    const privateNav = document.getElementById('main-nav-private');
+    const publicDropdown = document.getElementById('dropdown-public-links');
+    const privateDropdown = document.getElementById('dropdown-private-links');
+
 
     // Sidebar elements
     const sidebarToggleContainer = document.getElementById('sidebar-toggle-container');
@@ -180,9 +165,11 @@ function checkLoginStatus() {
         loginButtonMobile.classList.add('hidden');
         profileSectionMobile.classList.remove('hidden');
         
-        publicNavItems.forEach(item => item && item.classList.add('hidden'));
-        privateNavItems.forEach(item => item && item.classList.remove('hidden'));
-        
+        publicNav.classList.add('hidden');
+        privateNav.classList.remove('hidden');
+        publicDropdown.classList.add('hidden');
+        privateDropdown.classList.remove('hidden');
+
         sidebarToggleContainer.classList.remove('hidden');
         if (logoLink) logoLink.href = 'https://post4ex.github.io/postman/dashboard.html';
         
@@ -195,7 +182,6 @@ function checkLoginStatus() {
         if (profileDetailsContainer) profileDetailsContainer.innerHTML = '';
         if (mobileProfileDetailsContainer) mobileProfileDetailsContainer.innerHTML = '';
 
-        // Define which fields to display in the profile
         const fieldsToShow = ['NAME', 'CODE', 'ROLE', 'BRANCH', 'EMAIL', 'MOBILE', 'TOKEN'];
 
         fieldsToShow.forEach(key => {
@@ -203,21 +189,19 @@ function checkLoginStatus() {
                 const value = loginData[key];
                 const keyFormatted = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase().replace(/_/g, ' ');
 
-                // Populate desktop dropdown
                 if(profileDetailsContainer){
                     const detailWrapper = document.createElement('div');
                     detailWrapper.innerHTML = `
                         <p class="text-xs text-gray-500">${keyFormatted}</p>
-                        <p class="font-semibold text-sm text-gray-800 break-words">${value}</p>
+                        <p class="font-semibold text-sm text-gray-800 break-words">${value || 'N/A'}</p>
                     `;
                     profileDetailsContainer.appendChild(detailWrapper);
                 }
 
-                // Populate mobile dropdown
                 if(mobileProfileDetailsContainer){
                     const mobileDetailItem = document.createElement('p');
                     mobileDetailItem.className = 'text-sm text-gray-700';
-                    mobileDetailItem.innerHTML = `<span class="font-semibold">${keyFormatted}:</span> ${value}`;
+                    mobileDetailItem.innerHTML = `<span class="font-semibold">${keyFormatted}:</span> ${value || 'N/A'}`;
                     mobileProfileDetailsContainer.appendChild(mobileDetailItem);
                 }
             }
@@ -241,8 +225,10 @@ function checkLoginStatus() {
         loginButtonMobile.classList.remove('hidden');
         profileSectionMobile.classList.add('hidden');
 
-        publicNavItems.forEach(item => item && item.classList.remove('hidden'));
-        privateNavItems.forEach(item => item && item.classList.add('hidden'));
+        publicNav.classList.remove('hidden');
+        privateNav.classList.add('hidden');
+        publicDropdown.classList.remove('hidden');
+        privateDropdown.classList.add('hidden');
 
         sidebarToggleContainer.classList.add('hidden');
         if (logoLink) logoLink.href = 'https://post4ex.github.io/postman/main.html'; 
@@ -263,7 +249,6 @@ function initializeUI() {
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
     
-    // Desktop profile dropdown toggle
     const profileButton = document.getElementById('profile-button');
     const profileDropdown = document.getElementById('profile-dropdown');
 
@@ -281,7 +266,6 @@ function initializeUI() {
         });
     }
 
-    // Global click listener to close dropdowns
     document.addEventListener('click', (event) => {
         if (dropdownMenu && !dropdownMenu.classList.contains('hidden')) {
             const isClickInsideMenuButton = menuButton ? menuButton.contains(event.target) : false;
@@ -298,7 +282,6 @@ function initializeUI() {
         }
     });
 
-    // Logout functionality
     const handleLogout = () => {
         localStorage.removeItem('loginData');
         window.location.href = 'https://post4ex.github.io/postman/login.html';
@@ -308,7 +291,6 @@ function initializeUI() {
     if (logoutButton) logoutButton.addEventListener('click', handleLogout);
     if (logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
 
-    // Sidebar functionality
     if (sidebar && sidebarToggle && sidebarOverlay) {
         const toggleSidebar = () => {
             sidebar.classList.toggle('-translate-x-full');
@@ -329,11 +311,12 @@ const setActiveNavOnLoad = () => {
     let pageId = 'home'; 
     if (path.includes('dashboard.html')) pageId = 'bookorder'; 
     if (path.includes('tracking.html')) pageId = 'tracking';
-    if (path.includes('services.html')) pageId = 'services';
+    if (path.includes('Pincode.html')) pageId = 'pincode';
     if (path.includes('complaint.html')) pageId = 'complaint';
     if (path.includes('Calculator.html')) pageId = 'calculator';
     if (path.includes('ticket.html')) pageId = 'ticket';
     if (path.includes('task.html')) pageId = 'task';
+    if (path.includes('wallet.html')) pageId = 'wallet';
     if (path.includes('search.html')) pageId = 'search';
     
     setActiveNav(pageId);
@@ -342,7 +325,7 @@ const setActiveNavOnLoad = () => {
 // --- SCRIPT EXECUTION STARTS HERE ---
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
-    const protectedPages = ['dashboard.html', 'BookOrder.html', 'Calculator.html', 'ticket.html', 'task.html', 'search.html'];
+    const protectedPages = ['dashboard.html', 'BookOrder.html', 'Calculator.html', 'ticket.html', 'task.html', 'search.html', 'wallet.html'];
     
     if (protectedPages.some(page => path.includes(page))) {
         const loginDataJSON = localStorage.getItem('loginData');
@@ -359,7 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Load header and footer components first
     Promise.all([
         loadComponent('https://post4ex.github.io/postman/header.html', 'header-placeholder'),
         loadComponent('https://post4ex.github.io/postman/footer.html', 'footer-placeholder')
