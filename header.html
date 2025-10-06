@@ -35,31 +35,34 @@
             </nav>
         </div>
 
-        <!-- Right Section: Auth Controls -->
-        <div class="hidden sm:flex items-center space-x-4">
-            <a id="nav-search-private" href="https://post4ex.github.io/postman/search.html" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors hidden">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
-            </a>
-            <a id="login-button" href="https://post4ex.github.io/postman/login.html" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
-            <div id="profile-section" class="relative hidden">
-                <button id="profile-button" class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                </button>
-                <div id="profile-dropdown" class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 hidden p-4 border">
-                    <div class="border-b pb-2 mb-2">
-                        <h3 class="text-md font-semibold text-gray-800">User Profile</h3>
+        <!-- Right Section Wrapper -->
+        <div class="flex items-center">
+            <!-- Desktop Auth Controls -->
+            <div class="hidden sm:flex items-center space-x-4">
+                <a id="nav-search-private" href="https://post4ex.github.io/postman/search.html" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                </a>
+                <a id="login-button" href="https://post4ex.github.io/postman/login.html" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
+                <div id="profile-section" class="relative hidden">
+                    <button id="profile-button" class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    </button>
+                    <div id="profile-dropdown" class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 hidden p-4 border">
+                        <div class="border-b pb-2 mb-2">
+                            <h3 class="text-md font-semibold text-gray-800">User Profile</h3>
+                        </div>
+                        <div id="profile-details-container" class="space-y-2"></div>
+                        <button id="profile-logout-button" class="w-full text-left mt-4 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
                     </div>
-                    <div id="profile-details-container" class="space-y-2"></div>
-                    <button id="profile-logout-button" class="w-full text-left mt-4 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
                 </div>
             </div>
-        </div>
 
-        <!-- Mobile Menu Button -->
-        <div class="sm:hidden">
-            <button id="menuButton" class="p-2 rounded-lg text-blue-900 hover:text-blue-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
+            <!-- Mobile Menu Button -->
+            <div class="sm:hidden">
+                <button id="menuButton" class="p-2 rounded-lg text-blue-900 hover:text-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+            </div>
         </div>
 
         <!-- Mobile Dropdown Menu -->
@@ -206,4 +209,3 @@
         }
     }
 </script>
-
