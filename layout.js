@@ -92,30 +92,8 @@ async function loadDynamicContent(url, targetElementId) {
     }
 }
 
-
 /**
- * Sets the active state for a navigation link based on a page identifier.
- * @param {string} pageId - Identifier for the page (e.g., 'main', 'tracking').
- */
-const setActiveNav = (pageId) => {
-    setTimeout(() => {
-        const navLinks = document.querySelectorAll('#main-nav a, #dropdownMenu a');
-        navLinks.forEach(link => {
-            link.classList.remove('bg-gray-600', 'font-bold');
-            link.classList.add('bg-blue-900');
-            
-            const linkPage = link.id ? link.id.split('-')[1] : '';
-            if (linkPage === pageId) {
-                link.classList.remove('bg-blue-900');
-                link.classList.add('bg-gray-600', 'font-bold');
-            }
-        });
-    }, 100);
-};
-window.setActiveNav = setActiveNav;
-
-/**
- * Checks login status from localStorage and updates the UI accordingly, including role-based permissions.
+ * Checks login status from localStorage and updates the UI accordingly.
  */
 function checkLoginStatus() {
     const loginDataJSON = localStorage.getItem('loginData');
@@ -137,10 +115,7 @@ function checkLoginStatus() {
     const ledgerMenuItem = document.getElementById('ledger-menu-item');
     const mastersMenuItem = document.getElementById('masters-menu-item');
 
-    if (!loginButton || !profileSection) return;
-
     let isLoggedIn = false;
-    let userRole = null;
     let userData = null;
     if (loginDataJSON) {
         const loginData = JSON.parse(loginDataJSON);
@@ -148,7 +123,6 @@ function checkLoginStatus() {
         if (now <= loginData.expires) {
             isLoggedIn = true;
             userData = loginData;
-            userRole = userData.ROLE ? userData.ROLE.trim().toUpperCase() : null; 
         } else {
             localStorage.removeItem('loginData'); // Clear expired session
         }
@@ -161,7 +135,6 @@ function checkLoginStatus() {
         loginButtonMobile.classList.add('hidden');
         profileSectionMobile.classList.remove('hidden');
         
-        // Toggle navigation visibility
         mainNavPublic.classList.add('hidden');
         mainNavPrivate.classList.remove('hidden');
         dropdownPublicLinks.classList.add('hidden');
@@ -172,10 +145,9 @@ function checkLoginStatus() {
         // --- Populate Profile Dropdowns ---
         const profileFieldsToShow = ['Name', 'Code', 'Role', 'Branch', 'Email', 'Mobile', 'Token'];
         
-        // Desktop Profile
         const profileDetailsContainer = document.getElementById('profile-details-container');
         if (profileDetailsContainer) {
-            profileDetailsContainer.innerHTML = ''; // Clear previous entries
+            profileDetailsContainer.innerHTML = ''; 
             profileFieldsToShow.forEach(key => {
                 if (userData[key]) {
                     const detailEl = document.createElement('div');
@@ -185,10 +157,9 @@ function checkLoginStatus() {
             });
         }
         
-        // Mobile Profile
         const mobileProfileDetailsContainer = document.getElementById('mobile-profile-details-container');
         if (mobileProfileDetailsContainer) {
-            mobileProfileDetailsContainer.innerHTML = ''; // Clear previous entries
+            mobileProfileDetailsContainer.innerHTML = '';
              profileFieldsToShow.forEach(key => {
                 if (userData[key]) {
                     const detailEl = document.createElement('div');
@@ -199,6 +170,7 @@ function checkLoginStatus() {
         }
 
         // --- Role-Based Access Control for Sidebar ---
+        const userRole = userData.ROLE ? userData.ROLE.trim().toUpperCase() : null;
         if (ledgerMenuItem && mastersMenuItem) {
             if (userRole === 'CLIENT' || userRole === 'BRANCH') {
                 ledgerMenuItem.classList.add('hidden');
@@ -216,7 +188,6 @@ function checkLoginStatus() {
         loginButtonMobile.classList.remove('hidden');
         profileSectionMobile.classList.add('hidden');
 
-        // Toggle navigation visibility
         mainNavPublic.classList.remove('hidden');
         mainNavPrivate.classList.add('hidden');
         dropdownPublicLinks.classList.remove('hidden');
@@ -236,20 +207,16 @@ function initializeUI() {
     const menuButton = document.getElementById('menuButton');
     const dropdownMenu = document.getElementById('dropdownMenu');
     
-    // Profile Dropdown Elements
     const profileButton = document.getElementById('profile-button');
     const profileDropdown = document.getElementById('profile-dropdown');
     
-    // Logout Buttons
     const profileLogoutButton = document.getElementById('profile-logout-button');
     const logoutButtonMobile = document.getElementById('logout-button-mobile');
     
-    // Sidebar Elements
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
     
-    // Mobile Menu Toggle
     if (menuButton && dropdownMenu) {
         menuButton.addEventListener('click', (event) => {
             event.stopPropagation();
@@ -257,7 +224,6 @@ function initializeUI() {
         });
     }
 
-    // Desktop Profile Dropdown Toggle
     if (profileButton && profileDropdown) {
         profileButton.addEventListener('click', (event) => {
             event.stopPropagation();
@@ -265,17 +231,15 @@ function initializeUI() {
         });
     }
 
-    // Hide menus when clicking outside
     document.addEventListener('click', (event) => {
-        if (dropdownMenu && !dropdownMenu.contains(event.target) && !menuButton.contains(event.target)) {
+        if (dropdownMenu && !dropdownMenu.contains(event.target) && menuButton && !menuButton.contains(event.target)) {
             dropdownMenu.classList.add('hidden');
         }
-        if (profileDropdown && !profileDropdown.contains(event.target) && !profileButton.contains(event.target)) {
+        if (profileDropdown && !profileDropdown.contains(event.target) && profileButton && !profileButton.contains(event.target)) {
             profileDropdown.classList.add('hidden');
         }
     });
 
-    // Logout Functionality
     const handleLogout = () => {
         localStorage.removeItem('loginData');
         window.location.href = 'https://post4ex.github.io/postman/login.html';
@@ -283,7 +247,6 @@ function initializeUI() {
     if (profileLogoutButton) profileLogoutButton.addEventListener('click', handleLogout);
     if (logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
 
-    // Sidebar Toggle Functionality
     if (sidebar && sidebarToggle && sidebarOverlay) {
         const toggleSidebar = () => {
             sidebar.classList.toggle('-translate-x-full');
@@ -303,35 +266,26 @@ const setActiveNavOnLoad = () => {
     const path = window.location.pathname;
     let pageId = 'home'; 
     if (path.includes('dashboard.html')) pageId = 'home';
-    if (path.includes('Pincode.html')) pageId = 'pincode';
-    if (path.includes('complaint.html')) pageId = 'complaint';
-    if (path.includes('BookOrder.html')) pageId = 'bookorder';
-    if (path.includes('tracking.html')) pageId = 'tracking';
-    if (path.includes('Calculator.html')) pageId = 'calculator';
-    if (path.includes('ticket.html')) pageId = 'ticket';
-    if (path.includes('task.html')) pageId = 'task';
-    if (path.includes('wallet.html')) pageId = 'wallet';
-    if (path.includes('search.html')) pageId = 'search';
+    else if (path.includes('Pincode.html')) pageId = 'pincode';
+    else if (path.includes('complaint.html')) pageId = 'complaint';
+    else if (path.includes('BookOrder.html')) pageId = 'bookorder';
+    else if (path.includes('tracking.html')) pageId = 'tracking';
+    else if (path.includes('Calculator.html')) pageId = 'calculator';
+    else if (path.includes('ticket.html')) pageId = 'ticket';
+    else if (path.includes('task.html')) pageId = 'task';
+    else if (path.includes('wallet.html')) pageId = 'wallet';
+    else if (path.includes('search.html')) pageId = 'search';
     
-    // Use a small timeout to ensure elements are in the DOM after component loading
     setTimeout(() => {
-        document.querySelectorAll('#main-nav-public a, #main-nav-private a, #dropdown-public-links a, #dropdown-private-links a').forEach(link => {
+        document.querySelectorAll('a[id^="nav-"], a[id^="dropdown-"]').forEach(link => {
             const linkId = link.id || '';
-            const isPrivate = linkId.includes('-private');
-            const isPublic = linkId.includes('-public');
-            let linkType = '';
-            if (isPrivate) linkType = 'private';
-            if (isPublic) linkType = 'public';
+            const linkPage = linkId.split('-')[1];
 
-            const linkPage = linkId.replace(`nav-`, '').replace(`dropdown-`, '').replace(`-${linkType}`, '');
-            
-            // Reset styles
             link.classList.remove('bg-gray-600', 'font-bold');
-            if (!link.id.includes('search')) { // Don't reset search icon
+             if (!link.id.includes('search')) {
                  link.classList.add('bg-blue-900');
             }
 
-            // Apply active styles
             if (linkPage === pageId) {
                 link.classList.remove('bg-blue-900');
                 link.classList.add('bg-gray-600', 'font-bold');
@@ -364,7 +318,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Load header and footer components first
     Promise.all([
         loadComponent('https://post4ex.github.io/postman/header.html', 'header-placeholder'),
         loadComponent('https://post4ex.github.io/postman/footer.html', 'footer-placeholder')
@@ -372,26 +325,21 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeUI();
         setActiveNavOnLoad();
         
-        // Load dynamic content based on the current page
         if (path.includes('main.html') || path.endsWith('/postman/') || path.endsWith('/')) {
             loadDynamicContent('https://post4ex.github.io/postman/tracking.html', 'tracking-content-area');
             loadDynamicContent('https://post4ex.github.io/postman/services.html', 'services-content-area');
 
-            // Logic to hide services when tracking results appear.
             const trackingArea = document.getElementById('tracking-content-area');
             const servicesArea = document.getElementById('services-content-area');
             if (trackingArea && servicesArea) {
                 const observer = new MutationObserver(() => {
-                    // Assuming tracking.html uses a results container and search button with these IDs
                     const resultsContainer = trackingArea.querySelector('#results-container');
                     const searchButton = trackingArea.querySelector('#tracking-search-button');
 
-                    // If results are shown, hide services
                     if (resultsContainer && resultsContainer.innerHTML.trim() !== '' && !resultsContainer.classList.contains('hidden')) {
                         servicesArea.classList.add('hidden');
                     }
 
-                    // Re-show services when a new search is started
                     if (searchButton && !searchButton.hasAttribute('data-listener-added')) {
                         searchButton.addEventListener('click', () => {
                             if (servicesArea) {
@@ -403,8 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 observer.observe(trackingArea, { childList: true, subtree: true });
             }
-        } else if (path.includes('Pincode.html')) {
-            loadDynamicContent('https://post4ex.github.io/postman/services.html', 'services-content-area');
         }
     }).catch(error => {
         console.error("Failed to initialize page layout:", error);
