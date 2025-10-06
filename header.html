@@ -35,61 +35,66 @@
             </nav>
         </div>
 
-        <!-- Right Section Wrapper -->
-        <div class="flex items-center">
-            <!-- Desktop Auth Controls -->
-            <div class="hidden sm:flex items-center space-x-4">
-                <a id="nav-search-private" href="https://post4ex.github.io/postman/search.html" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
-                </a>
-                <a id="login-button" href="https://post4ex.github.io/postman/login.html" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
-                <div id="profile-section" class="relative hidden">
-                    <button id="profile-button" class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                    </button>
-                    <div id="profile-dropdown" class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 hidden p-4 border">
-                        <div class="border-b pb-2 mb-2">
-                            <h3 class="text-md font-semibold text-gray-800">User Profile</h3>
-                        </div>
-                        <div id="profile-details-container" class="space-y-2"></div>
-                        <button id="profile-logout-button" class="w-full text-left mt-4 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mobile Menu Button -->
-            <div class="sm:hidden">
-                <button id="menuButton" class="p-2 rounded-lg text-blue-900 hover:text-blue-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+        <!-- Right Section: Auth Controls -->
+        <div class="hidden sm:flex items-center space-x-4">
+            <button id="manual-refresh-button" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors hidden" title="Refresh Data">
+                <svg id="refresh-icon-static" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+                </svg>
+                <svg id="refresh-icon-spinning" class="animate-spin h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+             <a id="nav-search-private" href="https://post4ex.github.io/postman/search.html" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+            </a>
+             <a id="login-button" href="https://post4ex.github.io/postman/login.html" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
+             <div id="profile-section" class="relative hidden">
+                <button id="profile-button" class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 </button>
-            </div>
-            
-            <!-- Mobile Dropdown Menu -->
-            <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden w-48 z-40">
-                <div id="dropdown-public-links">
-                    <a id="dropdown-home-public" href="https://post4ex.github.io/postman/main.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-                    <a id="dropdown-pincode-public" href="https://post4ex.github.io/postman/Pincode.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Pincode</a>
-                    <a id="dropdown-complaint-public" href="https://post4ex.github.io/postman/complaint.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
-                </div>
-                <div id="dropdown-private-links" class="hidden">
-                    <a id="dropdown-bookorder-private" href="https://post4ex.github.io/postman/BookOrder.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Book Order</a>
-                    <a id="dropdown-tracking-private" href="https://post4ex.github.io/postman/tracking.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
-                    <a id="dropdown-calculator-private" href="https://post4ex.github.io/postman/Calculator.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Calculator</a>
-                    <a id="dropdown-ticket-private" href="https://post4ex.github.io/postman/ticket.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Ticket</a>
-                    <a id="dropdown-task-private" href="https://post4ex.github.io/postman/task.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Task</a>
-                    <a id="dropdown-wallet-private" href="https://post4ex.github.io/postman/wallet.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Wallet</a>
-                    <a id="dropdown-search-private" href="https://post4ex.github.io/postman/search.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Search</a>
-                </div>
-                <div class="mt-2 pt-2 border-t">
-                    <a id="login-button-mobile" href="https://post4ex.github.io/postman/login.html" class="block px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
-                    <div id="profile-section-mobile" class="hidden">
-                        <div id="mobile-profile-details-container" class="p-2 space-y-1 bg-gray-700 rounded-lg mb-2"></div>
-                        <button id="logout-button-mobile" class="w-full text-left px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
+                <div id="profile-dropdown" class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 hidden p-4 border">
+                    <div class="border-b pb-2 mb-2">
+                         <h3 class="text-md font-semibold text-gray-800">User Profile</h3>
                     </div>
+                    <div id="profile-details-container" class="space-y-2"></div>
+                    <button id="profile-logout-button" class="w-full text-left mt-4 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
+                </div>
+             </div>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <div class="sm:hidden">
+            <button id="menuButton" class="p-2 rounded-lg text-blue-900 hover:text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden w-48 z-40">
+            <div id="dropdown-public-links">
+                <a id="dropdown-home-public" href="https://post4ex.github.io/postman/main.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
+                <a id="dropdown-pincode-public" href="https://post4ex.github.io/postman/Pincode.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Pincode</a>
+                <a id="dropdown-complaint-public" href="https://post4ex.github.io/postman/complaint.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
+            </div>
+            <div id="dropdown-private-links" class="hidden">
+                <a id="dropdown-bookorder-private" href="https://post4ex.github.io/postman/BookOrder.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Book Order</a>
+                <a id="dropdown-tracking-private" href="https://post4ex.github.io/postman/tracking.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
+                <a id="dropdown-calculator-private" href="https://post4ex.github.io/postman/Calculator.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Calculator</a>
+                <a id="dropdown-ticket-private" href="https://post4ex.github.io/postman/ticket.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Ticket</a>
+                <a id="dropdown-task-private" href="https://post4ex.github.io/postman/task.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Task</a>
+                <a id="dropdown-wallet-private" href="https://post4ex.github.io/postman/wallet.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Wallet</a>
+                <a id="dropdown-search-private" href="https://post4ex.github.io/postman/search.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Search</a>
+            </div>
+            <div class="mt-2 pt-2 border-t">
+                <a id="login-button-mobile" href="https://post4ex.github.io/postman/login.html" class="block px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
+                <div id="profile-section-mobile" class="hidden">
+                    <div id="mobile-profile-details-container" class="p-2 space-y-1 bg-gray-700 rounded-lg mb-2"></div>
+                    <button id="logout-button-mobile" class="w-full text-left px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
                 </div>
             </div>
         </div>
-
     </div>
 </header>
 
