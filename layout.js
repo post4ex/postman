@@ -104,6 +104,7 @@ function checkLoginStatus() {
     const loginButtonMobile = document.getElementById('login-button-mobile');
     const profileSectionMobile = document.getElementById('profile-section-mobile');
     const searchButtonPrivate = document.getElementById('nav-search-private');
+    const manualRefreshButton = document.getElementById('manual-refresh-button');
 
     // Navigation sections
     const mainNavPublic = document.getElementById('main-nav-public');
@@ -126,7 +127,8 @@ function checkLoginStatus() {
                 isLoggedIn = true;
                 userData = loginData;
             } else {
-                localStorage.removeItem('loginData'); // Clear expired session
+                localStorage.removeItem('loginData');
+                localStorage.removeItem('appData');
             }
         } catch (e) {
             console.error("Failed to parse login data from localStorage", e);
@@ -139,6 +141,7 @@ function checkLoginStatus() {
         loginButton.classList.add('hidden');
         profileSection.classList.remove('hidden');
         searchButtonPrivate.classList.remove('hidden');
+        manualRefreshButton.classList.remove('hidden');
         loginButtonMobile.classList.add('hidden');
         profileSectionMobile.classList.remove('hidden');
         
@@ -149,7 +152,6 @@ function checkLoginStatus() {
         
         sidebarToggleContainer.classList.remove('hidden');
         
-        // --- Populate Profile Dropdowns ---
         const profileFieldsToShow = ['name', 'code', 'role', 'branch', 'email', 'mobile', 'token'];
         
         const populateDetails = (container, templateGenerator) => {
@@ -165,21 +167,18 @@ function checkLoginStatus() {
             }
         };
 
-        // Desktop Profile
         populateDetails(document.getElementById('profile-details-container'), (key, value) => {
             const detailEl = document.createElement('div');
             detailEl.innerHTML = `<p class="text-sm"><strong class="font-semibold text-gray-600">${key}:</strong> <span class="text-gray-800">${value}</span></p>`;
             return detailEl;
         });
 
-        // Mobile Profile
         populateDetails(document.getElementById('mobile-profile-details-container'), (key, value) => {
             const detailEl = document.createElement('div');
             detailEl.innerHTML = `<p class="text-xs text-white"><strong class="font-semibold text-gray-300">${key}:</strong> <span>${value}</span></p>`;
             return detailEl;
         });
 
-        // --- Role-Based Access Control for Sidebar ---
         const userRole = userData.ROLE ? userData.ROLE.trim().toUpperCase() : null;
         if (ledgerMenuItem && mastersMenuItem) {
             if (userRole === 'CLIENT' || userRole === 'BRANCH') {
@@ -196,6 +195,7 @@ function checkLoginStatus() {
         loginButton.classList.remove('hidden');
         profileSection.classList.add('hidden');
         searchButtonPrivate.classList.add('hidden');
+        manualRefreshButton.classList.add('hidden');
         loginButtonMobile.classList.remove('hidden');
         profileSectionMobile.classList.add('hidden');
 
@@ -210,11 +210,8 @@ function checkLoginStatus() {
     }
 }
 
-let silentRefreshInterval = null; // Variable to hold the interval ID
+let silentRefreshInterval = null;
 
-/**
- * Main function to initialize the UI event listeners after components are loaded.
- */
 function initializeUI() {
     const menuButton = document.getElementById('menuButton');
     const dropdownMenu = document.getElementById('dropdownMenu');
@@ -228,6 +225,8 @@ function initializeUI() {
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    const manualRefreshButton = document.getElementById('manual-refresh-button');
     
     if (menuButton && dropdownMenu) {
         menuButton.addEventListener('click', (event) => {
@@ -240,6 +239,27 @@ function initializeUI() {
         profileButton.addEventListener('click', (event) => {
             event.stopPropagation();
             profileDropdown.classList.toggle('hidden');
+        });
+    }
+
+    if (manualRefreshButton) {
+        const staticIcon = document.getElementById('refresh-icon-static');
+        const spinningIcon = document.getElementById('refresh-icon-spinning');
+
+        manualRefreshButton.addEventListener('click', async () => {
+            staticIcon.classList.add('hidden');
+            spinningIcon.classList.remove('hidden');
+            manualRefreshButton.disabled = true;
+
+            try {
+                await verifyAndFetchAppData(true); // Force refresh
+            } catch (error) {
+                console.error("Manual refresh failed:", error);
+            } finally {
+                staticIcon.classList.remove('hidden');
+                spinningIcon.classList.add('hidden');
+                manualRefreshButton.disabled = false;
+            }
         });
     }
 
@@ -256,7 +276,7 @@ function initializeUI() {
         localStorage.removeItem('loginData');
         localStorage.removeItem('appData');
         if (silentRefreshInterval) {
-            clearInterval(silentRefreshInterval); // Stop the refresh on logout
+            clearInterval(silentRefreshInterval);
         }
         window.location.href = 'https://post4ex.github.io/postman/login.html';
     };
@@ -275,9 +295,6 @@ function initializeUI() {
     checkLoginStatus();
 }
 
-/**
- * Sets the active navigation link based on the current page URL.
- */
 const setActiveNavOnLoad = () => {
     const path = window.location.pathname;
     let pageId = 'home'; 
@@ -310,21 +327,17 @@ const setActiveNavOnLoad = () => {
     }, 150);
 };
 
-/**
- * Verifies the user's session token and fetches filtered application data from Google Sheets.
- * Manages caching and silent refresh.
- */
-async function verifyAndFetchAppData() {
+async function verifyAndFetchAppData(force = false) {
     const loginDataJSON = localStorage.getItem('loginData');
     if (!loginDataJSON) return;
     
     const appDataJSON = localStorage.getItem('appData');
-    if (appDataJSON) {
+    if (appDataJSON && !force) {
         try {
             const appData = JSON.parse(appDataJSON);
             if (new Date().getTime() < appData.expires) {
                 console.log('App data exists and is valid. Skipping fetch.');
-                startSilentRefresh(); // Ensure refresh is running
+                startSilentRefresh();
                 return;
             }
         } catch (e) {
@@ -344,7 +357,7 @@ async function verifyAndFetchAppData() {
 
         const DATA_LOADER_URL = 'https://script.google.com/macros/s/AKfycbwq2ZIniCkLN-3SCaPKgVhy74Rqpt9b9Kovz1ANj2z0Iwg-Ad3jHC9N3xrYatDnbpwR5A/exec';
         
-        console.log('Verifying token and fetching initial application data...');
+        console.log(force ? 'Forcing data refresh...' : 'Verifying token and fetching initial application data...');
         const response = await fetch(`${DATA_LOADER_URL}?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`);
 
         if (!response.ok) {
@@ -362,7 +375,7 @@ async function verifyAndFetchAppData() {
             localStorage.setItem('appData', JSON.stringify(appDataToStore));
             console.log('App data was fetched and stored successfully.');
             
-            startSilentRefresh(); // Start the background refresh process
+            startSilentRefresh();
             
             window.dispatchEvent(new CustomEvent('appDataLoaded', { detail: result.data }));
         } else {
@@ -374,11 +387,7 @@ async function verifyAndFetchAppData() {
     }
 }
 
-/**
- * Starts a silent, periodic refresh of the application data in the background.
- */
 function startSilentRefresh() {
-    // Prevent multiple intervals from running
     if (silentRefreshInterval) {
         clearInterval(silentRefreshInterval);
     }
@@ -408,7 +417,7 @@ function startSilentRefresh() {
                     const appDataJSON = localStorage.getItem('appData');
                     if (appDataJSON) {
                         const existingAppData = JSON.parse(appDataJSON);
-                        existingAppData.data = result.data; // Update data but keep original expiry
+                        existingAppData.data = result.data;
                         localStorage.setItem('appData', JSON.stringify(existingAppData));
                         console.log('Silent data refresh successful.');
                          window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: result.data }));
@@ -421,7 +430,6 @@ function startSilentRefresh() {
     }, FIVE_MINUTES);
 }
 
-// --- SCRIPT EXECUTION STARTS HERE ---
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
     const protectedPages = [
