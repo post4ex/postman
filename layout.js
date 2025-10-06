@@ -65,22 +65,24 @@ async function loadDynamicContent(url, targetElementId) {
         const doc = parser.parseFromString(htmlText, 'text/html');
         
         const mainContent = doc.querySelector('main .container');
+        const pageScriptTag = doc.querySelector('body > script:last-of-type');
         
         if (mainContent) {
             targetElement.innerHTML = mainContent.innerHTML;
 
-            // Find and execute ALL script tags from the fetched content
-            const scripts = doc.querySelectorAll('script');
-            scripts.forEach(script => {
-                const newScript = document.createElement('script');
-                if (script.src) {
-                    newScript.src = script.src;
-                } else {
-                    newScript.textContent = script.textContent;
+            if (pageScriptTag && pageScriptTag.textContent) {
+                let scriptContent = pageScriptTag.textContent;
+                const regex = /document\.addEventListener\(\s*['"]DOMContentLoaded['"]\s*,\s*(?:function\s*\(\s*\)\s*\{|(?:\(\s*\)\s*=>\s*\{))([\s\S]*)\}\s*\)\s*;/;
+                const match = scriptContent.match(regex);
+                
+                if (match && match[1]) {
+                    scriptContent = match[1];
                 }
-                // Append to body to execute, then remove
-                document.body.appendChild(newScript).remove();
-            });
+
+                const script = document.createElement('script');
+                script.textContent = scriptContent;
+                document.body.appendChild(script).remove();
+            }
         } else {
             throw new Error('Could not find main content in the fetched page.');
         }
