@@ -195,8 +195,11 @@ function checkLoginStatus() {
         if (profileDetailsContainer) profileDetailsContainer.innerHTML = '';
         if (mobileProfileDetailsContainer) mobileProfileDetailsContainer.innerHTML = '';
 
-        for (const key in loginData) {
-            if (Object.hasOwnProperty.call(loginData, key) && key !== 'expires') {
+        // Define which fields to display in the profile
+        const fieldsToShow = ['NAME', 'CODE', 'ROLE', 'BRANCH', 'EMAIL', 'MOBILE', 'TOKEN'];
+
+        fieldsToShow.forEach(key => {
+            if (Object.hasOwnProperty.call(loginData, key)) {
                 const value = loginData[key];
                 const keyFormatted = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase().replace(/_/g, ' ');
 
@@ -205,7 +208,7 @@ function checkLoginStatus() {
                     const detailWrapper = document.createElement('div');
                     detailWrapper.innerHTML = `
                         <p class="text-xs text-gray-500">${keyFormatted}</p>
-                        <p class="font-semibold text-sm text-gray-800">${value}</p>
+                        <p class="font-semibold text-sm text-gray-800 break-words">${value}</p>
                     `;
                     profileDetailsContainer.appendChild(detailWrapper);
                 }
@@ -218,7 +221,7 @@ function checkLoginStatus() {
                     mobileProfileDetailsContainer.appendChild(mobileDetailItem);
                 }
             }
-        }
+        });
 
         // --- Role-Based Access Control for Sidebar ---
         if (ledgerMenuItem && mastersMenuItem) {
@@ -368,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (isMainPage) {
             loadDynamicContent('https://post4ex.github.io/postman/tracking.html', 'tracking-content-area');
+            loadDynamicContent('https://post4ex.github.io/postman/services.html', 'services-content-area');
         }
     }).catch(error => {
         console.error("Failed to initialize page layout:", error);
