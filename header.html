@@ -19,35 +19,39 @@
 
         <!-- Main Navigation -->
         <nav id="main-nav" class="hidden sm:flex items-center space-x-2 text-sm font-semibold">
-            <a id="nav-bookorder" href="https://post4ex.github.io/postman/BookOrder.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Book Order</a>
+            <!-- Public Nav -->
+            <a id="nav-home-public" href="https://post4ex.github.io/postman/main.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
+            <a id="nav-services-public" href="https://post4ex.github.io/postman/services.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
+            <a id="nav-complaint-public" href="https://post4ex.github.io/postman/complaint.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
+            
+            <!-- Private Nav (Logged In) -->
+            <a id="nav-bookorder-private" href="https://post4ex.github.io/postman/BookOrder.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Book Order</a>
+            <a id="nav-calculator-private" href="https://post4ex.github.io/postman/Calculator.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Calculator</a>
+            <a id="nav-ticket-private" href="https://post4ex.github.io/postman/ticket.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Ticket</a>
+            <a id="nav-task-private" href="https://post4ex.github.io/postman/task.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Task</a>
+            
+            <!-- Always Visible -->
             <a id="nav-tracking" href="https://post4ex.github.io/postman/tracking.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
-            <a id="nav-calculator" href="https://post4ex.github.io/postman/Calculator.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Calculator</a>
-            <a id="nav-ticket" href="https://post4ex.github.io/postman/ticket.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Ticket</a>
-            <a id="nav-task" href="https://post4ex.github.io/postman/task.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Task</a>
+            
+            <!-- Search (Logged In only) -->
             <a id="nav-search" href="https://post4ex.github.io/postman/search.html" class="p-2 rounded-full text-blue-900 hover:bg-gray-100 transition-colors hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
             </a>
+
             <!-- Login/Profile buttons -->
             <div class="flex items-center">
                 <a id="login-button" href="https://post4ex.github.io/postman/login.html" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
                 
-                <!-- Profile Dropdown - Hidden by default -->
                 <div id="profile-section" class="relative hidden">
                     <button id="profile-button" class="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 focus:outline-none">
                         <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"></path></svg>
                         <span class="font-semibold text-sm text-gray-700" id="profile-name-short"></span>
                     </button>
-                    <!-- Dropdown Menu -->
                     <div id="profile-dropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl z-50 hidden">
-                        <div class="p-4 border-b">
-                            <p class="font-bold text-gray-800" id="profile-name">User Name</p>
-                            <p class="text-sm text-gray-500" id="profile-role">User Role</p>
-                        </div>
-                        <div class="p-4 border-b">
-                            <p class="text-xs text-gray-500">Company Code</p>
-                            <p class="font-semibold text-gray-800" id="profile-code">CODE</p>
+                        <div id="profile-details-container" class="p-4 border-b space-y-2">
+                            <!-- User details will be dynamically injected here -->
                         </div>
                         <div class="p-2">
                             <button id="profile-logout-button" class="w-full text-left flex items-center space-x-2 px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none">
@@ -69,19 +73,26 @@
 
         <!-- Mobile Dropdown Menu -->
         <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden">
-            <a id="dropdown-bookorder" href="https://post4ex.github.io/postman/BookOrder.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Book Order</a>
+            <!-- Public -->
+            <a id="dropdown-home-public" href="https://post4ex.github.io/postman/main.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
+            <a id="dropdown-services-public" href="https://post4ex.github.io/postman/services.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
+            <a id="dropdown-complaint-public" href="https://post4ex.github.io/postman/complaint.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
+            
+            <!-- Private -->
+            <a id="dropdown-bookorder-private" href="https://post4ex.github.io/postman/BookOrder.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Book Order</a>
+            <a id="dropdown-calculator-private" href="https://post4ex.github.io/postman/Calculator.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Calculator</a>
+            <a id="dropdown-ticket-private" href="https://post4ex.github.io/postman/ticket.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Ticket</a>
+            <a id="dropdown-task-private" href="https://post4ex.github.io/postman/task.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Task</a>
+            <a id="dropdown-search-private" href="https://post4ex.github.io/postman/search.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Search</a>
+            
+            <!-- Always visible -->
             <a id="dropdown-tracking" href="https://post4ex.github.io/postman/tracking.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
-            <a id="dropdown-calculator" href="https://post4ex.github.io/postman/Calculator.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Calculator</a>
-            <a id="dropdown-ticket" href="https://post4ex.github.io/postman/ticket.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Ticket</a>
-             <a id="dropdown-task" href="https://post4ex.github.io/postman/task.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Task</a>
-             <a id="dropdown-search" href="https://post4ex.github.io/postman/search.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors hidden">Search</a>
+            
             <a id="login-button-mobile" href="https://post4ex.github.io/postman/login.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
-            <!-- Mobile Profile Section -->
+            
             <div id="profile-section-mobile" class="hidden mt-1 border-t pt-2">
-                <div class="px-4 py-2">
-                    <p class="font-bold text-gray-800" id="mobile-profile-name">User Name</p>
-                    <p class="text-sm text-gray-500" id="mobile-profile-role">User Role</p>
-                    <p class="text-xs text-gray-500 mt-1">Code: <span class="font-semibold" id="mobile-profile-code">CODE</span></p>
+                <div id="mobile-profile-details-container" class="px-4 py-2 space-y-1">
+                    <!-- Mobile user details will be dynamically injected here -->
                 </div>
                 <button id="logout-button-mobile" class="w-full text-left mt-1 px-4 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors">Logout</button>
             </div>
