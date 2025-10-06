@@ -120,92 +120,83 @@ window.setActiveNav = setActiveNav;
 function checkLoginStatus() {
     const loginDataJSON = localStorage.getItem('loginData');
     
-    // Auth elements
+    // Auth-related elements
     const loginButton = document.getElementById('login-button');
     const profileSection = document.getElementById('profile-section');
     const loginButtonMobile = document.getElementById('login-button-mobile');
     const profileSectionMobile = document.getElementById('profile-section-mobile');
 
-    // Nav containers
-    const publicNav = document.getElementById('main-nav-public');
-    const privateNav = document.getElementById('main-nav-private');
-    const publicDropdown = document.getElementById('dropdown-public-links');
-    const privateDropdown = document.getElementById('dropdown-private-links');
-
-
+    // Navigation sections
+    const mainNavPublic = document.getElementById('main-nav-public');
+    const mainNavPrivate = document.getElementById('main-nav-private');
+    const dropdownPublicLinks = document.getElementById('dropdown-public-links');
+    const dropdownPrivateLinks = document.getElementById('dropdown-private-links');
+    
     // Sidebar elements
     const sidebarToggleContainer = document.getElementById('sidebar-toggle-container');
     const ledgerMenuItem = document.getElementById('ledger-menu-item');
     const mastersMenuItem = document.getElementById('masters-menu-item');
-    
-    // Logo link
-    const logoLink = document.getElementById('logoLink');
 
-    if (!loginButton) return;
+    if (!loginButton || !profileSection) return;
 
     let isLoggedIn = false;
-
+    let userRole = null;
+    let userData = null;
     if (loginDataJSON) {
         const loginData = JSON.parse(loginDataJSON);
-        if (new Date().getTime() <= loginData.expires) {
+        const now = new Date().getTime();
+        if (now <= loginData.expires) {
             isLoggedIn = true;
+            userData = loginData;
+            userRole = userData.ROLE ? userData.ROLE.trim().toUpperCase() : null; 
         } else {
-            localStorage.removeItem('loginData');
+            localStorage.removeItem('loginData'); // Clear expired session
         }
     }
 
     if (isLoggedIn) {
-        const loginData = JSON.parse(loginDataJSON);
-        const userRole = loginData.ROLE ? loginData.ROLE.trim().toUpperCase() : 'N/A';
-        const userName = loginData.NAME || 'User';
-
         // --- UI for LOGGED IN user ---
         loginButton.classList.add('hidden');
         profileSection.classList.remove('hidden');
         loginButtonMobile.classList.add('hidden');
         profileSectionMobile.classList.remove('hidden');
         
-        publicNav.classList.add('hidden');
-        privateNav.classList.remove('hidden');
-        publicDropdown.classList.add('hidden');
-        privateDropdown.classList.remove('hidden');
-
+        // Toggle navigation visibility
+        mainNavPublic.classList.add('hidden');
+        mainNavPrivate.classList.remove('hidden');
+        dropdownPublicLinks.classList.add('hidden');
+        dropdownPrivateLinks.classList.remove('hidden');
+        
         sidebarToggleContainer.classList.remove('hidden');
-        if (logoLink) logoLink.href = 'https://post4ex.github.io/postman/dashboard.html';
         
         // --- Populate Profile Dropdowns ---
-        document.getElementById('profile-name-short').textContent = userName.split(' ')[0];
+        const profileFieldsToShow = ['Name', 'Code', 'Role', 'Branch', 'Email', 'Mobile', 'Token'];
         
+        // Desktop Profile
         const profileDetailsContainer = document.getElementById('profile-details-container');
+        if (profileDetailsContainer) {
+            profileDetailsContainer.innerHTML = ''; // Clear previous entries
+            profileFieldsToShow.forEach(key => {
+                if (userData[key]) {
+                    const detailEl = document.createElement('div');
+                    detailEl.innerHTML = `<p class="text-sm"><strong class="font-semibold text-gray-600">${key}:</strong> <span class="text-gray-800">${userData[key]}</span></p>`;
+                    profileDetailsContainer.appendChild(detailEl);
+                }
+            });
+        }
+        
+        // Mobile Profile
         const mobileProfileDetailsContainer = document.getElementById('mobile-profile-details-container');
-
-        if (profileDetailsContainer) profileDetailsContainer.innerHTML = '';
-        if (mobileProfileDetailsContainer) mobileProfileDetailsContainer.innerHTML = '';
-
-        const fieldsToShow = ['NAME', 'CODE', 'ROLE', 'BRANCH', 'EMAIL', 'MOBILE', 'TOKEN'];
-
-        fieldsToShow.forEach(key => {
-            if (Object.hasOwnProperty.call(loginData, key)) {
-                const value = loginData[key];
-                const keyFormatted = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase().replace(/_/g, ' ');
-
-                if(profileDetailsContainer){
-                    const detailWrapper = document.createElement('div');
-                    detailWrapper.innerHTML = `
-                        <p class="text-xs text-gray-500">${keyFormatted}</p>
-                        <p class="font-semibold text-sm text-gray-800 break-words">${value || 'N/A'}</p>
-                    `;
-                    profileDetailsContainer.appendChild(detailWrapper);
+        if (mobileProfileDetailsContainer) {
+            mobileProfileDetailsContainer.innerHTML = ''; // Clear previous entries
+             profileFieldsToShow.forEach(key => {
+                if (userData[key]) {
+                    const detailEl = document.createElement('div');
+                    detailEl.innerHTML = `<p class="text-xs text-white"><strong class="font-semibold text-gray-300">${key}:</strong> <span>${userData[key]}</span></p>`;
+                    mobileProfileDetailsContainer.appendChild(detailEl);
                 }
-
-                if(mobileProfileDetailsContainer){
-                    const mobileDetailItem = document.createElement('p');
-                    mobileDetailItem.className = 'text-sm text-gray-700';
-                    mobileDetailItem.innerHTML = `<span class="font-semibold">${keyFormatted}:</span> ${value || 'N/A'}`;
-                    mobileProfileDetailsContainer.appendChild(mobileDetailItem);
-                }
-            }
-        });
+            });
+        }
 
         // --- Role-Based Access Control for Sidebar ---
         if (ledgerMenuItem && mastersMenuItem) {
@@ -225,14 +216,13 @@ function checkLoginStatus() {
         loginButtonMobile.classList.remove('hidden');
         profileSectionMobile.classList.add('hidden');
 
-        publicNav.classList.remove('hidden');
-        privateNav.classList.add('hidden');
-        publicDropdown.classList.remove('hidden');
-        privateDropdown.classList.add('hidden');
+        // Toggle navigation visibility
+        mainNavPublic.classList.remove('hidden');
+        mainNavPrivate.classList.add('hidden');
+        dropdownPublicLinks.classList.remove('hidden');
+        dropdownPrivateLinks.classList.add('hidden');
 
         sidebarToggleContainer.classList.add('hidden');
-        if (logoLink) logoLink.href = 'https://post4ex.github.io/postman/main.html'; 
-
         if (ledgerMenuItem) ledgerMenuItem.classList.add('hidden');
         if (mastersMenuItem) mastersMenuItem.classList.add('hidden');
     }
@@ -245,20 +235,21 @@ function checkLoginStatus() {
 function initializeUI() {
     const menuButton = document.getElementById('menuButton');
     const dropdownMenu = document.getElementById('dropdownMenu');
+    
+    // Profile Dropdown Elements
+    const profileButton = document.getElementById('profile-button');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    
+    // Logout Buttons
+    const profileLogoutButton = document.getElementById('profile-logout-button');
+    const logoutButtonMobile = document.getElementById('logout-button-mobile');
+    
+    // Sidebar Elements
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
     
-    const profileButton = document.getElementById('profile-button');
-    const profileDropdown = document.getElementById('profile-dropdown');
-
-    if (profileButton && profileDropdown) {
-        profileButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            profileDropdown.classList.toggle('hidden');
-        });
-    }
-
+    // Mobile Menu Toggle
     if (menuButton && dropdownMenu) {
         menuButton.addEventListener('click', (event) => {
             event.stopPropagation();
@@ -266,31 +257,33 @@ function initializeUI() {
         });
     }
 
+    // Desktop Profile Dropdown Toggle
+    if (profileButton && profileDropdown) {
+        profileButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+    }
+
+    // Hide menus when clicking outside
     document.addEventListener('click', (event) => {
-        if (dropdownMenu && !dropdownMenu.classList.contains('hidden')) {
-            const isClickInsideMenuButton = menuButton ? menuButton.contains(event.target) : false;
-            const isClickInsideDropdownMenu = dropdownMenu.contains(event.target);
-            if (!isClickInsideMenuButton && !isClickInsideDropdownMenu) {
-                dropdownMenu.classList.add('hidden');
-            }
+        if (dropdownMenu && !dropdownMenu.contains(event.target) && !menuButton.contains(event.target)) {
+            dropdownMenu.classList.add('hidden');
         }
-        if (profileDropdown && !profileDropdown.classList.contains('hidden')) {
-            const isClickInsideProfileButton = profileButton ? profileButton.contains(event.target) : false;
-            if (!isClickInsideProfileButton) {
-                profileDropdown.classList.add('hidden');
-            }
+        if (profileDropdown && !profileDropdown.contains(event.target) && !profileButton.contains(event.target)) {
+            profileDropdown.classList.add('hidden');
         }
     });
 
+    // Logout Functionality
     const handleLogout = () => {
         localStorage.removeItem('loginData');
         window.location.href = 'https://post4ex.github.io/postman/login.html';
     };
-    const logoutButton = document.getElementById('profile-logout-button');
-    const logoutButtonMobile = document.getElementById('logout-button-mobile');
-    if (logoutButton) logoutButton.addEventListener('click', handleLogout);
+    if (profileLogoutButton) profileLogoutButton.addEventListener('click', handleLogout);
     if (logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
 
+    // Sidebar Toggle Functionality
     if (sidebar && sidebarToggle && sidebarOverlay) {
         const toggleSidebar = () => {
             sidebar.classList.toggle('-translate-x-full');
@@ -309,25 +302,54 @@ function initializeUI() {
 const setActiveNavOnLoad = () => {
     const path = window.location.pathname;
     let pageId = 'home'; 
-    if (path.includes('dashboard.html')) pageId = 'bookorder'; 
-    if (path.includes('tracking.html')) pageId = 'tracking';
+    if (path.includes('dashboard.html')) pageId = 'home';
     if (path.includes('Pincode.html')) pageId = 'pincode';
     if (path.includes('complaint.html')) pageId = 'complaint';
+    if (path.includes('BookOrder.html')) pageId = 'bookorder';
+    if (path.includes('tracking.html')) pageId = 'tracking';
     if (path.includes('Calculator.html')) pageId = 'calculator';
     if (path.includes('ticket.html')) pageId = 'ticket';
     if (path.includes('task.html')) pageId = 'task';
     if (path.includes('wallet.html')) pageId = 'wallet';
     if (path.includes('search.html')) pageId = 'search';
     
-    setActiveNav(pageId);
+    // Use a small timeout to ensure elements are in the DOM after component loading
+    setTimeout(() => {
+        document.querySelectorAll('#main-nav-public a, #main-nav-private a, #dropdown-public-links a, #dropdown-private-links a').forEach(link => {
+            const linkId = link.id || '';
+            const isPrivate = linkId.includes('-private');
+            const isPublic = linkId.includes('-public');
+            let linkType = '';
+            if (isPrivate) linkType = 'private';
+            if (isPublic) linkType = 'public';
+
+            const linkPage = linkId.replace(`nav-`, '').replace(`dropdown-`, '').replace(`-${linkType}`, '');
+            
+            // Reset styles
+            link.classList.remove('bg-gray-600', 'font-bold');
+            if (!link.id.includes('search')) { // Don't reset search icon
+                 link.classList.add('bg-blue-900');
+            }
+
+            // Apply active styles
+            if (linkPage === pageId) {
+                link.classList.remove('bg-blue-900');
+                link.classList.add('bg-gray-600', 'font-bold');
+            }
+        });
+    }, 150);
 };
 
 // --- SCRIPT EXECUTION STARTS HERE ---
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
-    const protectedPages = ['dashboard.html', 'BookOrder.html', 'Calculator.html', 'ticket.html', 'task.html', 'search.html', 'wallet.html'];
-    
-    if (protectedPages.some(page => path.includes(page))) {
+    const protectedPages = [
+        'dashboard.html', 'BookOrder.html', 'tracking.html', 'Calculator.html', 
+        'ticket.html', 'task.html', 'wallet.html', 'search.html'
+    ];
+    const isProtected = protectedPages.some(page => path.includes(page));
+
+    if (isProtected) {
         const loginDataJSON = localStorage.getItem('loginData');
         let isLoggedIn = false;
         if (loginDataJSON) {
@@ -342,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Load header and footer components first
     Promise.all([
         loadComponent('https://post4ex.github.io/postman/header.html', 'header-placeholder'),
         loadComponent('https://post4ex.github.io/postman/footer.html', 'footer-placeholder')
@@ -349,10 +372,38 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeUI();
         setActiveNavOnLoad();
         
-        const isMainPage = path.endsWith('/') || path.endsWith('main.html') || path.endsWith('/postman/') || path === '/postman';
-        
-        if (isMainPage) {
+        // Load dynamic content based on the current page
+        if (path.includes('main.html') || path.endsWith('/postman/') || path.endsWith('/')) {
             loadDynamicContent('https://post4ex.github.io/postman/tracking.html', 'tracking-content-area');
+            loadDynamicContent('https://post4ex.github.io/postman/services.html', 'services-content-area');
+
+            // Logic to hide services when tracking results appear.
+            const trackingArea = document.getElementById('tracking-content-area');
+            const servicesArea = document.getElementById('services-content-area');
+            if (trackingArea && servicesArea) {
+                const observer = new MutationObserver(() => {
+                    // Assuming tracking.html uses a results container and search button with these IDs
+                    const resultsContainer = trackingArea.querySelector('#results-container');
+                    const searchButton = trackingArea.querySelector('#tracking-search-button');
+
+                    // If results are shown, hide services
+                    if (resultsContainer && resultsContainer.innerHTML.trim() !== '' && !resultsContainer.classList.contains('hidden')) {
+                        servicesArea.classList.add('hidden');
+                    }
+
+                    // Re-show services when a new search is started
+                    if (searchButton && !searchButton.hasAttribute('data-listener-added')) {
+                        searchButton.addEventListener('click', () => {
+                            if (servicesArea) {
+                                servicesArea.classList.remove('hidden');
+                            }
+                        });
+                        searchButton.setAttribute('data-listener-added', 'true');
+                    }
+                });
+                observer.observe(trackingArea, { childList: true, subtree: true });
+            }
+        } else if (path.includes('Pincode.html')) {
             loadDynamicContent('https://post4ex.github.io/postman/services.html', 'services-content-area');
         }
     }).catch(error => {
