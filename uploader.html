@@ -3,66 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Uploader with Barcode & OCR</title>
+    <title>Uploader - Postman</title>
+    <!-- Google Fonts & Tailwind CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Site Styles -->
+    <link rel="stylesheet" href="style.css">
     <!-- Cropper.js CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <style>
-        body {
-            display: flex; justify-content: center; align-items: center; min-height: 100vh;
-            margin: 0; padding: 20px 0; background-color: #f9f9f9; font-family: sans-serif; flex-direction: column;
+        /* --- FIX STARTS HERE: Explicit Button Styling --- */
+        /* This ensures buttons look correct even with Tailwind's CSS reset */
+        .uploader-container button {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #333;
+            transition: background-color 0.2s, border-color 0.2s;
         }
+        .uploader-container button:hover {
+            background-color: #f0f0f0;
+            border-color: #bbb;
+        }
+        .uploader-container button:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+         /* --- FIX ENDS HERE --- */
+
         .uploader-container {
             display: flex; flex-direction: column; align-items: center; gap: 15px;
-            width: 100%; padding: 0 15px; box-sizing: border-box;
+            width: 100%; box-sizing: border-box;
         }
         #gscript-container {
             width: 100%; padding: 10px; background-color: #fffbe6; border-radius: 8px; border: 1px solid #ffeeba;
         }
         #gscript-container input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        /* Main Controls Strip */
+        
         #main-controls-strip {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            padding: 8px;
-            background-color: #e9ecef;
-            border-radius: 8px;
-            box-sizing: border-box;
+            width: 100%; display: flex; justify-content: center; align-items: center;
+            gap: 10px; flex-wrap: wrap; padding: 8px; background-color: #e9ecef;
+            border-radius: 8px; box-sizing: border-box;
         }
         .upload-type-strip, .button-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-            justify-content: center;
+            display: flex; flex-wrap: wrap; gap: 8px;
+            align-items: center; justify-content: center;
         }
         .separator {
-            width: 1px;
-            height: 28px;
-            background-color: #ced4da;
+            width: 1px; height: 28px; background-color: #ced4da;
         }
-        @media (max-width: 680px) {
-            .separator { display: none; }
-        }
+        @media (max-width: 680px) { .separator { display: none; } }
 
         .type-btn {
             padding: 6px 12px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
         }
         .type-btn.active {
-            background-color: #007bff;
-            color: #fff;
-            border-color: #007bff;
-            font-weight: bold;
+            background-color: #1E3A8A; color: #fff; border-color: #1E3A8A; font-weight: bold;
         }
-        /* Scroller Styles */
+        .type-btn.active:hover {
+            background-color: #1c347a;
+        }
+        
         #image-scroller-container {
             width: 100%; height: 80px; background-color: #eee; border: 1px solid #ddd;
             border-radius: 4px; padding: 5px; box-sizing: border-box; display: none;
@@ -74,7 +79,7 @@
             height: 100%; width: 70px; object-fit: cover; cursor: pointer;
             border: 2px solid transparent; border-radius: 2px; transition: border-color 0.2s;
         }
-        .scroller-img.active { border-color: #007bff; }
+        .scroller-img.active { border-color: #1E3A8A; }
         
         #image-view-area {
             border: 2px dashed #ccc; width: 100%; aspect-ratio: 4 / 3; display: flex;
@@ -82,29 +87,18 @@
             position: relative; overflow: hidden; background-color: #f0f0f0;
             cursor: default;
         }
-        #image-view-area.selectable {
-            cursor: crosshair;
-        }
-        /* Hide the original image, we will draw it on the canvas */
-        #image-preview { 
-            display: none;
-        }
+        #image-view-area.selectable { cursor: crosshair; }
+        #image-preview { display: none; }
         #camera-feed, #preview-canvas {
             width: 100%; height: 100%; object-fit: contain;
         }
-        #camera-feed.active-capture {
-            cursor: pointer;
-        }
+        #camera-feed.active-capture { cursor: pointer; }
         #preview-canvas { display: none; }
 
-        button {
-            padding: 8px 16px; border: 1px solid #ccc; background-color: #fff; border-radius: 4px; cursor: pointer;
-        }
         #rotate-btn, #lock-btn, #cancel-btn, #cancel-all-btn, #file-input { display: none; }
         .entry-input-group { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; align-items: center; }
         .entry-input-group input, .entry-input-group select { padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; flex-grow: 1; }
         
-        /* Table Styles */
         .data-table-container { width: 100%; margin-top: 5px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 14px; }
@@ -113,244 +107,186 @@
         td .image-cell-content img { max-width: 100%; max-height: 100%; object-fit: contain; }
         #table-actions { width: 100%; margin-top: 15px; }
 
-        /* Inline Cropper Styles */
         #inline-cropper-wrapper {
-            display: none; /* Hidden by default */
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-            background-color: #f0f0f0;
-            border: 2px dashed #007bff; 
+            display: none; width: 100%; padding: 10px; box-sizing: border-box;
+            background-color: #f0f0f0; border: 2px dashed #1E3A8A; 
         }
-        #cropper-container {
-            width: 100%;
-            height: 60vh;
-        }
-        #cropper-image {
-            display: block;
-            max-width: 100%;
-        }
+        #cropper-container { width: 100%; height: 60vh; }
+        #cropper-image { display: block; max-width: 100%; }
         
-        /* OCR Selection Canvas */
         #selection-canvas {
-            position: absolute;
-            top: 0; left: 0;
-            display: none; /* Hidden by default */
-            z-index: 10;
+            position: absolute; top: 0; left: 0; display: none; z-index: 10;
         }
         
-        /* Status Bar */
         #status-bar {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            min-height: 2.5em;
-            text-align: center;
-            background-color: #e9ecef;
-            border-radius: 4px;
-            color: #495057;
+            width: 100%; padding: 8px; box-sizing: border-box; min-height: 2.5em;
+            text-align: center; background-color: #e9ecef; border-radius: 4px; color: #495057;
         }
-        #status-bar.error {
-            color: #dc3545;
-            font-weight: bold;
-        }
+        #status-bar.error { color: #dc3545; font-weight: bold; }
 
-        /* Enhancement Controls */
-        .slider-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            max-width: 280px;
-            justify-content: center;
-        }
-        .enhancement-sliders {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        input[type="range"] {
-            flex-grow: 1;
-        }
+        .slider-control { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 280px; justify-content: center; }
+        .enhancement-sliders { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 15px; }
+        input[type="range"] { flex-grow: 1; }
 
-
-        /* Responsive Layout Styles */
-        .main-content-wrapper {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            gap: 15px;
-        }
-        .preview-column, .controls-column {
-            width: 100%;
-        }
-        .controls-column {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+        .main-content-wrapper { display: flex; flex-direction: column; width: 100%; gap: 15px; }
+        .preview-column, .controls-column { width: 100%; }
+        .controls-column { display: flex; flex-direction: column; gap: 15px; }
 
         @media (min-width: 1024px) {
-            .main-content-wrapper {
-                flex-direction: row;
-                align-items: flex-start;
-            }
-            .preview-column {
-                flex: 1.5; /* Give preview more space */
-                min-width: 0;
-            }
-            .controls-column {
-                flex: 1;
-                min-width: 0;
-            }
-            .data-table-container {
-                margin-top: 0;
-            }
-            #table-actions {
-                margin-top: 0;
-            }
+            .main-content-wrapper { flex-direction: row; align-items: flex-start; }
+            .preview-column { flex: 1.5; min-width: 0; }
+            .controls-column { flex: 1; min-width: 0; }
+            .data-table-container, #table-actions { margin-top: 0; }
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen flex flex-col">
 
-    <div class="uploader-container">
-        <!-- Google Apps Script URL Input -->
-        <div id="gscript-container" style="display: none;">
-            <label for="gscript-url"><b>Paste your Google Apps Script Web App URL here:</b></label>
-            <input type="text" id="gscript-url" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbwkC3OXNACPPH-LLPJyhkZKaDh6VtNgGbp8lMQbzz1XF327IN_OhFEEapOzNm3REbn5/exec">
-        </div>
+    <div id="header-placeholder"></div>
 
-        <!-- Main Controls -->
-        <div id="main-controls-strip">
-            <div class="upload-type-strip">
-                <button class="type-btn active" data-type="POD">POD</button>
-                <button class="type-btn" data-type="Reciept">Reciept</button>
-                <button class="type-btn" data-type="KYC">KYC</button>
-                <button class="type-btn" data-type="Product">Product</button>
-                <button class="type-btn" data-type="MultiBox">MultiBox</button>
-            </div>
-            <div class="separator"></div>
-            <div class="button-group">
-                <button id="camera-btn">Camera</button>
-                <button id="upload-btn">Upload</button>
-                <button id="rotate-btn">Rotate</button>
-                <button id="lock-btn">Lock</button>
-                <button id="cancel-btn">Cancel</button>
-                <button id="cancel-all-btn">Cancel All</button>
-                <input type="file" id="file-input" accept="image/*,application/pdf" multiple>
-            </div>
-        </div>
-
-        <!-- Scroller -->
-        <div id="image-scroller-container"><div id="image-scroller"></div></div>
-        
-        <div class="main-content-wrapper">
-            <div class="preview-column">
-                <!-- Inline Cropper -->
-                <div id="inline-cropper-wrapper">
-                    <div id="cropper-container">
-                        <img id="cropper-image" src="">
+    <main class="w-full flex-grow p-4 sm:p-8">
+        <div class="container mx-auto">
+            <div class="card">
+                <div class="uploader-container">
+                    <!-- Google Apps Script URL Input -->
+                    <div id="gscript-container" style="display: none;">
+                        <label for="gscript-url"><b>Paste your Google Apps Script Web App URL here:</b></label>
+                        <input type="text" id="gscript-url" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbwkC3OXNACPPH-LLPJyhkZKaDh6VtNgGbp8lMQbzz1XF327IN_OhFEEapOzNm3REbn5/exec">
                     </div>
-                    <div class="button-group" style="margin-top: 10px;">
-                        <button id="crop-rotate-btn">Rotate</button>
-                        <button id="enhance-btn">Enhance</button>
-                        <button id="crop-confirm-btn">Crop</button>
-                        <button id="crop-cancel-btn">Cancel</button>
-                    </div>
-                    <div id="enhancement-controls" style="display:none; margin-top:10px; padding-top:10px; border-top: 1px solid #ccc;">
+
+                    <!-- Main Controls -->
+                    <div id="main-controls-strip">
+                        <div class="upload-type-strip">
+                            <button class="type-btn active" data-type="POD">POD</button>
+                            <button class="type-btn" data-type="Reciept">Reciept</button>
+                            <button class="type-btn" data-type="KYC">KYC</button>
+                            <button class="type-btn" data-type="Product">Product</button>
+                            <button class="type-btn" data-type="MultiBox">MultiBox</button>
+                        </div>
+                        <div class="separator"></div>
                         <div class="button-group">
-                             <button id="auto-enhance-btn">Auto</button>
-                            <button id="greyscale-btn">Greyscale</button>
-                            <button id="bw-btn">B&W Doc</button>
-                            <button id="sharpen-btn">Sharpen</button>
-                            <button id="reset-enhance-btn" style="background-color: #f8d7da;">Reset</button>
+                            <button id="camera-btn">Camera</button>
+                            <button id="upload-btn">Upload</button>
+                            <button id="rotate-btn">Rotate</button>
+                            <button id="lock-btn">Lock</button>
+                            <button id="cancel-btn">Cancel</button>
+                            <button id="cancel-all-btn">Cancel All</button>
+                            <input type="file" id="file-input" accept="image/*,application/pdf" multiple>
                         </div>
-                        <div class="enhancement-sliders">
-                            <div class="slider-control">
-                                <label for="brightness-slider">Brightness</label>
-                                <input type="range" id="brightness-slider" min="-50" max="50" value="0">
+                    </div>
+
+                    <!-- Scroller -->
+                    <div id="image-scroller-container"><div id="image-scroller"></div></div>
+                    
+                    <div class="main-content-wrapper">
+                        <div class="preview-column">
+                            <!-- Inline Cropper -->
+                            <div id="inline-cropper-wrapper">
+                                <div id="cropper-container">
+                                    <img id="cropper-image" src="">
+                                </div>
+                                <div class="button-group" style="margin-top: 10px;">
+                                    <button id="crop-rotate-btn">Rotate</button>
+                                    <button id="enhance-btn">Enhance</button>
+                                    <button id="crop-confirm-btn">Crop</button>
+                                    <button id="crop-cancel-btn">Cancel</button>
+                                </div>
+                                <div id="enhancement-controls" style="display:none; margin-top:10px; padding-top:10px; border-top: 1px solid #ccc;">
+                                    <div class="button-group">
+                                         <button id="auto-enhance-btn">Auto</button>
+                                        <button id="greyscale-btn">Greyscale</button>
+                                        <button id="bw-btn">B&W Doc</button>
+                                        <button id="sharpen-btn">Sharpen</button>
+                                        <button id="reset-enhance-btn" style="background-color: #f8d7da;">Reset</button>
+                                    </div>
+                                    <div class="enhancement-sliders">
+                                        <div class="slider-control">
+                                            <label for="brightness-slider">Brightness</label>
+                                            <input type="range" id="brightness-slider" min="-50" max="50" value="0">
+                                        </div>
+                                        <div class="slider-control">
+                                            <label for="contrast-slider">Contrast</label>
+                                            <input type="range" id="contrast-slider" min="-50" max="50" value="0">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="slider-control">
-                                <label for="contrast-slider">Contrast</label>
-                                <input type="range" id="contrast-slider" min="-50" max="50" value="0">
+
+                            <!-- Preview Area -->
+                            <div id="image-view-area">
+                                <span id="placeholder">Image preview area</span>
+                                <img id="image-preview" src="" alt="Image preview"/>
+                                <canvas id="preview-canvas"></canvas>
+                                <canvas id="selection-canvas"></canvas>
+                                <video id="camera-feed" autoplay playsinline></video>
+                            </div>
+                        </div>
+                        <div class="controls-column">
+                            <!-- Status Bar -->
+                            <div id="status-bar"></div>
+
+                            <!-- Inputs -->
+                            <div class="entry-input-group">
+                                <input type="text" id="awb-input" placeholder="Enter AWB / Ref (Required)">
+                                <input type="text" id="customer-name-input" placeholder="Enter Customer Name" style="display: none;">
+                                <select id="kyc-type-select" style="display: none;">
+                                    <optgroup label="Individual">
+                                        <option value="Aadhaar Card">Aadhaar Card</option>
+                                        <option value="PAN Card">PAN Card</option>
+                                        <option value="Indian Passport">Indian Passport</option>
+                                        <option value="Voter ID Card">Voter ID Card</option>
+                                        <option value="Driving License">Driving License</option>
+                                        <option value="NREGA Job Card">NREGA Job Card</option>
+                                    </optgroup>
+                                    <optgroup label="Business">
+                                        <option value="Partnership Deed">Partnership Deed</option>
+                                        <option value="Certificate of Incorporation">Certificate of Incorporation</option>
+                                        <option value="GST Registration">GST Registration</option>
+                                        <option value="MoA & AoA">MoA & AoA</option>
+                                        <option value="Board Resolution">Board Resolution</option>
+                                    </optgroup>
+                                </select>
+                                <select id="doc-type-select" style="display: none;">
+                                    <option value="INV">INV</option>
+                                    <option value="EWB">EWB</option>
+                                    <option value="CLN">CLN</option>
+                                    <option value="ADH">ADH</option>
+                                    <option value="DBT">DBT</option>
+                                    <option value="CDT">CDT</option>
+                                    <option value="HRD">HRD</option>
+                                    <option value="AGT">AGT</option>
+                                    <option value="INT">INT</option>
+                                </select>
+                                <input type="text" id="doc-number-input" placeholder="Enter Doc Number" style="display: none;">
+                                <input type="text" id="remark-input" placeholder="Status Remark (Default: Delivered)">
+                                <button id="pick-btn">Pick</button>
+                            </div>
+                            <!-- Table -->
+                            <div class="data-table-container">
+                                <table>
+                                    <thead>
+                                        <tr id="table-header-row"></tr>
+                                    </thead>
+                                    <tbody id="data-table-body"></tbody>
+                                </table>
+                            </div>
+                            <!-- Table Actions -->
+                            <div class="button-group" id="table-actions">
+                                <button id="delete-last-btn">Delete Last</button>
+                                <button id="clear-all-btn">Clear All</button>
+                                <button id="submit-btn">Submit</button>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Preview Area -->
-                <div id="image-view-area">
-                    <span id="placeholder">Image preview area</span>
-                    <img id="image-preview" src="" alt="Image preview"/>
-                    <canvas id="preview-canvas"></canvas>
-                    <canvas id="selection-canvas"></canvas>
-                    <video id="camera-feed" autoplay playsinline></video>
-                </div>
-            </div>
-            <div class="controls-column">
-                <!-- Status Bar -->
-                <div id="status-bar"></div>
-
-                <!-- Inputs -->
-                <div class="entry-input-group">
-                    <input type="text" id="awb-input" placeholder="Enter AWB / Ref (Required)">
-                    <input type="text" id="customer-name-input" placeholder="Enter Customer Name" style="display: none;">
-                    <select id="kyc-type-select" style="display: none;">
-                        <optgroup label="Individual">
-                            <option value="Aadhaar Card">Aadhaar Card</option>
-                            <option value="PAN Card">PAN Card</option>
-                            <option value="Indian Passport">Indian Passport</option>
-                            <option value="Voter ID Card">Voter ID Card</option>
-                            <option value="Driving License">Driving License</option>
-                            <option value="NREGA Job Card">NREGA Job Card</option>
-                        </optgroup>
-                        <optgroup label="Business">
-                            <option value="Partnership Deed">Partnership Deed</option>
-                            <option value="Certificate of Incorporation">Certificate of Incorporation</option>
-                            <option value="GST Registration">GST Registration</option>
-                            <option value="MoA & AoA">MoA & AoA</option>
-                            <option value="Board Resolution">Board Resolution</option>
-                        </optgroup>
-                    </select>
-                    <select id="doc-type-select" style="display: none;">
-                        <option value="INV">INV</option>
-                        <option value="EWB">EWB</option>
-                        <option value="CLN">CLN</option>
-                        <option value="ADH">ADH</option>
-                        <option value="DBT">DBT</option>
-                        <option value="CDT">CDT</option>
-                        <option value="HRD">HRD</option>
-                        <option value="AGT">AGT</option>
-                        <option value="INT">INT</option>
-                    </select>
-                    <input type="text" id="doc-number-input" placeholder="Enter Doc Number" style="display: none;">
-                    <input type="text" id="remark-input" placeholder="Status Remark (Default: Delivered)">
-                    <button id="pick-btn">Pick</button>
-                </div>
-                <!-- Table -->
-                <div class="data-table-container">
-                    <table>
-                        <thead>
-                            <tr id="table-header-row">
-                                <!-- THs will be generated by JS -->
-                            </tr>
-                        </thead>
-                        <tbody id="data-table-body"></tbody>
-                    </table>
-                </div>
-                <!-- Table Actions -->
-                <div class="button-group" id="table-actions">
-                    <button id="delete-last-btn">Delete Last</button>
-                    <button id="clear-all-btn">Clear All</button>
-                    <button id="submit-btn">Submit</button>
-                </div>
             </div>
         </div>
-    </div>
-    
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
+
     <!-- Third-party libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
@@ -361,7 +297,9 @@
         // Set up PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js`;
 
-        // DOM Elements
+        // DOM Elements are defined here...
+        // ... (The entire original inline script is preserved here) ...
+        // ... (I am omitting it for brevity, but it is fully included in the file) ...
         const gscriptUrlInput = document.getElementById('gscript-url');
         const cameraBtn = document.getElementById('camera-btn'), uploadBtn = document.getElementById('upload-btn'),
               fileInput = document.getElementById('file-input'), placeholder = document.getElementById('placeholder'),
@@ -1561,6 +1499,4 @@
     </script>
 </body>
 </html>
-
-
 
