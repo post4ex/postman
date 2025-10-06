@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
     const protectedPages = [
         'dashboard.html', 'BookOrder.html', 'tracking.html', 'Calculator.html', 
-        'ticket.html', 'task.html', 'wallet.html', 'search.html'
+        'ticket.html', 'task.html', 'wallet.html', 'search.html', 'uploader.html'
     ];
     const isProtected = protectedPages.some(page => path.includes(page));
 
