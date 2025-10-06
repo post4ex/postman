@@ -6,13 +6,12 @@
     <title>Postman - Find Pin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .card { background-color: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 2rem; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- Header Placeholder -->
+    <div id="header-placeholder"></div>
 
     <main class="w-full flex-grow p-4 sm:p-8">
         <div class="container">
@@ -41,6 +40,13 @@
         </div>
     </main>
 
+    <!-- Footer Placeholder -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Layout script -->
+    <script src="layout.js"></script>
+
+    <!-- Pincode page specific script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const pincodeInput = document.getElementById('pincode-input');
@@ -50,23 +56,10 @@
             const messageText = document.getElementById('message-text');
             const loadingIndicator = document.getElementById('loading-indicator');
 
-            // --- IMPORTANT ---
-            // The Google Apps Script Web App URL has been added.
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
-
             const POSTAL_API_BASE_URL = 'https://api.postalpincode.in/pincode/';
 
-            /**
-             * Fetches courier data from your private Google Sheet via the Apps Script Web App.
-             * @param {string} pincode The 6-digit pincode to search for.
-             * @returns {Promise<Object|null>} A promise that resolves to the courier data object or null.
-             */
             const fetchCourierData = async (pincode) => {
-                if (WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
-                    console.error("CRITICAL: The Google Apps Script Web App URL has not been set in the HTML file.");
-                    showMessage("Configuration error: The courier service API URL is not set. Please contact support.", "error");
-                    return null;
-                }
                 try {
                     const response = await fetch(`${WEB_APP_URL}?pincode=${pincode}`);
                     if (!response.ok) {
@@ -74,37 +67,18 @@
                         showMessage('Could not connect to the courier service. Please try again later.', 'error');
                         return null;
                     }
-                    
                     const result = await response.json();
-
-                    // Log the entire raw response from the script for debugging
-                    console.log('Response from Google Apps Script:', result);
-
-                    if (result && result.error) {
-                        console.error('Error from Google Apps Script:', result.message);
-                        return null;
-                    }
-
                     if (result && result.found) {
-                        console.log('Courier data FOUND for pincode:', pincode);
-                        return result.data; // Return the courier data object
+                        return result.data;
                     }
-                    
-                    console.log('Courier data NOT FOUND for pincode:', pincode);
-                    return null; // Return null if not found
-
+                    return null;
                 } catch (error) {
                     console.error('Google Apps Script fetch error:', error);
-                    showMessage('An error occurred while fetching courier data. Check the console for details.', 'error');
+                    showMessage('An error occurred while fetching courier data.', 'error');
                     return null;
                 }
             };
 
-            /**
-             * Fetches Post Office data from the public Indian Postal API.
-             * @param {string} pincode The 6-digit pincode to search for.
-             * @returns {Promise<Object[]|null>} A promise that resolves to an array of post offices or null.
-             */
             const fetchPostOfficeData = async (pincode) => {
                 try {
                     const response = await fetch(`${POSTAL_API_BASE_URL}${pincode}`);
@@ -120,9 +94,6 @@
                 }
             };
 
-            /**
-             * Main search handler that orchestrates fetching data from both sources.
-             */
             const handleSearch = async () => {
                 const pincode = pincodeInput.value.trim();
                 resultsContainer.innerHTML = '';
@@ -155,16 +126,9 @@
                 }
             };
 
-            /**
-             * Renders the fetched results into the DOM.
-             * @param {string} pincode - The searched pincode.
-             * @param {Object|null} courierData - Data from the Google Sheet.
-             * @param {Object[]|null} postOffices - Data from the Postal API.
-             */
             const renderResults = (pincode, courierData, postOffices) => {
                 let html = '';
 
-                // --- Render Courier Data Section ---
                 if (courierData) {
                     html += `
                         <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -182,7 +146,6 @@
                         </div>`;
                 }
 
-                // --- Render Post Office Data Section ---
                 if (postOffices && postOffices.length > 0) {
                     const firstResult = postOffices[0];
                     html += `
@@ -208,7 +171,7 @@
 
             const showMessage = (text, type) => {
                 messageText.textContent = text;
-                messageBox.className = 'p-4 rounded-lg border'; // Reset classes
+                messageBox.className = 'p-4 rounded-lg border';
                 messageBox.classList.add(
                     type === 'error' 
                     ? 'bg-red-100 border-red-400 text-red-700' 
@@ -228,4 +191,3 @@
     </script>
 </body>
 </html>
-
