@@ -38,65 +38,15 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
-    <div id="header-placeholder">
-         <!-- Header -->
-        <header class="w-full bg-white text-blue-900 shadow-md py-4 px-6 sticky top-0 z-40">
-            <div class="container-fluid mx-auto flex items-center justify-between relative">
-                <!-- Sidebar Toggle and Logo -->
-                <div class="flex items-center space-x-4">
-                    <!-- Sidebar Toggle Button (visible only when logged in) -->
-                    <div id="sidebar-toggle-container" class="hidden">
-                        <button id="sidebar-toggle" class="p-2 rounded-lg text-blue-900 hover:text-blue-700 focus:outline-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <!-- Logo -->
-                    <a href="https://post4ex.github.io/postman/main.html" id="logoLink" class="flex items-center space-x-2 flex-shrink-0">
-                        <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto rounded-lg">
-                    </a>
-                </div>
-
-                <!-- Main Navigation -->
-                <nav id="main-nav" class="hidden sm:flex items-center space-x-2 text-sm font-semibold">
-                    <a id="nav-main" href="https://post4ex.github.io/postman/main.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-                    <a id="nav-tracking" href="https://post4ex.github.io/postman/tracking.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
-                    <a id="nav-services" href="https://post4ex.github.io/postman/services.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
-                    <a id="nav-complaint" href="https://post4ex.github.io/postman/complaint.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
-                    <!-- Login/Logout buttons are now flex items for right alignment -->
-                    <div class="flex items-center">
-                        <a id="login-button" href="https://post4ex.github.io/postman/login.html" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
-                        <button id="logout-button" class="hidden px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
-                    </div>
-                </nav>
-
-                <!-- Mobile Menu Button -->
-                <button id="menuButton" class="sm:hidden p-2 rounded-lg text-blue-900 hover:text-blue-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-
-                <!-- Mobile Dropdown Menu -->
-                <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden">
-                    <a id="dropdown-main" href="https://post4ex.github.io/postman/main.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
-                    <a id="dropdown-tracking" href="https://post4ex.github.io/postman/tracking.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
-                    <a id="dropdown-services" href="https://post4ex.github.io/postman/services.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
-                    <a id="dropdown-complaint" href="https://post4ex.github.io/postman/complaint.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Raise a Complaint</a>
-                    <a id="login-button-mobile" href="https://post4ex.github.io/postman/login.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
-                    <button id="logout-button-mobile" class="hidden w-full text-left mt-1 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
-                </div>
-            </div>
-        </header>
-    </div>
+    <div id="header-placeholder"></div>
 
     <main class="flex-grow flex items-center justify-center p-4">
         <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden grid md:grid-cols-2 gap-0">
             <!-- Column 1: Login Form -->
             <div class="p-8 md:p-12">
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Postman Welcomes You.</h1>
-                <p class="text-gray-600 mb-8">Please enter your details to sign in.</p>
+                <div class="flex justify-center mb-8">
+                    <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-20 w-auto">
+                </div>
                 <form id="login-form" class="space-y-6">
                     <!-- Code Input -->
                     <div class="relative">
@@ -138,7 +88,7 @@
                 </div>
                  <!-- Overlay and Text -->
                 <div class="relative z-10 flex flex-col justify-center items-center h-full p-8 bg-blue-900 bg-opacity-75 text-white text-center">
-                     <h2 class="text-4xl font-bold mb-4">Adventures of a Postman.</h2>
+                     <h2 class="text-4xl font-bold mb-4">Postman Welcomes to do Adventures .</h2>
                      <p class="text-lg">Manage shipments, track packages, and access all your services seamlessly in one place.</p>
                 </div>
             </div>
@@ -147,6 +97,7 @@
 
     <div id="footer-placeholder"></div>
 
+    <script src="layout.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
              // --- DOM Elements ---
