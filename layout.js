@@ -72,7 +72,7 @@ async function loadDynamicContent(url, targetElementId) {
 
             if (pageScriptTag && pageScriptTag.textContent) {
                 let scriptContent = pageScriptTag.textContent;
-                const regex = /document\.addEventListener\(\s*['"]DOMContentLoaded['"]\s*,\s*(?:function\s*\(\s*\)\s*\{|(?:\(\s*\)\s*=>\s*\{))([\s\S]*)\}\s*\)\s*;/;
+                const regex = /document\.addEventListener\(\s*['"]DOMContentLoaded['"]\s*,\s*(?:function\s*\(\s*\)\s*\{|(?:\(\s*\)\s*=>\s*\{))([\sS]*)\}\s*\)\s*;/;
                 const match = scriptContent.match(regex);
                 
                 if (match && match[1]) {
@@ -118,17 +118,22 @@ function checkLoginStatus() {
     let isLoggedIn = false;
     let userData = null;
     if (loginDataJSON) {
-        const loginData = JSON.parse(loginDataJSON);
-        const now = new Date().getTime();
-        if (now <= loginData.expires) {
-            isLoggedIn = true;
-            userData = loginData;
-        } else {
-            localStorage.removeItem('loginData'); // Clear expired session
+        try {
+            const loginData = JSON.parse(loginDataJSON);
+            const now = new Date().getTime();
+            if (loginData.expires && now <= loginData.expires) {
+                isLoggedIn = true;
+                userData = loginData;
+            } else {
+                localStorage.removeItem('loginData'); // Clear expired session
+            }
+        } catch (e) {
+            console.error("Failed to parse login data from localStorage", e);
+            localStorage.removeItem('loginData');
         }
     }
 
-    if (isLoggedIn) {
+    if (isLoggedIn && userData) {
         // --- UI for LOGGED IN user ---
         loginButton.classList.add('hidden');
         profileSection.classList.remove('hidden');
@@ -143,31 +148,34 @@ function checkLoginStatus() {
         sidebarToggleContainer.classList.remove('hidden');
         
         // --- Populate Profile Dropdowns ---
-        const profileFieldsToShow = ['Name', 'Code', 'Role', 'Branch', 'Email', 'Mobile', 'Token'];
+        const profileFieldsToShow = ['name', 'code', 'role', 'branch', 'email', 'mobile', 'token'];
         
-        const profileDetailsContainer = document.getElementById('profile-details-container');
-        if (profileDetailsContainer) {
-            profileDetailsContainer.innerHTML = ''; 
-            profileFieldsToShow.forEach(key => {
-                if (userData[key]) {
-                    const detailEl = document.createElement('div');
-                    detailEl.innerHTML = `<p class="text-sm"><strong class="font-semibold text-gray-600">${key}:</strong> <span class="text-gray-800">${userData[key]}</span></p>`;
-                    profileDetailsContainer.appendChild(detailEl);
-                }
-            });
-        }
-        
-        const mobileProfileDetailsContainer = document.getElementById('mobile-profile-details-container');
-        if (mobileProfileDetailsContainer) {
-            mobileProfileDetailsContainer.innerHTML = '';
-             profileFieldsToShow.forEach(key => {
-                if (userData[key]) {
-                    const detailEl = document.createElement('div');
-                    detailEl.innerHTML = `<p class="text-xs text-white"><strong class="font-semibold text-gray-300">${key}:</strong> <span>${userData[key]}</span></p>`;
-                    mobileProfileDetailsContainer.appendChild(detailEl);
-                }
-            });
-        }
+        const populateDetails = (container, templateGenerator) => {
+            if (container) {
+                container.innerHTML = ''; 
+                profileFieldsToShow.forEach(field => {
+                    const userDataKey = Object.keys(userData).find(k => k.toLowerCase() === field);
+                    if (userDataKey && userData[userDataKey]) {
+                        const displayKey = field.charAt(0).toUpperCase() + field.slice(1);
+                        container.appendChild(templateGenerator(displayKey, userData[userDataKey]));
+                    }
+                });
+            }
+        };
+
+        // Desktop Profile
+        populateDetails(document.getElementById('profile-details-container'), (key, value) => {
+            const detailEl = document.createElement('div');
+            detailEl.innerHTML = `<p class="text-sm"><strong class="font-semibold text-gray-600">${key}:</strong> <span class="text-gray-800">${value}</span></p>`;
+            return detailEl;
+        });
+
+        // Mobile Profile
+        populateDetails(document.getElementById('mobile-profile-details-container'), (key, value) => {
+            const detailEl = document.createElement('div');
+            detailEl.innerHTML = `<p class="text-xs text-white"><strong class="font-semibold text-gray-300">${key}:</strong> <span>${value}</span></p>`;
+            return detailEl;
+        });
 
         // --- Role-Based Access Control for Sidebar ---
         const userRole = userData.ROLE ? userData.ROLE.trim().toUpperCase() : null;
