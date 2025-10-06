@@ -6,52 +6,147 @@
     <title>Login - Postman</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* General Body & Container Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            width: 100%;
+        }
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Dropdown Menu for Mobile Navigation */
+        .dropdown-menu {
+            position: absolute;
+            right: 1.5rem;
+            top: 5rem;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 0.5rem;
+            z-index: 50;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
-    <div id="header-placeholder"></div>
+    <div id="header-placeholder">
+         <!-- Header -->
+        <header class="w-full bg-white text-blue-900 shadow-md py-4 px-6 sticky top-0 z-40">
+            <div class="container-fluid mx-auto flex items-center justify-between relative">
+                <!-- Sidebar Toggle and Logo -->
+                <div class="flex items-center space-x-4">
+                    <!-- Sidebar Toggle Button (visible only when logged in) -->
+                    <div id="sidebar-toggle-container" class="hidden">
+                        <button id="sidebar-toggle" class="p-2 rounded-lg text-blue-900 hover:text-blue-700 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Logo -->
+                    <a href="https://post4ex.github.io/postman/main.html" id="logoLink" class="flex items-center space-x-2 flex-shrink-0">
+                        <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto rounded-lg">
+                    </a>
+                </div>
 
-    <main class="flex-grow flex items-center justify-center p-4">
-        <div class="card w-full max-w-md">
-            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Login</h1>
-            <form id="login-form" class="space-y-6">
-                <!-- Code Input -->
-                <div class="relative">
-                    <input type="text" id="code" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
-                    <label for="code" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
-                        Code
-                    </label>
-                </div>
-                <!-- Username Input -->
-                <div class="relative">
-                    <input type="text" id="username" autocomplete="username" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
-                    <label for="username" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
-                        Username
-                    </label>
-                </div>
-                <!-- Password Input -->
-                <div class="relative">
-                    <input type="password" id="password" autocomplete="current-password" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
-                    <label for="password" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
-                        Password
-                    </label>
-                </div>
-                <!-- Submit Button -->
-                <button type="submit" class="w-full py-4 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors mt-6 flex items-center justify-center">
-                    <span id="button-text">Log In</span>
-                    <svg id="spinner" class="animate-spin h-5 w-5 text-white ml-3 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <!-- Main Navigation -->
+                <nav id="main-nav" class="hidden sm:flex items-center space-x-2 text-sm font-semibold">
+                    <a id="nav-main" href="https://post4ex.github.io/postman/main.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
+                    <a id="nav-tracking" href="https://post4ex.github.io/postman/tracking.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
+                    <a id="nav-services" href="https://post4ex.github.io/postman/services.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
+                    <a id="nav-complaint" href="https://post4ex.github.io/postman/complaint.html" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Complaint</a>
+                    <!-- Login/Logout buttons are now flex items for right alignment -->
+                    <div class="flex items-center">
+                        <a id="login-button" href="https://post4ex.github.io/postman/login.html" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
+                        <button id="logout-button" class="hidden px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
+                    </div>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <button id="menuButton" class="sm:hidden p-2 rounded-lg text-blue-900 hover:text-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                 </button>
-            </form>
-            <div id="message-area" class="text-center font-medium mt-4 text-sm"></div>
+
+                <!-- Mobile Dropdown Menu -->
+                <div id="dropdownMenu" class="dropdown-menu hidden sm:hidden">
+                    <a id="dropdown-main" href="https://post4ex.github.io/postman/main.html" class="block px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Home</a>
+                    <a id="dropdown-tracking" href="https://post4ex.github.io/postman/tracking.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Tracking</a>
+                    <a id="dropdown-services" href="https://post4ex.github.io/postman/services.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Services</a>
+                    <a id="dropdown-complaint" href="https://post4ex.github.io/postman/complaint.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">Raise a Complaint</a>
+                    <a id="login-button-mobile" href="https://post4ex.github.io/postman/login.html" class="block mt-1 px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
+                    <button id="logout-button-mobile" class="hidden w-full text-left mt-1 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
+                </div>
+            </div>
+        </header>
+    </div>
+
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden grid md:grid-cols-2 gap-0">
+            <!-- Column 1: Login Form -->
+            <div class="p-8 md:p-12">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Postman Welcomes You.</h1>
+                <p class="text-gray-600 mb-8">Please enter your details to sign in.</p>
+                <form id="login-form" class="space-y-6">
+                    <!-- Code Input -->
+                    <div class="relative">
+                        <input type="text" id="code" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
+                        <label for="code" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
+                            Company Code
+                        </label>
+                    </div>
+                    <!-- Username Input -->
+                    <div class="relative">
+                        <input type="text" id="username" autocomplete="username" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
+                        <label for="username" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
+                            Username
+                        </label>
+                    </div>
+                    <!-- Password Input -->
+                    <div class="relative">
+                        <input type="password" id="password" autocomplete="current-password" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
+                        <label for="password" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
+                            Password
+                        </label>
+                    </div>
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full py-4 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors mt-6 flex items-center justify-center">
+                        <span id="button-text">Log In</span>
+                        <svg id="spinner" class="animate-spin h-5 w-5 text-white ml-3 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </form>
+                <div id="message-area" class="text-center font-medium mt-4 text-sm"></div>
+            </div>
+
+            <!-- Column 2: Greeting and Image -->
+            <div class="hidden md:block relative">
+                <!-- Background Image -->
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1585713181935-d5f622cc261b?q=80&w=2070&auto=format&fit=crop');">
+                </div>
+                 <!-- Overlay and Text -->
+                <div class="relative z-10 flex flex-col justify-center items-center h-full p-8 bg-blue-900 bg-opacity-75 text-white text-center">
+                     <h2 class="text-4xl font-bold mb-4">Adventures of a Postman.</h2>
+                     <p class="text-lg">Manage shipments, track packages, and access all your services seamlessly in one place.</p>
+                </div>
+            </div>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
 
-    <script src="layout.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
              // --- DOM Elements ---
@@ -143,3 +238,4 @@
     </script>
 </body>
 </html>
+
