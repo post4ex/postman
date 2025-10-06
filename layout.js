@@ -119,33 +119,41 @@ window.setActiveNav = setActiveNav;
  */
 function checkLoginStatus() {
     const loginDataJSON = localStorage.getItem('loginData');
+    
+    // Desktop auth elements
     const loginButton = document.getElementById('login-button');
-    const logoutButton = document.getElementById('logout-button');
-    const sidebarToggleContainer = document.getElementById('sidebar-toggle-container');
-    
-    // Get home links to make them dynamic
-    const homeLink = document.getElementById('nav-main');
-    const homeLinkMobile = document.getElementById('dropdown-main');
-    
-    // Mobile auth buttons
-    const loginButtonMobile = document.getElementById('login-button-mobile');
-    const logoutButtonMobile = document.getElementById('logout-button-mobile');
+    const profileSection = document.getElementById('profile-section');
+    const searchButton = document.getElementById('nav-search');
 
-    // Sidebar menu items for role-based access
+    // Mobile auth elements
+    const loginButtonMobile = document.getElementById('login-button-mobile');
+    const profileSectionMobile = document.getElementById('profile-section-mobile');
+    const searchButtonMobile = document.getElementById('dropdown-search');
+
+    // Sidebar elements
+    const sidebarToggleContainer = document.getElementById('sidebar-toggle-container');
     const ledgerMenuItem = document.getElementById('ledger-menu-item');
     const mastersMenuItem = document.getElementById('masters-menu-item');
+    
+    // Dynamic home links
+    const homeLink = document.getElementById('nav-bookorder'); 
+    const homeLinkMobile = document.getElementById('dropdown-bookorder');
 
-    if (!loginButton || !logoutButton || !sidebarToggleContainer) return;
+    if (!loginButton) return;
 
     let isLoggedIn = false;
     let userRole = null;
+    let userName = null;
+    let userCode = null;
+
     if (loginDataJSON) {
         const loginData = JSON.parse(loginDataJSON);
         const now = new Date().getTime();
         if (now <= loginData.expires) {
             isLoggedIn = true;
-            // **FIX:** Get role, trim whitespace, and convert to uppercase for reliable comparison.
-            userRole = loginData.ROLE ? loginData.ROLE.trim().toUpperCase() : null; 
+            userRole = loginData.ROLE ? loginData.ROLE.trim().toUpperCase() : 'N/A';
+            userName = loginData.NAME || 'User';
+            userCode = loginData.CODE || 'N/A';
         } else {
             localStorage.removeItem('loginData'); // Clear expired session
         }
@@ -154,24 +162,35 @@ function checkLoginStatus() {
     if (isLoggedIn) {
         // --- UI for LOGGED IN user ---
         loginButton.classList.add('hidden');
-        logoutButton.classList.remove('hidden');
-        if(loginButtonMobile) loginButtonMobile.classList.add('hidden');
-        if(logoutButtonMobile) logoutButtonMobile.classList.remove('hidden');
+        profileSection.classList.remove('hidden');
+        if (searchButton) searchButton.classList.remove('hidden');
         
         sidebarToggleContainer.classList.remove('hidden');
-        // Update home links to point to the dashboard
         if (homeLink) homeLink.href = 'https://post4ex.github.io/postman/dashboard.html';
-        if (homeLinkMobile) homeLinkMobile.href = 'https://post4ex.github.io/postman/dashboard.html';
         
+        // Update profile dropdown
+        document.getElementById('profile-name').textContent = userName;
+        document.getElementById('profile-role').textContent = userRole;
+        document.getElementById('profile-code').textContent = userCode;
+        document.getElementById('profile-name-short').textContent = userName.split(' ')[0];
+
+        // Mobile UI
+        if (loginButtonMobile) loginButtonMobile.classList.add('hidden');
+        if (profileSectionMobile) profileSectionMobile.classList.remove('hidden');
+        if (searchButtonMobile) searchButtonMobile.classList.remove('hidden');
+        if (homeLinkMobile) homeLinkMobile.href = 'https://post4ex.github.io/postman/dashboard.html';
+
+        // Update mobile profile info
+        document.getElementById('mobile-profile-name').textContent = userName;
+        document.getElementById('mobile-profile-role').textContent = userRole;
+        document.getElementById('mobile-profile-code').textContent = userCode;
+
         // --- Role-Based Access Control for Sidebar ---
         if (ledgerMenuItem && mastersMenuItem) {
-            // **FIX:** Compare against uppercase roles for consistency.
             if (userRole === 'CLIENT' || userRole === 'BRANCH') {
-                // Hide for non-admin roles
                 ledgerMenuItem.classList.add('hidden');
                 mastersMenuItem.classList.add('hidden');
             } else {
-                // Show for Admin or other roles
                 ledgerMenuItem.classList.remove('hidden');
                 mastersMenuItem.classList.remove('hidden');
             }
@@ -180,16 +199,18 @@ function checkLoginStatus() {
     } else {
         // --- UI for LOGGED OUT user ---
         loginButton.classList.remove('hidden');
-        logoutButton.classList.add('hidden');
-        if(loginButtonMobile) loginButtonMobile.classList.remove('hidden');
-        if(logoutButtonMobile) logoutButtonMobile.classList.add('hidden');
+        profileSection.classList.add('hidden');
+        if (searchButton) searchButton.classList.add('hidden');
 
         sidebarToggleContainer.classList.add('hidden');
-        // Update home links to point to the main public page
-        if (homeLink) homeLink.href = 'https://post4ex.github.io/postman/main.html';
-        if (homeLinkMobile) homeLinkMobile.href = 'https://post4ex.github.io/postman/main.html';
+        if (homeLink) homeLink.href = 'https://post4ex.github.io/postman/BookOrder.html'; 
 
-        // Ensure sidebar menus are hidden if logged out
+        // Mobile UI
+        if (loginButtonMobile) loginButtonMobile.classList.remove('hidden');
+        if (profileSectionMobile) profileSectionMobile.classList.add('hidden');
+        if (searchButtonMobile) searchButtonMobile.classList.add('hidden');
+        if (homeLinkMobile) homeLinkMobile.href = 'https://post4ex.github.io/postman/BookOrder.html';
+
         if (ledgerMenuItem) ledgerMenuItem.classList.add('hidden');
         if (mastersMenuItem) mastersMenuItem.classList.add('hidden');
     }
@@ -202,35 +223,58 @@ function checkLoginStatus() {
 function initializeUI() {
     const menuButton = document.getElementById('menuButton');
     const dropdownMenu = document.getElementById('dropdownMenu');
-    const logoutButton = document.getElementById('logout-button');
-    const logoutButtonMobile = document.getElementById('logout-button-mobile');
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
     
+    // Desktop profile dropdown toggle
+    const profileButton = document.getElementById('profile-button');
+    const profileDropdown = document.getElementById('profile-dropdown');
+
+    if (profileButton && profileDropdown) {
+        profileButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+    }
+
     if (menuButton && dropdownMenu) {
         menuButton.addEventListener('click', (event) => {
             event.stopPropagation();
             dropdownMenu.classList.toggle('hidden');
         });
-        dropdownMenu.addEventListener('click', () => dropdownMenu.classList.add('hidden'));
     }
 
+    // Global click listener to close dropdowns
     document.addEventListener('click', (event) => {
-        const isClickInsideMenuButton = menuButton ? menuButton.contains(event.target) : false;
-        const isClickInsideDropdownMenu = dropdownMenu ? dropdownMenu.contains(event.target) : false;
-        if (!isClickInsideMenuButton && !isClickInsideDropdownMenu && dropdownMenu) {
-            dropdownMenu.classList.add('hidden');
+        // Close mobile dropdown
+        if (dropdownMenu && !dropdownMenu.classList.contains('hidden')) {
+            const isClickInsideMenuButton = menuButton ? menuButton.contains(event.target) : false;
+            const isClickInsideDropdownMenu = dropdownMenu.contains(event.target);
+            if (!isClickInsideMenuButton && !isClickInsideDropdownMenu) {
+                dropdownMenu.classList.add('hidden');
+            }
+        }
+        // Close profile dropdown
+        if (profileDropdown && !profileDropdown.classList.contains('hidden')) {
+            const isClickInsideProfileButton = profileButton ? profileButton.contains(event.target) : false;
+            if (!isClickInsideProfileButton) {
+                profileDropdown.classList.add('hidden');
+            }
         }
     });
 
+    // Logout functionality
     const handleLogout = () => {
         localStorage.removeItem('loginData');
         window.location.href = 'https://post4ex.github.io/postman/login.html';
     };
+    const logoutButton = document.getElementById('profile-logout-button');
+    const logoutButtonMobile = document.getElementById('logout-button-mobile');
     if (logoutButton) logoutButton.addEventListener('click', handleLogout);
     if (logoutButtonMobile) logoutButtonMobile.addEventListener('click', handleLogout);
 
+    // Sidebar functionality
     if (sidebar && sidebarToggle && sidebarOverlay) {
         const toggleSidebar = () => {
             sidebar.classList.toggle('-translate-x-full');
@@ -248,11 +292,13 @@ function initializeUI() {
  */
 const setActiveNavOnLoad = () => {
     const path = window.location.pathname;
-    let pageId = 'main'; // Default to main
-    if (path.includes('dashboard.html')) pageId = 'main'; // Treat dashboard as home
+    let pageId = 'bookorder'; // Default to bookorder
+    if (path.includes('dashboard.html')) pageId = 'bookorder'; 
     if (path.includes('tracking.html')) pageId = 'tracking';
-    if (path.includes('services.html')) pageId = 'services';
-    if (path.includes('complaint.html')) pageId = 'complaint';
+    if (path.includes('Calculator.html')) pageId = 'calculator';
+    if (path.includes('ticket.html')) pageId = 'ticket';
+    if (path.includes('task.html')) pageId = 'task';
+    if (path.includes('search.html')) pageId = 'search';
     
     setActiveNav(pageId);
 };
@@ -261,7 +307,9 @@ const setActiveNavOnLoad = () => {
 document.addEventListener('DOMContentLoaded', () => {
     // Protect the dashboard page from unauthorized access
     const path = window.location.pathname;
-    if (path.includes('dashboard.html')) {
+    const protectedPages = ['dashboard.html', 'BookOrder.html', 'Calculator.html', 'ticket.html', 'task.html', 'search.html'];
+    
+    if (protectedPages.some(page => path.includes(page))) {
         const loginDataJSON = localStorage.getItem('loginData');
         let isLoggedIn = false;
         if (loginDataJSON) {
@@ -271,9 +319,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (!isLoggedIn) {
-            // Redirect to login page if not logged in
             window.location.href = 'https://post4ex.github.io/postman/login.html';
-            return; // Stop further script execution for this page
+            return; 
         }
     }
 
@@ -289,9 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (isMainPage) {
             loadDynamicContent('https://post4ex.github.io/postman/tracking.html', 'tracking-content-area');
-            loadDynamicContent('https://post4ex.github.io/postman/services.html', 'services-content-area');
         }
     }).catch(error => {
         console.error("Failed to initialize page layout:", error);
     });
 });
+
