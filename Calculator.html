@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculation of a Advenure</title>
+    <title>The Postman Calculator</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
@@ -49,7 +49,6 @@
             border-radius: 0.5rem;
             background-color: white;
             transition: border-color 0.2s;
-            cursor: text;
         }
         .form-field-container:focus-within {
             border-color: #2563eb;
@@ -65,6 +64,7 @@
             padding: 0.25rem 0;
             margin-top: 0.25rem;
             background-color: transparent;
+            width: 100%;
         }
 
         .segmented-control {
@@ -120,11 +120,14 @@
                     <div class="space-y-6 flex flex-col justify-between">
                         <form id="calculator-form" class="space-y-6 flex-1 flex flex-col justify-between">
                             <!-- Booking Details -->
-                            <div class="input-group">
-                                <div class="segmented-control">
-                                    <button type="button" id="code-btn" class="active-btn">Code</button>
-                                    <button type="button" id="mobile-btn" class="inactive-btn">Mobile</button>
-                                    <input type="text" id="booking-input" name="booking-input" placeholder="Enter 4-digit code" maxlength="4" required>
+                             <div class="form-field-container">
+                                <label for="booking-code-selector">Client Code</label>
+                                <div id="booking-code-wrapper" class="mt-1">
+                                    <input type="text" id="booking-input-locked" class="w-full bg-gray-100 cursor-not-allowed hidden" disabled>
+                                    <select id="booking-code-dropdown" class="w-full hidden">
+                                        <option value="">Loading clients...</option>
+                                    </select>
+                                    <input type="text" id="booking-input-manual" class="w-full hidden" placeholder="Enter 4-digit code" maxlength="4">
                                 </div>
                             </div>
 
@@ -201,25 +204,21 @@
                     <div class="flex items-center justify-center min-h-[300px]">
                         <div id="results-container" class="w-full h-full flex flex-col gap-4">
                             
-                            <!-- Card for Premium Service -->
                             <div id="pro-card" class="card p-4 flex-1 flex flex-col justify-center items-center text-center border-2 border-transparent transition-colors duration-200">
                                 <h4 class="text-xl font-semibold mb-2 text-gray-800">Premium</h4>
                                 <p id="pro-amount" class="text-3xl font-bold text-gray-800">₹--</p>
                             </div>
                             
-                            <!-- Card for Express Service -->
                             <div id="exp-card" class="card p-4 flex-1 flex flex-col justify-center items-center text-center border-2 border-blue-500 transition-colors duration-200">
                                 <h4 class="text-xl font-semibold mb-2 text-blue-500">Express</h4>
                                 <p id="exp-amount" class="text-3xl font-bold text-blue-500">₹--</p>
                             </div>
                             
-                            <!-- Card for Airline Service -->
                             <div id="air-card" class="card p-4 flex-1 flex flex-col justify-center items-center text-center border-2 border-transparent transition-colors duration-200">
                                 <h4 class="text-xl font-semibold mb-2 text-gray-800">Airline</h4>
                                 <p id="air-amount" class="text-3xl font-bold text-gray-800">₹--</p>
                             </div>
                             
-                            <!-- Card for Surface Service -->
                             <div id="sfc-card" class="card p-4 flex-1 flex flex-col justify-center items-center text-center border-2 border-transparent transition-colors duration-200">
                                 <h4 class="text-xl font-semibold mb-2 text-gray-800">Surface</h4>
                                 <p id="sfc-amount" class="text-3xl font-bold text-gray-800">₹--</p>
@@ -238,107 +237,103 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('calculator-form');
-            const codeBtn = document.getElementById('code-btn');
-            const mobileBtn = document.getElementById('mobile-btn');
-            const bookingInput = document.getElementById('booking-input');
+            // New Booking Input Elements
+            const lockedInput = document.getElementById('booking-input-locked');
+            const codeDropdown = document.getElementById('booking-code-dropdown');
+            const manualInput = document.getElementById('booking-input-manual');
+            
             const pickupPin = document.getElementById('pickup-pin');
             const deliveryPin = document.getElementById('delivery-pin');
-            
             const paidBtn = document.getElementById('paid-btn');
             const codBtn = document.getElementById('cod-btn');
             const codAmountInput = document.getElementById('cod-amount');
-            
             const expBtn = document.getElementById('exp-btn');
             const airBtn = document.getElementById('air-btn');
             const sfcBtn = document.getElementById('sfc-btn');
             const proBtn = document.getElementById('pro-btn');
-            
-            const resultDisplay = document.getElementById('results-container');
             const proCard = document.getElementById('pro-card');
             const expCard = document.getElementById('exp-card');
             const airCard = document.getElementById('air-card');
             const sfcCard = document.getElementById('sfc-card');
-
             const proAmount = document.getElementById('pro-amount');
             const expAmount = document.getElementById('exp-amount');
             const airAmount = document.getElementById('air-amount');
             const sfcAmount = document.getElementById('sfc-amount');
-            
             const weightInput = document.getElementById('weight');
             const piecesInput = document.getElementById('pieces');
             const lengthInput = document.getElementById('length');
             const widthInput = document.getElementById('width');
             const heightInput = document.getElementById('height');
-
             const proTitle = proCard.querySelector('h4');
             const expTitle = expCard.querySelector('h4');
             const airTitle = airCard.querySelector('h4');
             const sfcTitle = sfcCard.querySelector('h4');
 
-            let inputMode = 'code';
             let paymentMode = 'paid';
             let serviceType = 'exp';
 
-            // --- Auto-fill User Code from Cache ---
-            function autoFillUserData() {
+            function setupBookingInputByRole() {
                 const loginDataJSON = localStorage.getItem('loginData');
-                if (loginDataJSON) {
-                    try {
-                        const loginData = JSON.parse(loginDataJSON);
-                        const userCode = loginData.CODE || loginData.code;
-                        if (userCode) {
-                            bookingInput.value = userCode;
-                            inputMode = 'code'; 
-                            updateBookingMode();
+                const appDataJSON = localStorage.getItem('appData');
+
+                // Hide all inputs first to prevent flicker
+                lockedInput.style.display = 'none';
+                codeDropdown.style.display = 'none';
+                manualInput.style.display = 'none';
+
+                if (!loginDataJSON) {
+                    manualInput.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    const loginData = JSON.parse(loginDataJSON);
+                    const userRole = (loginData.ROLE || loginData.role || '').toUpperCase();
+                    const userCode = loginData.CODE || loginData.code;
+
+                    if (userRole === 'CLIENT') {
+                        lockedInput.value = userCode;
+                        lockedInput.style.display = 'block';
+                    } else if (['ADMIN', 'BRANCH', 'STAFF'].includes(userRole)) {
+                        codeDropdown.style.display = 'block';
+                        if (appDataJSON) {
+                            const appData = JSON.parse(appDataJSON).data;
+                            const b2bSheetKey = Object.keys(appData).find(key => key.toLowerCase() === 'b2b');
+                            
+                            if (b2bSheetKey && appData[b2bSheetKey]) {
+                                codeDropdown.innerHTML = '<option value="">-- Select a Client --</option>';
+                                const clients = appData[b2bSheetKey];
+                                clients.forEach(client => {
+                                    const clientCodeKey = Object.keys(client).find(k => k.toLowerCase() === 'code');
+                                    const clientNameKey = Object.keys(client).find(k => k.toLowerCase() === 'name');
+                                    if (clientCodeKey && client[clientCodeKey]) {
+                                        const option = document.createElement('option');
+                                        option.value = client[clientCodeKey];
+                                        const name = (clientNameKey && client[clientNameKey]) ? ` - ${client[clientNameKey]}` : '';
+                                        option.textContent = `${client[clientCodeKey]}${name}`;
+                                        codeDropdown.appendChild(option);
+                                    }
+                                });
+                            } else {
+                                codeDropdown.innerHTML = '<option value="">Could not find B2B data.</option>';
+                            }
+                        } else {
+                            codeDropdown.innerHTML = '<option value="">App data loading...</option>';
                         }
-                    } catch (e) {
-                        console.error("Could not parse login data for auto-fill:", e);
+                    } else {
+                        manualInput.style.display = 'block';
                     }
+                } catch (e) {
+                    console.error("Error setting up booking input:", e);
+                    manualInput.style.display = 'block'; // Fallback on error
                 }
             }
             
-            const handleBookingInput = (e) => {
-                if (inputMode === 'code') {
-                    e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
-                } else if (inputMode === 'mobile') {
-                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
-                }
-            };
-            
-            bookingInput.addEventListener('input', handleBookingInput);
-            
-            const updateBookingMode = () => {
-                codeBtn.classList.remove('active-btn', 'inactive-btn');
-                mobileBtn.classList.remove('active-btn', 'inactive-btn');
-
-                if (inputMode === 'code') {
-                    codeBtn.classList.add('active-btn');
-                    mobileBtn.classList.add('inactive-btn');
-                    bookingInput.placeholder = 'Enter 4-digit code';
-                    bookingInput.type = 'text';
-                    bookingInput.maxLength = 4;
-                    bookingInput.value = bookingInput.value.replace(/[^A-Z]/g, '');
-                } else {
-                    mobileBtn.classList.add('active-btn');
-                    codeBtn.classList.add('inactive-btn');
-                    bookingInput.placeholder = 'Enter 10-digit mobile number';
-                    bookingInput.type = 'tel';
-                    bookingInput.maxLength = 10;
-                    bookingInput.value = bookingInput.value.replace(/[^0-9]/g, '');
-                }
-            };
-            
             const updatePaymentMode = () => {
-                paidBtn.classList.remove('active-btn', 'inactive-btn');
-                codBtn.classList.remove('active-btn', 'inactive-btn');
-
-                if (paymentMode === 'paid') {
-                    paidBtn.classList.add('active-btn');
-                    codBtn.classList.add('inactive-btn');
-                } else {
-                    codBtn.classList.add('active-btn');
-                    paidBtn.classList.add('inactive-btn');
-                }
+                paidBtn.classList.toggle('active-btn', paymentMode === 'paid');
+                paidBtn.classList.toggle('inactive-btn', paymentMode !== 'paid');
+                codBtn.classList.toggle('active-btn', paymentMode === 'cod');
+                codBtn.classList.toggle('inactive-btn', paymentMode !== 'cod');
             };
 
             const updateServiceType = (selectedType) => {
@@ -349,50 +344,26 @@
                 const titles = [expTitle, airTitle, sfcTitle, proTitle];
 
                 buttons.forEach(button => {
-                    if (button.id.includes(selectedType)) {
-                        button.classList.add('active-btn');
-                        button.classList.remove('inactive-btn');
-                    } else {
-                        button.classList.add('inactive-btn');
-                        button.classList.remove('active-btn');
-                    }
+                    button.classList.toggle('active-btn', button.id.includes(selectedType));
+                    button.classList.toggle('inactive-btn', !button.id.includes(selectedType));
                 });
 
                 cards.forEach((card, index) => {
-                    if (card.id.includes(selectedType)) {
-                        card.classList.add('bg-blue-600', 'border-blue-600');
-                        card.classList.remove('bg-white', 'border-transparent');
-                        amounts[index].classList.add('text-white');
-                        amounts[index].classList.remove('text-gray-800');
-                        titles[index].classList.add('text-white');
-                        titles[index].classList.remove('text-gray-800');
-                    } else {
-                        card.classList.remove('bg-blue-600', 'border-blue-600');
-                        card.classList.add('bg-white', 'border-transparent');
-                        amounts[index].classList.add('text-gray-800');
-                        amounts[index].classList.remove('text-white');
-                        titles[index].classList.add('text-gray-800');
-                        titles[index].classList.remove('text-white');
-                    }
+                    const isActive = card.id.includes(selectedType);
+                    card.classList.toggle('bg-blue-600', isActive);
+                    card.classList.toggle('border-blue-600', isActive);
+                    card.classList.toggle('bg-white', !isActive);
+                    card.classList.toggle('border-transparent', !isActive);
+                    amounts[index].classList.toggle('text-white', isActive);
+                    amounts[index].classList.toggle('text-gray-800', !isActive);
+                    titles[index].classList.toggle('text-white', isActive);
+                    titles[index].classList.toggle('text-gray-800', !isActive);
                 });
             };
-
-            // Call autofill and set initial states
-            autoFillUserData();
-            updateBookingMode();
+            
             updatePaymentMode();
             updateServiceType(serviceType);
 
-            codeBtn.addEventListener('click', () => {
-                inputMode = 'code';
-                updateBookingMode();
-            });
-
-            mobileBtn.addEventListener('click', () => {
-                inputMode = 'mobile';
-                updateBookingMode();
-            });
-            
             paidBtn.addEventListener('click', () => {
                 paymentMode = 'paid';
                 codAmountInput.placeholder = 'Enter Amount';
@@ -414,11 +385,15 @@
                 e.preventDefault();
                 
                 const errorMessage = document.getElementById('error-message');
-                if (errorMessage) {
-                    errorMessage.remove();
+                if (errorMessage) errorMessage.remove();
+                
+                function getBookingCode() {
+                    if (lockedInput.style.display === 'block') return lockedInput.value;
+                    if (codeDropdown.style.display === 'block') return codeDropdown.value;
+                    return manualInput.value;
                 }
 
-                const bookingValue = bookingInput.value;
+                const bookingValue = getBookingCode();
                 const pickupPinValue = pickupPin.value;
                 const deliveryPinValue = deliveryPin.value;
                 const weight = parseFloat(weightInput.value);
@@ -428,60 +403,28 @@
                 const height = parseFloat(heightInput.value);
                 const codAmount = paymentMode === 'cod' ? parseFloat(codAmountInput.value) : 0;
                 
-                let valid = true;
                 let errorMsg = '';
-                
-                if (inputMode === 'code' && (bookingValue.length !== 4 || !/^[A-Z]{4}$/.test(bookingValue))) {
-                    errorMsg = 'Booking code must be exactly 4 capital alphabetical characters.';
-                    valid = false;
-                }
-                
-                if (inputMode === 'mobile' && (bookingValue.length !== 10 || !/^[0-9]{10}$/.test(bookingValue))) {
-                    errorMsg = 'Mobile number must be exactly 10 numeric digits.';
-                    valid = false;
-                }
-
-                if (pickupPinValue.length !== 6 || !/^[0-9]{6}$/.test(pickupPinValue)) {
+                if (!bookingValue || (bookingValue.length !== 4 || !/^[A-Z]{4}$/.test(bookingValue))) {
+                    errorMsg = 'A valid 4-character client code is required.';
+                } else if (pickupPinValue.length !== 6 || !/^[0-9]{6}$/.test(pickupPinValue)) {
                     errorMsg = 'Pickup Pin must be exactly 6 numeric digits.';
-                    valid = false;
-                }
-
-                if (deliveryPinValue.length !== 6 || !/^[0-9]{6}$/.test(deliveryPinValue)) {
+                } else if (deliveryPinValue.length !== 6 || !/^[0-9]{6}$/.test(deliveryPinValue)) {
                     errorMsg = 'Delivery Pin must be exactly 6 numeric digits.';
-                    valid = false;
-                }
-
-                if (isNaN(weight) || weight < 0) {
-                    errorMsg = 'Weight must be a non-negative number.';
-                    valid = false;
-                }
-                
-                if (isNaN(pieces) || pieces < 0 || pieces % 1 !== 0) {
-                    errorMsg = 'Pieces must be a non-negative integer.';
-                    valid = false;
-                }
-
-                if (isNaN(length) || length < 0 || length % 1 !== 0) {
-                    errorMsg = 'Length must be a non-negative integer.';
-                    valid = false;
-                }
-                
-                if (isNaN(width) || width < 0 || width % 1 !== 0) {
-                    errorMsg = 'Width must be a non-negative integer.';
-                    valid = false;
-                }
-                
-                if (isNaN(height) || height < 0 || height % 1 !== 0) {
-                    errorMsg = 'Height must be a non-negative integer.';
-                    valid = false;
-                }
-
-                if (paymentMode === 'cod' && (isNaN(codAmount) || codAmount < 0)) {
+                } else if (isNaN(weight) || weight <= 0) {
+                    errorMsg = 'Weight must be a positive number.';
+                } else if (isNaN(pieces) || pieces <= 0 || pieces % 1 !== 0) {
+                    errorMsg = 'Pieces must be a positive integer.';
+                } else if (isNaN(length) || length <= 0 || length % 1 !== 0) {
+                    errorMsg = 'Length must be a positive integer.';
+                } else if (isNaN(width) || width <= 0 || width % 1 !== 0) {
+                    errorMsg = 'Width must be a positive integer.';
+                } else if (isNaN(height) || height <= 0 || height % 1 !== 0) {
+                    errorMsg = 'Height must be a positive integer.';
+                } else if (paymentMode === 'cod' && (isNaN(codAmount) || codAmount < 0)) {
                     errorMsg = 'COD amount must be a non-negative number.';
-                    valid = false;
                 }
                 
-                if (!valid) {
+                if (errorMsg) {
                     showError(errorMsg);
                     return;
                 }
@@ -490,12 +433,8 @@
                 const chargeableWeight = Math.max(weight, volumetricWeight);
 
                 const serviceRates = {
-                    'pro': { rate: 20, time: '1 business day' },
-                    'exp': { rate: 15, time: '1-2 business days' },
-                    'air': { rate: 10, time: '2-4 business days' },
-                    'sfc': { rate: 5, time: '5-7 business days' }
+                    'pro': { rate: 20 }, 'exp': { rate: 15 }, 'air': { rate: 10 }, 'sfc': { rate: 5 }
                 };
-
                 const originPrefix = parseInt(pickupPinValue.substring(0, 3));
                 const destinationPrefix = parseInt(deliveryPinValue.substring(0, 3));
                 const distanceFactor = Math.abs(originPrefix - destinationPrefix) / 100;
@@ -511,16 +450,20 @@
 
             function showError(message) {
                 proAmount.textContent = expAmount.textContent = airAmount.textContent = sfcAmount.textContent = '₹--';
-                
                 const existingError = document.getElementById('error-message');
                 if (existingError) existingError.remove();
-
                 const errorDiv = document.createElement('div');
                 errorDiv.id = 'error-message';
                 errorDiv.className = 'col-span-2 text-center text-red-500 font-semibold mt-4';
                 errorDiv.textContent = message;
                 document.getElementById('results-container').appendChild(errorDiv);
             }
+
+            // Listen for app data events to populate the dropdown
+            window.addEventListener('appDataLoaded', setupBookingInputByRole);
+            window.addEventListener('appDataRefreshed', setupBookingInputByRole);
+            // Initial call to set up the input based on current state
+            setupBookingInputByRole();
         });
     </script>
 
