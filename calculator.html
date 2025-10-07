@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Postman Calculator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Site-wide styles -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Custom styles for the calculator - preserved from original file */
+        .calculate-btn {
+            background-color: #2563eb;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .calculate-btn:hover {
+            background-color: #1d4ed8;
+        }
+        .result-box {
+            background-color: #eff6ff;
+            border: 1px solid #dbeafe;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .result-box h4 {
+            font-weight: 600;
+            color: #1e40af;
+        }
+        
+        .form-field-container {
+            display: flex;
+            flex-direction: column;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: white;
+            transition: border-color 0.2s;
+            cursor: text;
+        }
+        .form-field-container:focus-within {
+            border-color: #2563eb;
+        }
+        .form-field-container label {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .form-field-container input, .form-field-container select {
+            border: none;
+            outline: none;
+            padding: 0.25rem 0;
+            margin-top: 0.25rem;
+            background-color: transparent;
+        }
+
+        .segmented-control {
+            display: flex;
+            align-items: stretch;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background-color: white;
+        }
+        .segmented-control button {
+            flex-grow: 1;
+            padding: 0.5rem 0.75rem;
+            font-weight: 500;
+            border-radius: 0;
+            transition: background-color 0.2s, color 0.2s;
+            cursor: pointer;
+            outline: none;
+            border: none;
+        }
+        .segmented-control input {
+            flex-grow: 2;
+            padding: 0.5rem 0.75rem;
+            border: none;
+            outline: none;
+            background-color: white;
+        }
+        .segmented-control .active-btn {
+            background-color: #2563eb;
+            color: white;
+        }
+        .segmented-control .inactive-btn {
+            background-color: white;
+            color: #4b5563;
+        }
+        .segmented-control button:hover:not(.active-btn) {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <div id="header-placeholder"></div>
+
+    <main class="w-full flex-grow p-4 sm:p-8">
+        <div class="container mx-auto">
+             <!-- Calculator Section -->
+            <section id="calculator-section" class="card space-y-8 py-8 px-6">
+                <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">The Postman Calculator</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                    <!-- Left side: Form for entries -->
+                    <div class="space-y-6 flex flex-col justify-between">
+                        <form id="calculator-form" class="space-y-6 flex-1 flex flex-col justify-between">
+                            <!-- Booking Details -->
+                            <div class="input-group">
+                                <div class="segmented-control">
+                                    <button type="button" id="code-btn" class="active-btn">Code</button>
+                                    <button type="button" id="mobile-btn" class="inactive-btn">Mobile</button>
+                                    <input type="text" id="booking-input" name="booking-input" placeholder="Enter 4-digit code" maxlength="4" required>
+                                </div>
+                            </div>
+
+                            <!-- Payment Mode -->
+                            <div class="input-group">
+                                <div class="segmented-control">
+                                    <button type="button" id="paid-btn" class="active-btn w-1/2">Paid</button>
+                                    <button type="button" id="cod-btn" class="inactive-btn w-1/2">COD</button>
+                                    <input type="number" id="cod-amount" name="cod-amount" placeholder="Enter Amount" required>
+                                </div>
+                            </div>
+                
+                            <!-- Pickup and Delivery Pins -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-field-container">
+                                    <label for="pickup-pin">Pickup Pin:</label>
+                                    <input type="text" id="pickup-pin" name="pickup-pin" placeholder="e.g., 100001" maxlength="6" required oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)">
+                                </div>
+                                <div class="form-field-container">
+                                    <label for="delivery-pin">Delivery Pin:</label>
+                                    <input type="text" id="delivery-pin" name="delivery-pin" placeholder="e.g., 902100" maxlength="6" required oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)">
+                                </div>
+                            </div>
+                
+                            <!-- Shipment Details -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-field-container">
+                                    <label for="weight">Weight (kg):</label>
+                                    <input type="number" id="weight" name="weight" placeholder="Enter weight in kg" min="0" step="0.01" required>
+                                    <div class="text-xs text-gray-500 mt-1">This will be used to calculate final cost.</div>
+                                </div>
+                                <div class="form-field-container">
+                                    <label for="pieces">Pieces/Box:</label>
+                                    <input type="number" id="pieces" name="pieces" placeholder="Number of items" min="0" step="1" required onkeydown="if(event.key==='.'){event.preventDefault();}">
+                                    <div class="text-xs text-gray-500 mt-1">Number of individual boxes/pieces.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="form-field-container">
+                                    <label for="length">Length (cm):</label>
+                                    <input type="number" id="length" name="length" placeholder="Length" min="0" step="1" required onkeydown="if(event.key==='.'){event.preventDefault();}">
+                                </div>
+                                <div class="form-field-container">
+                                    <label for="width">Width (cm):</label>
+                                    <input type="number" id="width" name="width" placeholder="Width" min="0" step="1" required onkeydown="if(event.key==='.'){event.preventDefault();}">
+                                </div>
+                                <div class="form-field-container">
+                                    <label for="height">Height (cm):</label>
+                                    <input type="number" id="height" name="height" placeholder="Height" min="0" step="1" required onkeydown="if(event.key==='.'){event.preventDefault();}">
+                                </div>
+                            </div>
+                
+                            <!-- Service Type Buttons -->
+                            <div class="input-group">
+                                <div class="form-field-container">
+                                    <label for="service-buttons">Service Type:</label>
+                                    <div id="service-buttons" class="segmented-control mt-1">
+                                        <button type="button" id="exp-btn" class="active-btn">EXP</button>
+                                        <button type="button" id="air-btn" class="inactive-btn">AIR</button>
+                                        <button type="button" id="sfc-btn" class="inactive-btn">SFC</button>
+                                        <button type="button" id="pro-btn" class="inactive-btn">PRO</button>
+                                    </div>
+                                </div>
+                            </div>
+                
+                            <div class="flex justify-center">
+                                <button type="submit" class="calculate-btn">Calculate Cost</button>
+                            </div>
+                        </form>
+                    </div>
+                
+                    <!-- Right side: Results display -->
+                    <div class="flex items-center justify-center min-h-[300px]">
+                        <div id="results-container" class="w-full h-full flex flex-col gap-4">
+                            
+                            <!-- Card for Premium Service -->
+                            <div id="pro-card" class="card p-4 flex-1 flex flex-col justify-center items-center text-center border-2 border-transparent transition-colors duration-200">
+                                <h4 class="text-xl font-semibold mb-2 text-gray-800">Premium</h4>
+                                <p id="pro-amount" class="text-3xl font-bold text-gray-800">₹--</p>
+                            </div>
+                            
+                            <!-- Card for Express Service -->
+                            <div id="exp-card" class="card p-4 flex-1 flex flex-col justify-center items-center text-center border-2 border-blue-500 transition-colors duration-200">
+                                <h4 class="text-xl font-semibold mb-2 text-blue-500">Express</h4>
+                                <p id="exp-amount" class="text-3xl font-bold text-blue-500">₹--</p>
+                            </div>
+                            
+                            <!-- Card for Airline Service -->
+                            <div id="air-card" class="card p-4 flex-1 flex flex-col justify-center items-center text-center border-2 border-transparent transition-colors duration-200">
+                                <h4 class="text-xl font-semibold mb-2 text-gray-800">Airline</h4>
+                                <p id="air-amount" class="text-3xl font-bold text-gray-800">₹--</p>
+                            </div>
+                            
+                            <!-- Card for Surface Service -->
+                            <div id="sfc-card" class="card p-4 flex-1 flex flex-col justify-center items-center text-center border-2 border-transparent transition-colors duration-200">
+                                <h4 class="text-xl font-semibold mb-2 text-gray-800">Surface</h4>
+                                <p id="sfc-amount" class="text-3xl font-bold text-gray-800">₹--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('calculator-form');
+            const codeBtn = document.getElementById('code-btn');
+            const mobileBtn = document.getElementById('mobile-btn');
+            const bookingInput = document.getElementById('booking-input');
+            const pickupPin = document.getElementById('pickup-pin');
+            const deliveryPin = document.getElementById('delivery-pin');
+            
+            const paidBtn = document.getElementById('paid-btn');
+            const codBtn = document.getElementById('cod-btn');
+            const codAmountInput = document.getElementById('cod-amount');
+            
+            const expBtn = document.getElementById('exp-btn');
+            const airBtn = document.getElementById('air-btn');
+            const sfcBtn = document.getElementById('sfc-btn');
+            const proBtn = document.getElementById('pro-btn');
+            
+            const resultDisplay = document.getElementById('results-container');
+            const proCard = document.getElementById('pro-card');
+            const expCard = document.getElementById('exp-card');
+            const airCard = document.getElementById('air-card');
+            const sfcCard = document.getElementById('sfc-card');
+
+            const proAmount = document.getElementById('pro-amount');
+            const expAmount = document.getElementById('exp-amount');
+            const airAmount = document.getElementById('air-amount');
+            const sfcAmount = document.getElementById('sfc-amount');
+            
+            const weightInput = document.getElementById('weight');
+            const piecesInput = document.getElementById('pieces');
+            const lengthInput = document.getElementById('length');
+            const widthInput = document.getElementById('width');
+            const heightInput = document.getElementById('height');
+
+            const proTitle = proCard.querySelector('h4');
+            const expTitle = expCard.querySelector('h4');
+            const airTitle = airCard.querySelector('h4');
+            const sfcTitle = sfcCard.querySelector('h4');
+
+            let inputMode = 'code';
+            let paymentMode = 'paid';
+            let serviceType = 'exp';
+
+            // --- Auto-fill User Code from Cache ---
+            function autoFillUserData() {
+                const loginDataJSON = localStorage.getItem('loginData');
+                if (loginDataJSON) {
+                    try {
+                        const loginData = JSON.parse(loginDataJSON);
+                        const userCode = loginData.CODE || loginData.code;
+                        if (userCode) {
+                            bookingInput.value = userCode;
+                            inputMode = 'code'; 
+                            updateBookingMode();
+                        }
+                    } catch (e) {
+                        console.error("Could not parse login data for auto-fill:", e);
+                    }
+                }
+            }
+            
+            const handleBookingInput = (e) => {
+                if (inputMode === 'code') {
+                    e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+                } else if (inputMode === 'mobile') {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                }
+            };
+            
+            bookingInput.addEventListener('input', handleBookingInput);
+            
+            const updateBookingMode = () => {
+                codeBtn.classList.remove('active-btn', 'inactive-btn');
+                mobileBtn.classList.remove('active-btn', 'inactive-btn');
+
+                if (inputMode === 'code') {
+                    codeBtn.classList.add('active-btn');
+                    mobileBtn.classList.add('inactive-btn');
+                    bookingInput.placeholder = 'Enter 4-digit code';
+                    bookingInput.type = 'text';
+                    bookingInput.maxLength = 4;
+                    bookingInput.value = bookingInput.value.replace(/[^A-Z]/g, '');
+                } else {
+                    mobileBtn.classList.add('active-btn');
+                    codeBtn.classList.add('inactive-btn');
+                    bookingInput.placeholder = 'Enter 10-digit mobile number';
+                    bookingInput.type = 'tel';
+                    bookingInput.maxLength = 10;
+                    bookingInput.value = bookingInput.value.replace(/[^0-9]/g, '');
+                }
+            };
+            
+            const updatePaymentMode = () => {
+                paidBtn.classList.remove('active-btn', 'inactive-btn');
+                codBtn.classList.remove('active-btn', 'inactive-btn');
+
+                if (paymentMode === 'paid') {
+                    paidBtn.classList.add('active-btn');
+                    codBtn.classList.add('inactive-btn');
+                } else {
+                    codBtn.classList.add('active-btn');
+                    paidBtn.classList.add('inactive-btn');
+                }
+            };
+
+            const updateServiceType = (selectedType) => {
+                serviceType = selectedType;
+                const buttons = [expBtn, airBtn, sfcBtn, proBtn];
+                const cards = [expCard, airCard, sfcCard, proCard];
+                const amounts = [expAmount, airAmount, sfcAmount, proAmount];
+                const titles = [expTitle, airTitle, sfcTitle, proTitle];
+
+                buttons.forEach(button => {
+                    if (button.id.includes(selectedType)) {
+                        button.classList.add('active-btn');
+                        button.classList.remove('inactive-btn');
+                    } else {
+                        button.classList.add('inactive-btn');
+                        button.classList.remove('active-btn');
+                    }
+                });
+
+                cards.forEach((card, index) => {
+                    if (card.id.includes(selectedType)) {
+                        card.classList.add('bg-blue-600', 'border-blue-600');
+                        card.classList.remove('bg-white', 'border-transparent');
+                        amounts[index].classList.add('text-white');
+                        amounts[index].classList.remove('text-gray-800');
+                        titles[index].classList.add('text-white');
+                        titles[index].classList.remove('text-gray-800');
+                    } else {
+                        card.classList.remove('bg-blue-600', 'border-blue-600');
+                        card.classList.add('bg-white', 'border-transparent');
+                        amounts[index].classList.add('text-gray-800');
+                        amounts[index].classList.remove('text-white');
+                        titles[index].classList.add('text-gray-800');
+                        titles[index].classList.remove('text-white');
+                    }
+                });
+            };
+
+            // Call autofill and set initial states
+            autoFillUserData();
+            updateBookingMode();
+            updatePaymentMode();
+            updateServiceType(serviceType);
+
+            codeBtn.addEventListener('click', () => {
+                inputMode = 'code';
+                updateBookingMode();
+            });
+
+            mobileBtn.addEventListener('click', () => {
+                inputMode = 'mobile';
+                updateBookingMode();
+            });
+            
+            paidBtn.addEventListener('click', () => {
+                paymentMode = 'paid';
+                codAmountInput.placeholder = 'Enter Amount';
+                updatePaymentMode();
+            });
+
+            codBtn.addEventListener('click', () => {
+                paymentMode = 'cod';
+                codAmountInput.placeholder = 'Enter COD Amount';
+                updatePaymentMode();
+            });
+            
+            expBtn.addEventListener('click', () => updateServiceType('exp'));
+            airBtn.addEventListener('click', () => updateServiceType('air'));
+            sfcBtn.addEventListener('click', () => updateServiceType('sfc'));
+            proBtn.addEventListener('click', () => updateServiceType('pro'));
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const errorMessage = document.getElementById('error-message');
+                if (errorMessage) {
+                    errorMessage.remove();
+                }
+
+                const bookingValue = bookingInput.value;
+                const pickupPinValue = pickupPin.value;
+                const deliveryPinValue = deliveryPin.value;
+                const weight = parseFloat(weightInput.value);
+                const pieces = parseFloat(piecesInput.value);
+                const length = parseFloat(lengthInput.value);
+                const width = parseFloat(widthInput.value);
+                const height = parseFloat(heightInput.value);
+                const codAmount = paymentMode === 'cod' ? parseFloat(codAmountInput.value) : 0;
+                
+                let valid = true;
+                let errorMsg = '';
+                
+                if (inputMode === 'code' && (bookingValue.length !== 4 || !/^[A-Z]{4}$/.test(bookingValue))) {
+                    errorMsg = 'Booking code must be exactly 4 capital alphabetical characters.';
+                    valid = false;
+                }
+                
+                if (inputMode === 'mobile' && (bookingValue.length !== 10 || !/^[0-9]{10}$/.test(bookingValue))) {
+                    errorMsg = 'Mobile number must be exactly 10 numeric digits.';
+                    valid = false;
+                }
+
+                if (pickupPinValue.length !== 6 || !/^[0-9]{6}$/.test(pickupPinValue)) {
+                    errorMsg = 'Pickup Pin must be exactly 6 numeric digits.';
+                    valid = false;
+                }
+
+                if (deliveryPinValue.length !== 6 || !/^[0-9]{6}$/.test(deliveryPinValue)) {
+                    errorMsg = 'Delivery Pin must be exactly 6 numeric digits.';
+                    valid = false;
+                }
+
+                if (isNaN(weight) || weight < 0) {
+                    errorMsg = 'Weight must be a non-negative number.';
+                    valid = false;
+                }
+                
+                if (isNaN(pieces) || pieces < 0 || pieces % 1 !== 0) {
+                    errorMsg = 'Pieces must be a non-negative integer.';
+                    valid = false;
+                }
+
+                if (isNaN(length) || length < 0 || length % 1 !== 0) {
+                    errorMsg = 'Length must be a non-negative integer.';
+                    valid = false;
+                }
+                
+                if (isNaN(width) || width < 0 || width % 1 !== 0) {
+                    errorMsg = 'Width must be a non-negative integer.';
+                    valid = false;
+                }
+                
+                if (isNaN(height) || height < 0 || height % 1 !== 0) {
+                    errorMsg = 'Height must be a non-negative integer.';
+                    valid = false;
+                }
+
+                if (paymentMode === 'cod' && (isNaN(codAmount) || codAmount < 0)) {
+                    errorMsg = 'COD amount must be a non-negative number.';
+                    valid = false;
+                }
+                
+                if (!valid) {
+                    showError(errorMsg);
+                    return;
+                }
+                
+                const volumetricWeight = (length * width * height) / 5000;
+                const chargeableWeight = Math.max(weight, volumetricWeight);
+
+                const serviceRates = {
+                    'pro': { rate: 20, time: '1 business day' },
+                    'exp': { rate: 15, time: '1-2 business days' },
+                    'air': { rate: 10, time: '2-4 business days' },
+                    'sfc': { rate: 5, time: '5-7 business days' }
+                };
+
+                const originPrefix = parseInt(pickupPinValue.substring(0, 3));
+                const destinationPrefix = parseInt(deliveryPinValue.substring(0, 3));
+                const distanceFactor = Math.abs(originPrefix - destinationPrefix) / 100;
+                const codFee = paymentMode === 'cod' ? codAmount * 0.02 : 0;
+                
+                proAmount.textContent = `₹${(chargeableWeight * serviceRates['pro'].rate + (chargeableWeight * serviceRates['pro'].rate * distanceFactor * 0.1) + codFee).toFixed(2)}`;
+                expAmount.textContent = `₹${(chargeableWeight * serviceRates['exp'].rate + (chargeableWeight * serviceRates['exp'].rate * distanceFactor * 0.1) + codFee).toFixed(2)}`;
+                airAmount.textContent = `₹${(chargeableWeight * serviceRates['air'].rate + (chargeableWeight * serviceRates['air'].rate * distanceFactor * 0.1) + codFee).toFixed(2)}`;
+                sfcAmount.textContent = `₹${(chargeableWeight * serviceRates['sfc'].rate + (chargeableWeight * serviceRates['sfc'].rate * distanceFactor * 0.1) + codFee).toFixed(2)}`;
+
+                updateServiceType(serviceType);
+            });
+
+            function showError(message) {
+                proAmount.textContent = expAmount.textContent = airAmount.textContent = sfcAmount.textContent = '₹--';
+                
+                const existingError = document.getElementById('error-message');
+                if (existingError) existingError.remove();
+
+                const errorDiv = document.createElement('div');
+                errorDiv.id = 'error-message';
+                errorDiv.className = 'col-span-2 text-center text-red-500 font-semibold mt-4';
+                errorDiv.textContent = message;
+                document.getElementById('results-container').appendChild(errorDiv);
+            }
+        });
+    </script>
+
+</body>
+</html>
+
