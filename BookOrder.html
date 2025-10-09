@@ -557,6 +557,43 @@
                     toggleWeightProductEntry(true);
                 }
             }
+            
+            function resetForNextBooking() {
+                consignmentBoxes = [];
+                consignmentProducts = [];
+                
+                document.getElementById('receiver_name').value = '';
+                document.getElementById('awb').value = '';
+                document.getElementById('actual_weight').value = '';
+                document.getElementById('length').value = '';
+                document.getElementById('breadth').value = '';
+                document.getElementById('height').value = '';
+                document.getElementById('product_name').value = '';
+                document.getElementById('doc_no').value = '';
+                document.getElementById('eway_bill').value = '';
+                document.getElementById('amount').value = '';
+
+                document.getElementById('payment_global').checked = false;
+                document.getElementById('payment_topay').checked = false;
+                document.getElementById('payment_cod').checked = false;
+                document.getElementById('payment_fov').checked = false;
+                
+                selectedContacts.receiver = null;
+                document.getElementById('receiverDetailsDisplay').innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
+
+                document.getElementById('transport_type').value = '';
+                document.getElementById('carrier_select').value = '';
+
+                renderMultiboxTable();
+                renderProductTable();
+                
+                setBookingFieldsLocked(true); 
+                
+                toggleWeightProductEntry(true); 
+
+                updateDisplayTables();
+            }
+
 
             function resetFullForm() {
                 consignmentBoxes = [];
@@ -720,7 +757,7 @@
 
                 // Display user and customer data
                 document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
-                document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
+                document.getElementById('display_user_name').textContent = loginData.username || loginData.USERNAME || loginData.NAME || loginData.name || '---';
                 document.getElementById('display_branch').textContent = loginData.BRANCH || loginData.branch || '---';
             }
 
@@ -1257,7 +1294,7 @@
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
                 const orderData = {
-                    'USER_NAME': loginData.NAME || loginData.name || '',
+                    'USER_NAME': loginData.username || loginData.USERNAME || loginData.NAME || loginData.name || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
                     'CARRIER': document.getElementById('display_carrier').textContent,
@@ -1314,7 +1351,7 @@
                     const result = await response.json();
                     if (result.success) {
                         alert(result.message);
-                        resetFullForm();
+                        resetForNextBooking();
                     } else { throw new Error(result.message); }
                 } catch (error) {
                     console.error('Error posting data:', error);
