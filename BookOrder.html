@@ -594,8 +594,8 @@
                 renderMultiboxTable();
                 renderProductTable();
                 
-                // 6. Ensure booking fields remain locked, as customer/sender are still selected
-                setBookingFieldsLocked(true); 
+                // 6. Unlock fields for the next booking, keeping customer/sender details.
+                setBookingFieldsLocked(false); 
                 
                 // 7. Lock the weight/product entry until a new receiver is selected.
                 toggleWeightProductEntry(true); 
@@ -1385,3 +1385,4 @@
     </script>
 </body>
 </html>
+
