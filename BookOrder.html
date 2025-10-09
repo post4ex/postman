@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consignment Booking</title>
+    <title>Booking - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -718,8 +718,8 @@
                 document.getElementById('display_topay').textContent = document.getElementById('payment_topay').checked ? 'Yes' : 'No';
                 document.getElementById('display_fov').textContent = document.getElementById('payment_fov').checked ? 'Yes' : 'No';
 
-                // Display user data
-                document.getElementById('display_code').textContent = loginData.CODE || loginData.code || '---';
+                // Display user and customer data
+                document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
                 document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
                 document.getElementById('display_branch').textContent = loginData.BRANCH || loginData.branch || '---';
             }
@@ -986,6 +986,13 @@
                         option.textContent = client.CLIENT_NAME;
                         customerNameSelect.appendChild(option);
                     });
+
+                    // Auto-select if there is only one customer
+                    if (fetchedGSheetData.B2B.length === 1) {
+                        customerNameSelect.value = fetchedGSheetData.B2B[0].CLIENT_NAME;
+                        // Trigger the change event to run associated logic
+                        customerNameSelect.dispatchEvent(new Event('change'));
+                    }
                 }
             }
 
@@ -1331,3 +1338,4 @@
     </script>
 </body>
 </html>
+
