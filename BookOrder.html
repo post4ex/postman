@@ -191,6 +191,8 @@
                                 Book
                             </button>
                         </div>
+                        <!-- Inline Message Display Area -->
+                        <div id="bookingMessage" class="p-2 text-sm text-center rounded-md mt-2"></div>
                     </form>
                 </div>
                 <!-- Top Right: Multibox & Product -->
@@ -486,6 +488,7 @@
             const customerNameSelect = document.getElementById('customer_name');
             const transportTypeSelect = document.getElementById('transport_type');
             const carrierSelect = document.getElementById('carrier_select');
+            const bookingMessage = document.getElementById('bookingMessage');
 
             let loginData = {};
             let isBookingLocked = false;
@@ -615,6 +618,8 @@
                 orderDateInput.value = formatDate(new Date());
                 senderDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Select a customer to autofill sender.</span>`;
                 receiverDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
+                bookingMessage.textContent = '';
+                bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
                 selectedContacts.sender = null;
                 selectedContacts.receiver = null;
                 selectedCustomerDetails = {};
@@ -1296,8 +1301,12 @@
             cancelButton.addEventListener('click', resetFullForm);
 
             bookButton.addEventListener('click', async () => {
+                 bookingMessage.textContent = '';
+                 bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
+
                  if (!areMainDetailsComplete() || (consignmentBoxes.length === 0 && consignmentProducts.length === 0)) {
-                    alert('Please fill all required fields (Customer, Sender, Receiver, Mode, Carrier) and add at least one box or product.');
+                    bookingMessage.textContent = 'Please fill all required fields (Customer, Sender, Receiver, Mode, Carrier) and add at least one box or product.';
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
                     return;
                 }
                 bookButton.disabled = true;
@@ -1359,12 +1368,14 @@
                     });
                     const result = await response.json();
                     if (result.success) {
-                        alert(result.message);
+                        bookingMessage.textContent = result.message;
+                        bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-green-700 bg-green-100';
                         resetForNextBooking();
                     } else { throw new Error(result.message); }
                 } catch (error) {
                     console.error('Error posting data:', error);
-                    alert(`Booking failed: ${error.message}`);
+                    bookingMessage.textContent = `Booking failed: ${error.message}`;
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
                 } finally {
                     bookButton.disabled = false;
                     bookButton.textContent = 'Book';
@@ -1372,7 +1383,8 @@
             });
             
             getAwbButton.addEventListener('click', () => {
-                alert('AWB fetch logic not implemented yet.');
+                bookingMessage.textContent = 'AWB fetch logic not implemented yet.';
+                bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-blue-700 bg-blue-100';
             });
 
             updateTimestamp();
@@ -1385,4 +1397,5 @@
     </script>
 </body>
 </html>
+
 
