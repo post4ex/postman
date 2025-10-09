@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking - Postman</title>
+    <title>Consignment Booking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -264,7 +264,7 @@
                 <!-- Bottom Left: Order Details -->
                 <div class="w-full md:w-1/2 border-r border-gray-400">
                     <div id="orderTableSection" class="p-4 bg-white">
-                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Order Details</h3>
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800 hidden">Order Details</h3>
                         <div class="overflow-x-auto">
                             <table class="min-w-full text-sm">
                                 <tbody class="divide-y divide-gray-300">
@@ -364,7 +364,7 @@
                     </div>
 
                     <!-- Helper Table Section -->
-                    <div id="helperTableSection" class="p-4 bg-white border-t border-gray-400">
+                    <div id="helperTableSection" class="p-4 bg-white border-t border-gray-400 hidden">
                         <div class="overflow-x-auto">
                             <table class="min-w-full border-collapse border border-gray-400 text-sm">
                                 <thead>
@@ -391,7 +391,7 @@
 
                     <!-- Charges & Taxes Section -->
                     <div id="chargesSection" class="p-4 bg-white border-t border-gray-400">
-                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Charges & Taxes</h3>
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800 hidden">Charges & Taxes</h3>
                         <div class="overflow-x-auto">
                             <table class="min-w-full text-sm">
                                 <tbody class="divide-y divide-gray-300">
@@ -1257,10 +1257,11 @@
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
                 const orderData = {
+                    'USER_NAME': loginData.NAME || loginData.name || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
                     'CARRIER': document.getElementById('display_carrier').textContent,
-                    'AWB_NUMBER': document.getElementById('display_awb_number').textContent,
+                    'AWB_NUMBER': document.getElementById('awb').value.trim(),
                     'TRANSIT_DATE': document.getElementById('display_transit_date').textContent,
                     'CONSIGNOR': document.getElementById('display_consignor').textContent,
                     'ORIGIN_CITY': document.getElementById('display_origin_city').textContent,
