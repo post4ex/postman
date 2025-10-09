@@ -557,13 +557,13 @@
                     toggleWeightProductEntry(true);
                 }
             }
-
+            
             function resetForNextBooking() {
-                // 1. Clear data arrays
+                // 1. Clear data arrays for boxes and products
                 consignmentBoxes = [];
                 consignmentProducts = [];
                 
-                // 2. Manually reset form fields for the new entry
+                // 2. Manually reset only the fields for the new entry, keeping customer/sender
                 document.getElementById('receiver_name').value = '';
                 document.getElementById('awb').value = '';
                 document.getElementById('actual_weight').value = '';
@@ -581,12 +581,11 @@
                 document.getElementById('payment_cod').checked = false;
                 document.getElementById('payment_fov').checked = false;
                 
-                // 3. Reset receiver-specific state
+                // 3. Reset ONLY the receiver-specific state
                 selectedContacts.receiver = null;
                 document.getElementById('receiverDetailsDisplay').innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
 
-                // 4. Reset fields that depend on receiver (mode, carrier)
-                // Note: Customer and Sender fields are NOT reset
+                // 4. Reset fields that depend on receiver (mode, carrier) but keep them editable
                 document.getElementById('transport_type').value = '';
                 document.getElementById('carrier_select').value = '';
 
@@ -594,13 +593,13 @@
                 renderMultiboxTable();
                 renderProductTable();
                 
-                // 6. Ensure booking fields remain locked, as customer/sender are still selected
-                setBookingFieldsLocked(true); 
+                // 6. UNLOCK all main booking fields so user can change customer/sender if needed for the next entry
+                setBookingFieldsLocked(false);
                 
-                // 7. Lock the weight/product entry until a new receiver is selected.
+                // 7. Re-lock the weight/product entry until a new receiver is selected.
                 toggleWeightProductEntry(true); 
 
-                // 8. Final update of display tables
+                // 8. Final update of display tables to reflect the reset state
                 updateDisplayTables();
             }
 
@@ -766,7 +765,7 @@
 
                 // Display user and customer data
                 document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
-                document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
+                document.getElementById('display_user_name').textContent = loginData.username || loginData.USERNAME || '---';
                 document.getElementById('display_branch').textContent = loginData.BRANCH || loginData.branch || '---';
             }
 
@@ -1303,7 +1302,7 @@
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
                 const orderData = {
-                    'USER_NAME': loginData.NAME || loginData.name || '',
+                    'USER_NAME': loginData.username || loginData.USERNAME || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
                     'CARRIER': document.getElementById('display_carrier').textContent,
