@@ -436,6 +436,7 @@
     <script src="layout.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const bookingForm = document.getElementById('bookingForm');
             const timestampInput = document.getElementById('timestamp');
             const orderDateInput = document.getElementById('order_date');
             const senderNameInput = document.getElementById('sender_name');
@@ -1064,6 +1065,8 @@
                 if (appData.data) initializePageWithData(appData.data);
             }
             
+            bookingForm.addEventListener('submit', e => e.preventDefault());
+            
             customerNameSelect.addEventListener('change', () => {
                 const selectedCustomerName = customerNameSelect.value;
                 selectedCustomerDetails = {}; 
@@ -1147,12 +1150,9 @@
             breadthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); heightInput.focus(); } });
             heightInput.addEventListener('keydown', e => { 
                 if (e.key === 'Enter' || e.key === 'Tab') { 
-                    e.preventDefault(); 
-                    // Use a timeout to ensure the input value is updated before processing, which fixes issues on mobile browsers.
-                    setTimeout(() => { 
-                        addMultiboxEntry(); 
-                        actualWeightInput.focus(); 
-                    }, 0); 
+                    e.preventDefault();
+                    addMultiboxEntry(); 
+                    actualWeightInput.focus();
                 } 
             });
             productNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); docNoInput.focus(); } });
@@ -1172,3 +1172,4 @@
     </script>
 </body>
 </html>
+
