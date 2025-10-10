@@ -1145,7 +1145,16 @@
             actualWeightInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lengthInput.focus(); } });
             lengthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); breadthInput.focus(); } });
             breadthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); heightInput.focus(); } });
-            heightInput.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); addMultiboxEntry(); actualWeightInput.focus(); } });
+            heightInput.addEventListener('keydown', e => { 
+                if (e.key === 'Enter' || e.key === 'Tab') { 
+                    e.preventDefault(); 
+                    // Use a timeout to ensure the input value is updated before processing, which fixes issues on mobile browsers.
+                    setTimeout(() => { 
+                        addMultiboxEntry(); 
+                        actualWeightInput.focus(); 
+                    }, 0); 
+                } 
+            });
             productNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); docNoInput.focus(); } });
             docNoInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ewayBillInput.focus(); } });
             ewayBillInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); amountInput.focus(); } });
