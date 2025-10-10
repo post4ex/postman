@@ -1378,7 +1378,7 @@
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
                 const orderData = {
-                    'CODE': document.getElementById('display_code').textContent || '',
+                    'CODE': selectedCustomerDetails.CODE || '',
                     'USER_NAME': loginData.NAME || loginData.name || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
@@ -1464,4 +1464,3 @@
     </script>
 </body>
 </html>
-
