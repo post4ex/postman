@@ -150,11 +150,14 @@
 
                         <!-- Consignment Details Grid -->
                         <div id="multiboxErrorMessage" class="text-xs text-red-500 px-2 pt-2"></div>
-                        <div class="flex items-center gap-0 border border-gray-400 p-2">
-                            <input type="number" id="actual_weight" name="actual_weight" placeholder="Wgt (kg)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="number" id="length" name="length" placeholder="L (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="number" id="breadth" name="breadth" placeholder="B (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="number" id="height" name="height" placeholder="H (cm)" class="w-1/4 p-1 focus:ring-blue-500 focus:border-blue-500">
+                        <div class="flex items-center gap-2 border border-gray-400 p-2">
+                            <div class="flex-grow grid grid-cols-4 gap-0">
+                                <input type="number" id="actual_weight" name="actual_weight" placeholder="Wgt (kg)" class="w-full p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-l-md">
+                                <input type="number" id="length" name="length" placeholder="L (cm)" class="w-full p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                <input type="number" id="breadth" name="breadth" placeholder="B (cm)" class="w-full p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                <input type="number" id="height" name="height" placeholder="H (cm)" class="w-full p-1 focus:ring-blue-500 focus:border-blue-500 md:rounded-r-md">
+                            </div>
+                            <button type="button" id="addMultiboxButtonMobile" class="md:hidden flex-shrink-0 bg-gray-800 text-white rounded-md h-8 w-10 flex items-center justify-center text-lg hover:bg-gray-700">+</button>
                         </div>
 
                         <!-- Product Details Grid -->
@@ -467,6 +470,7 @@
             const lengthInput = document.getElementById('length');
             const breadthInput = document.getElementById('breadth');
             const heightInput = document.getElementById('height');
+            const addMultiboxButtonMobile = document.getElementById('addMultiboxButtonMobile');
             const multiboxTableBody = document.getElementById('multiboxTableBody');
             const multiboxTotalsTextDiv = document.getElementById('multiboxTotalsText');
             const clearMultiboxButton = document.getElementById('clearMultiboxButton');
@@ -491,7 +495,7 @@
             const bookingMessage = document.getElementById('bookingMessage');
 
             let loginData = {};
-            let isBookingLocked = false;
+            let currentFormState = 'START'; // START, CUSTOMER_SELECTED, PARTIES_SELECTED, CARRIER_SELECTED, ENTRY_STARTED
             let wasModeUnlocked = false; 
             let userMadeInitialModeChoice = false;
             let fetchedGSheetData = {};
@@ -506,60 +510,91 @@
                 totalAmount: 0
             };
 
-            function setBookingFieldsLocked(locked) {
-                const fieldsToLock = [
-                    'order_date', 'sender_name', 'receiver_name',
-                    'transport_type', 'carrier_select', 'payment_global',
-                    'payment_topay', 'payment_cod', 'payment_fov'
-                ];
-                fieldsToLock.forEach(id => {
+            // --- NEW FORM STATE MANAGEMENT LOGIC ---
+
+            function setFieldsDisabled(ids, disabled) {
+                ids.forEach(id => {
                     const element = document.getElementById(id);
                     if (element) {
-                        if (locked && id === 'carrier_select' && element.value === '') {
-                           return;
-                        }
-                        element.disabled = locked;
-                        if (locked) {
-                            element.classList.add('bg-gray-200', 'cursor-not-allowed');
+                        if (element.type === 'checkbox') {
+                            element.disabled = disabled;
+                             if (disabled) {
+                                element.parentElement.classList.add('opacity-50', 'cursor-not-allowed');
+                            } else {
+                                element.parentElement.classList.remove('opacity-50', 'cursor-not-allowed');
+                            }
                         } else {
-                            element.classList.remove('bg-gray-200', 'cursor-not-allowed');
+                            element.disabled = disabled;
+                            if (disabled) {
+                                element.classList.add('bg-gray-200', 'cursor-not-allowed');
+                            } else {
+                                element.classList.remove('bg-gray-200', 'cursor-not-allowed');
+                            }
                         }
                     }
                 });
-                isBookingLocked = locked;
             }
-            
-             function toggleWeightProductEntry(locked) {
-                const fields = [
-                    actualWeightInput, lengthInput, breadthInput, heightInput,
-                    productNameInput, docNoInput, ewayBillInput, productTypeSelect, amountInput
+
+            function updateFormLockState() {
+                // Define all field groups
+                const customerFields = ['customer_name'];
+                const partyFields = ['order_date', 'sender_name', 'receiver_name'];
+                const transportFields = ['transport_type', 'carrier_select'];
+                const paymentFields = ['payment_global', 'payment_topay', 'payment_cod', 'payment_fov'];
+                const entryFields = [
+                    'actual_weight', 'length', 'breadth', 'height',
+                    'product_name', 'doc_no', 'eway_bill', 'product_type', 'amount'
                 ];
-                fields.forEach(field => {
-                    field.disabled = locked;
-                    if(locked) {
-                        field.classList.add('bg-gray-200', 'cursor-not-allowed');
-                    } else {
-                        field.classList.remove('bg-gray-200', 'cursor-not-allowed');
-                    }
-                });
-            }
 
-            function areMainDetailsComplete() {
-                const isCustomerSelected = customerNameSelect.value !== '';
-                const isSenderSelected = !!selectedContacts.sender;
-                const isReceiverSelected = !!selectedContacts.receiver;
-                const isModeSelected = transportTypeSelect.value !== '';
-                const isCarrierSelected = carrierSelect.value !== '';
-                return isCustomerSelected && isSenderSelected && isReceiverSelected && isModeSelected && isCarrierSelected;
-            }
+                // Reset all to locked state first, except for customer
+                setFieldsDisabled(partyFields, true);
+                setFieldsDisabled(transportFields, true);
+                setFieldsDisabled(paymentFields, true);
+                setFieldsDisabled(entryFields, true);
+                setFieldsDisabled(customerFields, false); // Customer is always the starting point
 
-             function checkMainDetailsAndToggleInputs() {
-                if (areMainDetailsComplete()) {
-                    toggleWeightProductEntry(false);
-                } else {
-                    toggleWeightProductEntry(true);
+                switch (currentFormState) {
+                    case 'START':
+                        // Already handled by the default lock state above.
+                        break;
+                    
+                    case 'CUSTOMER_SELECTED':
+                        setFieldsDisabled(partyFields, false);
+                        break;
+
+                    case 'PARTIES_SELECTED':
+                        setFieldsDisabled(customerFields, true);
+                        setFieldsDisabled(partyFields, true);
+                        setFieldsDisabled(transportFields, false);
+                        break;
+                        
+                    case 'CARRIER_SELECTED':
+                        setFieldsDisabled(customerFields, true);
+                        setFieldsDisabled(partyFields, true);
+                        setFieldsDisabled(transportFields, false); // Keep open until entry starts
+                        setFieldsDisabled(paymentFields, false);
+                        setFieldsDisabled(entryFields, false);
+                        break;
+
+                    case 'ENTRY_STARTED':
+                        setFieldsDisabled(customerFields, true);
+                        setFieldsDisabled(partyFields, true);
+                        setFieldsDisabled(transportFields, true);
+                        setFieldsDisabled(paymentFields, true);
+                        setFieldsDisabled(entryFields, false);
+                        break;
                 }
             }
+            
+            function checkAndAdvanceState() {
+                if (currentFormState === 'CUSTOMER_SELECTED' && selectedContacts.sender && selectedContacts.receiver) {
+                    currentFormState = 'PARTIES_SELECTED';
+                    updateFormLockState();
+                }
+            }
+
+            // --- END NEW FORM STATE MANAGEMENT LOGIC ---
+
 
             function resetForNextBooking() {
                 // 1. Clear data arrays
@@ -597,13 +632,11 @@
                 renderMultiboxTable();
                 renderProductTable();
                 
-                // 6. Unlock fields for the next booking, keeping customer/sender details.
-                setBookingFieldsLocked(false); 
-                
-                // 7. Lock the weight/product entry until a new receiver is selected.
-                toggleWeightProductEntry(true); 
+                // 6. Set state back to allow consignee entry
+                currentFormState = 'CUSTOMER_SELECTED';
+                updateFormLockState();
 
-                // 8. Final update of display tables
+                // 7. Final update of display tables
                 updateDisplayTables();
             }
 
@@ -612,7 +645,6 @@
                 consignmentProducts = [];
                 renderMultiboxTable();
                 renderProductTable();
-                setBookingFieldsLocked(false);
                 userMadeInitialModeChoice = false;
                 document.getElementById('bookingForm').reset();
                 orderDateInput.value = formatDate(new Date());
@@ -623,9 +655,12 @@
                 selectedContacts.sender = null;
                 selectedContacts.receiver = null;
                 selectedCustomerDetails = {};
+                
+                currentFormState = 'START';
+                updateFormLockState();
+
                 updateDisplayTables();
                 updateCharges();
-                toggleWeightProductEntry(true);
             }
 
             function formatDate(date) {
@@ -776,7 +811,7 @@
             }
 
             function revalidateMode() {
-                if (userMadeInitialModeChoice && isBookingLocked) return;
+                if (userMadeInitialModeChoice && currentFormState === 'ENTRY_STARTED') return;
 
                 let initialMode = transportTypeSelect.value;
                 let newMode = initialMode;
@@ -822,7 +857,7 @@
 
                 modeChangeMessage.textContent = message;
 
-                if (isBookingLocked) {
+                if (currentFormState === 'ENTRY_STARTED') {
                     if (temporaryUnlock) {
                         transportTypeSelect.disabled = false;
                         transportTypeSelect.classList.remove('bg-gray-200', 'cursor-not-allowed');
@@ -885,8 +920,9 @@
 
                 consignmentBoxes.push({ boxNum, actualWeight: actualWeight || 0, length: length || 0, breadth: breadth || 0, height: height || 0, volWeight, chargeWeight });
 
-                if (!isBookingLocked) {
-                    setBookingFieldsLocked(true);
+                if (currentFormState !== 'ENTRY_STARTED') {
+                    currentFormState = 'ENTRY_STARTED';
+                    updateFormLockState();
                 } else if (wasModeUnlocked) {
                     transportTypeSelect.disabled = true;
                     transportTypeSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
@@ -1019,7 +1055,10 @@
                 }
 
                 consignmentProducts.push({ name: productName, docNo, ewayBill, type: productType, amount: amount || 0 });
-                if (!isBookingLocked) setBookingFieldsLocked(true);
+                if (currentFormState !== 'ENTRY_STARTED') {
+                    currentFormState = 'ENTRY_STARTED';
+                    updateFormLockState();
+                }
                 renderProductTable();
                 productNameInput.value = '';
                 docNoInput.value = '';
@@ -1113,8 +1152,7 @@
                         populateModeDropdown(null);
                     }
                     updateDisplayTables();
-                    checkMainDetailsAndToggleInputs();
-
+                    
                     if (query.length < 2 || !fetchedGSheetData.B2B2C) return;
                     const customerCode = selectedCustomerDetails.CODE;
                     if (!customerCode) return;
@@ -1145,7 +1183,7 @@
                                 resultsElement.classList.add('hidden');
                                 revalidateMode(); 
                                 updateDisplayTables();
-                                checkMainDetailsAndToggleInputs();
+                                checkAndAdvanceState();
                             });
                             resultsElement.appendChild(li);
                         });
@@ -1195,48 +1233,52 @@
             customerNameSelect.addEventListener('change', () => {
                 const selectedCustomerName = customerNameSelect.value;
                 selectedCustomerDetails = {}; 
-                if (selectedCustomerName && fetchedGSheetData.B2B) {
-                    selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === selectedCustomerName) || {};
-                }
-                if (selectedCustomerName && fetchedGSheetData.B2B2C) {
-                    const contactDetails = fetchedGSheetData.B2B2C.find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
-                    if (contactDetails) {
-                        senderNameInput.value = contactDetails.NAME;
-                        originPincodeInput.value = contactDetails.PINCODE || '';
-                        selectedContacts.sender = contactDetails;
-                        displayContactDetails(contactDetails, senderDetailsDisplay);
+                if (selectedCustomerName) {
+                    currentFormState = 'CUSTOMER_SELECTED';
+                    if (fetchedGSheetData.B2B) {
+                        selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === selectedCustomerName) || {};
+                    }
+                    if (fetchedGSheetData.B2B2C) {
+                        const contactDetails = fetchedGSheetData.B2B2C.find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
+                        if (contactDetails) {
+                            senderNameInput.value = contactDetails.NAME;
+                            originPincodeInput.value = contactDetails.PINCODE || '';
+                            selectedContacts.sender = contactDetails;
+                            displayContactDetails(contactDetails, senderDetailsDisplay);
+                        }
                     }
                 } else {
+                    currentFormState = 'START';
                     senderNameInput.value = '';
                     originPincodeInput.value = '';
                     selectedContacts.sender = null;
                     senderDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Select a customer to autofill sender.</span>`;
                 }
+                
+                updateFormLockState();
                 populateModeDropdown(null); 
                 const expressOption = Array.from(transportTypeSelect.options).find(opt => opt.text.toUpperCase() === 'EXPRESS');
                 if (expressOption) transportTypeSelect.value = expressOption.value;
                 updateDisplayTables();
-                checkMainDetailsAndToggleInputs();
+                checkAndAdvanceState();
             });
             
             transportTypeSelect.addEventListener('change', () => {
-                if (!isBookingLocked) userMadeInitialModeChoice = true;
+                if (currentFormState !== 'ENTRY_STARTED') userMadeInitialModeChoice = true;
                 recalculateAllBoxWeights();
-                if (isBookingLocked) {
+                if (currentFormState === 'ENTRY_STARTED') {
                     transportTypeSelect.disabled = true;
                     transportTypeSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
                     wasModeUnlocked = false; 
                     modeChangeMessage.textContent = '';
                 }
-                checkMainDetailsAndToggleInputs();
             });
 
             carrierSelect.addEventListener('change', () => {
-                if (isBookingLocked && carrierSelect.value !== '') {
-                    carrierSelect.disabled = true;
-                    carrierSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
+                 if (carrierSelect.value && currentFormState === 'PARTIES_SELECTED') {
+                    currentFormState = 'CARRIER_SELECTED';
+                    updateFormLockState();
                 }
-                checkMainDetailsAndToggleInputs();
             });
 
             document.addEventListener('click', (e) => {
@@ -1246,7 +1288,7 @@
                 }
             });
 
-            ['order_date', 'carrier_select', 'awb', 'sender_name', 'origin_pincode', 'receiver_name', 'dest_pincode', 'transport_type'].forEach(id => {
+            ['order_date', 'awb', 'sender_name', 'origin_pincode', 'receiver_name', 'dest_pincode', 'transport_type'].forEach(id => {
                 document.getElementById(id).addEventListener('input', updateDisplayTables);
             });
             
@@ -1261,6 +1303,7 @@
             lengthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); breadthInput.focus(); } });
             breadthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); heightInput.focus(); } });
             heightInput.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); addMultiboxEntry(); actualWeightInput.focus(); } });
+            addMultiboxButtonMobile.addEventListener('click', addMultiboxEntry);
             productNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); docNoInput.focus(); } });
             docNoInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ewayBillInput.focus(); } });
             ewayBillInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); amountInput.focus(); } });
@@ -1269,25 +1312,37 @@
             clearMultiboxButton.addEventListener('click', () => {
                 consignmentBoxes.pop();
                 renderMultiboxTable();
-                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) {
+                    currentFormState = 'CARRIER_SELECTED';
+                    updateFormLockState();
+                }
             });
 
             clearMultiboxButton.addEventListener('dblclick', () => {
                 consignmentBoxes = [];
                 renderMultiboxTable();
-                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+                 if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) {
+                    currentFormState = 'CARRIER_SELECTED';
+                    updateFormLockState();
+                }
             });
 
             clearProductsButton.addEventListener('click', () => {
                 consignmentProducts.pop();
                 renderProductTable();
-                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) {
+                    currentFormState = 'CARRIER_SELECTED';
+                    updateFormLockState();
+                }
             });
 
             clearProductsButton.addEventListener('dblclick', () => {
                 consignmentProducts = [];
                 renderProductTable();
-                 if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+                 if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) {
+                    currentFormState = 'CARRIER_SELECTED';
+                    updateFormLockState();
+                }
             });
 
             clearAllButton.addEventListener('click', () => {
@@ -1295,7 +1350,8 @@
                 consignmentProducts = [];
                 renderMultiboxTable();
                 renderProductTable();
-                setBookingFieldsLocked(false);
+                currentFormState = 'CARRIER_SELECTED';
+                updateFormLockState();
             });
             
             cancelButton.addEventListener('click', resetFullForm);
@@ -1304,8 +1360,8 @@
                  bookingMessage.textContent = '';
                  bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
 
-                 if (!areMainDetailsComplete() || (consignmentBoxes.length === 0 && consignmentProducts.length === 0)) {
-                    bookingMessage.textContent = 'Please fill all required fields (Customer, Sender, Receiver, Mode, Carrier) and add at least one box or product.';
+                 if (currentFormState !== 'ENTRY_STARTED' && currentFormState !== 'CARRIER_SELECTED' || (consignmentBoxes.length === 0 && consignmentProducts.length === 0)) {
+                    bookingMessage.textContent = 'Please fill all required fields and add at least one box or product.';
                     bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
                     return;
                 }
@@ -1392,10 +1448,9 @@
             setInterval(updateTimestamp, 60000);
             updateDisplayTables();
             updateSummaryDisplay();
-            toggleWeightProductEntry(true);
+            updateFormLockState(); // Set initial lock state
         });
     </script>
 </body>
 </html>
-
 
