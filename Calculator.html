@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculator - Postman</title>
+    <title>Calculate an Adventure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -143,11 +143,12 @@
 
                         <!-- Consignment Details Grid -->
                         <div id="multiboxErrorMessage" class="text-xs text-red-500 px-2 pt-2"></div>
-                        <div class="flex items-center gap-0 border border-gray-400 p-2">
-                            <input type="number" id="actual_weight" name="actual_weight" placeholder="Wgt (kg)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="number" id="length" name="length" placeholder="L (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="number" id="breadth" name="breadth" placeholder="B (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="number" id="height" name="height" placeholder="H (cm)" class="w-1/4 p-1 focus:ring-blue-500 focus:border-blue-500">
+                        <div class="flex items-center gap-2 border border-gray-400 p-2">
+                            <input type="number" id="actual_weight" name="actual_weight" placeholder="Wgt (kg)" class="flex-1 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="length" name="length" placeholder="L (cm)" class="flex-1 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="breadth" name="breadth" placeholder="B (cm)" class="flex-1 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="height" name="height" placeholder="H (cm)" class="flex-1 p-1 focus:ring-blue-500 focus:border-blue-500">
+                            <button type="button" id="addBoxButton" class="bg-gray-700 text-white py-1 px-3 rounded-md text-sm font-medium hover:bg-gray-600">Add Box</button>
                         </div>
 
                         <!-- Product Details Grid -->
@@ -167,7 +168,7 @@
                         
                         <!-- Action Buttons -->
                         <div class="flex items-center gap-2 border border-gray-400 p-2">
-                            <button id="cancel_button" type="button" class="w-full bg-blue-800 text-white py-2 px-4 text-sm font-medium hover:bg-blue-1000 rounded-md shadow-sm">
+                            <button id="cancel_button" type="button" class="w-full bg-blue-900 text-white py-2 px-4 text-sm font-medium hover:bg-blue-800 rounded-md shadow-sm">
                                 Reset Calculator
                             </button>
                         </div>
@@ -337,7 +338,7 @@
                             <button id="clearMultiboxButton" class="bg-yellow-500 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-yellow-600">
                                 Clear Multibox
                             </button>
-                            <button id="clearProductsButton" class="bg-blue-500 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-blue-600">
+                            <button id="clearProductsButton" class="bg-red-500 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-red-600">
                                 Clear Product
                             </button>
                             <button id="clearAllButton" class="bg-gray-500 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-600">
@@ -466,6 +467,7 @@
             const clearProductsButton = document.getElementById('clearProductsButton');
             const clearAllButton = document.getElementById('clearAllButton');
             const cancelButton = document.getElementById('cancel_button');
+            const addBoxButton = document.getElementById('addBoxButton');
             const customerNameSelect = document.getElementById('customer_name');
             const transportTypeSelect = document.getElementById('transport_type');
             const carrierSelect = document.getElementById('carrier_select');
@@ -845,6 +847,7 @@
                 lengthInput.value = '';
                 breadthInput.value = '';
                 heightInput.value = '';
+                actualWeightInput.focus();
             }
             
             function updateCharges() {
@@ -1039,7 +1042,7 @@
             function initializePageWithData(data) {
                 if (!data) {
                     bookingMessage.textContent = 'Application data could not be loaded. Please try refreshing the page.';
-                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-blue-100';
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
                     return;
                 }
                 fetchedGSheetData = data;
@@ -1142,10 +1145,14 @@
                 updateDisplayTables();
             });
 
+            addBoxButton.addEventListener('click', () => {
+                addMultiboxEntry();
+            });
+            
             actualWeightInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lengthInput.focus(); } });
             lengthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); breadthInput.focus(); } });
             breadthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); heightInput.focus(); } });
-            heightInput.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); addMultiboxEntry(); actualWeightInput.focus(); } });
+            heightInput.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); addMultiboxEntry(); } });
             productNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); docNoInput.focus(); } });
             docNoInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ewayBillInput.focus(); } });
             ewayBillInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); amountInput.focus(); } });
