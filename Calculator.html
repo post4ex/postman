@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Order</title>
+    <title>Calculate an Adventure</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,6 +58,7 @@
     <div id="header-placeholder"></div>
 
     <main class="flex-grow p-1">
+        <h1 class="text-3xl font-bold text-center text-blue-900 my-4">Calculate an Adventure</h1>
         <div class="container mx-auto bg-white flex flex-col border border-gray-400">
 
             <!-- Top Row -->
@@ -648,9 +649,7 @@
                 document.getElementById('display_rate_uid').textContent = rateUid;
 
                 let rate = '---', addRate = '---';
-                const receiverPincode = destPincodeInput.value;
-                const receiverContact = fetchedGSheetData.B2B2C?.find(c => c.PINCODE === receiverPincode);
-                const receiverZone = receiverContact?.ZONE;
+                const receiverZone = selectedContacts.receiver?.ZONE;
                 
                 const ratesData = fetchedGSheetData.RATES;
                 if (rateUid !== '---' && receiverZone && ratesData) {
@@ -681,8 +680,7 @@
             }
 
             function updateDisplayTables() {
-                const receiverPincode = destPincodeInput.value;
-                const receiverContact = fetchedGSheetData.B2B2C?.find(c => c.PINCODE === receiverPincode);
+                const receiverContact = selectedContacts.receiver;
                 const originPincode = originPincodeInput.value;
                 const originContact = fetchedGSheetData.B2B2C?.find(c => c.PINCODE === originPincode);
                 
@@ -701,8 +699,8 @@
                 const tatColumnName = `${selectedModeText}_TAT`;
 
                 let tatValue = '---';
-                if (receiverContact && selectedModeText) {
-                    tatValue = receiverContact[tatColumnName] || '---';
+                if (receiverContact && selectedModeText && receiverContact[tatColumnName]) {
+                    tatValue = receiverContact[tatColumnName];
                 }
                 document.getElementById('display_tat').textContent = tatValue;
                 document.getElementById('display_mode').textContent = transportTypeSelect.value || '---';
@@ -731,8 +729,7 @@
                 
                 if (!isNaN(weightChangeLimit) && expressOption && !userMadeInitialModeChoice) {
                     const isOverWeight = summaryTotals.totalChgWt > weightChangeLimit;
-                    const receiverPincode = destPincodeInput.value;
-                    const receiverContact = fetchedGSheetData.B2B2C?.find(c => c.PINCODE === receiverPincode);
+                    const receiverContact = selectedContacts.receiver;
 
                     if (isOverWeight && initialMode === expressOption.value) {
                         const preferredMode = receiverContact?.MODE;
@@ -751,8 +748,7 @@
                 
                 if(newMode !== initialMode) transportTypeSelect.value = newMode;
 
-                const receiverPincode = destPincodeInput.value;
-                const receiverContact = fetchedGSheetData.B2B2C?.find(c => c.PINCODE === receiverPincode);
+                const receiverContact = selectedContacts.receiver;
                 const receiverZone = receiverContact?.ZONE;
 
                 if(receiverZone && fetchedGSheetData.MODE){
@@ -1119,21 +1115,31 @@
                 });
             });
             
-            destPincodeInput.addEventListener('input', () => {
+            destPincodeInput.addEventListener('input', async () => {
                 const receiverPincode = destPincodeInput.value;
-                if(receiverPincode.length === 6 && fetchedGSheetData.B2B2C){
-                     const receiverContact = fetchedGSheetData.B2B2C.find(c => c.PINCODE === receiverPincode);
-                     if(receiverContact){
-                        selectedContacts.receiver = receiverContact;
-                        populateModeDropdown(receiverContact.ZONE);
-                        revalidateMode();
-                     } else {
-                        selectedContacts.receiver = null;
-                     }
+                selectedContacts.receiver = null;
+                
+                if (receiverPincode.length === 6) {
+                    document.getElementById('display_zone').textContent = 'Fetching...';
+                    try {
+                        const response = await fetch(`https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec?pincode=${receiverPincode}`);
+                        const result = await response.json();
+                        
+                        if (result.success && result.contact) {
+                            selectedContacts.receiver = result.contact;
+                            populateModeDropdown(result.contact.ZONE);
+                            revalidateMode();
+                        } else {
+                           document.getElementById('display_zone').textContent = 'Not Found';
+                        }
+                    } catch (error) {
+                        console.error('Error fetching pincode details:', error);
+                        document.getElementById('display_zone').textContent = 'Error';
+                    }
                 } else {
-                    selectedContacts.receiver = null;
+                    document.getElementById('display_zone').textContent = '---';
                 }
-                 updateDisplayTables();
+                updateDisplayTables();
             });
 
             actualWeightInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lengthInput.focus(); } });
