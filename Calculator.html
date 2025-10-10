@@ -155,16 +155,18 @@
 
                         <!-- Product Details Grid -->
                         <div class="flex items-end gap-0 border border-gray-400 p-2">
-                            <input type="text" id="product_name" name="product_name" placeholder="Product" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="next">
-                            <input type="text" id="doc_no" name="doc_no" placeholder="DocNo" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="next">
-                            <input type="text" id="eway_bill" name="eway_bill" placeholder="EWay" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" pattern="\d{12}" maxlength="12" title="EWay bill must be a 12-digit numeric number." enterkeyhint="next">
-                            <select id="product_type" name="product_type" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="text" id="product_name" name="product_name" placeholder="Product" class="flex-1 w-0 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="next">
+                            <input type="text" id="doc_no" name="doc_no" placeholder="DocNo" class="flex-1 w-0 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="next">
+                            <input type="text" id="eway_bill" name="eway_bill" placeholder="EWay" class="flex-1 w-0 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" pattern="\d{12}" maxlength="12" title="EWay bill must be a 12-digit numeric number." enterkeyhint="next">
+                            <select id="product_type" name="product_type" class="hidden">
                                 <option value="INV">INV</option>
                                 <option value="CLN">CLN</option>
                                 <option value="DEC">DEC</option>
                                 <option value="ADH">ADH</option>
                             </select>
-                            <input type="number" id="amount" name="amount" placeholder="Amount (₹)" class="w-1/5 p-1 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="done">
+                            <input type="number" id="amount" name="amount" placeholder="Amount (₹)" class="flex-1 w-0 p-1 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="done">
+                             <!-- Mobile-only Add button -->
+                            <button type="button" id="add_product_button" class="ml-2 bg-blue-600 text-white font-bold text-xl rounded-full hover:bg-blue-700 focus:outline-none flex-shrink-0 h-8 w-8 flex items-center justify-center block md:hidden">+</button>
                         </div>
                         <div id="ewayStatusMessage" class="text-xs text-red-500 mt-1 px-2"></div>
                         
@@ -466,6 +468,7 @@
             const ewayBillInput = document.getElementById('eway_bill');
             const productTypeSelect = document.getElementById('product_type');
             const amountInput = document.getElementById('amount');
+            const addProductButton = document.getElementById('add_product_button');
             const ewayStatusMessage = document.getElementById('ewayStatusMessage');
             const productTotalsTextDiv = document.getElementById('productTotalsText');
             const clearProductsButton = document.getElementById('clearProductsButton');
@@ -1084,6 +1087,11 @@
             addMultiboxButton.addEventListener('click', () => {
                 addMultiboxEntry();
                 actualWeightInput.focus();
+            });
+
+            addProductButton.addEventListener('click', () => {
+                addProductEntry();
+                productNameInput.focus();
             });
             
             customerNameSelect.addEventListener('change', () => {
