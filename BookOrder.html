@@ -1147,8 +1147,7 @@
 
                     if (type === 'sender') {
                         selectedContacts.sender = null;
-                        // THIS IS THE FIX: Only revert to main customer details if the field is cleared
-                        if (query === '') {
+                         if (query === '') {
                              selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === customerNameSelect.value) || {};
                         }
                     }
@@ -1178,7 +1177,7 @@
                                 displayContactDetails(contact, displayElement);
                                 if (type === 'sender') {
                                     selectedContacts.sender = contact;
-                                    selectedCustomerDetails = contact; // Set the specific sender as the source of truth
+                                    selectedCustomerDetails = contact; 
                                     originPincodeInput.value = contact.PINCODE || '';
                                 } else {
                                     selectedContacts.receiver = contact;
@@ -1250,7 +1249,7 @@
                             senderNameInput.value = contactDetails.NAME;
                             originPincodeInput.value = contactDetails.PINCODE || '';
                             selectedContacts.sender = contactDetails;
-                            selectedCustomerDetails = contactDetails; // Set the specific contact as the source of truth
+                            selectedCustomerDetails = contactDetails; 
                             displayContactDetails(contactDetails, senderDetailsDisplay);
                         } else {
                             senderNameInput.value = '';
@@ -1379,7 +1378,7 @@
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
                 const orderData = {
-                    'CODE': selectedCustomerDetails.CODE || '',
+                    'CODE': document.getElementById('display_code').textContent || '',
                     'USER_NAME': loginData.NAME || loginData.name || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
