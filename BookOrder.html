@@ -1147,8 +1147,10 @@
 
                     if (type === 'sender') {
                         selectedContacts.sender = null;
-                        // When sender is cleared, revert to the main B2B customer details
-                        selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === customerNameSelect.value) || {};
+                        // THIS IS THE FIX: Only revert to main customer details if the field is cleared
+                        if (query === '') {
+                             selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === customerNameSelect.value) || {};
+                        }
                     }
                     if (type === 'receiver') {
                         selectedContacts.receiver = null;
@@ -1176,7 +1178,7 @@
                                 displayContactDetails(contact, displayElement);
                                 if (type === 'sender') {
                                     selectedContacts.sender = contact;
-                                    selectedCustomerDetails = contact; // THIS IS THE FIX: Set the specific sender as the source of truth
+                                    selectedCustomerDetails = contact; // Set the specific sender as the source of truth
                                     originPincodeInput.value = contact.PINCODE || '';
                                 } else {
                                     selectedContacts.receiver = contact;
