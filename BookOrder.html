@@ -1145,7 +1145,11 @@
                     resultsElement.innerHTML = '';
                     resultsElement.classList.add('hidden');
 
-                    if (type === 'sender') selectedContacts.sender = null;
+                    if (type === 'sender') {
+                        selectedContacts.sender = null;
+                        // When sender is cleared, revert to the main B2B customer details
+                        selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === customerNameSelect.value) || {};
+                    }
                     if (type === 'receiver') {
                         selectedContacts.receiver = null;
                         populateModeDropdown(null);
@@ -1153,10 +1157,10 @@
                     updateDisplayTables();
                     
                     if (query.length < 2 || !fetchedGSheetData.B2B2C) return;
-                    const customerCode = selectedCustomerDetails.CODE;
-                    if (!customerCode) return;
+                    const mainCustomerCode = (fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === customerNameSelect.value) || {}).CODE;
+                    if (!mainCustomerCode) return;
 
-                    const customerSpecificContacts = fetchedGSheetData.B2B2C.filter(contact => contact.CODE === customerCode);
+                    const customerSpecificContacts = fetchedGSheetData.B2B2C.filter(contact => contact.CODE.startsWith(mainCustomerCode));
                     const filteredResults = customerSpecificContacts.filter(contact => 
                         (contact.NAME && contact.NAME.toLowerCase().includes(query)) || 
                         (contact.PINCODE && contact.PINCODE.toString().includes(query)) || 
@@ -1172,6 +1176,7 @@
                                 displayContactDetails(contact, displayElement);
                                 if (type === 'sender') {
                                     selectedContacts.sender = contact;
+                                    selectedCustomerDetails = contact; // THIS IS THE FIX: Set the specific sender as the source of truth
                                     originPincodeInput.value = contact.PINCODE || '';
                                 } else {
                                     selectedContacts.receiver = contact;
@@ -1243,7 +1248,12 @@
                             senderNameInput.value = contactDetails.NAME;
                             originPincodeInput.value = contactDetails.PINCODE || '';
                             selectedContacts.sender = contactDetails;
+                            selectedCustomerDetails = contactDetails; // Set the specific contact as the source of truth
                             displayContactDetails(contactDetails, senderDetailsDisplay);
+                        } else {
+                            senderNameInput.value = '';
+                            selectedContacts.sender = null;
+                            senderDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Select a specific consignor.</span>`;
                         }
                     }
                 } else {
@@ -1367,6 +1377,7 @@
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
                 const orderData = {
+                    'CODE': selectedCustomerDetails.CODE || '',
                     'USER_NAME': loginData.NAME || loginData.name || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
