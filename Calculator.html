@@ -1071,12 +1071,11 @@
             
             bookingForm.addEventListener('submit', e => {
                 e.preventDefault();
-                // Check if the relevant fields are non-empty to decide the action.
-                // This is more reliable than checking document.activeElement on all browsers.
-                if (heightInput.value && actualWeightInput.value && lengthInput.value && breadthInput.value) {
+                // This logic is specifically for mobile keyboards that show "Go" or "Done".
+                if (document.activeElement === heightInput) {
                     addMultiboxEntry();
                     actualWeightInput.focus();
-                } else if (amountInput.value && productNameInput.value && docNoInput.value) {
+                } else if (document.activeElement === amountInput) {
                     addProductEntry();
                     productNameInput.focus();
                 }
@@ -1170,10 +1169,14 @@
             breadthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); heightInput.focus(); } });
             
             heightInput.addEventListener('keydown', e => {
-                if (e.key === 'Tab' && !e.shiftKey) { // Handle Tab on desktop for better UX
+                if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
                     e.preventDefault();
                     addMultiboxEntry(); 
-                    productNameInput.focus(); // Move to the next logical section
+                    if (e.key === 'Enter') {
+                        actualWeightInput.focus();
+                    } else {
+                        productNameInput.focus();
+                    }
                 } 
             });
 
@@ -1182,7 +1185,7 @@
             ewayBillInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); amountInput.focus(); } });
             
             amountInput.addEventListener('keydown', e => {
-                if (e.key === 'Tab' && !e.shiftKey) { // Handle Tab on desktop
+                if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
                     e.preventDefault();
                     addProductEntry();
                     productNameInput.focus();
