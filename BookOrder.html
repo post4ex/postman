@@ -286,6 +286,12 @@
                                         <td id="display_user_name" class="px-2 py-1">---</td>
                                     </tr>
                                     <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CUST_CODE</td>
+                                        <td id="display_cust_code" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50"></td>
+                                        <td class="px-2 py-1"></td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
                                         <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TIME_STAMP</td>
                                         <td id="display_timestamp" class="px-2 py-1">---</td>
                                         <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORDER_DATE</td>
@@ -805,6 +811,7 @@
 
                 // Display user and customer data
                 document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
+                document.getElementById('display_cust_code').textContent = selectedCustomerDetails.CODE || '---';
                 document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
                 document.getElementById('display_branch').textContent = loginData.BRANCH || loginData.branch || '---';
             }
@@ -1370,7 +1377,7 @@
                  bookingMessage.textContent = '';
                  bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
 
-                 if (currentFormState !== 'ENTRY_STARTED' && currentFormState !== 'CARRIER_SELECTED' || (consignmentBoxes.length === 0 && consignmentProducts.length === 0)) {
+                 if ((currentFormState !== 'ENTRY_STARTED' && currentFormState !== 'CARRIER_SELECTED') || (consignmentBoxes.length === 0 && consignmentProducts.length === 0)) {
                     bookingMessage.textContent = 'Please fill all required fields and add at least one box or product.';
                     bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
                     return;
@@ -1378,7 +1385,8 @@
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
                 const orderData = {
-                    'CODE': selectedCustomerDetails.CODE || '',
+                    'CODE': document.getElementById('display_code').textContent || '',
+                    'CUST_CODE': document.getElementById('display_cust_code').textContent || '',
                     'USER_NAME': loginData.NAME || loginData.name || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
@@ -1418,7 +1426,7 @@
                     'TOTAL': document.getElementById('display_total').textContent,
                 };
                 const payload = {
-                    code: orderData.CODE,
+                    code: loginData.CODE || loginData.code,
                     token: loginData.TOKEN || loginData.token,
                     orderDetails: orderData,
                     multiboxDetails: consignmentBoxes,
