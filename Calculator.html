@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculate an Adventure</title>
+    <title>Calculator - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1125,9 +1125,9 @@
                         const response = await fetch(`https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec?pincode=${receiverPincode}`);
                         const result = await response.json();
                         
-                        if (result.success && result.contact) {
-                            selectedContacts.receiver = result.contact;
-                            populateModeDropdown(result.contact.ZONE);
+                        if (!result.error && result.found && result.data) {
+                            selectedContacts.receiver = result.data;
+                            populateModeDropdown(result.data.ZONE);
                             revalidateMode();
                         } else {
                            document.getElementById('display_zone').textContent = 'Not Found';
