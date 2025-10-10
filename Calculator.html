@@ -144,24 +144,24 @@
                         <!-- Consignment Details Grid -->
                         <div id="multiboxErrorMessage" class="text-xs text-red-500 px-2 pt-2"></div>
                         <div class="flex items-center gap-0 border border-gray-400 p-2">
-                            <input type="number" id="actual_weight" name="actual_weight" placeholder="Wgt (kg)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="number" id="length" name="length" placeholder="L (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="number" id="breadth" name="breadth" placeholder="B (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="number" id="height" name="height" placeholder="H (cm)" class="w-1/4 p-1 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="actual_weight" name="actual_weight" placeholder="Wgt (kg)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="next">
+                            <input type="number" id="length" name="length" placeholder="L (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="next">
+                            <input type="number" id="breadth" name="breadth" placeholder="B (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="next">
+                            <input type="number" id="height" name="height" placeholder="H (cm)" class="w-1/4 p-1 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="done">
                         </div>
 
                         <!-- Product Details Grid -->
                         <div class="flex items-end gap-0 border border-gray-400 p-2">
-                            <input type="text" id="product_name" name="product_name" placeholder="Product" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="text" id="doc_no" name="doc_no" placeholder="DocNo" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            <input type="text" id="eway_bill" name="eway_bill" placeholder="EWay" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" pattern="\d{12}" maxlength="12" title="EWay bill must be a 12-digit numeric number.">
+                            <input type="text" id="product_name" name="product_name" placeholder="Product" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="next">
+                            <input type="text" id="doc_no" name="doc_no" placeholder="DocNo" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="next">
+                            <input type="text" id="eway_bill" name="eway_bill" placeholder="EWay" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" pattern="\d{12}" maxlength="12" title="EWay bill must be a 12-digit numeric number." enterkeyhint="next">
                             <select id="product_type" name="product_type" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
                                 <option value="INV">INV</option>
                                 <option value="CLN">CLN</option>
                                 <option value="DEC">DEC</option>
                                 <option value="ADH">ADH</option>
                             </select>
-                            <input type="number" id="amount" name="amount" placeholder="Amount (₹)" class="w-1/5 p-1 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="amount" name="amount" placeholder="Amount (₹)" class="w-1/5 p-1 focus:ring-blue-500 focus:border-blue-500" enterkeyhint="done">
                         </div>
                         <div id="ewayStatusMessage" class="text-xs text-red-500 mt-1 px-2"></div>
                         
@@ -1065,7 +1065,18 @@
                 if (appData.data) initializePageWithData(appData.data);
             }
             
-            bookingForm.addEventListener('submit', e => e.preventDefault());
+            bookingForm.addEventListener('submit', e => {
+                e.preventDefault();
+                // Check if the relevant fields are non-empty to decide the action.
+                // This is more reliable than checking document.activeElement on all browsers.
+                if (heightInput.value && actualWeightInput.value && lengthInput.value && breadthInput.value) {
+                    addMultiboxEntry();
+                    actualWeightInput.focus();
+                } else if (amountInput.value && productNameInput.value && docNoInput.value) {
+                    addProductEntry();
+                    productNameInput.focus();
+                }
+            });
             
             customerNameSelect.addEventListener('change', () => {
                 const selectedCustomerName = customerNameSelect.value;
@@ -1148,17 +1159,26 @@
             actualWeightInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lengthInput.focus(); } });
             lengthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); breadthInput.focus(); } });
             breadthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); heightInput.focus(); } });
-            heightInput.addEventListener('keydown', e => { 
-                if (e.key === 'Enter' || e.key === 'Tab') { 
+            
+            heightInput.addEventListener('keydown', e => {
+                if (e.key === 'Tab' && !e.shiftKey) { // Handle Tab on desktop for better UX
                     e.preventDefault();
                     addMultiboxEntry(); 
-                    actualWeightInput.focus();
+                    productNameInput.focus(); // Move to the next logical section
                 } 
             });
+
             productNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); docNoInput.focus(); } });
             docNoInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ewayBillInput.focus(); } });
             ewayBillInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); amountInput.focus(); } });
-            amountInput.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); addProductEntry(); productNameInput.focus(); } });
+            
+            amountInput.addEventListener('keydown', e => {
+                if (e.key === 'Tab' && !e.shiftKey) { // Handle Tab on desktop
+                    e.preventDefault();
+                    addProductEntry();
+                    productNameInput.focus();
+                }
+            });
 
             cancelButton.addEventListener('click', resetFullForm);
 
