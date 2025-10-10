@@ -68,15 +68,15 @@
                         <!-- Hidden timestamp input to preserve JS logic -->
                         <input type="text" id="timestamp" name="timestamp" readonly class="hidden">
 
-                        <!-- Order Date & Customer Grid -->
+                        <!-- Customer & Order Date Grid -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-400 p-2">
                             <div class="p-2 border-r border-gray-400">
-                                <input type="date" id="order_date" name="order_date" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div class="p-2">
                                 <select id="customer_name" name="customer_name" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
                                    <option value="">Loading Customers...</option>
                                 </select>
+                            </div>
+                             <div class="p-2">
+                                <input type="date" id="order_date" name="order_date" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
                             </div>
                         </div>
                         
@@ -601,7 +601,7 @@
                 consignmentBoxes = [];
                 consignmentProducts = [];
                 
-                // 2. Manually reset form fields for the new entry
+                // 2. Manually reset form fields for the new entry, preserving customer and sender
                 document.getElementById('receiver_name').value = '';
                 document.getElementById('awb').value = '';
                 document.getElementById('actual_weight').value = '';
@@ -624,7 +624,6 @@
                 document.getElementById('receiverDetailsDisplay').innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
 
                 // 4. Reset fields that depend on receiver (mode, carrier)
-                // Note: Customer and Sender fields are NOT reset
                 document.getElementById('transport_type').value = '';
                 document.getElementById('carrier_select').value = '';
 
