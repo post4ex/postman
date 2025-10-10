@@ -1417,7 +1417,7 @@
                     'TOTAL': document.getElementById('display_total').textContent,
                 };
                 const payload = {
-                    code: loginData.CODE || loginData.code,
+                    code: selectedCustomerDetails.CODE || loginData.CODE || loginData.code,
                     token: loginData.TOKEN || loginData.token,
                     orderDetails: orderData,
                     multiboxDetails: consignmentBoxes,
