@@ -1,215 +1,236 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <base target="_top">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Submission Form</title>
-    <!-- Tailwind CSS for styling -->
+    <title>Clients - Postman</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
     <style>
-        /* Custom font and minor style adjustments */
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        /* Additional style to ensure consistency */
+        .form-input {
+            border-radius: 0.375rem; /* default rounded-md */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            padding: 0.5rem 0.75rem;
+            transition: border-color 0.2s;
         }
-        /* Style to remove rounded corners from all inputs */
-        input, button {
-            border-radius: 0 !important;
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6; /* focus:border-blue-500 */
+        }
+        .readonly-input {
+            background-color: #f3f4f6; /* bg-gray-100 */
         }
     </style>
 </head>
-<body class="bg-white">
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <div id="header-placeholder"></div>
 
-    <div class="w-full bg-white">
-        <h2 class="text-xl font-bold text-center text-gray-800 p-2 border-b">B2B2C Data Submission Form</h2>
-        
-        <form id="dataForm">
-            <!-- Authorization Section -->
-            <div class="border-b p-2">
-                 <h3 class="text-md font-semibold text-gray-700 mb-2">Authorization</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2">
-                    <div>
-                        <label for="user" class="sr-only">CODE</label>
-                        <input type="text" id="user" name="user" placeholder="CODE" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label for="token" class="sr-only">TOKEN</label>
-                        <input type="password" id="token" name="token" placeholder="TOKEN" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none">
-                    </div>
-                </div>
-            </div>
+    <main class="flex-grow container mx-auto p-4">
+        <div class="card">
+            <h2 class="text-2xl font-bold text-center text-gray-800 p-4 border-b mb-6">B2B2C Client Submission Form</h2>
             
-            <!-- Data Fields Section -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                <div><label for="mobile" class="sr-only">MOBILE</label><input type="tel" id="mobile" name="mobile" placeholder="MOBILE" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
-                <div><label for="gst_id" class="sr-only">GST/PAN/ADHAR</label><input type="text" id="gst_id" name="gst_id" placeholder="GST/PAN/ADHAR" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
-                <div><label for="branch" class="sr-only">BRANCH</label><input type="text" id="branch" name="branch" placeholder="BRANCH" class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
+            <form id="dataForm" class="space-y-4">
+                <!-- Hidden Authorization Fields -->
+                <input type="hidden" id="user" name="user">
+                <input type="hidden" id="token" name="token">
                 
-                <div><label for="code" class="sr-only">CODE</label><input type="text" id="code" name="code" placeholder="CODE" class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
-                <div class="md:col-span-2"><label for="name" class="sr-only">NAME</label><input type="text" id="name" name="name" placeholder="NAME" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
-
-                <div class="md:col-span-2 lg:col-span-3"><label for="address" class="sr-only">ADDRESS</label><input type="text" id="address" name="address" placeholder="ADDRESS" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
-
-                <div class="md:col-span-2"><label for="email" class="sr-only">EMAIL</label><input type="email" id="email" name="email" placeholder="EMAIL" class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
-                <div><label for="pincode" class="sr-only">PINCODE</label><input type="text" id="pincode" name="pincode" placeholder="PINCODE" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none transition-opacity duration-300"></div>
-                
-                <div><label for="city" class="sr-only">CITY</label><input type="text" id="city" name="city" placeholder="CITY" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
-                <div><label for="state" class="sr-only">STATE</label><input type="text" id="state" name="state" placeholder="STATE" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
-                <div><label for="zone" class="sr-only">ZONE</label><input type="text" id="zone" name="zone" placeholder="ZONE" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
-                
-                <div><label for="express_tat" class="sr-only">EXPRESS TAT</label><input type="text" id="express_tat" name="express_tat" placeholder="EXPRESS TAT" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
-                <div class="md:col-span-2"><label for="airline_tat" class="sr-only">AIRLINE TAT</label><input type="text" id="airline_tat" name="airline_tat" placeholder="AIRLINE TAT" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
-                
-                <!-- Final row with fields and buttons -->
-                <div class="md:col-span-2 lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
-                    <div class="sm:col-span-1"><label for="surface_tat" class="sr-only">SURFACE TAT</label><input type="text" id="surface_tat" name="surface_tat" placeholder="SURFACE TAT" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
-                    <div class="sm:col-span-1"><label for="premium_tat" class="sr-only">PREMIUM TAT</label><input type="text" id="premium_tat" name="premium_tat" placeholder="PREMIUM TAT" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
-                    <div class="sm:col-span-1"><label for="oda" class="sr-only">ODA</label><input type="text" id="oda" name="oda" placeholder="ODA" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
-                    <div class="sm:col-span-1"><label for="carrier" class="sr-only">CARRIER</label><input type="text" id="carrier" name="carrier" placeholder="CARRIER" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                <!-- Data Fields Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <input type="tel" id="mobile" name="mobile" placeholder="MOBILE" required class="form-input w-full">
+                    <input type="text" id="gst_id" name="gst_id" placeholder="GST/PAN/ADHAR" required class="form-input w-full">
+                    <input type="text" id="branch" name="branch" placeholder="BRANCH" class="form-input w-full">
                     
-                    <button type="button" id="cancelBtn" class="w-full bg-gray-500 text-white p-1 border border-gray-600">
+                    <input type="text" id="code" name="code" placeholder="CODE" class="form-input w-full">
+                    <input type="text" id="name" name="name" placeholder="NAME" required class="form-input w-full md:col-span-2">
+
+                    <input type="text" id="address" name="address" placeholder="ADDRESS" required class="form-input w-full md:col-span-2 lg:col-span-3">
+
+                    <input type="email" id="email" name="email" placeholder="EMAIL" class="form-input w-full md:col-span-2">
+                    <input type="text" id="pincode" name="pincode" placeholder="PINCODE" required class="form-input w-full">
+                    
+                    <input type="text" id="city" name="city" placeholder="CITY" class="form-input w-full readonly-input" readonly>
+                    <input type="text" id="state" name="state" placeholder="STATE" class="form-input w-full readonly-input" readonly>
+                    <input type="text" id="zone" name="zone" placeholder="ZONE" class="form-input w-full readonly-input" readonly>
+                    
+                    <input type="text" id="express_tat" name="express_tat" placeholder="EXPRESS TAT" class="form-input w-full readonly-input" readonly>
+                    <input type="text" id="airline_tat" name="airline_tat" placeholder="AIRLINE TAT" class="form-input w-full readonly-input md:col-span-2" readonly>
+                    
+                    <input type="text" id="surface_tat" name="surface_tat" placeholder="SURFACE TAT" class="form-input w-full readonly-input" readonly>
+                    <input type="text" id="premium_tat" name="premium_tat" placeholder="PREMIUM TAT" class="form-input w-full readonly-input" readonly>
+                    <input type="text" id="oda" name="oda" placeholder="ODA" class="form-input w-full readonly-input" readonly>
+                    <input type="text" id="carrier" name="carrier" placeholder="CARRIER" class="form-input w-full readonly-input" readonly>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end space-x-4 pt-4 border-t mt-6">
+                    <button type="button" id="cancelBtn" class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors">
                         Cancel
                     </button>
-                    
-                    <button type="submit" id="submitBtn" class="w-full bg-green-600 text-white p-1 border border-green-700 disabled:bg-gray-400">
-                        Submit
+                    <button type="submit" id="submitBtn" class="px-6 py-2 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors disabled:bg-gray-400 flex items-center">
+                        <span id="button-text">Submit</span>
+                        <svg id="spinner" class="animate-spin h-5 w-5 text-white ml-3 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
                     </button>
                 </div>
-            </div>
-        </form>
-        <!-- Status message area -->
-        <div id="status" class="text-center font-semibold text-sm p-2" style="display: none;"></div>
-    </div>
+            </form>
+            <!-- Status message area -->
+            <div id="status" class="text-center font-medium mt-4 text-sm"></div>
+        </div>
+    </main>
 
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
     <script>
-        // --- DOM ELEMENT REFERENCES ---
-        const form = document.getElementById('dataForm');
-        const statusDiv = document.getElementById('status');
-        const submitBtn = document.getElementById('submitBtn');
-        const cancelBtn = document.getElementById('cancelBtn'); // Added cancel button
-        
-        // Pincode related fields
-        const pincodeInput = document.getElementById('pincode');
-        const cityInput = document.getElementById('city');
-        const stateInput = document.getElementById('state');
-        const carrierInput = document.getElementById('carrier');
-        const expressTatInput = document.getElementById('express_tat');
-        const airlineTatInput = document.getElementById('airline_tat');
-        const surfaceTatInput = document.getElementById('surface_tat');
-        const premiumTatInput = document.getElementById('premium_tat');
-        const odaInput = document.getElementById('oda');
-        const zoneInput = document.getElementById('zone');
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM ELEMENT REFERENCES ---
+            const form = document.getElementById('dataForm');
+            const statusDiv = document.getElementById('status');
+            const submitBtn = document.getElementById('submitBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const buttonText = document.getElementById('button-text');
+            const spinner = document.getElementById('spinner');
 
-        // --- CONFIGURATION ---
-        // URL for the main form submission script
-        const SUBMIT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwb5gqe6hep6orsrnviSzD-LDNt4axEnLKNPCfWJl8GINS55FzWEOKSMVVTy8M8KlO4w/exec';
-        // URL for the pincode lookup script
-        const PINCODE_API_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
+            // Form Fields
+            const userInput = document.getElementById('user');
+            const tokenInput = document.getElementById('token');
+            const pincodeInput = document.getElementById('pincode');
+            const cityInput = document.getElementById('city');
+            const stateInput = document.getElementById('state');
+            const carrierInput = document.getElementById('carrier');
+            const expressTatInput = document.getElementById('express_tat');
+            const airlineTatInput = document.getElementById('airline_tat');
+            const surfaceTatInput = document.getElementById('surface_tat');
+            const premiumTatInput = document.getElementById('premium_tat');
+            const odaInput = document.getElementById('oda');
+            const zoneInput = document.getElementById('zone');
 
-        // --- CANCEL BUTTON LOGIC ---
-        cancelBtn.addEventListener('click', () => {
-            form.reset();
-            clearPincodeDataFields();
-        });
+            // --- CONFIGURATION ---
+            const SUBMIT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwb5gqe6hep6orsrnviSzD-LDNt4axEnLKNPCfWJl8GINS55FzWEOKSMVVTy8M8KlO4w/exec';
+            const PINCODE_API_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
 
-        // --- PINCODE AUTOFILL LOGIC ---
-        let debounceTimer;
-        pincodeInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                const pincode = pincodeInput.value.trim();
-
-                // If pincode is not 6 digits, clear fields and stop
-                if (pincode.length !== 6 || !/^\d{6}$/.test(pincode)) {
-                    clearPincodeDataFields();
-                    return;
-                }
-                
-                // Provide visual feedback during API call
-                pincodeInput.classList.add('opacity-50', 'cursor-wait');
-
-                fetch(`${PINCODE_API_URL}?pincode=${pincode}`)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not OK');
-                        return response.json();
-                    })
-                    .then(result => {
-                        if (result.found && result.data) {
-                            const data = result.data;
-                            // Populate fields based on the mapping from your script
-                            stateInput.value = data.StateName || '';
-                            cityInput.value = data.DestinationName || '';
-                            carrierInput.value = data.Carrier || '';
-                            expressTatInput.value = data['Dox (E)'] || '';
-                            airlineTatInput.value = data['NonDox (A)'] || '';
-                            surfaceTatInput.value = data['NonDox (S)'] || '';
-                            odaInput.value = data.ODA || '';
-                            premiumTatInput.value = data['PRO (P)'] || '';
-                            zoneInput.value = data.ZONE || '';
-                        } else {
-                            clearPincodeDataFields();
-                            console.warn(result.message || 'Pincode not found.');
+            // --- AUTO-FILL AUTHENTICATION ---
+            function populateAuthFields() {
+                const loginDataJSON = localStorage.getItem('loginData');
+                if (loginDataJSON) {
+                    try {
+                        const loginData = JSON.parse(loginDataJSON);
+                        const now = new Date().getTime();
+                        if (loginData.expires && now <= loginData.expires) {
+                            userInput.value = loginData.CODE || loginData.code || '';
+                            tokenInput.value = loginData.TOKEN || loginData.token || '';
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching pincode data:', error);
-                        clearPincodeDataFields();
-                    })
-                    .finally(() => {
-                        // Remove visual feedback
-                        pincodeInput.classList.remove('opacity-50', 'cursor-wait');
-                    });
-            }, 500); // Wait 500ms after user stops typing
-        });
-
-        const clearPincodeDataFields = () => {
-            cityInput.value = '';
-            stateInput.value = '';
-            carrierInput.value = '';
-            expressTatInput.value = '';
-            airlineTatInput.value = '';
-            surfaceTatInput.value = '';
-            premiumTatInput.value = '';
-            odaInput.value = '';
-            zoneInput.value = '';
-        };
-
-        // --- MAIN FORM SUBMISSION LOGIC ---
-        form.addEventListener('submit', e => {
-            e.preventDefault();
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
-
-            fetch(SUBMIT_SCRIPT_URL, {
-                method: 'POST',
-                body: new FormData(form)
-            })
-            .then(response => response.json())
-            .then(data => {
-                statusDiv.style.display = 'block';
-                statusDiv.textContent = data.message;
-                statusDiv.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
-
-                if (data.status === 'success') {
-                    statusDiv.classList.add('bg-green-100', 'text-green-800');
-                    form.reset();
-                } else {
-                    statusDiv.classList.add('bg-red-100', 'text-red-800');
+                    } catch (e) {
+                        console.error("Failed to parse login data:", e);
+                    }
                 }
-            })
-            .catch(error => {
-                statusDiv.style.display = 'block';
-                statusDiv.classList.remove('bg-green-100', 'text-green-800');
-                statusDiv.classList.add('bg-red-100', 'text-red-800');
-                statusDiv.textContent = 'Error! Could not submit form. Check connection or the script URL.';
-                console.error('Error:', error);
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit';
-                setTimeout(() => { statusDiv.style.display = 'none'; }, 5000);
+            }
+            populateAuthFields();
+
+            // --- UI FUNCTIONS ---
+            function setLoading(isLoading) {
+                submitBtn.disabled = isLoading;
+                spinner.classList.toggle('hidden', !isLoading);
+                buttonText.textContent = isLoading ? 'Submitting...' : 'Submit';
+            }
+
+            function displayMessage(message, type) {
+                statusDiv.textContent = message;
+                statusDiv.className = 'text-center font-medium mt-4 text-sm'; // Reset classes
+                if (type === 'error') {
+                    statusDiv.classList.add('text-red-600');
+                } else if (type === 'success') {
+                    statusDiv.classList.add('text-green-600');
+                }
+                setTimeout(() => { statusDiv.textContent = ''; }, 5000);
+            }
+
+            // --- EVENT LISTENERS ---
+            cancelBtn.addEventListener('click', () => {
+                form.reset();
+                clearPincodeDataFields();
+                populateAuthFields(); // Re-populate hidden auth fields after reset
             });
+
+            let debounceTimer;
+            pincodeInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    const pincode = pincodeInput.value.trim();
+                    if (pincode.length !== 6 || !/^\d{6}$/.test(pincode)) {
+                        clearPincodeDataFields();
+                        return;
+                    }
+                    fetchPincodeData(pincode);
+                }, 500);
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                setLoading(true);
+
+                try {
+                    const response = await fetch(SUBMIT_SCRIPT_URL, {
+                        method: 'POST',
+                        body: new FormData(form)
+                    });
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        displayMessage(result.message, 'success');
+                        form.reset();
+                        populateAuthFields();
+                    } else {
+                        displayMessage(result.message, 'error');
+                    }
+                } catch (error) {
+                    console.error('Error submitting form:', error);
+                    displayMessage('An unexpected error occurred. Please check your connection.', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            });
+
+            // --- HELPER FUNCTIONS ---
+            const clearPincodeDataFields = () => {
+                const fields = [cityInput, stateInput, carrierInput, expressTatInput, airlineTatInput, surfaceTatInput, premiumTatInput, odaInput, zoneInput];
+                fields.forEach(field => field.value = '');
+            };
+
+            async function fetchPincodeData(pincode) {
+                pincodeInput.classList.add('opacity-50', 'cursor-wait');
+                try {
+                    const response = await fetch(`${PINCODE_API_URL}?pincode=${pincode}`);
+                    if (!response.ok) throw new Error('Network response was not OK');
+                    const result = await response.json();
+
+                    if (result.found && result.data) {
+                        const data = result.data;
+                        stateInput.value = data.StateName || '';
+                        cityInput.value = data.DestinationName || '';
+                        carrierInput.value = data.Carrier || '';
+                        expressTatInput.value = data['Dox (E)'] || '';
+                        airlineTatInput.value = data['NonDox (A)'] || '';
+                        surfaceTatInput.value = data['NonDox (S)'] || '';
+                        odaInput.value = data.ODA || '';
+                        premiumTatInput.value = data['PRO (P)'] || '';
+                        zoneInput.value = data.ZONE || '';
+                    } else {
+                        clearPincodeDataFields();
+                        console.warn(result.message || 'Pincode not found.');
+                    }
+                } catch (error) {
+                    console.error('Error fetching pincode data:', error);
+                    clearPincodeDataFields();
+                } finally {
+                    pincodeInput.classList.remove('opacity-50', 'cursor-wait');
+                }
+            }
         });
     </script>
 </body>
 </html>
-
