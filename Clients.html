@@ -35,14 +35,18 @@
                 <!-- Hidden Authorization Fields -->
                 <input type="hidden" id="user" name="user">
                 <input type="hidden" id="token" name="token">
+                <input type="hidden" id="code" name="code">
                 
                 <!-- Data Fields Section -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <input type="tel" id="mobile" name="mobile" placeholder="MOBILE" required class="form-input w-full">
-                    <input type="text" id="gst_id" name="gst_id" placeholder="GST/PAN/ADHAR" required class="form-input w-full">
+                    <input type="text" id="gst_id" name="gst_id" placeholder="GST/PAN/ADHAR" class="form-input w-full">
                     <input type="text" id="branch" name="branch" placeholder="BRANCH" class="form-input w-full">
                     
-                    <input type="text" id="code" name="code" placeholder="CODE" class="form-input w-full">
+                    <div class="relative">
+                        <input type="text" id="client-search" placeholder="Search Client (Name or Code)" class="form-input w-full" list="client-list" autocomplete="off">
+                        <datalist id="client-list"></datalist>
+                    </div>
                     <input type="text" id="name" name="name" placeholder="NAME" required class="form-input w-full md:col-span-2">
 
                     <input type="text" id="address" name="address" placeholder="ADDRESS" required class="form-input w-full md:col-span-2 lg:col-span-3">
@@ -98,6 +102,12 @@
             // Form Fields
             const userInput = document.getElementById('user');
             const tokenInput = document.getElementById('token');
+            const codeInput = document.getElementById('code'); // Hidden input for selected client code
+            const clientSearchInput = document.getElementById('client-search');
+            const clientList = document.getElementById('client-list');
+            const branchInput = document.getElementById('branch');
+            const nameInput = document.getElementById('name');
+
             const pincodeInput = document.getElementById('pincode');
             const cityInput = document.getElementById('city');
             const stateInput = document.getElementById('state');
@@ -131,6 +141,51 @@
             }
             populateAuthFields();
 
+             // --- CLIENT SEARCH & AUTOFILL ---
+            function populateClientList(clients) {
+                clientList.innerHTML = ''; // Clear existing options
+                clients.forEach(client => {
+                    if (client.CODE && client.CLIENT_NAME) {
+                        const option = document.createElement('option');
+                        option.value = `${client.CLIENT_NAME} (${client.CODE})`;
+                        option.dataset.code = client.CODE;
+                        option.dataset.branch = client.BRANCH || '';
+                        option.dataset.name = client.CLIENT_NAME || '';
+                        clientList.appendChild(option);
+                    }
+                });
+            }
+
+            window.addEventListener('appDataLoaded', (event) => {
+                const appData = event.detail;
+                if (appData && appData.B2B && Array.isArray(appData.B2B)) {
+                    populateClientList(appData.B2B);
+                }
+            });
+
+            const storedAppDataJSON = localStorage.getItem('appData');
+            if (storedAppDataJSON) {
+                try {
+                    const storedAppData = JSON.parse(storedAppDataJSON);
+                    if (storedAppData.data && storedAppData.data.B2B) {
+                        populateClientList(storedAppData.data.B2B);
+                    }
+                } catch(e) { console.error("Could not parse stored app data", e); }
+            }
+
+            clientSearchInput.addEventListener('input', () => {
+                const value = clientSearchInput.value;
+                const selectedOption = Array.from(clientList.options).find(opt => opt.value === value);
+
+                if (selectedOption) {
+                    codeInput.value = selectedOption.dataset.code;
+                    branchInput.value = selectedOption.dataset.branch;
+                    nameInput.value = selectedOption.dataset.name;
+                } else {
+                    codeInput.value = ''; // Clear if no match
+                }
+            });
+
             // --- UI FUNCTIONS ---
             function setLoading(isLoading) {
                 submitBtn.disabled = isLoading;
@@ -140,7 +195,7 @@
 
             function displayMessage(message, type) {
                 statusDiv.textContent = message;
-                statusDiv.className = 'text-center font-medium mt-4 text-sm'; // Reset classes
+                statusDiv.className = 'text-center font-medium mt-4 text-sm';
                 if (type === 'error') {
                     statusDiv.classList.add('text-red-600');
                 } else if (type === 'success') {
@@ -152,8 +207,9 @@
             // --- EVENT LISTENERS ---
             cancelBtn.addEventListener('click', () => {
                 form.reset();
+                clientSearchInput.value = '';
                 clearPincodeDataFields();
-                populateAuthFields(); // Re-populate hidden auth fields after reset
+                populateAuthFields();
             });
 
             let debounceTimer;
@@ -183,6 +239,7 @@
                     if (result.status === 'success') {
                         displayMessage(result.message, 'success');
                         form.reset();
+                        clientSearchInput.value = '';
                         populateAuthFields();
                     } else {
                         displayMessage(result.message, 'error');
@@ -234,3 +291,4 @@
     </script>
 </body>
 </html>
+
