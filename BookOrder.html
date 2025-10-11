@@ -1021,6 +1021,33 @@
                 amountInput.value = '';
                 productTypeSelect.value = 'INV';
             }
+            
+            function handleCustomerSelectionChange() {
+                const selectedCustomerName = customerNameSelect.value;
+                selectedCustomerDetails = {}; 
+                if (selectedCustomerName && fetchedGSheetData.B2B) {
+                    selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === selectedCustomerName) || {};
+                }
+                if (selectedCustomerName && fetchedGSheetData.B2B2C) {
+                    const contactDetails = fetchedGSheetData.B2B2C.find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
+                    if (contactDetails) {
+                        senderNameInput.value = contactDetails.NAME;
+                        originPincodeInput.value = contactDetails.PINCODE || '';
+                        selectedContacts.sender = contactDetails;
+                        displayContactDetails(contactDetails, senderDetailsDisplay);
+                    }
+                } else {
+                    senderNameInput.value = '';
+                    originPincodeInput.value = '';
+                    selectedContacts.sender = null;
+                    senderDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Select a customer to autofill sender.</span>`;
+                }
+                populateModeDropdown(null); 
+                const expressOption = Array.from(transportTypeSelect.options).find(opt => opt.text.toUpperCase() === 'EXPRESS');
+                if (expressOption) transportTypeSelect.value = expressOption.value;
+                updateDisplayTables();
+                checkMainDetailsAndToggleInputs();
+            }
 
             function populateCustomerDropdown() {
                 if (fetchedGSheetData.B2B && fetchedGSheetData.B2B.length > 0) {
@@ -1035,8 +1062,8 @@
                     // Auto-select if there is only one customer
                     if (fetchedGSheetData.B2B.length === 1) {
                         customerNameSelect.value = fetchedGSheetData.B2B[0].CLIENT_NAME;
-                        // Trigger the change event to run associated logic
-                        customerNameSelect.dispatchEvent(new Event('change'));
+                        // Directly call the handler to ensure logic runs
+                        handleCustomerSelectionChange();
                     }
                 }
             }
@@ -1187,32 +1214,7 @@
                 if (appData.data) initializePageWithData(appData.data);
             }
             
-            customerNameSelect.addEventListener('change', () => {
-                const selectedCustomerName = customerNameSelect.value;
-                selectedCustomerDetails = {}; 
-                if (selectedCustomerName && fetchedGSheetData.B2B) {
-                    selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === selectedCustomerName) || {};
-                }
-                if (selectedCustomerName && fetchedGSheetData.B2B2C) {
-                    const contactDetails = fetchedGSheetData.B2B2C.find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
-                    if (contactDetails) {
-                        senderNameInput.value = contactDetails.NAME;
-                        originPincodeInput.value = contactDetails.PINCODE || '';
-                        selectedContacts.sender = contactDetails;
-                        displayContactDetails(contactDetails, senderDetailsDisplay);
-                    }
-                } else {
-                    senderNameInput.value = '';
-                    originPincodeInput.value = '';
-                    selectedContacts.sender = null;
-                    senderDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Select a customer to autofill sender.</span>`;
-                }
-                populateModeDropdown(null); 
-                const expressOption = Array.from(transportTypeSelect.options).find(opt => opt.text.toUpperCase() === 'EXPRESS');
-                if (expressOption) transportTypeSelect.value = expressOption.value;
-                updateDisplayTables();
-                checkMainDetailsAndToggleInputs();
-            });
+            customerNameSelect.addEventListener('change', handleCustomerSelectionChange);
             
             transportTypeSelect.addEventListener('change', () => {
                 if (!isBookingLocked) userMadeInitialModeChoice = true;
