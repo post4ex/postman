@@ -44,8 +44,8 @@
                     <input type="text" id="branch" name="branch" placeholder="BRANCH" class="form-input w-full">
                     
                     <div class="relative">
-                        <input type="text" id="client-search" placeholder="Search Client (Name or Code)" class="form-input w-full" list="client-list" autocomplete="off">
-                        <datalist id="client-list"></datalist>
+                        <input type="text" id="client-search" placeholder="Search Client (Name or Code)" class="form-input w-full" autocomplete="off">
+                        <div id="client-results" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto hidden"></div>
                     </div>
                     <input type="text" id="name" name="name" placeholder="NAME" required class="form-input w-full md:col-span-2">
 
@@ -104,7 +104,7 @@
             const tokenInput = document.getElementById('token');
             const codeInput = document.getElementById('code'); // Hidden input for selected client code
             const clientSearchInput = document.getElementById('client-search');
-            const clientList = document.getElementById('client-list');
+            const clientResultsContainer = document.getElementById('client-results');
             const branchInput = document.getElementById('branch');
             const nameInput = document.getElementById('name');
 
@@ -122,6 +122,8 @@
             // --- CONFIGURATION ---
             const SUBMIT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwb5gqe6hep6orsrnviSzD-LDNt4axEnLKNPCfWJl8GINS55FzWEOKSMVVTy8M8KlO4w/exec';
             const PINCODE_API_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
+
+            let clientsData = [];
 
             // --- AUTO-FILL AUTHENTICATION ---
             function populateAuthFields() {
@@ -142,24 +144,14 @@
             populateAuthFields();
 
              // --- CLIENT SEARCH & AUTOFILL ---
-            function populateClientList(clients) {
-                clientList.innerHTML = ''; // Clear existing options
-                clients.forEach(client => {
-                    if (client.CODE && client.CLIENT_NAME) {
-                        const option = document.createElement('option');
-                        option.value = `${client.CLIENT_NAME} (${client.CODE})`;
-                        option.dataset.code = client.CODE;
-                        option.dataset.branch = client.BRANCH || '';
-                        option.dataset.name = client.CLIENT_NAME || '';
-                        clientList.appendChild(option);
-                    }
-                });
+            function loadClientData(clients) {
+                clientsData = clients.filter(client => client.CODE && client.CLIENT_NAME);
             }
 
             window.addEventListener('appDataLoaded', (event) => {
                 const appData = event.detail;
                 if (appData && appData.B2B && Array.isArray(appData.B2B)) {
-                    populateClientList(appData.B2B);
+                    loadClientData(appData.B2B);
                 }
             });
 
@@ -168,21 +160,57 @@
                 try {
                     const storedAppData = JSON.parse(storedAppDataJSON);
                     if (storedAppData.data && storedAppData.data.B2B) {
-                        populateClientList(storedAppData.data.B2B);
+                        loadClientData(storedAppData.data.B2B);
                     }
                 } catch(e) { console.error("Could not parse stored app data", e); }
             }
 
             clientSearchInput.addEventListener('input', () => {
-                const value = clientSearchInput.value;
-                const selectedOption = Array.from(clientList.options).find(opt => opt.value === value);
+                const searchTerm = clientSearchInput.value.trim();
+                clientResultsContainer.innerHTML = '';
+                clientResultsContainer.classList.add('hidden');
 
-                if (selectedOption) {
-                    codeInput.value = selectedOption.dataset.code;
-                    branchInput.value = selectedOption.dataset.branch;
-                    nameInput.value = selectedOption.dataset.name;
-                } else {
-                    codeInput.value = ''; // Clear if no match
+                if (!searchTerm) {
+                    codeInput.value = ''; // Clear if search is cleared
+                    return;
+                }
+
+                // Check for exact code match first
+                const exactMatch = clientsData.find(c => c.CODE.toUpperCase() === searchTerm.toUpperCase());
+                if (exactMatch) {
+                    codeInput.value = exactMatch.CODE;
+                    branchInput.value = exactMatch.BRANCH || '';
+                    clientSearchInput.value = `${exactMatch.CLIENT_NAME} (${exactMatch.CODE})`;
+                    return; // Found an exact match, stop here
+                }
+
+                const filteredClients = clientsData.filter(client =>
+                    client.CLIENT_NAME.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    client.CODE.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                if (filteredClients.length > 0) {
+                    filteredClients.forEach(client => {
+                        const resultItem = document.createElement('div');
+                        resultItem.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+                        resultItem.textContent = `${client.CLIENT_NAME} (${client.CODE})`;
+                        
+                        resultItem.addEventListener('mousedown', () => {
+                            clientSearchInput.value = `${client.CLIENT_NAME} (${client.CODE})`;
+                            codeInput.value = client.CODE;
+                            branchInput.value = client.BRANCH || '';
+                            clientResultsContainer.classList.add('hidden');
+                        });
+                        clientResultsContainer.appendChild(resultItem);
+                    });
+                    clientResultsContainer.classList.remove('hidden');
+                }
+            });
+            
+            // Hide results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!clientSearchInput.contains(e.target)) {
+                    clientResultsContainer.classList.add('hidden');
                 }
             });
 
