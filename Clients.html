@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Submission Form</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and minor style adjustments */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        /* Style to remove rounded corners from all inputs */
+        input, button {
+            border-radius: 0 !important;
+        }
+    </style>
+</head>
+<body class="bg-white">
+
+    <div class="w-full bg-white">
+        <h2 class="text-xl font-bold text-center text-gray-800 p-2 border-b">B2B2C Data Submission Form</h2>
+        
+        <form id="dataForm">
+            <!-- Authorization Section -->
+            <div class="border-b p-2">
+                 <h3 class="text-md font-semibold text-gray-700 mb-2">Authorization</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2">
+                    <div>
+                        <label for="user" class="sr-only">CODE</label>
+                        <input type="text" id="user" name="user" placeholder="CODE" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label for="token" class="sr-only">TOKEN</label>
+                        <input type="password" id="token" name="token" placeholder="TOKEN" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Fields Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                <div><label for="mobile" class="sr-only">MOBILE</label><input type="tel" id="mobile" name="mobile" placeholder="MOBILE" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
+                <div><label for="gst_id" class="sr-only">GST/PAN/ADHAR</label><input type="text" id="gst_id" name="gst_id" placeholder="GST/PAN/ADHAR" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
+                <div><label for="branch" class="sr-only">BRANCH</label><input type="text" id="branch" name="branch" placeholder="BRANCH" class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
+                
+                <div><label for="code" class="sr-only">CODE</label><input type="text" id="code" name="code" placeholder="CODE" class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
+                <div class="md:col-span-2"><label for="name" class="sr-only">NAME</label><input type="text" id="name" name="name" placeholder="NAME" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
+
+                <div class="md:col-span-2 lg:col-span-3"><label for="address" class="sr-only">ADDRESS</label><input type="text" id="address" name="address" placeholder="ADDRESS" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
+
+                <div class="md:col-span-2"><label for="email" class="sr-only">EMAIL</label><input type="email" id="email" name="email" placeholder="EMAIL" class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none"></div>
+                <div><label for="pincode" class="sr-only">PINCODE</label><input type="text" id="pincode" name="pincode" placeholder="PINCODE" required class="w-full p-1 border border-gray-300 focus:border-blue-500 outline-none transition-opacity duration-300"></div>
+                
+                <div><label for="city" class="sr-only">CITY</label><input type="text" id="city" name="city" placeholder="CITY" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                <div><label for="state" class="sr-only">STATE</label><input type="text" id="state" name="state" placeholder="STATE" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                <div><label for="zone" class="sr-only">ZONE</label><input type="text" id="zone" name="zone" placeholder="ZONE" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                
+                <div><label for="express_tat" class="sr-only">EXPRESS TAT</label><input type="text" id="express_tat" name="express_tat" placeholder="EXPRESS TAT" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                <div class="md:col-span-2"><label for="airline_tat" class="sr-only">AIRLINE TAT</label><input type="text" id="airline_tat" name="airline_tat" placeholder="AIRLINE TAT" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                
+                <!-- Final row with fields and buttons -->
+                <div class="md:col-span-2 lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
+                    <div class="sm:col-span-1"><label for="surface_tat" class="sr-only">SURFACE TAT</label><input type="text" id="surface_tat" name="surface_tat" placeholder="SURFACE TAT" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                    <div class="sm:col-span-1"><label for="premium_tat" class="sr-only">PREMIUM TAT</label><input type="text" id="premium_tat" name="premium_tat" placeholder="PREMIUM TAT" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                    <div class="sm:col-span-1"><label for="oda" class="sr-only">ODA</label><input type="text" id="oda" name="oda" placeholder="ODA" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                    <div class="sm:col-span-1"><label for="carrier" class="sr-only">CARRIER</label><input type="text" id="carrier" name="carrier" placeholder="CARRIER" class="w-full p-1 border border-gray-300 bg-gray-50" readonly></div>
+                    
+                    <button type="button" id="cancelBtn" class="w-full bg-gray-500 text-white p-1 border border-gray-600">
+                        Cancel
+                    </button>
+                    
+                    <button type="submit" id="submitBtn" class="w-full bg-green-600 text-white p-1 border border-green-700 disabled:bg-gray-400">
+                        Submit
+                    </button>
+                </div>
+            </div>
+        </form>
+        <!-- Status message area -->
+        <div id="status" class="text-center font-semibold text-sm p-2" style="display: none;"></div>
+    </div>
+
+    <script>
+        // --- DOM ELEMENT REFERENCES ---
+        const form = document.getElementById('dataForm');
+        const statusDiv = document.getElementById('status');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelBtn = document.getElementById('cancelBtn'); // Added cancel button
+        
+        // Pincode related fields
+        const pincodeInput = document.getElementById('pincode');
+        const cityInput = document.getElementById('city');
+        const stateInput = document.getElementById('state');
+        const carrierInput = document.getElementById('carrier');
+        const expressTatInput = document.getElementById('express_tat');
+        const airlineTatInput = document.getElementById('airline_tat');
+        const surfaceTatInput = document.getElementById('surface_tat');
+        const premiumTatInput = document.getElementById('premium_tat');
+        const odaInput = document.getElementById('oda');
+        const zoneInput = document.getElementById('zone');
+
+        // --- CONFIGURATION ---
+        // URL for the main form submission script
+        const SUBMIT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwb5gqe6hep6orsrnviSzD-LDNt4axEnLKNPCfWJl8GINS55FzWEOKSMVVTy8M8KlO4w/exec';
+        // URL for the pincode lookup script
+        const PINCODE_API_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
+
+        // --- CANCEL BUTTON LOGIC ---
+        cancelBtn.addEventListener('click', () => {
+            form.reset();
+            clearPincodeDataFields();
+        });
+
+        // --- PINCODE AUTOFILL LOGIC ---
+        let debounceTimer;
+        pincodeInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const pincode = pincodeInput.value.trim();
+
+                // If pincode is not 6 digits, clear fields and stop
+                if (pincode.length !== 6 || !/^\d{6}$/.test(pincode)) {
+                    clearPincodeDataFields();
+                    return;
+                }
+                
+                // Provide visual feedback during API call
+                pincodeInput.classList.add('opacity-50', 'cursor-wait');
+
+                fetch(`${PINCODE_API_URL}?pincode=${pincode}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not OK');
+                        return response.json();
+                    })
+                    .then(result => {
+                        if (result.found && result.data) {
+                            const data = result.data;
+                            // Populate fields based on the mapping from your script
+                            stateInput.value = data.StateName || '';
+                            cityInput.value = data.DestinationName || '';
+                            carrierInput.value = data.Carrier || '';
+                            expressTatInput.value = data['Dox (E)'] || '';
+                            airlineTatInput.value = data['NonDox (A)'] || '';
+                            surfaceTatInput.value = data['NonDox (S)'] || '';
+                            odaInput.value = data.ODA || '';
+                            premiumTatInput.value = data['PRO (P)'] || '';
+                            zoneInput.value = data.ZONE || '';
+                        } else {
+                            clearPincodeDataFields();
+                            console.warn(result.message || 'Pincode not found.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching pincode data:', error);
+                        clearPincodeDataFields();
+                    })
+                    .finally(() => {
+                        // Remove visual feedback
+                        pincodeInput.classList.remove('opacity-50', 'cursor-wait');
+                    });
+            }, 500); // Wait 500ms after user stops typing
+        });
+
+        const clearPincodeDataFields = () => {
+            cityInput.value = '';
+            stateInput.value = '';
+            carrierInput.value = '';
+            expressTatInput.value = '';
+            airlineTatInput.value = '';
+            surfaceTatInput.value = '';
+            premiumTatInput.value = '';
+            odaInput.value = '';
+            zoneInput.value = '';
+        };
+
+        // --- MAIN FORM SUBMISSION LOGIC ---
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            fetch(SUBMIT_SCRIPT_URL, {
+                method: 'POST',
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                statusDiv.style.display = 'block';
+                statusDiv.textContent = data.message;
+                statusDiv.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+
+                if (data.status === 'success') {
+                    statusDiv.classList.add('bg-green-100', 'text-green-800');
+                    form.reset();
+                } else {
+                    statusDiv.classList.add('bg-red-100', 'text-red-800');
+                }
+            })
+            .catch(error => {
+                statusDiv.style.display = 'block';
+                statusDiv.classList.remove('bg-green-100', 'text-green-800');
+                statusDiv.classList.add('bg-red-100', 'text-red-800');
+                statusDiv.textContent = 'Error! Could not submit form. Check connection or the script URL.';
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
+                setTimeout(() => { statusDiv.style.display = 'none'; }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>
+
