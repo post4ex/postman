@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CreateOrder - Postman</title>
+    <title>BookOrder - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -174,7 +174,7 @@
                         
                         <!-- AWB and Action Buttons -->
                         <div class="flex items-center gap-2 border border-gray-400 p-2">
-                            <div class="relative flex-grow hidden">
+                            <div class="relative flex-grow">
                                 <input type="text" id="awb" name="awb" placeholder="AWB" class="w-full p-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 pr-10">
                                 <button type="button" id="getAwbButton" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 hover:text-gray-700" title="Get AWB">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -194,7 +194,85 @@
                         <!-- Inline Message Display Area -->
                         <div id="bookingMessage" class="p-2 text-sm text-center rounded-md mt-2"></div>
                     </form>
+
+                    <!-- Order Details Table -->
+                    <div id="orderTableSection" class="p-4 bg-white border-t border-gray-400 hidden">
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Order Details</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm">
+                                <tbody class="divide-y divide-gray-300">
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">REFERENCE</td>
+                                        <td id="display_reference" class="px-2 py-1 w-1/4">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">BRANCH</td>
+                                        <td id="display_branch" class="px-2 py-1 w-1/4">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CODE</td>
+                                        <td id="display_code" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">USER_NAME</td>
+                                        <td id="display_user_name" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TIME_STAMP</td>
+                                        <td id="display_timestamp" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORDER_DATE</td>
+                                        <td id="display_order_date" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CARRIER</td>
+                                        <td id="display_carrier" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">AWB_NUMBER</td>
+                                        <td id="display_awb_number" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TRANSIT_DATE</td>
+                                        <td id="display_transit_date" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CONSIGNOR</td>
+                                        <td id="display_consignor" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORIGIN_CITY</td>
+                                        <td id="display_origin_city" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORIGIN_PINCODE</td>
+                                        <td id="display_origin_pincode" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CONSIGNEE</td>
+                                        <td id="display_consignee" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">DEST_CITY</td>
+                                        <td id="display_dest_city" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">DEST_PINCODE</td>
+                                        <td id="display_dest_pincode" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TAT</td>
+                                        <td id="display_tat" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ZONE</td>
+                                        <td id="display_zone" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">MODE</td>
+                                        <td id="display_mode" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">GLOBAL</td>
+                                        <td id="display_global" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">COD</td>
+                                        <td id="display_cod" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TOPAY</td>
+                                        <td id="display_topay" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">FOV</td>
+                                        <td id="display_fov" class="px-2 py-1">---</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
+
                 <!-- Top Right: Multibox & Product -->
                 <div class="w-full md:w-1/2">
                     <!-- Multibox Section -->
@@ -261,176 +339,91 @@
                 </div>
             </div>
 
-            <!-- Bottom Row: Combined Summary and Charges -->
-            <div class="flex flex-col md:flex-row">
-                <!-- Bottom Left: Summary -->
-                <div class="w-full md:w-1/2 border-r border-gray-400">
-                    <div id="summarySection" class="p-4 bg-white">
-                        <div class="grid grid-cols-4 gap-4 text-center">
-                            <div>
-                                <p class="text-sm text-gray-500">WEIGHT</p>
-                                <p id="display_weight" class="text-lg font-bold text-gray-800">---</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">CHG_WT</p>
-                                <p id="display_chg_wt" class="text-lg font-bold text-gray-800">---</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">PIECES</p>
-                                <p id="display_pieces" class="text-lg font-bold text-gray-800">---</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">VALUE</p>
-                                <p id="display_value" class="text-lg font-bold text-gray-800">---</p>
-                            </div>
+            <!-- Summary Row -->
+            <div class="border-b border-gray-400">
+                <div id="summarySection" class="p-4 bg-white">
+                    <div class="grid grid-cols-4 gap-4 text-center">
+                        <div>
+                            <p class="text-sm text-gray-500">WEIGHT</p>
+                            <p id="display_weight" class="text-lg font-bold text-gray-800">---</p>
                         </div>
-                    </div>
-                    <!-- Helper Table Section -->
-                    <div id="helperTableSection" class="p-4 bg-white border-t border-gray-400 hidden">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full border-collapse border border-gray-400 text-sm">
-                                <thead>
-                                    <tr class="bg-gray-100 text-gray-600">
-                                        <th class="p-2 border border-gray-400 text-left">WEIGHT_CEILING</th>
-                                        <th class="p-2 border border-gray-400 text-left">WEIGHT_ZONE</th>
-                                        <th class="p-2 border border-gray-400 text-left">RATE_UID</th>
-                                        <th class="p-2 border border-gray-400 text-left">RATE</th>
-                                        <th class="p-2 border border-gray-400 text-left">ADD_RATE</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="helperTableBody">
-                                    <tr>
-                                        <td class="p-2 border border-gray-400" id="display_weight_ceiling">---</td>
-                                        <td class="p-2 border border-gray-400" id="display_weight_zone">---</td>
-                                        <td class="p-2 border border-gray-400" id="display_rate_uid">---</td>
-                                        <td class="p-2 border border-gray-400" id="display_rate">---</td>
-                                        <td class="p-2 border border-gray-400" id="display_add_rate">---</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div>
+                            <p class="text-sm text-gray-500">CHG_WT</p>
+                            <p id="display_chg_wt" class="text-lg font-bold text-gray-800">---</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">PIECES</p>
+                            <p id="display_pieces" class="text-lg font-bold text-gray-800">---</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">VALUE</p>
+                            <p id="display_value" class="text-lg font-bold text-gray-800">---</p>
                         </div>
                     </div>
                 </div>
-                <!-- Bottom Right: Charges -->
-                <div class="w-full md:w-1/2">
-                    <div id="chargesSection" class="p-4 bg-white">
-                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Charges & Taxes</h3>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full text-sm">
-                                <tbody class="divide-y divide-gray-300">
-                                    <tr class="divide-x divide-gray-300">
-                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/2" colspan="2">FRIGHT</td>
-                                        <td id="display_fright" class="px-2 py-1 w-1/2 text-right" colspan="2">0.00</td>
-                                    </tr>
-                                    <tr class="divide-x divide-gray-300">
-                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/2" colspan="2">OTHER CHARGES</td>
-                                        <td id="display_other_chg" class="px-2 py-1 w-1/2 text-right" colspan="2">0.00</td>
-                                    </tr>
-                                    <tr class="divide-x divide-gray-300">
-                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/2" colspan="2">GST</td>
-                                        <td id="display_gst_total" class="px-2 py-1 w-1/2 text-right" colspan="2">0.00</td>
-                                    </tr>
-                                    <tr class="divide-x divide-gray-300">
-                                        <td class="px-2 py-1 font-medium text-gray-600 bg-blue-100 text-blue-800 text-base" colspan="2">TOTAL</td>
-                                        <td id="display_total" class="px-2 py-1 text-right font-bold text-blue-800 text-base" colspan="2">0.00</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                             <!-- Hidden elements for preserving post data -->
-                            <div class="hidden">
-                                <span id="display_fuel_chg"></span>
-                                <span id="display_cod_chg"></span>
-                                <span id="display_topay_chg"></span>
-                                <span id="display_fov_chg"></span>
-                                <span id="display_eway_chg"></span>
-                                <span id="display_awb_chg"></span>
-                                <span id="display_pack_chg"></span>
-                                <span id="display_dev_chg"></span>
-                                <span id="display_taxable"></span>
-                                <span id="display_sgst"></span>
-                                <span id="display_cgst"></span>
-                                <span id="display_igst"></span>
-                            </div>
-                        </div>
+                <!-- Helper Table Section -->
+                <div id="helperTableSection" class="p-4 bg-white border-t border-gray-400 hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full border-collapse border border-gray-400 text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600">
+                                    <th class="p-2 border border-gray-400 text-left">WEIGHT_CEILING</th>
+                                    <th class="p-2 border border-gray-400 text-left">WEIGHT_ZONE</th>
+                                    <th class="p-2 border border-gray-400 text-left">RATE_UID</th>
+                                    <th class="p-2 border border-gray-400 text-left">RATE</th>
+                                    <th class="p-2 border border-gray-400 text-left">ADD_RATE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="helperTableBody">
+                                <tr>
+                                    <td class="p-2 border border-gray-400" id="display_weight_ceiling">---</td>
+                                    <td class="p-2 border border-gray-400" id="display_weight_zone">---</td>
+                                    <td class="p-2 border border-gray-400" id="display_rate_uid">---</td>
+                                    <td class="p-2 border border-gray-400" id="display_rate">---</td>
+                                    <td class="p-2 border border-gray-400" id="display_add_rate">---</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-
-            <!-- Order Details Table -->
+            
+            <!-- Charges Row -->
             <div>
-                <div id="orderTableSection" class="p-4 bg-white">
-                    <h3 class="text-lg font-semibold mb-2 text-gray-800">Order Details</h3>
+                 <div id="chargesSection" class="p-4 bg-white">
+                    <h3 class="text-lg font-semibold mb-2 text-gray-800">Charges & Taxes</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
                             <tbody class="divide-y divide-gray-300">
                                 <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">REFERENCE</td>
-                                    <td id="display_reference" class="px-2 py-1 w-1/4">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">BRANCH</td>
-                                    <td id="display_branch" class="px-2 py-1 w-1/4">---</td>
+                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">FRIGHT</td>
+                                    <td id="display_fright" class="px-2 py-1 w-1/4 text-right">0.00</td>
+                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">OTHER CHARGES</td>
+                                    <td id="display_other_chg" class="px-2 py-1 w-1/4 text-right">0.00</td>
                                 </tr>
                                 <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CODE</td>
-                                    <td id="display_code" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">USER_NAME</td>
-                                    <td id="display_user_name" class="px-2 py-1">---</td>
-                                </tr>
-                                <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TIME_STAMP</td>
-                                    <td id="display_timestamp" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORDER_DATE</td>
-                                    <td id="display_order_date" class="px-2 py-1">---</td>
-                                </tr>
-                                <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CARRIER</td>
-                                    <td id="display_carrier" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">AWB_NUMBER</td>
-                                    <td id="display_awb_number" class="px-2 py-1">---</td>
-                                </tr>
-                                <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TRANSIT_DATE</td>
-                                    <td id="display_transit_date" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CONSIGNOR</td>
-                                    <td id="display_consignor" class="px-2 py-1">---</td>
-                                </tr>
-                                <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORIGIN_CITY</td>
-                                    <td id="display_origin_city" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORIGIN_PINCODE</td>
-                                    <td id="display_origin_pincode" class="px-2 py-1">---</td>
-                                </tr>
-                                <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CONSIGNEE</td>
-                                    <td id="display_consignee" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">DEST_CITY</td>
-                                    <td id="display_dest_city" class="px-2 py-1">---</td>
-                                </tr>
-                                <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">DEST_PINCODE</td>
-                                    <td id="display_dest_pincode" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TAT</td>
-                                    <td id="display_tat" class="px-2 py-1">---</td>
-                                </tr>
-                                <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ZONE</td>
-                                    <td id="display_zone" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">MODE</td>
-                                    <td id="display_mode" class="px-2 py-1">---</td>
-                                </tr>
-                                <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">GLOBAL</td>
-                                    <td id="display_global" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">COD</td>
-                                    <td id="display_cod" class="px-2 py-1">---</td>
-                                </tr>
-                                <tr class="divide-x divide-gray-300">
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TOPAY</td>
-                                    <td id="display_topay" class="px-2 py-1">---</td>
-                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">FOV</td>
-                                    <td id="display_fov" class="px-2 py-1">---</td>
+                                    <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">GST</td>
+                                    <td id="display_gst_total" class="px-2 py-1 w-1/4 text-right">0.00</td>
+                                    <td class="px-2 py-1 font-medium text-gray-600 bg-blue-100 text-blue-800 text-base w-1/4">TOTAL</td>
+                                    <td id="display_total" class="px-2 py-1 text-right font-bold text-blue-800 text-base w-1/4">0.00</td>
                                 </tr>
                             </tbody>
                         </table>
+                         <!-- Hidden elements for preserving post data -->
+                        <div class="hidden">
+                            <span id="display_fuel_chg"></span>
+                            <span id="display_cod_chg"></span>
+                            <span id="display_topay_chg"></span>
+                            <span id="display_fov_chg"></span>
+                            <span id="display_eway_chg"></span>
+                            <span id="display_awb_chg"></span>
+                            <span id="display_pack_chg"></span>
+                            <span id="display_dev_chg"></span>
+                            <span id="display_taxable"></span>
+                            <span id="display_sgst"></span>
+                            <span id="display_cgst"></span>
+                            <span id="display_igst"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1312,7 +1305,7 @@
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
                 const orderData = {
-                    'USER_NAME': loginData.NAME || loginData.name || '',
+                    'CODE': document.getElementById('display_code').textContent || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
                     'CARRIER': document.getElementById('display_carrier').textContent,
