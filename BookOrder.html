@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookOrder - Postman</title>
+    <title>CreateOrder - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1175,7 +1175,15 @@
                         addNewLi.className = 'bg-gray-100 font-semibold';
                         addNewLi.textContent = '+ Add New Contact';
                         addNewLi.addEventListener('click', () => {
-                            displayElement.innerHTML = `<span class="italic text-gray-500">Enter new contact details manually.</span>`;
+                            const customerCode = selectedCustomerDetails.CODE;
+                            if (customerCode) {
+                                const url = `https://post4ex.github.io/postman/Clients.html?code=${encodeURIComponent(customerCode)}`;
+                                const popupFeatures = 'width=800,height=700,menubar=no,toolbar=no,location=no,resizable=yes,scrollbars=yes,status=no';
+                                window.open(url, 'AddNewClient', popupFeatures);
+                            } else {
+                                // Use a more user-friendly modal/message box in a real app
+                                alert('Please select a customer before adding a new contact.');
+                            }
                             resultsElement.classList.add('hidden');
                         });
                         resultsElement.appendChild(addNewLi);
@@ -1371,7 +1379,7 @@
                         resetForNextBooking();
                     } else { throw new Error(result.message); }
                 } catch (error) {
-                    console.error('Error posting data:', error);
+                    console.error('Error posting data:', error.message);
                     bookingMessage.textContent = `Booking failed: ${error.message}`;
                     bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
                 } finally {
