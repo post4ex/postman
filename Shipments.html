@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Style for table responsiveness */
+        .table-container {
+            overflow-x: auto;
+        }
+        .details-row {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Main Content Area -->
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-md">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold mb-4">Orders</h1>
+            </div>
+
+            <!-- Filter Section -->
+            <div id="filter-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-gray-50">
+                <div>
+                    <label for="filter-start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                    <input type="date" id="filter-start-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="filter-end-date" class="block text-sm font-medium text-gray-700">End Date</label>
+                    <input type="date" id="filter-end-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="filter-branch" class="block text-sm font-medium text-gray-700">Branch</label>
+                    <select id="filter-branch" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="filter-code" class="block text-sm font-medium text-gray-700">Code</label>
+                    <select id="filter-code" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="filter-carrier" class="block text-sm font-medium text-gray-700">Carrier</label>
+                    <select id="filter-carrier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="lg:col-span-5 flex justify-end items-center">
+                    <button id="reset-filters" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 text-sm">Reset Filters</button>
+                </div>
+            </div>
+
+            <p id="status-message" class="text-gray-600 mb-6 text-center">Loading order data...</p>
+
+            <!-- This is where content will be displayed -->
+            <div id="orders-container" class="mt-2 table-container">
+                <!-- Data will be rendered here as a table -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const container = document.getElementById('orders-container');
+        const statusMessage = document.getElementById('status-message');
+        const dataUrl = 'https://raw.githubusercontent.com/post4ex/postman/refs/heads/main/data.js';
+        let originalOrders = []; // To store the master list of orders
+        let b2b2cDataMap = new Map(); // To store B2B2C details for lookup
+        let productDataMap = new Map();
+        let multiboxDataMap = new Map();
+        let trackDataMap = new Map();
+        let logsDataMap = new Map();
+        let uploadsDataMap = new Map();
+
+        // Function to fetch and process data
+        async function loadData() {
+            try {
+                const response = await fetch(dataUrl);
+                if (!response.ok) throw new Error(`Network response was not ok: ${response.status}`);
+
+                const fileContent = await response.text();
+                const getData = new Function(`${fileContent} return downloadedData;`);
+                const result = getData();
+                
+                originalOrders = result.data.ORDERS;
+                if (!Array.isArray(originalOrders)) throw new Error("Order data is not valid.");
+                
+                // Sort orders by date, newest first
+                originalOrders.sort((a, b) => new Date(b.ORDER_DATE) - new Date(a.ORDER_DATE));
+                
+                // Create a map of B2B2C clients for easy lookup by UID
+                if (result.data.B2B2C && Array.isArray(result.data.B2B2C)) {
+                    result.data.B2B2C.forEach(client => {
+                        b2b2cDataMap.set(client.UID, client);
+                    });
+                }
+                
+                // Create maps for Product and MultiBox data
+                if (result.data.PRODUCT && Array.isArray(result.data.PRODUCT)) {
+                    result.data.PRODUCT.forEach(product => {
+                        const ref = product.RERERANCE; // Note the typo in source data
+                        if (!productDataMap.has(ref)) {
+                            productDataMap.set(ref, []);
+                        }
+                        productDataMap.get(ref).push(product);
+                    });
+                }
+
+                if (result.data.MULTIBOX && Array.isArray(result.data.MULTIBOX)) {
+                    result.data.MULTIBOX.forEach(box => {
+                        const ref = box.REFERANCE;
+                        if (!multiboxDataMap.has(ref)) {
+                            multiboxDataMap.set(ref, []);
+                        }
+                        multiboxDataMap.get(ref).push(box);
+                    });
+                }
+
+                // Create map for Tracking data
+                if (result.data.TRACK && Array.isArray(result.data.TRACK)) {
+                    result.data.TRACK.forEach(trackInfo => {
+                        trackDataMap.set(trackInfo.REFERANCE, trackInfo);
+                    });
+                }
+                
+                // Create map for Logs data
+                if (result.data.LOGS && Array.isArray(result.data.LOGS)) {
+                    result.data.LOGS.forEach(log => {
+                        const ref = log.REFERANCE;
+                        if (!logsDataMap.has(ref)) {
+                            logsDataMap.set(ref, []);
+                        }
+                        logsDataMap.get(ref).push(log);
+                    });
+                     // Sort logs by date for each reference
+                    for (const logs of logsDataMap.values()) {
+                        logs.sort((a, b) => new Date(b.SCAN_DATE) - new Date(a.SCAN_DATE));
+                    }
+                }
+                
+                // Create map for Uploads data
+                if (result.data.UPLOADS && Array.isArray(result.data.UPLOADS)) {
+                    result.data.UPLOADS.forEach(upload => {
+                        const awb = upload.AWB_NUMBER;
+                        if (awb) {
+                            const key = `awb-${awb}`;
+                            if (!uploadsDataMap.has(key)) uploadsDataMap.set(key, []);
+                            uploadsDataMap.get(key).push(upload);
+                        }
+                        const ref = upload.REF_NUMBER;
+                        if (ref) {
+                             const key = `ref-${ref}`;
+                            if (!uploadsDataMap.has(key)) uploadsDataMap.set(key, []);
+                            uploadsDataMap.get(key).push(upload);
+                        }
+                    });
+                }
+
+
+                populateFilters(originalOrders);
+                setupFilterListeners();
+                applyFilters();
+
+            } catch (error) {
+                statusMessage.textContent = `Failed to load data. Please check data source and format.`;
+                console.error("Fetch error:", error);
+            }
+        }
+
+        function populateFilters(orders) {
+            const branchFilter = document.getElementById('filter-branch');
+            const codeFilter = document.getElementById('filter-code');
+            const carrierFilter = document.getElementById('filter-carrier');
+
+            const branches = [...new Set(orders.map(o => o.BRANCH).filter(Boolean))];
+            const codes = [...new Set(orders.map(o => o.CODE).filter(Boolean))];
+            const carriers = [...new Set(orders.map(o => o.CARRIER).filter(Boolean))];
+
+            branches.sort().forEach(val => branchFilter.add(new Option(val, val)));
+            codes.sort().forEach(val => codeFilter.add(new Option(val, val)));
+            carriers.sort().forEach(val => carrierFilter.add(new Option(val, val)));
+        }
+
+        function setupFilterListeners() {
+            document.getElementById('filter-start-date').addEventListener('change', applyFilters);
+            document.getElementById('filter-end-date').addEventListener('change', applyFilters);
+            document.getElementById('filter-branch').addEventListener('change', applyFilters);
+            document.getElementById('filter-code').addEventListener('change', applyFilters);
+            document.getElementById('filter-carrier').addEventListener('change', applyFilters);
+            document.getElementById('reset-filters').addEventListener('click', () => {
+                document.getElementById('filter-start-date').value = '';
+                document.getElementById('filter-end-date').value = '';
+                document.getElementById('filter-branch').value = '';
+                document.getElementById('filter-code').value = '';
+                document.getElementById('filter-carrier').value = '';
+                applyFilters();
+            });
+        }
+        
+        function applyFilters() {
+            let startDate = document.getElementById('filter-start-date').value;
+            let endDate = document.getElementById('filter-end-date').value;
+            const branch = document.getElementById('filter-branch').value;
+            const code = document.getElementById('filter-code').value;
+            const carrier = document.getElementById('filter-carrier').value;
+
+            const isAnyFilterApplied = startDate || endDate || branch || code || carrier;
+            let statusText = `Displaying {count} of ${originalOrders.length} order records.`;
+
+            if (!isAnyFilterApplied) {
+                // If no filters are manually applied, set a default date range
+                const today = new Date();
+                const currentDay = today.getDate();
+                let firstDay;
+
+                if (currentDay <= 10) {
+                    // If in the first 10 days, include the previous month
+                    firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                } else {
+                    // Otherwise, just include the current month
+                    firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                }
+                
+                // Use the calculated start date for the default filter
+                startDate = firstDay.toISOString().split('T')[0];
+                statusText = `Displaying {count} of ${originalOrders.length} records (default view).`;
+            }
+
+            const filteredOrders = originalOrders.filter(order => {
+                const orderDate = new Date(order.ORDER_DATE);
+                const startDateMatch = !startDate || orderDate >= new Date(startDate);
+                const endDateMatch = !endDate || orderDate < new Date(new Date(endDate).setDate(new Date(endDate).getDate() + 1));
+                const branchMatch = !branch || order.BRANCH === branch;
+                const codeMatch = !code || order.CODE === code;
+                const carrierMatch = !carrier || order.CARRIER === carrier;
+
+                return startDateMatch && endDateMatch && branchMatch && codeMatch && carrierMatch;
+            });
+
+            renderOrdersTable(filteredOrders);
+            statusMessage.textContent = statusText.replace('{count}', filteredOrders.length);
+        }
+        
+        function generateShipmentDetailsHtml(order, trackMap, logsMap) {
+            const shipmentDetails = [
+                { label: 'Carrier', value: order.CARRIER }, { label: 'TAT', value: order.TAT },
+                { label: 'Zone', value: order.ZONE }, { label: 'Mode', value: order.MODE },
+                { label: 'Global', value: order.GLOBAL }, { label: 'COD', value: order.COD },
+                { label: 'To-Pay', value: order.TOPAY }, { label: 'FOV', value: order.FOV },
+                { label: 'Weight (kg)', value: order.WEIGHT }, { label: 'Chargeable Wt (kg)', value: order.CHG_WT },
+                { label: 'Pieces', value: order.PIECS }, { label: 'Declared Value', value: order.VALUE },
+            ];
+
+            let html = `<div class="p-4">`;
+            
+            // Shipment Details Grid
+            html += `<h4 class="font-semibold text-md mb-2 text-gray-700">Shipment Details</h4><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-sm mb-6">`;
+            shipmentDetails.forEach(detail => {
+                if (detail.value || detail.value === 0) {
+                    html += `
+                        <div class="p-2 bg-gray-100 rounded-md">
+                            <div class="text-gray-500 text-xs">${detail.label}</div>
+                            <div class="font-semibold text-gray-800">${detail.value}</div>
+                        </div>
+                    `;
+                }
+            });
+            html += `</div>`;
+
+            // Tracking Summary
+            const trackInfo = trackMap.get(order.REFERANCE);
+            if (trackInfo) {
+                 const manifestDate = trackInfo['Manifest Date'] ? new Date(trackInfo['Manifest Date']).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+                 const statusDate = trackInfo.DATE ? new Date(trackInfo.DATE).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+                 html += `<hr class="my-4"><h4 class="font-semibold text-md mb-2 text-gray-700">Tracking Summary</h4>`;
+                 html += `<div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm mb-6">
+                            <div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">Current Status</div><div class="font-semibold text-gray-800">${trackInfo.STATUS}</div></div>
+                            <div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">Status Date</div><div class="font-semibold text-gray-800">${statusDate}</div></div>
+                            <div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">Manifest Date</div><div class="font-semibold text-gray-800">${manifestDate}</div></div>
+                         </div>`;
+            }
+
+            // Tracking History
+            const logs = logsMap.get(order.REFERANCE) || [];
+            if (logs.length > 0) {
+                 html += `<hr class="my-4"><h4 class="font-semibold text-md mb-2 text-gray-700">Tracking History</h4>`;
+                 
+                 // Mobile View: Timeline
+                 html += `<div class="relative pl-6 border-l-2 border-gray-200 text-sm sm:hidden">`;
+                 logs.forEach(log => {
+                    const scanDate = new Date(log.SCAN_DATE).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    html += `
+                        <div class="mb-4">
+                           <div class="absolute w-4 h-4 bg-blue-500 rounded-full -left-2.5 mt-1 border-4 border-white"></div>
+                           <p class="font-semibold text-gray-800">${log.SCAN_STATUS}</p>
+                           <p class="text-gray-600">${log.SCAN_LOCATION}</p>
+                           <time class="text-xs text-gray-400">${scanDate}</time>
+                        </div>
+                    `;
+                 });
+                 html += `</div>`;
+
+                 // Desktop View: Table
+                 html += `<div class="hidden sm:block">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-2 py-2 text-left font-medium text-gray-600">Date & Time</th>
+                                        <th class="px-2 py-2 text-left font-medium text-gray-600">Status</th>
+                                        <th class="px-2 py-2 text-left font-medium text-gray-600">Location</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">`;
+                logs.forEach(log => {
+                    const scanDate = new Date(log.SCAN_DATE).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    html += `
+                        <tr>
+                            <td class="px-2 py-2 whitespace-nowrap text-gray-500">${scanDate}</td>
+                            <td class="px-2 py-2 font-medium text-gray-800">${log.SCAN_STATUS}</td>
+                            <td class="px-2 py-2 text-gray-500">${log.SCAN_LOCATION}</td>
+                        </tr>`;
+                });
+                html += `</tbody></table></div>`;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function generateChargesAndInvoiceHtml(order) {
+             const charges = [
+                { label: 'Freight', value: order.FRIGHT }, { label: 'Fuel Surcharge', value: order.FUEL_CHG },
+                { label: 'COD Charge', value: order.COD_CHG }, { label: 'To-Pay Charge', value: order.TOPAY_CHG },
+                { label: 'FOV Charge', value: order.FOV_CHG }, { label: 'E-Way Bill Charge', value: order.EWAY_CHG },
+                { label: 'AWB Charge', value: order.AWB_CHG }, { label: 'Packing Charge', value: order.PACK_CHG },
+                { label: 'Delivery Charge', value: order.DEV_CHG }, { label: 'Taxable Amount', value: order.TAXABLE, isBold: true },
+                { label: 'SGST', value: order.SGST }, { label: 'CGST', value: order.CGST },
+                { label: 'IGST', value: order.IGST }, { label: 'Grand Total', value: order.TOTAL, isBold: true },
+            ];
+
+            const invoiceDate = new Date(order.INVOICE_DATE).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+
+            let html = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+                    <div>
+                        <h4 class="font-semibold text-md mb-2 text-gray-700">Invoice Details</h4>
+                        <div class="divide-y divide-gray-200 text-sm">
+                            <div class="py-2 flex justify-between"><span>Invoice ID:</span><span class="font-medium">${order.INVOICE_ID}</span></div>
+                            <div class="py-2 flex justify-between"><span>Invoice Date:</span><span class="font-medium">${invoiceDate}</span></div>
+                            <div class="py-2 flex justify-between"><span>Invoice #:</span><span class="font-medium">${order.INV_NUMBER}</span></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-md mb-2 text-gray-700">Charges Breakup</h4>
+                        <div class="divide-y divide-gray-200 text-sm">
+            `;
+            
+            charges.forEach(charge => {
+                if (typeof charge.value === 'number' && charge.value !== 0) {
+                    html += `<div class="py-2 flex justify-between ${charge.isBold ? 'font-bold' : ''}"><span>${charge.label}:</span><span>₹${charge.value.toFixed(2)}</span></div>`;
+                }
+            });
+
+            html += `</div></div></div>`;
+            return html;
+        }
+        
+        function generatePartyDetailsHtml(uid, partyType, dataMap) {
+            const client = dataMap.get(uid);
+            if (!client) {
+                return `<div class="p-4 text-sm text-gray-500">${partyType} details not found for UID: ${uid}.</div>`;
+            }
+            const details = [
+                { label: 'Name', value: client.NAME },
+                { label: 'Address', value: client.ADDRESS },
+                { label: 'City', value: client.CITY },
+                { label: 'Pincode', value: client.PINCODE },
+                { label: 'State', value: client.STATE },
+                { label: 'Mobile', value: client.MOBILE },
+            ];
+            let html = `<div class="p-4"><h4 class="font-semibold text-md mb-2 text-gray-700">${partyType} Details</h4><div class="divide-y divide-gray-200 text-sm">`;
+            details.forEach(detail => {
+                if(detail.value) {
+                    html += `<div class="py-2 flex justify-between"><span>${detail.label}:</span><span class="font-medium text-right">${detail.value}</span></div>`;
+                }
+            });
+            html += `</div></div>`;
+            return html;
+        }
+
+        function generateProductAndBoxDetailsHtml(order, productMap, boxMap, uploadsMap) {
+            const products = productMap.get(order.REFERANCE) || [];
+            const boxes = boxMap.get(order.REFERANCE) || [];
+            
+            const uploadsByAwb = uploadsMap.get(`awb-${order.AWB_NUMBER}`) || [];
+            const uploadsByRef = uploadsMap.get(`ref-${order.REFERANCE}`) || [];
+            const combinedUploads = [...uploadsByAwb, ...uploadsByRef];
+            const uniqueUploads = Array.from(new Set(combinedUploads.map(u => JSON.stringify(u)))).map(s => JSON.parse(s));
+
+
+            if (products.length === 0 && boxes.length === 0 && uniqueUploads.length === 0) {
+                return `<div class="p-4 text-sm text-gray-500">No product, box, or upload details available for this reference.</div>`;
+            }
+
+            let html = `<div class="p-4">`;
+
+            if (products.length > 0 || boxes.length > 0) {
+                 html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
+                // Product Details Table
+                if (products.length > 0) {
+                    html += `
+                        <div>
+                            <h4 class="font-semibold text-md mb-2 text-gray-700">Product Details</h4>
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-2 py-1 text-left font-medium">Product</th>
+                                        <th class="px-2 py-1 text-left font-medium">Doc #</th>
+                                        <th class="px-2 py-1 text-right font-medium">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    products.forEach(p => {
+                        html += `
+                            <tr class="border-b">
+                                <td class="px-2 py-1">${p.PRODUCT}</td>
+                                <td class="px-2 py-1">${p.DOC_NUMBER}</td>
+                                <td class="px-2 py-1 text-right">${p.AMOUNT.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `</tbody></table></div>`;
+                }
+
+                // MultiBox Details Table
+                if (boxes.length > 0) {
+                    html += `
+                        <div>
+                            <h4 class="font-semibold text-md mb-2 text-gray-700">MultiBox Details</h4>
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-2 py-1 text-left font-medium">Wt.</th>
+                                        <th class="px-2 py-1 text-left font-medium">L</th>
+                                        <th class="px-2 py-1 text-left font-medium">B</th>
+                                        <th class="px-2 py-1 text-left font-medium">H</th>
+                                        <th class="px-2 py-1 text-right font-medium">Vol. Wt.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    boxes.forEach(b => {
+                        html += `
+                            <tr class="border-b">
+                                <td class="px-2 py-1">${b.WEIGHT}</td>
+                                <td class="px-2 py-1">${b.LENGTH}</td>
+                                <td class="px-2 py-1">${b.BREADTH}</td>
+                                <td class="px-2 py-1">${b.HIGHT}</td>
+                                <td class="px-2 py-1 text-right">${b.VOLUME.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `</tbody></table></div>`;
+                }
+                html += `</div>`;
+            }
+
+            // Uploads Table
+            if (uniqueUploads.length > 0) {
+                html += `<hr class="my-4"><h4 class="font-semibold text-md mb-2 text-gray-700">Uploads</h4>`;
+                html += `
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-2 py-2 text-left font-medium text-gray-600">Type</th>
+                                <th class="px-2 py-2 text-left font-medium text-gray-600">Date & Time</th>
+                                <th class="px-2 py-2 text-left font-medium text-gray-600">Doc #</th>
+                                <th class="px-2 py-2 text-center font-medium text-gray-600">File</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                `;
+                uniqueUploads.forEach(upload => {
+                    const uploadDate = new Date(upload.DATE_TIME).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                    html += `
+                        <tr class="border-b">
+                            <td class="px-2 py-2">${upload.UPLOAD_TYPE}</td>
+                            <td class="px-2 py-2">${uploadDate}</td>
+                            <td class="px-2 py-2">${upload.DOC_NUMBER || 'N/A'}</td>
+                            <td class="px-2 py-2 text-center">
+                                <a href="${upload.FILE_URL}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table>`;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function renderOrdersTable(orders) {
+            if (orders.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-gray-500">No orders match the current filters.</div>`;
+                return;
+            }
+
+            let tableHtml = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference #</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AWB Number</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consignor</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consignee</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+            `;
+            
+            orders.forEach((order, index) => {
+                const total = order.TOTAL ? `₹${Number(order.TOTAL).toFixed(2)}` : 'N/A';
+                const orderDate = new Date(order.ORDER_DATE).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'});
+
+                // Get tracking status and delivery date info
+                const trackInfo = trackDataMap.get(order.REFERANCE);
+                let statusHtml = '';
+                let deliveryDateHtml = '';
+                
+                const formatDate = (date) => date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                if (trackInfo && trackInfo.STATUS && trackInfo.STATUS.toUpperCase() === 'DELIVERED') {
+                    // Actual Delivery Date
+                    const deliveryDate = new Date(trackInfo.DATE);
+                    deliveryDateHtml = `<div class="text-xs text-green-600 font-semibold">Delivered on: ${formatDate(deliveryDate)}</div>`;
+                } else {
+                    // Estimated Delivery Date Logic
+                    const tatDays = parseInt(order.TAT, 10);
+                    if (!isNaN(tatDays) && tatDays > 0) {
+                        const orderDateObj = new Date(order.ORDER_DATE);
+                        let estimatedDeliveryDate = new Date(orderDateObj.setDate(orderDateObj.getDate() + tatDays));
+                        
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0); // Normalize today to the start of the day
+
+                        if (estimatedDeliveryDate < today) {
+                            // If Est. date is in the past, show next day's date
+                            const tomorrow = new Date();
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+                            deliveryDateHtml = `<div class="text-xs text-red-500">Est. Delivery: ${formatDate(tomorrow)}</div>`;
+                        } else {
+                            deliveryDateHtml = `<div class="text-xs text-gray-400">Est. Delivery: ${formatDate(estimatedDeliveryDate)}</div>`;
+                        }
+                    } else {
+                        deliveryDateHtml = `<div class="text-xs text-gray-400">Est. Delivery: N/A</div>`;
+                    }
+                }
+
+                if (trackInfo && trackInfo.STATUS) {
+                    let statusColor = 'text-gray-500';
+                    if (trackInfo.STATUS.toUpperCase() === 'DELIVERED') statusColor = 'text-green-600';
+                    else if (trackInfo.STATUS.toUpperCase().includes('TRANSIT')) statusColor = 'text-blue-600';
+                    else if (trackInfo.STATUS.toUpperCase() === 'UNDELIVERED') statusColor = 'text-red-600';
+                    
+                    statusHtml = `<div class="text-xs font-semibold ${statusColor}">${trackInfo.STATUS}</div>`;
+                }
+
+
+                // Get the name to display instead of the UID
+                const consignorDetails = b2b2cDataMap.get(order.CONSIGNOR);
+                const consignorNameToDisplay = consignorDetails ? consignorDetails.NAME : order.CONSIGNOR;
+                const consigneeDetails = b2b2cDataMap.get(order.CONSIGNEE);
+                const consigneeNameToDisplay = consigneeDetails ? consigneeDetails.NAME : order.CONSIGNEE;
+
+                tableHtml += `
+                    <tr class="order-row">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-left">
+                            <div class="flex items-center">
+                                <div class="flex flex-col items-center mr-3 shrink-0">
+                                    <button data-toggle-action="expand" data-toggle-index="${index}" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400">
+                                        <svg class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                                    </button>
+                                    <button data-toggle-action="collapse" data-toggle-index="${index}" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400">
+                                         <svg class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
+                                    </button>
+                                </div>
+                                <div>
+                                    <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="product-details-${index}">
+                                        <div>${order.REFERANCE || 'N/A'}</div>
+                                    </button>
+                                    ${statusHtml}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                           <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="shipment-details-${index}">
+                                <div>${order.AWB_NUMBER || 'N/A'}</div>
+                                <div class="text-xs text-gray-400">${order.CARRIER || ''}</div>
+                           </button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div>${orderDate}</div>
+                            ${deliveryDateHtml}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="consignor-details-${index}">
+                                <div>${consignorNameToDisplay || 'N/A'}</div>
+                                <div class="text-xs text-gray-400">${order.ORIGIN_CITY || ''}</div>
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                             <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="consignee-details-${index}">
+                                <div>${consigneeNameToDisplay || 'N/A'}</div>
+                                <div class="text-xs text-gray-400">${order.DEST_CITY || ''}</div>
+                            </button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-semibold">
+                           <button class="text-blue-600 hover:underline focus:outline-none" data-target-id="charges-details-${index}">
+                                ${total}
+                           </button>
+                        </td>
+                    </tr>
+                    <tr id="product-details-${index}" class="hidden details-row bg-gray-50">
+                        <td colspan="6" class="p-0 border-l-4 border-red-400">
+                           ${generateProductAndBoxDetailsHtml(order, productDataMap, multiboxDataMap, uploadsDataMap)}
+                        </td>
+                    </tr>
+                    <tr id="consignor-details-${index}" class="hidden details-row bg-gray-50">
+                        <td colspan="6" class="p-0 border-l-4 border-purple-400">
+                           ${generatePartyDetailsHtml(order.CONSIGNOR, 'Consignor', b2b2cDataMap)}
+                        </td>
+                    </tr>
+                    <tr id="consignee-details-${index}" class="hidden details-row bg-gray-50">
+                        <td colspan="6" class="p-0 border-l-4 border-yellow-400">
+                           ${generatePartyDetailsHtml(order.CONSIGNEE, 'Consignee', b2b2cDataMap)}
+                        </td>
+                    </tr>
+                    <tr id="shipment-details-${index}" class="hidden details-row bg-gray-50">
+                        <td colspan="6" class="p-0 border-l-4 border-blue-400">
+                           ${generateShipmentDetailsHtml(order, trackDataMap, logsDataMap)}
+                        </td>
+                    </tr>
+                    <tr id="charges-details-${index}" class="hidden details-row bg-gray-50">
+                        <td colspan="6" class="p-0 border-l-4 border-green-400">
+                           ${generateChargesAndInvoiceHtml(order)}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `</tbody></table>`;
+            container.innerHTML = tableHtml;
+        }
+
+        // --- Event Listener for details ---
+        container.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-target-id]');
+            const toggleButton = event.target.closest('[data-toggle-action]');
+
+            if (button) {
+                const targetId = button.dataset.targetId;
+                const detailsRow = document.getElementById(targetId);
+                if (detailsRow) {
+                    detailsRow.classList.toggle('hidden');
+                }
+            } else if (toggleButton) {
+                const index = toggleButton.dataset.toggleIndex;
+                const action = toggleButton.dataset.toggleAction;
+
+                const detailRowIds = [
+                    `product-details-${index}`,
+                    `consignor-details-${index}`,
+                    `consignee-details-${index}`,
+                    `shipment-details-${index}`,
+                    `charges-details-${index}`
+                ];
+
+                const shouldShow = action === 'expand';
+
+                detailRowIds.forEach(id => {
+                    const row = document.getElementById(id);
+                    if (row) {
+                        if (shouldShow) {
+                            row.classList.remove('hidden');
+                        } else {
+                            row.classList.add('hidden');
+                        }
+                    }
+                });
+            }
+        });
+
+        // --- Event Listener for Modal ---
+        document.addEventListener('DOMContentLoaded', () => {
+             loadData();
+        });
+    </script>
+
+</body>
+</html>
+
