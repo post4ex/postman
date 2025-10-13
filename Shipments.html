@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orders</title>
+    <title>Shipments - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -25,7 +25,7 @@
     <div class="container mx-auto p-4 sm:p-6 lg:p-8">
         <div class="bg-white p-6 sm:p-8 rounded-xl shadow-md">
             <div class="text-center">
-                <h1 class="text-3xl font-bold mb-4">Orders</h1>
+                <h1 class="text-3xl font-bold mb-4">All Adventures</h1>
             </div>
 
             <!-- Filter Section -->
@@ -486,7 +486,7 @@
                                 <th class="px-2 py-2 text-left font-medium text-gray-600">Type</th>
                                 <th class="px-2 py-2 text-left font-medium text-gray-600">Date & Time</th>
                                 <th class="px-2 py-2 text-left font-medium text-gray-600">Doc #</th>
-                                <th class="px-2 py-2 text-center font-medium text-gray-600">File</th>
+                                <th class="px-2 py-2 text-center font-medium text-gray-600">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
@@ -499,9 +499,17 @@
                             <td class="px-2 py-2">${uploadDate}</td>
                             <td class="px-2 py-2">${upload.DOC_NUMBER || 'N/A'}</td>
                             <td class="px-2 py-2 text-center">
-                                <a href="${upload.FILE_URL}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
-                                    View
-                                </a>
+                                <div class="flex justify-center space-x-2">
+                                    <button onclick="shareFile('${upload.FILE_URL}', 'upload-${upload.DOC_NUMBER || upload.AWB_NUMBER}')" title="Share on WhatsApp" class="p-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.433-9.89-9.889-9.89-5.452 0-9.887 4.428-9.888 9.891 0 2.095.59 4.108 1.713 5.86l.129.198-1.016 3.628 3.742-1.002.18.112z"/></svg>
+                                    </button>
+                                    <a href="${upload.FILE_URL}" download title="Download File" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    </a>
+                                    <a href="${upload.FILE_URL}" target="_blank" rel="noopener noreferrer" title="Open in New Tab" class="p-2 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     `;
@@ -668,6 +676,44 @@
             container.innerHTML = tableHtml;
         }
 
+        // --- Share Functions ---
+        function shareLinkFallback(url) {
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent('Check out this file: ' + url)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        async function shareFile(url, fileName = 'file') {
+            if (navigator.share) {
+                try {
+                    // Using a CORS proxy for Google Drive links
+                    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                    const response = await fetch(proxyUrl + url);
+                    if (!response.ok) {
+                        shareLinkFallback(url);
+                        return;
+                    }
+                    
+                    const blob = await response.blob();
+                    const mimeType = blob.type;
+                    const extension = mimeType.split('/')[1] || 'bin';
+                    const newFileName = `${fileName}.${extension}`;
+
+                    const file = new File([blob], newFileName, { type: mimeType });
+
+                    await navigator.share({
+                        title: 'Shared Document',
+                        text: 'Here is the document you requested.',
+                        files: [file],
+                    });
+                } catch (error) {
+                    console.error('Error sharing file:', error);
+                    shareLinkFallback(url);
+                }
+            } else {
+                shareLinkFallback(url);
+            }
+        }
+
         // --- Event Listener for details ---
         container.addEventListener('click', (event) => {
             const button = event.target.closest('[data-target-id]');
@@ -706,7 +752,6 @@
             }
         });
 
-        // --- Event Listener for Modal ---
         document.addEventListener('DOMContentLoaded', () => {
              loadData();
         });
