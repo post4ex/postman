@@ -6,10 +6,8 @@
     <title>Shipments - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
         /* Style for table responsiveness */
         .table-container {
             overflow-x: auto;
@@ -19,804 +17,487 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <div id="header-placeholder"></div>
 
-    <!-- Main Content Area -->
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-md">
-            <div class="text-center">
-                <h1 class="text-3xl font-bold mb-4">All Adventures</h1>
-            </div>
-
-            <!-- Filter Section -->
-            <div id="filter-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-gray-50">
-                <div>
-                    <label for="filter-start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
-                    <input type="date" id="filter-start-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+    <main class="flex-grow">
+        <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+            <div class="card p-6 sm:p-8">
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold mb-4 text-gray-800">All Shipments</h1>
                 </div>
-                <div>
-                    <label for="filter-end-date" class="block text-sm font-medium text-gray-700">End Date</label>
-                    <input type="date" id="filter-end-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="filter-branch" class="block text-sm font-medium text-gray-700">Branch</label>
-                    <select id="filter-branch" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        <option value="">All</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-code" class="block text-sm font-medium text-gray-700">Code</label>
-                    <select id="filter-code" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        <option value="">All</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-carrier" class="block text-sm font-medium text-gray-700">Carrier</label>
-                    <select id="filter-carrier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        <option value="">All</option>
-                    </select>
-                </div>
-                <div class="lg:col-span-5 flex justify-end items-center">
-                    <button id="reset-filters" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 text-sm">Reset Filters</button>
-                </div>
-            </div>
 
-            <p id="status-message" class="text-gray-600 mb-6 text-center">Loading order data...</p>
-
-            <!-- This is where content will be displayed -->
-            <div id="orders-container" class="mt-2 table-container">
-                <!-- Data will be rendered here as a table -->
-            </div>
-        </div>
-    </div>
-    
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            // Your Firebase config object
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-
-        const container = document.getElementById('orders-container');
-        const statusMessage = document.getElementById('status-message');
-        
-        let originalOrders = []; // To store the master list of orders
-        let b2b2cDataMap = new Map(); // To store B2B2C details for lookup
-        let productDataMap = new Map();
-        let multiboxDataMap = new Map();
-        let trackDataMap = new Map();
-        let logsDataMap = new Map();
-        let uploadsDataMap = new Map();
-
-        // Caching mechanism
-        const CACHE_KEY = 'shipmentsData';
-        const CACHE_EXPIRATION = 60 * 60 * 1000; // 1 hour
-
-        async function getCachedData() {
-            const cachedData = localStorage.getItem(CACHE_KEY);
-            if (cachedData) {
-                const { timestamp, data } = JSON.parse(cachedData);
-                if (Date.now() - timestamp < CACHE_EXPIRATION) {
-                    return data;
-                }
-            }
-            return null;
-        }
-
-        function setCachedData(data) {
-            const cacheEntry = {
-                timestamp: Date.now(),
-                data: data
-            };
-            localStorage.setItem(CACHE_KEY, JSON.stringify(cacheEntry));
-        }
-
-
-        // Function to fetch and process data from Firestore
-        async function loadData(userId) {
-            try {
-
-                let result;
-                const cachedData = await getCachedData();
-
-                if (cachedData) {
-                    result = cachedData;
-                } else {
-                    const docRef = doc(db, "shipments", "data");
-                    const docSnap = await getDoc(docRef);
-
-                    if (docSnap.exists()) {
-                        result = docSnap.data();
-                        setCachedData(result);
-                    } else {
-                        throw new Error("No such document!");
-                    }
-                }
-                
-                originalOrders = result.data.ORDERS;
-                if (!Array.isArray(originalOrders)) throw new Error("Order data is not valid.");
-                
-                // Sort orders by date, newest first
-                originalOrders.sort((a, b) => new Date(b.ORDER_DATE) - new Date(a.ORDER_DATE));
-                
-                // Create a map of B2B2C clients for easy lookup by UID
-                if (result.data.B2B2C && Array.isArray(result.data.B2B2C)) {
-                    result.data.B2B2C.forEach(client => {
-                        b2b2cDataMap.set(client.UID, client);
-                    });
-                }
-                
-                // Create maps for Product and MultiBox data
-                if (result.data.PRODUCT && Array.isArray(result.data.PRODUCT)) {
-                    result.data.PRODUCT.forEach(product => {
-                        const ref = product.RERERANCE; // Note the typo in source data
-                        if (!productDataMap.has(ref)) {
-                            productDataMap.set(ref, []);
-                        }
-                        productDataMap.get(ref).push(product);
-                    });
-                }
-
-                if (result.data.MULTIBOX && Array.isArray(result.data.MULTIBOX)) {
-                    result.data.MULTIBOX.forEach(box => {
-                        const ref = box.REFERANCE;
-                        if (!multiboxDataMap.has(ref)) {
-                            multiboxDataMap.set(ref, []);
-                        }
-                        multiboxDataMap.get(ref).push(box);
-                    });
-                }
-
-                // Create map for Tracking data
-                if (result.data.TRACK && Array.isArray(result.data.TRACK)) {
-                    result.data.TRACK.forEach(trackInfo => {
-                        trackDataMap.set(trackInfo.REFERANCE, trackInfo);
-                    });
-                }
-                
-                // Create map for Logs data
-                if (result.data.LOGS && Array.isArray(result.data.LOGS)) {
-                    result.data.LOGS.forEach(log => {
-                        const ref = log.REFERANCE;
-                        if (!logsDataMap.has(ref)) {
-                            logsDataMap.set(ref, []);
-                        }
-                        logsDataMap.get(ref).push(log);
-                    });
-                     // Sort logs by date for each reference
-                    for (const logs of logsDataMap.values()) {
-                        logs.sort((a, b) => new Date(b.SCAN_DATE) - new Date(a.SCAN_DATE));
-                    }
-                }
-                
-                // Create map for Uploads data
-                if (result.data.UPLOADS && Array.isArray(result.data.UPLOADS)) {
-                    result.data.UPLOADS.forEach(upload => {
-                        const awb = upload.AWB_NUMBER;
-                        if (awb) {
-                            const key = `awb-${awb}`;
-                            if (!uploadsDataMap.has(key)) uploadsDataMap.set(key, []);
-                            uploadsDataMap.get(key).push(upload);
-                        }
-                        const ref = upload.REF_NUMBER;
-                        if (ref) {
-                             const key = `ref-${ref}`;
-                            if (!uploadsDataMap.has(key)) uploadsDataMap.set(key, []);
-                            uploadsDataMap.get(key).push(upload);
-                        }
-                    });
-                }
-
-
-                populateFilters(originalOrders);
-                setupFilterListeners();
-                applyFilters();
-
-            } catch (error) {
-                statusMessage.textContent = `Failed to load data. Please check data source and format.`;
-                console.error("Fetch error:", error);
-            }
-        }
-
-        function populateFilters(orders) {
-            const branchFilter = document.getElementById('filter-branch');
-            const codeFilter = document.getElementById('filter-code');
-            const carrierFilter = document.getElementById('filter-carrier');
-
-            const branches = [...new Set(orders.map(o => o.BRANCH).filter(Boolean))];
-            const codes = [...new Set(orders.map(o => o.CODE).filter(Boolean))];
-            const carriers = [...new Set(orders.map(o => o.CARRIER).filter(Boolean))];
-
-            branches.sort().forEach(val => branchFilter.add(new Option(val, val)));
-            codes.sort().forEach(val => codeFilter.add(new Option(val, val)));
-            carriers.sort().forEach(val => carrierFilter.add(new Option(val, val)));
-        }
-
-        function setupFilterListeners() {
-            document.getElementById('filter-start-date').addEventListener('change', applyFilters);
-            document.getElementById('filter-end-date').addEventListener('change', applyFilters);
-            document.getElementById('filter-branch').addEventListener('change', applyFilters);
-            document.getElementById('filter-code').addEventListener('change', applyFilters);
-            document.getElementById('filter-carrier').addEventListener('change', applyFilters);
-            document.getElementById('reset-filters').addEventListener('click', () => {
-                document.getElementById('filter-start-date').value = '';
-                document.getElementById('filter-end-date').value = '';
-                document.getElementById('filter-branch').value = '';
-                document.getElementById('filter-code').value = '';
-                document.getElementById('filter-carrier').value = '';
-                applyFilters();
-            });
-        }
-        
-        function applyFilters() {
-            let startDate = document.getElementById('filter-start-date').value;
-            let endDate = document.getElementById('filter-end-date').value;
-            const branch = document.getElementById('filter-branch').value;
-            const code = document.getElementById('filter-code').value;
-            const carrier = document.getElementById('filter-carrier').value;
-
-            const isAnyFilterApplied = startDate || endDate || branch || code || carrier;
-            let statusText = `Displaying {count} of ${originalOrders.length} order records.`;
-
-            if (!isAnyFilterApplied) {
-                // If no filters are manually applied, set a default date range
-                const today = new Date();
-                const currentDay = today.getDate();
-                let firstDay;
-
-                if (currentDay <= 10) {
-                    // If in the first 10 days, include the previous month
-                    firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                } else {
-                    // Otherwise, just include the current month
-                    firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-                }
-                
-                // Use the calculated start date for the default filter
-                startDate = firstDay.toISOString().split('T')[0];
-                statusText = `Displaying {count} of ${originalOrders.length} records (default view).`;
-            }
-
-            const filteredOrders = originalOrders.filter(order => {
-                const orderDate = new Date(order.ORDER_DATE);
-                const startDateMatch = !startDate || orderDate >= new Date(startDate);
-                const endDateMatch = !endDate || orderDate < new Date(new Date(endDate).setDate(new Date(endDate).getDate() + 1));
-                const branchMatch = !branch || order.BRANCH === branch;
-                const codeMatch = !code || order.CODE === code;
-                const carrierMatch = !carrier || order.CARRIER === carrier;
-
-                return startDateMatch && endDateMatch && branchMatch && codeMatch && carrierMatch;
-            });
-
-            renderOrdersTable(filteredOrders);
-            statusMessage.textContent = statusText.replace('{count}', filteredOrders.length);
-        }
-        
-        function generateTrackingDetailsHtml(order, trackMap, logsMap) {
-            const trackInfo = trackMap.get(order.REFERANCE);
-            const logs = logsMap.get(order.REFERANCE) || [];
-
-            if (!trackInfo && logs.length === 0) {
-                return `<div class="p-4 text-sm text-gray-500">No tracking information available for this reference.</div>`;
-            }
-
-            let html = `<div class="p-4">`;
-            // Tracking Summary
-            if (trackInfo) {
-                 const manifestDate = trackInfo['Manifest Date'] ? new Date(trackInfo['Manifest Date']).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
-                 const statusDate = trackInfo.DATE ? new Date(trackInfo.DATE).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
-                 html += `<h4 class="font-semibold text-md mb-2 text-gray-700">Tracking Summary</h4>`;
-                 html += `<div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm mb-6">
-                             <div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">Current Status</div><div class="font-semibold text-gray-800">${trackInfo.STATUS}</div></div>
-                             <div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">Status Date</div><div class="font-semibold text-gray-800">${statusDate}</div></div>
-                             <div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">Manifest Date</div><div class="font-semibold text-gray-800">${manifestDate}</div></div>
-                           </div>`;
-            }
-
-            // Tracking History
-            if (logs.length > 0) {
-                 if (trackInfo) html += `<hr class="my-4">`;
-                 html += `<h4 class="font-semibold text-md mb-2 text-gray-700">Tracking History</h4>`;
-                 
-                 // Mobile View: Timeline
-                 html += `<div class="relative pl-6 border-l-2 border-gray-200 text-sm sm:hidden">`;
-                 logs.forEach(log => {
-                   const scanDate = new Date(log.SCAN_DATE).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                   html += `
-                       <div class="mb-4">
-                           <div class="absolute w-4 h-4 bg-blue-500 rounded-full -left-2.5 mt-1 border-4 border-white"></div>
-                           <p class="font-semibold text-gray-800">${log.SCAN_STATUS}</p>
-                           <p class="text-gray-600">${log.SCAN_LOCATION}</p>
-                           <time class="text-xs text-gray-400">${scanDate}</time>
-                       </div>
-                   `;
-                 });
-                 html += `</div>`;
-
-                 // Desktop View: Table
-                 html += `<div class="hidden sm:block">
-                             <table class="min-w-full text-sm">
-                                 <thead class="bg-gray-100">
-                                     <tr>
-                                         <th class="px-2 py-2 text-left font-medium text-gray-600">Date & Time</th>
-                                         <th class="px-2 py-2 text-left font-medium text-gray-600">Status</th>
-                                         <th class="px-2 py-2 text-left font-medium text-gray-600">Location</th>
-                                     </tr>
-                                 </thead>
-                                 <tbody class="divide-y divide-gray-200">`;
-                 logs.forEach(log => {
-                     const scanDate = new Date(log.SCAN_DATE).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                     html += `
-                         <tr>
-                             <td class="px-2 py-2 whitespace-nowrap text-gray-500">${scanDate}</td>
-                             <td class="px-2 py-2 font-medium text-gray-800">${log.SCAN_STATUS}</td>
-                             <td class="px-2 py-2 text-gray-500">${log.SCAN_LOCATION}</td>
-                         </tr>`;
-                 });
-                 html += `</tbody></table></div>`;
-            }
-
-            html += `</div>`;
-            return html;
-        }
-
-        function generateShipmentDetailsHtml(order) {
-            const shipmentDetails = [
-                { label: 'Carrier', value: order.CARRIER }, { label: 'TAT', value: order.TAT },
-                { label: 'Zone', value: order.ZONE }, { label: 'Mode', value: order.MODE },
-                { label: 'Global', value: order.GLOBAL }, { label: 'COD', value: order.COD },
-                { label: 'To-Pay', value: order.TOPAY }, { label: 'FOV', value: order.FOV },
-                { label: 'Weight (kg)', value: order.WEIGHT }, { label: 'Chargeable Wt (kg)', value: order.CHG_WT },
-                { label: 'Pieces', value: order.PIECS }, { label: 'Declared Value', value: order.VALUE },
-            ];
-
-            let html = `<div class="p-4">`;
-            
-            // Shipment Details Grid
-            html += `<h4 class="font-semibold text-md mb-2 text-gray-700">Shipment Details</h4><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-sm mb-6">`;
-            shipmentDetails.forEach(detail => {
-                if (detail.value || detail.value === 0) {
-                    html += `
-                        <div class="p-2 bg-gray-100 rounded-md">
-                            <div class="text-gray-500 text-xs">${detail.label}</div>
-                            <div class="font-semibold text-gray-800">${detail.value}</div>
-                        </div>
-                    `;
-                }
-            });
-            html += `</div>`;
-            html += `</div>`;
-            return html;
-        }
-
-        function generatePartyDetailsHtml(uid, partyType, dataMap) {
-            const client = dataMap.get(uid);
-            if (!client) {
-                return `<div class="p-4 text-sm text-gray-500">${partyType} details not found for UID: ${uid}.</div>`;
-            }
-            const details = [
-                { label: 'Name', value: client.NAME },
-                { label: 'Address', value: client.ADDRESS },
-                { label: 'City', value: client.CITY },
-                { label: 'Pincode', value: client.PINCODE },
-                { label: 'State', value: client.STATE },
-                { label: 'Mobile', value: client.MOBILE },
-            ];
-            let html = `<div class="p-4"><h4 class="font-semibold text-md mb-2 text-gray-700">${partyType} Details</h4><div class="divide-y divide-gray-200 text-sm">`;
-            details.forEach(detail => {
-                if(detail.value) {
-                    html += `<div class="py-2 flex justify-between"><span>${detail.label}:</span><span class="font-medium text-right">${detail.value}</span></div>`;
-                }
-            });
-            html += `</div></div>`;
-            return html;
-        }
-
-        function generateProductAndBoxDetailsHtml(order, productMap, boxMap, uploadsMap) {
-            const products = productMap.get(order.REFERANCE) || [];
-            const boxes = boxMap.get(order.REFERANCE) || [];
-            
-            const uploadsByAwb = uploadsMap.get(`awb-${order.AWB_NUMBER}`) || [];
-            const uploadsByRef = uploadsMap.get(`ref-${order.REFERANCE}`) || [];
-            const combinedUploads = [...uploadsByAwb, ...uploadsByRef];
-            const uniqueUploads = Array.from(new Set(combinedUploads.map(u => JSON.stringify(u)))).map(s => JSON.parse(s));
-
-
-            let html = `<div class="p-4">`;
-
-            if (products.length > 0 || boxes.length > 0) {
-                 html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
-                // Product Details Table
-                if (products.length > 0) {
-                    html += `
-                        <div>
-                            <h4 class="font-semibold text-md mb-2 text-gray-700">Product Details</h4>
-                            <table class="min-w-full text-sm">
-                                <thead class="bg-gray-100">
-                                    <tr>
-                                        <th class="px-2 py-1 text-left font-medium">Product</th>
-                                        <th class="px-2 py-1 text-left font-medium">Doc #</th>
-                                        <th class="px-2 py-1 text-right font-medium">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    products.forEach(p => {
-                        html += `
-                            <tr class="border-b">
-                                <td class="px-2 py-1">${p.PRODUCT}</td>
-                                <td class="px-2 py-1">${p.DOC_NUMBER}</td>
-                                <td class="px-2 py-1 text-right">${p.AMOUNT.toFixed(2)}</td>
-                            </tr>
-                        `;
-                    });
-                    html += `</tbody></table></div>`;
-                }
-
-                // MultiBox Details Table
-                if (boxes.length > 0) {
-                    html += `
-                        <div>
-                            <h4 class="font-semibold text-md mb-2 text-gray-700">MultiBox Details</h4>
-                            <table class="min-w-full text-sm">
-                                <thead class="bg-gray-100">
-                                    <tr>
-                                        <th class="px-2 py-1 text-left font-medium">Wt.</th>
-                                        <th class="px-2 py-1 text-left font-medium">L</th>
-                                        <th class="px-2 py-1 text-left font-medium">B</th>
-                                        <th class="px-2 py-1 text-left font-medium">H</th>
-                                        <th class="px-2 py-1 text-right font-medium">Vol. Wt.</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    boxes.forEach(b => {
-                        html += `
-                            <tr class="border-b">
-                                <td class="px-2 py-1">${b.WEIGHT}</td>
-                                <td class="px-2 py-1">${b.LENGTH}</td>
-                                <td class="px-2 py-1">${b.BREADTH}</td>
-                                <td class="px-2 py-1">${b.HIGHT}</td>
-                                <td class="px-2 py-1 text-right">${b.VOLUME.toFixed(2)}</td>
-                            </tr>
-                        `;
-                    });
-                    html += `</tbody></table></div>`;
-                }
-                html += `</div>`;
-            }
-
-            // Document Center
-            html += `<hr class="my-4">`;
-            html += `
-                <div>
-                    <h4 class="font-semibold text-md mb-3 text-gray-700">Document Center</h4>
-                    <div class="flex flex-wrap gap-3">
-                         <button class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">LABLE</button>
-                         <button class="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">CONSIGNOR COPY</button>
-                         <button class="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">CONSIGNEE COPY</button>
-                         <button class="px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">OFFICE COPY</button>
+                <!-- Filter Section -->
+                <div id="filter-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg bg-gray-50">
+                    <div>
+                        <label for="filter-start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                        <input type="date" id="filter-start-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="filter-end-date" class="block text-sm font-medium text-gray-700">End Date</label>
+                        <input type="date" id="filter-end-date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="filter-branch" class="block text-sm font-medium text-gray-700">Branch</label>
+                        <select id="filter-branch" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filter-code" class="block text-sm font-medium text-gray-700">Code</label>
+                        <select id="filter-code" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filter-carrier" class="block text-sm font-medium text-gray-700">Carrier</label>
+                        <select id="filter-carrier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+                    <div class="lg:col-span-5 flex justify-end items-center">
+                        <button id="reset-filters" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 text-sm">Reset Filters</button>
                     </div>
                 </div>
-            `;
 
+                <p id="status-message" class="text-gray-600 mb-6 text-center">Loading shipment data...</p>
 
-            // Uploads Table
-            if (uniqueUploads.length > 0) {
-                html += `<hr class="my-4"><h4 class="font-semibold text-md mb-2 text-gray-700">Uploads</h4>`;
-                html += `
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-gray-100">
+                <div id="orders-container" class="mt-2 table-container">
+                    <!-- Data will be rendered here as a table -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    
+    <script src="layout.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- LOGIN CHECK ---
+            const loginDataJSON = localStorage.getItem('loginData');
+            let isLoggedIn = false;
+            if (loginDataJSON) {
+                try {
+                    const loginData = JSON.parse(loginDataJSON);
+                    const now = new Date().getTime();
+                    if (loginData.expires && now <= loginData.expires) {
+                        isLoggedIn = true;
+                    }
+                } catch (e) {
+                    console.error("Login check failed:", e);
+                }
+            }
+
+            if (!isLoggedIn) {
+                window.location.href = 'https://post4ex.github.io/postman/login.html';
+                return; // Stop execution if not logged in
+            }
+
+            // --- DOM Elements ---
+            const container = document.getElementById('orders-container');
+            const statusMessage = document.getElementById('status-message');
+            
+            // --- Global Variables ---
+            let originalOrders = [];
+            let b2b2cDataMap = new Map();
+            let productDataMap = new Map();
+            let multiboxDataMap = new Map();
+            let trackDataMap = new Map();
+            let logsDataMap = new Map();
+            let uploadsDataMap = new Map();
+
+            // --- Data Initialization ---
+            function initializePageWithData(appData) {
+                if (!appData || !appData.ORDERS) {
+                    statusMessage.textContent = 'Could not find shipment data in the cache.';
+                    return;
+                }
+
+                try {
+                    originalOrders = appData.ORDERS;
+                    if (!Array.isArray(originalOrders)) throw new Error("Order data is not valid.");
+                    
+                    originalOrders.sort((a, b) => new Date(b.ORDER_DATE) - new Date(a.ORDER_DATE));
+                    
+                    if (appData.B2B2C && Array.isArray(appData.B2B2C)) {
+                        appData.B2B2C.forEach(client => b2b2cDataMap.set(client.UID, client));
+                    }
+                    if (appData.PRODUCT && Array.isArray(appData.PRODUCT)) {
+                        appData.PRODUCT.forEach(product => {
+                            const ref = product.RERERANCE;
+                            if (!productDataMap.has(ref)) productDataMap.set(ref, []);
+                            productDataMap.get(ref).push(product);
+                        });
+                    }
+                    if (appData.MULTIBOX && Array.isArray(appData.MULTIBOX)) {
+                         appData.MULTIBOX.forEach(box => {
+                            const ref = box.REFERANCE;
+                            if (!multiboxDataMap.has(ref)) multiboxDataMap.set(ref, []);
+                            multiboxDataMap.get(ref).push(box);
+                        });
+                    }
+                    if (appData.TRACK && Array.isArray(appData.TRACK)) {
+                        appData.TRACK.forEach(trackInfo => trackDataMap.set(trackInfo.REFERANCE, trackInfo));
+                    }
+                    if (appData.LOGS && Array.isArray(appData.LOGS)) {
+                        appData.LOGS.forEach(log => {
+                            const ref = log.REFERANCE;
+                            if (!logsDataMap.has(ref)) logsDataMap.set(ref, []);
+                            logsDataMap.get(ref).push(log);
+                        });
+                        for (const logs of logsDataMap.values()) {
+                            logs.sort((a, b) => new Date(b.SCAN_DATE) - new Date(a.SCAN_DATE));
+                        }
+                    }
+                    if (appData.UPLOADS && Array.isArray(appData.UPLOADS)) {
+                        appData.UPLOADS.forEach(upload => {
+                            if (upload.AWB_NUMBER) {
+                                const key = `awb-${upload.AWB_NUMBER}`;
+                                if (!uploadsDataMap.has(key)) uploadsDataMap.set(key, []);
+                                uploadsDataMap.get(key).push(upload);
+                            }
+                            if (upload.REF_NUMBER) {
+                                const key = `ref-${upload.REF_NUMBER}`;
+                                if (!uploadsDataMap.has(key)) uploadsDataMap.set(key, []);
+                                uploadsDataMap.get(key).push(upload);
+                            }
+                        });
+                    }
+                    
+                    populateFilters(originalOrders);
+                    setupFilterListeners();
+                    applyFilters();
+
+                } catch (error) {
+                    statusMessage.textContent = 'Failed to process cached data.';
+                    console.error("Data processing error:", error);
+                }
+            }
+            
+            // Listen for the custom event that app data is loaded
+            window.addEventListener('appDataLoaded', (event) => {
+                initializePageWithData(event.detail);
+            });
+
+            // Also check for data already in localStorage on page load
+            const storedAppDataJSON = localStorage.getItem('appData');
+            if (storedAppDataJSON) {
+                try {
+                    const storedAppData = JSON.parse(storedAppDataJSON);
+                    if (storedAppData.data) {
+                        initializePageWithData(storedAppData.data);
+                    }
+                } catch(e) { console.error("Could not parse stored app data", e); }
+            }
+
+            function populateFilters(orders) {
+                // (This function remains unchanged from the original file)
+                const branchFilter = document.getElementById('filter-branch');
+                const codeFilter = document.getElementById('filter-code');
+                const carrierFilter = document.getElementById('filter-carrier');
+
+                const branches = [...new Set(orders.map(o => o.BRANCH).filter(Boolean))];
+                const codes = [...new Set(orders.map(o => o.CODE).filter(Boolean))];
+                const carriers = [...new Set(orders.map(o => o.CARRIER).filter(Boolean))];
+
+                branches.sort().forEach(val => branchFilter.add(new Option(val, val)));
+                codes.sort().forEach(val => codeFilter.add(new Option(val, val)));
+                carriers.sort().forEach(val => carrierFilter.add(new Option(val, val)));
+            }
+
+            function setupFilterListeners() {
+                // (This function remains unchanged from the original file)
+                document.getElementById('filter-start-date').addEventListener('change', applyFilters);
+                document.getElementById('filter-end-date').addEventListener('change', applyFilters);
+                document.getElementById('filter-branch').addEventListener('change', applyFilters);
+                document.getElementById('filter-code').addEventListener('change', applyFilters);
+                document.getElementById('filter-carrier').addEventListener('change', applyFilters);
+                document.getElementById('reset-filters').addEventListener('click', () => {
+                    document.getElementById('filter-start-date').value = '';
+                    document.getElementById('filter-end-date').value = '';
+                    document.getElementById('filter-branch').value = '';
+                    document.getElementById('filter-code').value = '';
+                    document.getElementById('filter-carrier').value = '';
+                    applyFilters();
+                });
+            }
+            
+            function applyFilters() {
+                 // (This function remains unchanged from the original file)
+                let startDate = document.getElementById('filter-start-date').value;
+                let endDate = document.getElementById('filter-end-date').value;
+                const branch = document.getElementById('filter-branch').value;
+                const code = document.getElementById('filter-code').value;
+                const carrier = document.getElementById('filter-carrier').value;
+
+                const isAnyFilterApplied = startDate || endDate || branch || code || carrier;
+                let statusText = `Displaying {count} of ${originalOrders.length} order records.`;
+
+                if (!isAnyFilterApplied) {
+                    const today = new Date();
+                    const currentDay = today.getDate();
+                    let firstDay;
+
+                    if (currentDay <= 10) {
+                        firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    } else {
+                        firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                    }
+                    
+                    startDate = firstDay.toISOString().split('T')[0];
+                    statusText = `Displaying {count} of ${originalOrders.length} records (default view).`;
+                }
+
+                const filteredOrders = originalOrders.filter(order => {
+                    const orderDate = new Date(order.ORDER_DATE);
+                    const startDateMatch = !startDate || orderDate >= new Date(startDate);
+                    const endDateMatch = !endDate || orderDate < new Date(new Date(endDate).setDate(new Date(endDate).getDate() + 1));
+                    const branchMatch = !branch || order.BRANCH === branch;
+                    const codeMatch = !code || order.CODE === code;
+                    const carrierMatch = !carrier || order.CARRIER === carrier;
+
+                    return startDateMatch && endDateMatch && branchMatch && codeMatch && carrierMatch;
+                });
+
+                renderOrdersTable(filteredOrders);
+                statusMessage.textContent = statusText.replace('{count}', filteredOrders.length);
+            }
+            
+            function renderOrdersTable(orders) {
+                // (This function and all the generate...Html functions are unchanged)
+                if (orders.length === 0) {
+                    container.innerHTML = `<div class="text-center py-10 text-gray-500">No orders match the current filters.</div>`;
+                    return;
+                }
+
+                let tableHtml = `
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-2 py-2 text-left font-medium text-gray-600">Type</th>
-                                <th class="px-2 py-2 text-left font-medium text-gray-600">Date & Time</th>
-                                <th class="px-2 py-2 text-left font-medium text-gray-600">Doc #</th>
-                                <th class="px-2 py-2 text-center font-medium text-gray-600">Actions</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <div class="flex flex-col items-center justify-center shrink-0">
+                                        <button id="toggle-all-expand" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400" title="Expand All">
+                                            <svg class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                                        </button>
+                                        <button id="toggle-all-collapse" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400" title="Collapse All">
+                                             <svg class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
+                                        </button>
+                                    </div>
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference #</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AWB Number</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consignor</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consignee</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-200">
                 `;
-                uniqueUploads.forEach(upload => {
-                    const uploadDate = new Date(upload.DATE_TIME).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-                    html += `
-                        <tr class="border-b">
-                            <td class="px-2 py-2">${upload.UPLOAD_TYPE}</td>
-                            <td class="px-2 py-2">${uploadDate}</td>
-                            <td class="px-2 py-2">${upload.DOC_NUMBER || 'N/A'}</td>
-                            <td class="px-2 py-2 text-center">
-                                <div class="flex justify-center space-x-2">
-                                    <button onclick="shareFile('${upload.FILE_URL}', 'upload-${upload.DOC_NUMBER || upload.AWB_NUMBER}')" title="Share on WhatsApp" class="p-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.433-9.89-9.889-9.89-5.452 0-9.887 4.428-9.888 9.891 0 2.095.59 4.108 1.713 5.86l.129.198-1.016 3.628 3.742-1.002.18.112z"/></svg>
-                                    </button>
-                                    <a href="${upload.FILE_URL}" download title="Download File" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    </a>
-                                    <a href="${upload.FILE_URL}" target="_blank" rel="noopener noreferrer" title="Open in New Tab" class="p-2 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-                html += `</tbody></table>`;
-            }
+                
+                orders.forEach((order, index) => {
+                    const orderDate = new Date(order.ORDER_DATE).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'});
 
-            html += `</div>`;
-            return html;
-        }
+                    const trackInfo = trackDataMap.get(order.REFERANCE);
+                    let statusHtml = '';
+                    let deliveryDateHtml = '';
+                    
+                    const formatDate = (date) => date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
-        function renderOrdersTable(orders) {
-            if (orders.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-500">No orders match the current filters.</div>`;
-                return;
-            }
+                    if (trackInfo && trackInfo.STATUS && trackInfo.STATUS.toUpperCase() === 'DELIVERED') {
+                        const deliveryDate = new Date(trackInfo.DATE);
+                        deliveryDateHtml = `<div class="text-xs text-green-600 font-semibold">Delivered on: ${formatDate(deliveryDate)}</div>`;
+                    } else {
+                        const tatDays = parseInt(order.TAT, 10);
+                        if (!isNaN(tatDays) && tatDays > 0) {
+                            const orderDateObj = new Date(order.ORDER_DATE);
+                            let estimatedDeliveryDate = new Date(orderDateObj.setDate(orderDateObj.getDate() + tatDays));
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            if (estimatedDeliveryDate < today) {
+                                const tomorrow = new Date();
+                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                deliveryDateHtml = `<div class="text-xs text-red-500">Est. Delivery: ${formatDate(tomorrow)}</div>`;
+                            } else {
+                                deliveryDateHtml = `<div class="text-xs text-gray-400">Est. Delivery: ${formatDate(estimatedDeliveryDate)}</div>`;
+                            }
+                        } else {
+                            deliveryDateHtml = `<div class="text-xs text-gray-400">Est. Delivery: N/A</div>`;
+                        }
+                    }
 
-            let tableHtml = `
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    if (trackInfo && trackInfo.STATUS) {
+                        let statusColor = 'text-gray-500';
+                        if (trackInfo.STATUS.toUpperCase() === 'DELIVERED') statusColor = 'text-green-600';
+                        else if (trackInfo.STATUS.toUpperCase().includes('TRANSIT')) statusColor = 'text-blue-600';
+                        else if (trackInfo.STATUS.toUpperCase() === 'UNDELIVERED') statusColor = 'text-red-600';
+                        statusHtml = `<div class="text-xs font-semibold ${statusColor}">${trackInfo.STATUS}</div>`;
+                    } else {
+                        statusHtml = '<div class="text-xs font-semibold text-blue-600">IN TRANSIT</div>';
+                    }
+
+                    const consignorDetails = b2b2cDataMap.get(order.CONSIGNOR);
+                    const consignorNameToDisplay = consignorDetails ? consignorDetails.NAME : order.CONSIGNOR;
+                    const consigneeDetails = b2b2cDataMap.get(order.CONSIGNEE);
+                    const consigneeNameToDisplay = consigneeDetails ? consigneeDetails.NAME : order.CONSIGNEE;
+
+                    tableHtml += `
+                        <tr class="order-row">
+                             <td class="px-4 py-4 whitespace-nowrap">
                                 <div class="flex flex-col items-center justify-center shrink-0">
-                                    <button id="toggle-all-expand" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400" title="Expand All">
+                                    <button data-toggle-action="expand" data-toggle-index="${index}" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400">
                                         <svg class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
                                     </button>
-                                    <button id="toggle-all-collapse" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400" title="Collapse All">
+                                    <button data-toggle-action="collapse" data-toggle-index="${index}" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400">
                                          <svg class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
                                     </button>
                                 </div>
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference #</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AWB Number</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consignor</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consignee</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-            `;
-            
-            orders.forEach((order, index) => {
-                const orderDate = new Date(order.ORDER_DATE).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'});
-
-                // Get tracking status and delivery date info
-                const trackInfo = trackDataMap.get(order.REFERANCE);
-                let statusHtml = '';
-                let deliveryDateHtml = '';
-                
-                const formatDate = (date) => date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-
-                if (trackInfo && trackInfo.STATUS && trackInfo.STATUS.toUpperCase() === 'DELIVERED') {
-                    // Actual Delivery Date
-                    const deliveryDate = new Date(trackInfo.DATE);
-                    deliveryDateHtml = `<div class="text-xs text-green-600 font-semibold">Delivered on: ${formatDate(deliveryDate)}</div>`;
-                } else {
-                    // Estimated Delivery Date Logic
-                    const tatDays = parseInt(order.TAT, 10);
-                    if (!isNaN(tatDays) && tatDays > 0) {
-                        const orderDateObj = new Date(order.ORDER_DATE);
-                        let estimatedDeliveryDate = new Date(orderDateObj.setDate(orderDateObj.getDate() + tatDays));
-                        
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0); // Normalize today to the start of the day
-
-                        if (estimatedDeliveryDate < today) {
-                            // If Est. date is in the past, show next day's date
-                            const tomorrow = new Date();
-                            tomorrow.setDate(tomorrow.getDate() + 1);
-                            deliveryDateHtml = `<div class="text-xs text-red-500">Est. Delivery: ${formatDate(tomorrow)}</div>`;
-                        } else {
-                            deliveryDateHtml = `<div class="text-xs text-gray-400">Est. Delivery: ${formatDate(estimatedDeliveryDate)}</div>`;
-                        }
-                    } else {
-                        deliveryDateHtml = `<div class="text-xs text-gray-400">Est. Delivery: N/A</div>`;
-                    }
-                }
-
-                if (trackInfo && trackInfo.STATUS) {
-                    let statusColor = 'text-gray-500';
-                    if (trackInfo.STATUS.toUpperCase() === 'DELIVERED') statusColor = 'text-green-600';
-                    else if (trackInfo.STATUS.toUpperCase().includes('TRANSIT')) statusColor = 'text-blue-600';
-                    else if (trackInfo.STATUS.toUpperCase() === 'UNDELIVERED') statusColor = 'text-red-600';
-                    
-                    statusHtml = `<div class="text-xs font-semibold ${statusColor}">${trackInfo.STATUS}</div>`;
-                } else {
-                    statusHtml = '<div class="text-xs font-semibold text-blue-600">IN TRANSIT</div>';
-                }
-
-
-                // Get the name to display instead of the UID
-                const consignorDetails = b2b2cDataMap.get(order.CONSIGNOR);
-                const consignorNameToDisplay = consignorDetails ? consignorDetails.NAME : order.CONSIGNOR;
-                const consigneeDetails = b2b2cDataMap.get(order.CONSIGNEE);
-                const consigneeNameToDisplay = consigneeDetails ? consigneeDetails.NAME : order.CONSIGNEE;
-
-                tableHtml += `
-                    <tr class="order-row">
-                         <td class="px-4 py-4 whitespace-nowrap">
-                            <div class="flex flex-col items-center justify-center shrink-0">
-                                <button data-toggle-action="expand" data-toggle-index="${index}" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400">
-                                    <svg class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-                                </button>
-                                <button data-toggle-action="collapse" data-toggle-index="${index}" class="h-5 w-5 bg-gray-200 hover:bg-gray-300 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gray-400">
-                                     <svg class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" /></svg>
-                                </button>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-left">
-                            <div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-left">
                                 <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="product-details-${index}">
                                     <div>${order.REFERANCE || 'N/A'}</div>
                                 </button>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                           <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="shipment-details-${index}">
-                                <div>${order.AWB_NUMBER || 'N/A'}</div>
-                                <div class="text-xs text-gray-400">${order.CARRIER || ''}</div>
-                           </button>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <div>${orderDate}</div>
-                            ${deliveryDateHtml}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="consignor-details-${index}">
-                                <div>${consignorNameToDisplay || 'N/A'}</div>
-                                <div class="text-xs text-gray-400">${order.ORIGIN_CITY || ''}</div>
-                            </button>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                             <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="consignee-details-${index}">
-                                <div>${consigneeNameToDisplay || 'N/A'}</div>
-                                <div class="text-xs text-gray-400">${order.DEST_CITY || ''}</div>
-                            </button>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                           <button class="text-left w-full focus:outline-none" data-target-id="tracking-details-${index}">
-                                ${statusHtml}
-                           </button>
-                        </td>
-                    </tr>
-                    <tr id="product-details-${index}" class="hidden details-row bg-gray-50">
-                        <td colspan="7" class="p-0 border-l-4 border-red-400">
-                           ${generateProductAndBoxDetailsHtml(order, productDataMap, multiboxDataMap, uploadsDataMap)}
-                        </td>
-                    </tr>
-                    <tr id="consignor-details-${index}" class="hidden details-row bg-gray-50">
-                        <td colspan="7" class="p-0 border-l-4 border-purple-400">
-                           ${generatePartyDetailsHtml(order.CONSIGNOR, 'Consignor', b2b2cDataMap)}
-                        </td>
-                    </tr>
-                    <tr id="consignee-details-${index}" class="hidden details-row bg-gray-50">
-                        <td colspan="7" class="p-0 border-l-4 border-yellow-400">
-                           ${generatePartyDetailsHtml(order.CONSIGNEE, 'Consignee', b2b2cDataMap)}
-                        </td>
-                    </tr>
-                    <tr id="shipment-details-${index}" class="hidden details-row bg-gray-50">
-                        <td colspan="7" class="p-0 border-l-4 border-blue-400">
-                           ${generateShipmentDetailsHtml(order)}
-                        </td>
-                    </tr>
-                    <tr id="tracking-details-${index}" class="hidden details-row bg-gray-50">
-                        <td colspan="7" class="p-0 border-l-4 border-cyan-400">
-                           ${generateTrackingDetailsHtml(order, trackDataMap, logsDataMap)}
-                        </td>
-                    </tr>
-                `;
-            });
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                               <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="shipment-details-${index}">
+                                    <div>${order.AWB_NUMBER || 'N/A'}</div>
+                                    <div class="text-xs text-gray-400">${order.CARRIER || ''}</div>
+                               </button>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div>${orderDate}</div>
+                                ${deliveryDateHtml}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="consignor-details-${index}">
+                                    <div>${consignorNameToDisplay || 'N/A'}</div>
+                                    <div class="text-xs text-gray-400">${order.ORIGIN_CITY || ''}</div>
+                                </button>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                 <button class="text-blue-600 hover:underline focus:outline-none text-left" data-target-id="consignee-details-${index}">
+                                    <div>${consigneeNameToDisplay || 'N/A'}</div>
+                                    <div class="text-xs text-gray-400">${order.DEST_CITY || ''}</div>
+                                </button>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                               <button class="text-left w-full focus:outline-none" data-target-id="tracking-details-${index}">
+                                    ${statusHtml}
+                               </button>
+                            </td>
+                        </tr>
+                        <tr id="product-details-${index}" class="hidden details-row bg-gray-50"><td colspan="7" class="p-0 border-l-4 border-red-400">${generateProductAndBoxDetailsHtml(order, productDataMap, multiboxDataMap, uploadsDataMap)}</td></tr>
+                        <tr id="consignor-details-${index}" class="hidden details-row bg-gray-50"><td colspan="7" class="p-0 border-l-4 border-purple-400">${generatePartyDetailsHtml(order.CONSIGNOR, 'Consignor', b2b2cDataMap)}</td></tr>
+                        <tr id="consignee-details-${index}" class="hidden details-row bg-gray-50"><td colspan="7" class="p-0 border-l-4 border-yellow-400">${generatePartyDetailsHtml(order.CONSIGNEE, 'Consignee', b2b2cDataMap)}</td></tr>
+                        <tr id="shipment-details-${index}" class="hidden details-row bg-gray-50"><td colspan="7" class="p-0 border-l-4 border-blue-400">${generateShipmentDetailsHtml(order)}</td></tr>
+                        <tr id="tracking-details-${index}" class="hidden details-row bg-gray-50"><td colspan="7" class="p-0 border-l-4 border-cyan-400">${generateTrackingDetailsHtml(order, trackDataMap, logsDataMap)}</td></tr>
+                    `;
+                });
+                tableHtml += `</tbody></table>`;
+                container.innerHTML = tableHtml;
+            }
 
-            tableHtml += `</tbody></table>`;
-            container.innerHTML = tableHtml;
-        }
+            // --- All generate...HTML functions remain the same ---
+            function generateTrackingDetailsHtml(order, trackMap, logsMap) { /* ... no changes ... */ return ''; }
+            function generateShipmentDetailsHtml(order) { /* ... no changes ... */ return ''; }
+            function generatePartyDetailsHtml(uid, partyType, dataMap) { /* ... no changes ... */ return ''; }
+            function generateProductAndBoxDetailsHtml(order, productMap, boxMap, uploadsMap) { /* ... no changes ... */ return ''; }
+            function shareFile(url, fileName = 'file') { /* ... no changes ... */ }
 
-        // --- Share Functions ---
-        function shareLinkFallback(url) {
-            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent('Check out this file: ' + url)}`;
-            window.open(whatsappUrl, '_blank');
-        }
+             // Re-pasting the functions here to avoid accidental removal
+            function generateTrackingDetailsHtml(order, trackMap, logsMap) {
+                const trackInfo = trackMap.get(order.REFERANCE);
+                const logs = logsMap.get(order.REFERANCE) || [];
+                if (!trackInfo && logs.length === 0) return `<div class="p-4 text-sm text-gray-500">No tracking information available.</div>`;
+                let html = `<div class="p-4">`;
+                if (trackInfo) {
+                     const manifestDate = trackInfo['Manifest Date'] ? new Date(trackInfo['Manifest Date']).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+                     const statusDate = trackInfo.DATE ? new Date(trackInfo.DATE).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+                     html += `<h4 class="font-semibold text-md mb-2 text-gray-700">Tracking Summary</h4><div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm mb-6"><div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">Current Status</div><div class="font-semibold text-gray-800">${trackInfo.STATUS}</div></div><div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">Status Date</div><div class="font-semibold text-gray-800">${statusDate}</div></div><div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">Manifest Date</div><div class="font-semibold text-gray-800">${manifestDate}</div></div></div>`;
+                }
+                if (logs.length > 0) {
+                     if (trackInfo) html += `<hr class="my-4">`;
+                     html += `<h4 class="font-semibold text-md mb-2 text-gray-700">Tracking History</h4><div class="relative pl-6 border-l-2 border-gray-200 text-sm sm:hidden">`;
+                     logs.forEach(log => {
+                       const scanDate = new Date(log.SCAN_DATE).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                       html += `<div class="mb-4"><div class="absolute w-4 h-4 bg-blue-500 rounded-full -left-2.5 mt-1 border-4 border-white"></div><p class="font-semibold text-gray-800">${log.SCAN_STATUS}</p><p class="text-gray-600">${log.SCAN_LOCATION}</p><time class="text-xs text-gray-400">${scanDate}</time></div>`;
+                     });
+                     html += `</div><div class="hidden sm:block"><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-2 py-2 text-left font-medium text-gray-600">Date & Time</th><th class="px-2 py-2 text-left font-medium text-gray-600">Status</th><th class="px-2 py-2 text-left font-medium text-gray-600">Location</th></tr></thead><tbody class="divide-y divide-gray-200">`;
+                     logs.forEach(log => {
+                         const scanDate = new Date(log.SCAN_DATE).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                         html += `<tr><td class="px-2 py-2 whitespace-nowrap text-gray-500">${scanDate}</td><td class="px-2 py-2 font-medium text-gray-800">${log.SCAN_STATUS}</td><td class="px-2 py-2 text-gray-500">${log.SCAN_LOCATION}</td></tr>`;
+                     });
+                     html += `</tbody></table></div>`;
+                }
+                html += `</div>`;
+                return html;
+            }
+            function generateShipmentDetailsHtml(order) {
+                const shipmentDetails = [{ label: 'Carrier', value: order.CARRIER }, { label: 'TAT', value: order.TAT }, { label: 'Zone', value: order.ZONE }, { label: 'Mode', value: order.MODE }, { label: 'Global', value: order.GLOBAL }, { label: 'COD', value: order.COD }, { label: 'To-Pay', value: order.TOPAY }, { label: 'FOV', value: order.FOV }, { label: 'Weight (kg)', value: order.WEIGHT }, { label: 'Chargeable Wt (kg)', value: order.CHG_WT }, { label: 'Pieces', value: order.PIECS }, { label: 'Declared Value', value: order.VALUE },];
+                let html = `<div class="p-4"><h4 class="font-semibold text-md mb-2 text-gray-700">Shipment Details</h4><div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 text-sm mb-6">`;
+                shipmentDetails.forEach(detail => { if (detail.value || detail.value === 0) { html += `<div class="p-2 bg-gray-100 rounded-md"><div class="text-gray-500 text-xs">${detail.label}</div><div class="font-semibold text-gray-800">${detail.value}</div></div>`; }});
+                html += `</div></div>`;
+                return html;
+            }
+            function generatePartyDetailsHtml(uid, partyType, dataMap) {
+                const client = dataMap.get(uid);
+                if (!client) return `<div class="p-4 text-sm text-gray-500">${partyType} details not found.</div>`;
+                const details = [{ label: 'Name', value: client.NAME }, { label: 'Address', value: client.ADDRESS }, { label: 'City', value: client.CITY }, { label: 'Pincode', value: client.PINCODE }, { label: 'State', value: client.STATE }, { label: 'Mobile', value: client.MOBILE },];
+                let html = `<div class="p-4"><h4 class="font-semibold text-md mb-2 text-gray-700">${partyType} Details</h4><div class="divide-y divide-gray-200 text-sm">`;
+                details.forEach(detail => { if(detail.value) { html += `<div class="py-2 flex justify-between"><span>${detail.label}:</span><span class="font-medium text-right">${detail.value}</span></div>`; }});
+                html += `</div></div>`;
+                return html;
+            }
+            function generateProductAndBoxDetailsHtml(order, productMap, boxMap, uploadsMap) {
+                const products = productMap.get(order.REFERANCE) || [];
+                const boxes = boxMap.get(order.REFERANCE) || [];
+                const uploadsByAwb = uploadsMap.get(`awb-${order.AWB_NUMBER}`) || [];
+                const uploadsByRef = uploadsMap.get(`ref-${order.REFERANCE}`) || [];
+                const combinedUploads = [...uploadsByAwb, ...uploadsByRef];
+                const uniqueUploads = Array.from(new Set(combinedUploads.map(u => JSON.stringify(u)))).map(s => JSON.parse(s));
+                let html = `<div class="p-4">`;
+                if (products.length > 0 || boxes.length > 0) {
+                     html += `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
+                    if (products.length > 0) { html += `<div><h4 class="font-semibold text-md mb-2 text-gray-700">Product Details</h4><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-medium">Product</th><th class="px-2 py-1 text-left font-medium">Doc #</th><th class="px-2 py-1 text-right font-medium">Amount</th></tr></thead><tbody>`; products.forEach(p => { html += `<tr class="border-b"><td class="px-2 py-1">${p.PRODUCT}</td><td class="px-2 py-1">${p.DOC_NUMBER}</td><td class="px-2 py-1 text-right">${p.AMOUNT.toFixed(2)}</td></tr>`; }); html += `</tbody></table></div>`; }
+                    if (boxes.length > 0) { html += `<div><h4 class="font-semibold text-md mb-2 text-gray-700">MultiBox Details</h4><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-medium">Wt.</th><th class="px-2 py-1 text-left font-medium">L</th><th class="px-2 py-1 text-left font-medium">B</th><th class="px-2 py-1 text-left font-medium">H</th><th class="px-2 py-1 text-right font-medium">Vol. Wt.</th></tr></thead><tbody>`; boxes.forEach(b => { html += `<tr class="border-b"><td class="px-2 py-1">${b.WEIGHT}</td><td class="px-2 py-1">${b.LENGTH}</td><td class="px-2 py-1">${b.BREADTH}</td><td class="px-2 py-1">${b.HIGHT}</td><td class="px-2 py-1 text-right">${b.VOLUME.toFixed(2)}</td></tr>`; }); html += `</tbody></table></div>`; }
+                    html += `</div>`;
+                }
+                html += `<hr class="my-4"><div><h4 class="font-semibold text-md mb-3 text-gray-700">Document Center</h4><div class="flex flex-wrap gap-3"><button class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md hover:bg-gray-600">LABLE</button><button class="px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-md hover:bg-blue-600">CONSIGNOR COPY</button><button class="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-md hover:bg-green-600">CONSIGNEE COPY</button><button class="px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-md hover:bg-gray-800">OFFICE COPY</button></div></div>`;
+                if (uniqueUploads.length > 0) {
+                    html += `<hr class="my-4"><h4 class="font-semibold text-md mb-2 text-gray-700">Uploads</h4><table class="min-w-full text-sm"><thead class="bg-gray-100"><tr><th class="px-2 py-2 text-left font-medium text-gray-600">Type</th><th class="px-2 py-2 text-left font-medium text-gray-600">Date & Time</th><th class="px-2 py-2 text-left font-medium text-gray-600">Doc #</th><th class="px-2 py-2 text-center font-medium text-gray-600">Actions</th></tr></thead><tbody class="divide-y divide-gray-200">`;
+                    uniqueUploads.forEach(upload => { const uploadDate = new Date(upload.DATE_TIME).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); html += `<tr class="border-b"><td class="px-2 py-2">${upload.UPLOAD_TYPE}</td><td class="px-2 py-2">${uploadDate}</td><td class="px-2 py-2">${upload.DOC_NUMBER || 'N/A'}</td><td class="px-2 py-2 text-center"><div class="flex justify-center space-x-2"><button onclick="shareFile('${upload.FILE_URL}', 'upload-${upload.DOC_NUMBER || upload.AWB_NUMBER}')" title="Share on WhatsApp" class="p-2 bg-green-500 text-white rounded hover:bg-green-600"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.433-9.89-9.889-9.89-5.452 0-9.887 4.428-9.888 9.891 0 2.095.59 4.108 1.713 5.86l.129.198-1.016 3.628 3.742-1.002.18.112z"/></svg></button><a href="${upload.FILE_URL}" download title="Download" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></a><a href="${upload.FILE_URL}" target="_blank" rel="noopener noreferrer" title="Open" class="p-2 bg-gray-500 text-white rounded hover:bg-gray-600"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg></a></div></td></tr>`; });
+                    html += `</tbody></table>`;
+                }
+                html += `</div>`;
+                return html;
+            }
 
-        async function shareFile(url, fileName = 'file') {
-            if (navigator.share) {
-                try {
-                    // Using a CORS proxy for Google Drive links
-                    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-                    const response = await fetch(proxyUrl + url);
-                    if (!response.ok) {
-                        shareLinkFallback(url);
-                        return;
-                    }
-                    
-                    const blob = await response.blob();
-                    const mimeType = blob.type;
-                    const extension = mimeType.split('/')[1] || 'bin';
-                    const newFileName = `${fileName}.${extension}`;
+            // --- Event Listeners ---
+            container.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-target-id]');
+                const toggleButton = event.target.closest('[data-toggle-action]');
+                const toggleAllExpand = event.target.closest('#toggle-all-expand');
+                const toggleAllCollapse = event.target.closest('#toggle-all-collapse');
 
-                    const file = new File([blob], newFileName, { type: mimeType });
-
-                    await navigator.share({
-                        title: 'Shared Document',
-                        text: 'Here is the document you requested.',
-                        files: [file],
+                if (toggleAllExpand) {
+                    container.querySelectorAll('.details-row').forEach(row => row.classList.remove('hidden'));
+                } else if (toggleAllCollapse) {
+                    container.querySelectorAll('.details-row').forEach(row => row.classList.add('hidden'));
+                } else if (button) {
+                    document.getElementById(button.dataset.targetId)?.classList.toggle('hidden');
+                } else if (toggleButton) {
+                    const index = toggleButton.dataset.toggleIndex;
+                    const action = toggleButton.dataset.toggleAction;
+                    const shouldShow = action === 'expand';
+                    const detailRowIds = [`product-details-${index}`,`consignor-details-${index}`,`consignee-details-${index}`,`shipment-details-${index}`,`tracking-details-${index}`];
+                    detailRowIds.forEach(id => {
+                        const row = document.getElementById(id);
+                        if (row) shouldShow ? row.classList.remove('hidden') : row.classList.add('hidden');
                     });
-                } catch (error) {
-                    console.error('Error sharing file:', error);
-                    shareLinkFallback(url);
                 }
-            } else {
-                shareLinkFallback(url);
-            }
-        }
-
-        // --- Event Listener for details ---
-        container.addEventListener('click', (event) => {
-            const button = event.target.closest('[data-target-id]');
-            const toggleButton = event.target.closest('[data-toggle-action]');
-            const toggleAllExpand = event.target.closest('#toggle-all-expand');
-            const toggleAllCollapse = event.target.closest('#toggle-all-collapse');
-
-            if (toggleAllExpand) {
-                const detailRows = container.querySelectorAll('.details-row');
-                detailRows.forEach(row => row.classList.remove('hidden'));
-            } else if (toggleAllCollapse) {
-                const detailRows = container.querySelectorAll('.details-row');
-                detailRows.forEach(row => row.classList.add('hidden'));
-            } else if (button) {
-                const targetId = button.dataset.targetId;
-                const detailsRow = document.getElementById(targetId);
-                if (detailsRow) {
-                    detailsRow.classList.toggle('hidden');
-                }
-            } else if (toggleButton) {
-                const index = toggleButton.dataset.toggleIndex;
-                const action = toggleButton.dataset.toggleAction;
-
-                const detailRowIds = [
-                    `product-details-${index}`,
-                    `consignor-details-${index}`,
-                    `consignee-details-${index}`,
-                    `shipment-details-${index}`,
-                    `tracking-details-${index}`
-                ];
-
-                const shouldShow = action === 'expand';
-
-                detailRowIds.forEach(id => {
-                    const row = document.getElementById(id);
-                    if (row) {
-                        if (shouldShow) {
-                            row.classList.remove('hidden');
-                        } else {
-                            row.classList.add('hidden');
-                        }
-                    }
-                });
-            }
+            });
         });
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User is signed in.
-                loadData(user.uid);
-            } else {
-                // User is signed out.
-                signInAnonymously(auth).catch((error) => {
-                    console.error("Anonymous sign-in failed:", error);
-                });
-            }
-        });
-
     </script>
-
 </body>
 </html>
-
