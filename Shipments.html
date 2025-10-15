@@ -70,10 +70,24 @@
         </div>
     </div>
     
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            // Your Firebase config object
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+
         const container = document.getElementById('orders-container');
         const statusMessage = document.getElementById('status-message');
-        const dataUrl = 'https://raw.githubusercontent.com/post4ex/postman/refs/heads/main/data.js';
+        
         let originalOrders = []; // To store the master list of orders
         let b2b2cDataMap = new Map(); // To store B2B2C details for lookup
         let productDataMap = new Map();
@@ -82,15 +96,50 @@
         let logsDataMap = new Map();
         let uploadsDataMap = new Map();
 
-        // Function to fetch and process data
-        async function loadData() {
-            try {
-                const response = await fetch(dataUrl);
-                if (!response.ok) throw new Error(`Network response was not ok: ${response.status}`);
+        // Caching mechanism
+        const CACHE_KEY = 'shipmentsData';
+        const CACHE_EXPIRATION = 60 * 60 * 1000; // 1 hour
 
-                const fileContent = await response.text();
-                const getData = new Function(`${fileContent} return downloadedData;`);
-                const result = getData();
+        async function getCachedData() {
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            if (cachedData) {
+                const { timestamp, data } = JSON.parse(cachedData);
+                if (Date.now() - timestamp < CACHE_EXPIRATION) {
+                    return data;
+                }
+            }
+            return null;
+        }
+
+        function setCachedData(data) {
+            const cacheEntry = {
+                timestamp: Date.now(),
+                data: data
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cacheEntry));
+        }
+
+
+        // Function to fetch and process data from Firestore
+        async function loadData(userId) {
+            try {
+
+                let result;
+                const cachedData = await getCachedData();
+
+                if (cachedData) {
+                    result = cachedData;
+                } else {
+                    const docRef = doc(db, "shipments", "data");
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        result = docSnap.data();
+                        setCachedData(result);
+                    } else {
+                        throw new Error("No such document!");
+                    }
+                }
                 
                 originalOrders = result.data.ORDERS;
                 if (!Array.isArray(originalOrders)) throw new Error("Order data is not valid.");
@@ -754,16 +803,20 @@
             }
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-             loadData();
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in.
+                loadData(user.uid);
+            } else {
+                // User is signed out.
+                signInAnonymously(auth).catch((error) => {
+                    console.error("Anonymous sign-in failed:", error);
+                });
+            }
         });
+
     </script>
 
 </body>
 </html>
-
-
-
-
-
 
