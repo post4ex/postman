@@ -91,6 +91,26 @@
     <script src="layout.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- LOGIN CHECK ---
+            const loginDataJSON = localStorage.getItem('loginData');
+            let isLoggedIn = false;
+            if (loginDataJSON) {
+                try {
+                    const loginData = JSON.parse(loginDataJSON);
+                    const now = new Date().getTime();
+                    if (loginData.expires && now <= loginData.expires) {
+                        isLoggedIn = true;
+                    }
+                } catch (e) {
+                    console.error("Login check failed:", e);
+                }
+            }
+
+            if (!isLoggedIn) {
+                window.location.href = 'https://post4ex.github.io/postman/login.html';
+                return; // Stop executing script if not logged in
+            }
+            
             // --- DOM ELEMENT REFERENCES ---
             const form = document.getElementById('dataForm');
             const statusDiv = document.getElementById('status');
