@@ -149,6 +149,26 @@
     <script src="layout.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- PAGE PROTECTION ---
+            // This is a protected page. Redirect to login if the user is not authenticated.
+            const loginDataJSON = localStorage.getItem('loginData');
+            let isLoggedIn = false;
+            if (loginDataJSON) {
+                try {
+                    const loginData = JSON.parse(loginDataJSON);
+                    if (loginData.expires && new Date().getTime() <= loginData.expires) {
+                        isLoggedIn = true;
+                    }
+                } catch(e) { console.error("Error parsing login data", e); }
+            }
+
+            if (!isLoggedIn) {
+                // Using replace to prevent user from coming back to this page via back button
+                window.location.replace('https://post4ex.github.io/postman/login.html');
+                return; // Stop script execution
+            }
+
+            // --- DOM ELEMENT CONSTANTS ---
             const form = document.getElementById('partialUpdateForm');
             const submitButton = document.getElementById('submitButton');
             const buttonText = document.getElementById('buttonText');
@@ -161,15 +181,14 @@
             const carrierSelect = document.getElementById('carrier');
             const loadMoreContainer = document.getElementById('loadMoreContainer');
             const loadMoreButton = document.getElementById('loadMoreButton');
-            
             const codeInput = document.getElementById('code');
             const tokenInput = document.getElementById('token');
 
+            // --- STATE & CONFIG ---
             let activeShipmentElement = null;
             let allShipments = [];
             let currentIndex = 0;
             const shipmentsPerLoad = 10; 
-
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5PZJRnnDmyDtYbWctF6d0428h1haJnDfVA4HKQR4hcsdAolcmkhLG9MgntAhPSQyi/exec';
 
             // --- MAIN INITIALIZATION LOGIC ---
@@ -190,7 +209,6 @@
                     const loginData = JSON.parse(loginDataJSON);
                     const appData = JSON.parse(appDataJSON);
                     
-                    // Auto-fill authentication fields
                     codeInput.value = loginData.CODE || loginData.code;
                     tokenInput.value = loginData.TOKEN || loginData.token;
 
@@ -198,7 +216,6 @@
                     const ordersData = appData.data.ORDERS || [];
                     const carrierData = appData.data.CARRIER || [];
 
-                    // Populate carrier dropdown
                     carrierSelect.innerHTML = '<option value="">Select a carrier</option>';
                     carrierData.forEach(carrier => {
                         const option = document.createElement('option');
@@ -207,7 +224,6 @@
                         carrierSelect.appendChild(option);
                     });
                     
-                    // Process shipments
                     const nameLookup = new Map(b2b2cData.map(client => [client.UID, client.NAME]));
                     const processedOrders = ordersData.map(shipment => ({
                         ...shipment,
@@ -276,16 +292,15 @@
                     if (result.success) {
                         responseMessage.textContent = result.message;
                         responseMessage.className = 'mt-4 p-4 text-sm rounded-md bg-green-100 text-green-800';
-                        form.reset(); // Reset form fields
+                        form.reset();
                         
-                        // Re-populate readonly fields
                         const loginData = JSON.parse(localStorage.getItem('loginData'));
                         codeInput.value = loginData.CODE || loginData.code;
                         tokenInput.value = loginData.TOKEN || loginData.token;
 
                         if (activeShipmentElement) {
                              activeShipmentElement.classList.add('border-green-400', 'bg-green-50');
-                             setTimeout(() => { // remove highlight after a delay
+                             setTimeout(() => {
                                  activeShipmentElement.classList.remove('border-green-400', 'bg-green-50');
                              }, 2000);
                              activeShipmentElement = null;
@@ -382,11 +397,25 @@
                 }
             });
 
-            // Listen for the custom events from layout.js
+            // --- INITIALIZATION ---
             window.addEventListener('appDataLoaded', initializeAppLogic);
             window.addEventListener('appDataRefreshed', initializeAppLogic);
+
+            // Proactively check if data is already available in localStorage.
+            const appDataJSON = localStorage.getItem('appData');
+            if (appDataJSON) {
+                try {
+                    const appData = JSON.parse(appDataJSON);
+                    if (appData && appData.data && new Date().getTime() < appData.expires) {
+                        initializeAppLogic();
+                    }
+                } catch (e) {
+                    console.error("AssignCarrier.html: Error parsing cached appData.", e);
+                }
+            }
         });
     </script>
 
 </body>
 </html>
+
