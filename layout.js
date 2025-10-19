@@ -387,6 +387,63 @@ async function verifyAndFetchAppData(force = false) {
     }
 }
 
+// ====================================================================================
+// NEW: SMART DATA SYNC FUNCTION
+// This function intelligently merges new data into the old data without overwriting.
+// ====================================================================================
+function smartDataSync(oldData, newData) {
+    // Define the unique key for each data type. This is crucial for matching records.
+    const uniqueKeys = {
+        ORDERS: 'REFERANCE',
+        B2B2C: 'UID',
+        CARRIER: 'COMPANY_CODE',
+        CLIENTS: 'UID',
+        // Add other data types and their unique keys here as needed
+    };
+
+    const syncedData = { ...oldData };
+
+    for (const key in newData) {
+        if (Array.isArray(newData[key]) && oldData[key] && Array.isArray(oldData[key])) {
+            const uniqueKey = uniqueKeys[key];
+            if (!uniqueKey) {
+                console.warn(`No unique key defined for '${key}'. Performing a full replace for this key.`);
+                syncedData[key] = newData[key];
+                continue;
+            }
+
+            const oldDataMap = new Map(oldData[key].map(item => [item[uniqueKey], item]));
+            const newDataSet = new Set();
+            const mergedData = [];
+
+            // Update existing items and add new ones
+            for (const newItem of newData[key]) {
+                const id = newItem[uniqueKey];
+                newDataSet.add(id);
+                const oldItem = oldDataMap.get(id);
+
+                if (oldItem) {
+                    // Item exists, merge properties
+                    mergedData.push({ ...oldItem, ...newItem });
+                } else {
+                    // New item
+                    mergedData.push(newItem);
+                }
+            }
+            
+            // Add back any old items that were not in the new data (optional, depends on logic)
+            // For this application, we assume the new data is the source of truth, so we don't add back old items.
+            
+            syncedData[key] = mergedData;
+        } else {
+            // Not an array or doesn't exist in old data, just replace.
+            syncedData[key] = newData[key];
+        }
+    }
+    return syncedData;
+}
+
+
 function startSilentRefresh() {
     if (silentRefreshInterval) {
         clearInterval(silentRefreshInterval);
@@ -417,10 +474,17 @@ function startSilentRefresh() {
                     const appDataJSON = localStorage.getItem('appData');
                     if (appDataJSON) {
                         const existingAppData = JSON.parse(appDataJSON);
-                        existingAppData.data = result.data;
+                        
+                        // =============================================================
+                        // MODIFIED: Use the new smart sync instead of overwriting
+                        // =============================================================
+                        existingAppData.data = smartDataSync(existingAppData.data, result.data);
+                        // =============================================================
+
                         localStorage.setItem('appData', JSON.stringify(existingAppData));
-                        console.log('Silent data refresh successful.');
-                         window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: result.data }));
+                        console.log('Silent data refresh successful and merged.');
+                        // Dispatch the event with the newly merged data
+                        window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: existingAppData.data }));
                     }
                 }
             }
@@ -434,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
     const protectedPages = [
         'dashboard.html', 'BookOrder.html', 'tracking.html', 'Calculator.html', 
-        'ticket.html', 'task.html', 'wallet.html', 'search.html', 'uploader.html'
+        'ticket.html', 'task.html', 'wallet.html', 'search.html', 'uploader.html', 'AssignCarrier.html'
     ];
     const isProtected = protectedPages.some(page => path.includes(page));
 
@@ -494,4 +558,3 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Failed to initialize page layout:", error);
     });
 });
-
