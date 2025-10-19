@@ -328,54 +328,53 @@ const setActiveNavOnLoad = () => {
 };
 
 // ====================================================================================
-// NEW: SMART DATA SYNC FUNCTION
-// This function intelligently merges new data into the old data without overwriting.
+// UPGRADED: SMART DATA SYNC FUNCTION WITH CHANGE TRACKING
 // ====================================================================================
 function smartDataSync(oldData, newData) {
-    // Define the unique key for each data type. This is crucial for matching records.
     const uniqueKeys = {
-        ORDERS: 'REFERANCE',
-        B2B2C: 'UID',
-        CARRIER: 'COMPANY_CODE',
-        CLIENTS: 'UID',
-        // Add other data types and their unique keys here as needed
+        ORDERS: 'REFERANCE', B2B2C: 'UID', CARRIER: 'COMPANY_CODE', CLIENTS: 'UID',
     };
-
-    const syncedData = { ...oldData };
+    
+    const changes = {};
+    const syncedData = JSON.parse(JSON.stringify(oldData)); // Deep copy
 
     for (const key in newData) {
-        if (Array.isArray(newData[key]) && oldData[key] && Array.isArray(oldData[key])) {
-            const uniqueKey = uniqueKeys[key];
-            if (!uniqueKey) {
-                console.warn(`No unique key defined for '${key}'. Performing a full replace for this key.`);
-                syncedData[key] = newData[key];
-                continue;
-            }
+        if (!Array.isArray(newData[key]) || !syncedData[key] || !Array.isArray(syncedData[key])) {
+            syncedData[key] = newData[key]; // Not an array or not in old data, just replace.
+            continue;
+        }
 
-            const oldDataMap = new Map(oldData[key].map(item => [item[uniqueKey], item]));
-            const mergedData = [];
+        const uniqueKey = uniqueKeys[key];
+        if (!uniqueKey) {
+            console.warn(`No unique key for '${key}'. Replacing array.`);
+            syncedData[key] = newData[key];
+            continue;
+        }
+        
+        changes[key] = { added: [], updated: [] };
+        const oldDataMap = new Map(syncedData[key].map(item => [item[uniqueKey], item]));
+        const newDataMap = new Map();
 
-            // Update existing items and add new ones
-            for (const newItem of newData[key]) {
-                const id = newItem[uniqueKey];
-                const oldItem = oldDataMap.get(id);
+        for (const newItem of newData[key]) {
+            const id = newItem[uniqueKey];
+            newDataMap.set(id, newItem);
+            const oldItem = oldDataMap.get(id);
 
-                if (oldItem) {
-                    // Item exists, merge properties
-                    mergedData.push({ ...oldItem, ...newItem });
-                } else {
-                    // New item
-                    mergedData.push(newItem);
+            if (!oldItem) {
+                changes[key].added.push(newItem); // New item
+            } else {
+                // Check for updates by comparing JSON strings
+                if (JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
+                    changes[key].updated.push(newItem);
                 }
             }
-            
-            syncedData[key] = mergedData;
-        } else {
-            // Not an array or doesn't exist in old data, just replace.
-            syncedData[key] = newData[key];
         }
+        
+        // The new data from the server is the source of truth, so we just replace the whole array
+        syncedData[key] = newData[key];
     }
-    return syncedData;
+    
+    return { syncedData, changes };
 }
 
 
@@ -383,7 +382,6 @@ async function verifyAndFetchAppData(force = false) {
     const loginDataJSON = localStorage.getItem('loginData');
     if (!loginDataJSON) return;
     
-    // If not a forced refresh, check for valid, non-expired data first.
     if (!force) {
         const appDataJSON = localStorage.getItem('appData');
         if (appDataJSON) {
@@ -391,12 +389,10 @@ async function verifyAndFetchAppData(force = false) {
                 const appData = JSON.parse(appDataJSON);
                 if (new Date().getTime() < appData.expires) {
                     console.log('App data exists and is valid. Skipping fetch.');
-                    startSilentRefresh(); // Start the timer for the next silent refresh
+                    startSilentRefresh();
                     return;
                 }
-            } catch (e) {
-                console.error('Could not parse appData from localStorage.', e);
-            }
+            } catch (e) { console.error('Could not parse appData from localStorage.', e); }
         }
     }
 
@@ -415,40 +411,42 @@ async function verifyAndFetchAppData(force = false) {
         console.log(force ? 'Forcing data refresh...' : 'Fetching initial application data...');
         const response = await fetch(`${DATA_LOADER_URL}?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`);
 
-        if (!response.ok) {
-            throw new Error(`Network error while fetching app data: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
 
         const result = await response.json();
 
         if (result.success) {
-            const expiry = new Date().getTime() + (2 * 60 * 60 * 1000); // 2 hours
-            let finalData = result.data;
-            
-            // =====================================================================
-            // MODIFIED: Smart sync logic applied to manual refresh as well
-            // =====================================================================
+            const expiry = new Date().getTime() + (2 * 60 * 60 * 1000);
+            let finalData;
+            let changes = {};
+
             const existingAppDataJSON = localStorage.getItem('appData');
             if (existingAppDataJSON) {
                 try {
                     const existingAppData = JSON.parse(existingAppDataJSON);
                     console.log('Merging new data into existing cache.');
-                    finalData = smartDataSync(existingAppData.data, result.data);
+                    const syncResult = smartDataSync(existingAppData.data, result.data);
+                    finalData = syncResult.syncedData;
+                    changes = syncResult.changes;
                 } catch(e) {
-                    console.error("Could not parse existing app data for merging, will overwrite.", e);
+                    console.error("Could not merge existing data, will overwrite.", e);
+                    finalData = result.data;
                 }
+            } else {
+                 finalData = result.data;
             }
-            // =====================================================================
 
             const appDataToStore = { data: finalData, expires: expiry };
             localStorage.setItem('appData', JSON.stringify(appDataToStore));
             console.log('App data was successfully fetched and stored/merged.');
             
+            const eventDetail = { data: finalData, changes: changes };
+
             if (force) {
-                window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: finalData }));
+                window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: eventDetail }));
             } else {
                 startSilentRefresh();
-                window.dispatchEvent(new CustomEvent('appDataLoaded', { detail: finalData }));
+                window.dispatchEvent(new CustomEvent('appDataLoaded', { detail: eventDetail }));
             }
         } else {
             console.error('Failed to verify and fetch app data:', result.message);
@@ -490,11 +488,12 @@ function startSilentRefresh() {
                     if (appDataJSON) {
                         const existingAppData = JSON.parse(appDataJSON);
                         
-                        existingAppData.data = smartDataSync(existingAppData.data, result.data);
+                        const { syncedData, changes } = smartDataSync(existingAppData.data, result.data);
+                        existingAppData.data = syncedData;
 
                         localStorage.setItem('appData', JSON.stringify(existingAppData));
                         console.log('Silent data refresh successful and merged.');
-                        window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: existingAppData.data }));
+                        window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: { data: syncedData, changes: changes } }));
                     }
                 }
             }
