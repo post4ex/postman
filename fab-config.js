@@ -50,5 +50,6 @@ const fabPageActions = {
             action: 'refreshShipments' 
         }
     ]
+    // Add other pages and their specific buttons here
 };
 
