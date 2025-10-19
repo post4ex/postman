@@ -1,103 +1,100 @@
-// ============================================================
-// FLOATING ACTION BUTTON (FAB) ENGINE
-// This file contains all the logic to make the FAB work.
-// It reads the configuration from fab-config.js and builds
-// the buttons automatically. You should not need to edit this file.
-// ============================================================
+// This is the FAB "Engine" file. You should not need to edit it.
 
-// MODIFIED: Wait for the 'footerLoaded' event from layout.js to prevent race conditions
-window.addEventListener('footerLoaded', () => {
-    const fabContainer = document.getElementById('fab-container');
-    if (!fabContainer) {
-        console.error('FAB Error: fab-container element not found in the footer.');
-        return;
-    }
+// Self-invoking function to encapsulate all FAB logic.
+(() => {
+    let fabContainer;
 
-    const fabMain = document.getElementById('fab-main');
-    const fabActions = document.getElementById('fab-actions');
+    // This function builds the button menu based on the current page.
+    function initializeFAB() {
+        fabContainer = document.getElementById('fab-container');
+        const fabMain = document.getElementById('fab-main');
+        const fabActions = document.getElementById('fab-actions');
 
-    function initializeFab() {
-        // Check if the configuration object from fab-config.js exists
+        if (!fabContainer || !fabMain || !fabActions) {
+            console.error('FAB HTML structure not found.');
+            return;
+        }
+
+        // Determine the current page filename (e.g., "BookOrder.html")
+        const path = window.location.pathname;
+        const currentPage = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
+
+        // Check if the fabPageActions configuration is loaded
         if (typeof fabPageActions === 'undefined') {
-            console.warn('FAB configuration (fab-config.js) not found.');
+            console.error('fabPageActions configuration is not loaded.');
+            return;
+        }
+
+        const globalActions = fabPageActions.global || [];
+        const pageSpecificActions = fabPageActions[currentPage] || [];
+        const actionsToShow = [...pageSpecificActions, ...globalActions];
+
+
+        if (actionsToShow.length === 0) {
             fabContainer.classList.add('hidden');
             return;
         }
 
-        // Get the current page's filename (e.g., "BookOrder.html")
-        const currentPage = window.location.pathname.split('/').pop();
-        const actions = fabPageActions[currentPage];
-
-        // If there are no actions defined for the current page, hide the FAB
-        if (!actions || actions.length === 0) {
-            fabContainer.classList.add('hidden');
-            return;
-        }
-
-        // If actions exist, ensure the FAB is visible
+        // If there are actions, make sure the container is visible
         fabContainer.classList.remove('hidden');
 
-        // Clear any previous actions and build the new ones
+        // Clear any previous actions and build the new ones.
         fabActions.innerHTML = '';
-        actions.forEach(action => {
-            const actionButton = document.createElement('a');
-            actionButton.className = 'fab-action';
-            actionButton.setAttribute('data-action', action.action);
-            actionButton.innerHTML = `
-                <span class="fab-action-label">${action.label}</span>
-                <div class="fab-action-icon">${action.icon}</div>
-            `;
-            fabActions.appendChild(actionButton);
+        actionsToShow.forEach(action => {
+            const actionElement = document.createElement('div');
+            actionElement.className = 'fab-action';
+            
+            // Create the label
+            const label = document.createElement('span');
+            label.className = 'fab-action-label';
+            label.textContent = action.label;
+            
+            // Create the icon container
+            const iconContainer = document.createElement('div');
+            iconContainer.className = 'fab-action-icon';
+            iconContainer.innerHTML = action.icon; // Use the SVG string from the config
+            
+            actionElement.appendChild(label);
+            actionElement.appendChild(iconContainer);
+
+            // Add the click event listener
+            actionElement.addEventListener('click', () => {
+                // Special handling for navigation actions
+                if (action.action.startsWith('navigate_')) {
+                    const url = action.action.split('_')[1];
+                    // Check if it's an external link
+                    if (url.startsWith('http') || url.startsWith('mailto:') || url.startsWith('https:')) {
+                        window.open(url, '_blank');
+                    } else {
+                        window.location.href = url;
+                    }
+                } else {
+                    // Dispatch a custom event for page-specific functions
+                    window.dispatchEvent(new CustomEvent('fabAction', { detail: { action: action.action } }));
+                }
+                // Close the menu after an action is triggered
+                fabContainer.classList.remove('active');
+            });
+            
+            fabActions.appendChild(actionElement);
+        });
+
+        // Main button listener to toggle the menu
+        fabMain.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fabContainer.classList.toggle('active');
         });
     }
 
-    // Event listener for the main FAB to open/close the menu
-    fabMain.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent the document click listener from closing it immediately
-        fabContainer.classList.toggle('active');
-    });
+    // This is the trigger. It waits until the footer is fully loaded.
+    window.addEventListener('footerLoaded', initializeFAB);
 
-    // Event listener for the action buttons container
-    fabActions.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent clicks on the menu from closing it
-        const target = e.target.closest('.fab-action');
-        if (target) {
-            const action = target.dataset.action;
-            
-            // This is the core logic: it finds a function on the page with the specified name and calls it
-            if (action.startsWith('navigate_')) {
-                const page = action.split('_')[1];
-                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-                window.location.href = `${baseUrl}${page}.html`;
-            }
-            else if (window[action] && typeof window[action] === 'function') {
-                window[action]();
-            } 
-            // This allows triggering clicks on buttons, e.g., 'book_button_click'
-            else if (action.endsWith('_click')) {
-                 const buttonId = action.replace('_click', '');
-                 const button = document.getElementById(buttonId);
-                 if(button) {
-                     button.click();
-                 } else {
-                    console.warn(`FAB action error: Button with ID "${buttonId}" not found.`);
-                 }
-            } 
-            else {
-                console.warn(`FAB action error: Function named "${action}" was not found on this page (window object).`);
-            }
-            
-            // Close the menu after an action is clicked
+    // Add a listener to close the FAB menu if the user clicks anywhere else on the page.
+    document.addEventListener('click', () => {
+        if (fabContainer && fabContainer.classList.contains('active')) {
             fabContainer.classList.remove('active');
         }
     });
 
-    // Add a global listener to close the FAB menu when clicking anywhere else on the page
-    document.addEventListener('click', () => {
-        fabContainer.classList.remove('active');
-    });
-
-    // Initialize the FAB logic
-    initializeFab();
-});
+})();
 
