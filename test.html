@@ -3,43 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assign Carrier - Postman</title>
-    <!-- Tailwind CSS for styling -->
+    <title>BookOrder - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts for a modern look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Icon Library (for refresh icon) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            color: #1f2937;
         }
-        /* Ensure the main container fills the available space between header and footer */
-        main {
-            min-height: calc(100vh - 8rem); /* Adjust based on your header/footer height */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
-        /* Simple animation for spinners */
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        input[type=number] {
+            -moz-appearance: textfield;
         }
-        .spinner {
-            animation: spin 1s linear infinite;
+        .autocomplete-container {
+            position: relative;
         }
-        /* Custom scrollbar for scrollable areas */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+        .autocomplete-results {
+            position: absolute;
+            z-index: 10;
+            width: 100%;
+            background-color: white;
+            border: 1px solid #d1d5db;
+            border-top: none;
+            max-height: 200px;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            border-radius: 0 0 0.5rem 0.5rem;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
+        .autocomplete-results li {
+            padding: 0.5rem;
+            cursor: pointer;
+            border-bottom: 1px solid #e5e7eb;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
+        .autocomplete-results li:last-child {
+            border-bottom: none;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+        .autocomplete-results li:hover {
+            background-color: #f3f4f6;
         }
     </style>
 </head>
@@ -47,375 +57,1297 @@
 
     <div id="header-placeholder"></div>
 
-    <main class="flex-grow w-full flex flex-col p-4">
-        <div id="mainContainer" class="flex flex-col md:flex-row w-full max-w-7xl mx-auto gap-8 flex-grow">
+    <main class="flex-grow p-1">
+        <div class="container mx-auto bg-white flex flex-col border border-gray-400">
 
-            <!-- Left Column: Shipments List -->
-            <div class="w-full md:w-1/2 bg-white rounded-xl shadow-lg flex flex-col h-[60vh] md:h-full">
-                <div class="p-4 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
-                    <h2 class="text-xl font-bold text-gray-800">Recent Shipments</h2>
-                </div>
-                <div id="shipmentsListContainer" class="custom-scrollbar flex-grow p-4 space-y-3 overflow-y-auto">
-                    <div id="shipmentsPlaceholder" class="text-center text-gray-500 pt-16">
-                        <p>Waiting for application data...</p>
-                    </div>
-                     <div id="shipmentsSpinner" class="text-center text-gray-500 pt-16 hidden">
-                        <i class="fas fa-spinner fa-spin fa-2x"></i>
-                        <p class="mt-2">Loading Shipments...</p>
-                    </div>
-                </div>
-                <div id="loadMoreContainer" class="p-4 border-t border-gray-200 text-center hidden flex-shrink-0">
-                    <button id="loadMoreButton" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                        Load More
-                    </button>
-                </div>
-            </div>
+            <!-- Top Row -->
+            <div class="flex flex-col md:flex-row border-b border-gray-400">
+                <!-- Top Left: Booking Form -->
+                <div class="w-full md:w-1/2 border-r border-gray-400">
+                    <form id="bookingForm" class="">
+                        <!-- Hidden timestamp input to preserve JS logic -->
+                        <input type="text" id="timestamp" name="timestamp" readonly class="hidden">
 
-            <!-- Right Column: Partial Order Update Form -->
-            <div class="w-full md:w-1/2 md:h-full">
-                <div class="p-4 sm:p-8 space-y-6 bg-white rounded-xl shadow-lg">
-                    <div class="text-center">
-                        <h1 class="text-3xl font-bold text-gray-800">Assign Carrier</h1>
-                        <p class="mt-2 text-sm text-gray-600">Select a shipment from the left to update its details.</p>
-                    </div>
-
-                    <form id="partialUpdateForm" class="space-y-4">
-                        <fieldset class="border-t border-gray-200 pt-4 hidden">
-                            <legend class="text-lg font-semibold text-gray-700 mb-2">Authentication</legend>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="code" class="text-sm font-medium text-gray-700">User Code</label>
-                                    <input type="text" id="code" name="code" required class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" placeholder="Auto-filled" readonly>
-                                </div>
-                                <div>
-                                    <label for="token" class="text-sm font-medium text-gray-700">Token</label>
-                                    <input type="password" id="token" name="token" required class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" placeholder="Auto-filled" readonly>
+                        <!-- Order Date & Customer Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-400 p-2">
+                            <div class="p-2 border-r border-gray-400">
+                                <input type="date" id="order_date" name="order_date" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="p-2">
+                                <select id="customer_name" name="customer_name" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                   <option value="">Loading Customers...</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Sender & Receiver Flexbox -->
+                        <div class="flex flex-col md:flex-row gap-0 border border-gray-400">
+                            <!-- Sender Details -->
+                            <div class="w-full md:w-1/2 p-2 autocomplete-container">
+                                <input type="text" id="sender_name" name="sender_name" placeholder="Consignor Name or Mobile" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-md" autocomplete="off">
+                                <ul id="sender_autocomplete_results" class="autocomplete-results hidden"></ul>
+                                <div id="senderDetailsDisplay" class="p-2 bg-white mt-2 min-h-[60px]">
+                                    <span class="italic text-gray-500">Select a customer to autofill sender.</span>
                                 </div>
                             </div>
-                        </fieldset>
-                        <fieldset class="border-t border-gray-200 pt-4">
-                            <legend class="text-lg font-semibold text-gray-700 mb-2">Identify Order</legend>
-                            <div>
-                                <label for="reference" class="text-sm font-medium text-gray-700">Reference ID</label>
-                                <input type="number" id="reference" name="REFERANCE" required class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" placeholder="Select a shipment" readonly>
+                            <!-- Receiver Details -->
+                            <div class="w-full md:w-1/2 border-t md:border-t-0 md:border-l border-gray-400 p-2 autocomplete-container">
+                                <input type="text" id="receiver_name" name="receiver_name" placeholder="Consignee Name or Mobile" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-md" autocomplete="off">
+                                 <ul id="receiver_autocomplete_results" class="autocomplete-results hidden"></ul>
+                                <div id="receiverDetailsDisplay" class="p-2 bg-white mt-2 min-h-[60px]">
+                                    <span class="italic text-gray-500">Enter receiver details manually.</span>
+                                </div>
                             </div>
-                        </fieldset>
-                        <fieldset class="border-t border-gray-200 pt-4">
-                            <legend class="text-lg font-semibold text-gray-700 mb-2">Fields to Update</legend>
-                             <p class="text-xs text-gray-500 mb-4">Only fill in the fields you want to change.</p>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                 <div>
-                                    <label for="carrier" class="text-sm font-medium text-gray-700">Carrier</label>
-                                    <select id="carrier" name="CARRIER" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                        <option value="">Select a carrier</option>
+                        </div>
+
+                        <!-- Mode & Carrier Grid -->
+                        <div class="border border-gray-400">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-0 p-2">
+                                <div class="p-2 border-r border-gray-400">
+                                    <select id="transport_type" name="transport_type" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Loading Modes...</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label for="awb_number" class="text-sm font-medium text-gray-700">AWB Number</label>
-                                    <input type="text" id="awb_number" name="AWB_NUMBER" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="New AWB number">
-                                </div>
-                                <div>
-                                    <label for="order_date" class="text-sm font-medium text-gray-700">Order Date</label>
-                                    <input type="date" id="order_date" name="ORDER_DATE" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                </div>
-                                <div>
-                                    <label for="transit_date" class="text-sm font-medium text-gray-700">Transit Date</label>
-                                    <input type="date" id="transit_date" name="TRANSIT_DATE" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label for="dyna_awb" class="text-sm font-medium text-gray-700">Dyna AWB</label>
-                                    <input type="text" id="dyna_awb" name="DYNA_AWB" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="New Dyna AWB">
+                                <div class="p-2">
+                                     <select id="carrier_select" name="carrier_select" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Loading Carriers...</option>
+                                    </select>
                                 </div>
                             </div>
-                        </fieldset>
-                        <div>
-                            <button type="submit" id="submitButton" class="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300">
-                                <span id="buttonText">Update Order</span>
-                                <svg id="spinner" class="spinner h-5 w-5 ml-3 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
+                            <div id="modeChangeMessage" class="text-xs text-blue-600 px-4 pb-2"></div>
+                        </div>
+
+
+                        <!-- Payment Type Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-gray-400 p-2">
+                            <div class="flex items-center">
+                                <input id="payment_global" type="checkbox" name="payment_type" value="global" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                <label for="payment_global" class="ml-2 text-sm text-gray-700">Global</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="payment_topay" type="checkbox" name="payment_type" value="topay" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                <label for="payment_topay" class="ml-2 text-sm text-gray-700">Topay</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="payment_cod" type="checkbox" name="payment_type" value="cod" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                <label for="payment_cod" class="ml-2 text-sm text-gray-700">COD</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="payment_fov" type="checkbox" name="payment_type" value="fov" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                <label for="payment_fov" class="ml-2 text-sm text-gray-700">FOV</label>
+                            </div>
+                        </div>
+
+                        <!-- Origin & Destination Pincode (Hidden) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-400 hidden">
+                            <div class="p-2 border-r border-gray-400">
+                                <input type="tel" id="origin_pincode" name="origin_pincode" pattern="[0-9]{6}" maxlength="6" placeholder="Origin Pincode" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-md">
+                            </div>
+                            <div class="p-2">
+                                <input type="tel" id="dest_pincode" name="dest_pincode" pattern="[0-9]{6}" maxlength="6" placeholder="Destination Pincode" class="w-full p-1 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-md">
+                            </div>
+                        </div>
+
+                        <!-- Consignment Details Grid -->
+                        <div id="multiboxErrorMessage" class="text-xs text-red-500 px-2 pt-2"></div>
+                        <div class="flex items-center gap-0 border border-gray-400 p-2">
+                            <input type="number" id="actual_weight" name="actual_weight" placeholder="Wgt (kg)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="length" name="length" placeholder="L (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="breadth" name="breadth" placeholder="B (cm)" class="w-1/4 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="height" name="height" placeholder="H (cm)" class="w-1/4 p-1 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <!-- Product Details Grid -->
+                        <div class="flex items-end gap-0 border border-gray-400 p-2">
+                            <input type="text" id="product_name" name="product_name" placeholder="Product" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="text" id="doc_no" name="doc_no" placeholder="DocNo" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="text" id="eway_bill" name="eway_bill" placeholder="EWay" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500" pattern="\d{12}" maxlength="12" title="EWay bill must be a 12-digit numeric number.">
+                            <select id="product_type" name="product_type" class="w-1/5 p-1 border-r border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="INV">INV</option>
+                                <option value="CLN">CLN</option>
+                                <option value="DEC">DEC</option>
+                                <option value="ADH">ADH</option>
+                            </select>
+                            <input type="number" id="amount" name="amount" placeholder="Amount (₹)" class="w-1/5 p-1 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div id="ewayStatusMessage" class="text-xs text-red-500 mt-1 px-2"></div>
+                        
+                        <!-- AWB and Action Buttons -->
+                        <div class="flex items-center gap-2 border border-gray-400 p-2">
+                            <div class="relative flex-grow">
+                                <input type="text" id="awb" name="awb" placeholder="AWB" class="w-full p-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 pr-10">
+                                <button type="button" id="getAwbButton" class="absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 hover:text-gray-700" title="Get AWB">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 9a9 9 0 0115.12-4.38M20 20v-5h-5"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 15a9 9 0 01-15.12 4.38"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <button id="cancel_button" type="button" class="flex-grow bg-red-600 text-white py-2 px-4 text-sm font-medium hover:bg-red-700 rounded-md shadow-sm">
+                                Cancel
+                            </button>
+                            <button id="book_button" type="button" class="flex-grow bg-gray-800 text-white py-2 px-4 text-sm font-medium hover:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                Book
                             </button>
                         </div>
+                        <!-- Inline Message Display Area -->
+                        <div id="bookingMessage" class="p-2 text-sm text-center rounded-md mt-2"></div>
                     </form>
-                    <div id="responseMessage" class="mt-4 p-4 text-sm rounded-md hidden"></div>
+
+                    <!-- Order Details Table -->
+                    <div id="orderTableSection" class="p-4 bg-white border-t border-gray-400 hidden">
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800">Order Details</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm">
+                                <tbody class="divide-y divide-gray-300">
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">REFERENCE</td>
+                                        <td id="display_reference" class="px-2 py-1 w-1/4">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">BRANCH</td>
+                                        <td id="display_branch" class="px-2 py-1 w-1/4">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CODE</td>
+                                        <td id="display_code" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">USER_NAME</td>
+                                        <td id="display_user_name" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TIME_STAMP</td>
+                                        <td id="display_timestamp" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORDER_DATE</td>
+                                        <td id="display_order_date" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CARRIER</td>
+                                        <td id="display_carrier" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">AWB_NUMBER</td>
+                                        <td id="display_awb_number" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TRANSIT_DATE</td>
+                                        <td id="display_transit_date" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CONSIGNOR</td>
+                                        <td id="display_consignor" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORIGIN_CITY</td>
+                                        <td id="display_origin_city" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ORIGIN_PINCODE</td>
+                                        <td id="display_origin_pincode" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">CONSIGNEE</td>
+                                        <td id="display_consignee" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">DEST_CITY</td>
+                                        <td id="display_dest_city" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">DEST_PINCODE</td>
+                                        <td id="display_dest_pincode" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TAT</td>
+                                        <td id="display_tat" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">ZONE</td>
+                                        <td id="display_zone" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">MODE</td>
+                                        <td id="display_mode" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">GLOBAL</td>
+                                        <td id="display_global" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">COD</td>
+                                        <td id="display_cod" class="px-2 py-1">---</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">TOPAY</td>
+                                        <td id="display_topay" class="px-2 py-1">---</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50">FOV</td>
+                                        <td id="display_fov" class="px-2 py-1">---</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Right: Multibox & Product -->
+                <div class="w-full md:w-1/2">
+                    <!-- Multibox Section -->
+                    <div id="multiboxSection" class="p-4 bg-white">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border-collapse border border-gray-400">
+                                <thead>
+                                    <tr class="bg-gray-200 text-gray-700 text-sm">
+                                        <th class="p-2 border border-gray-400 text-left">BoxNum</th>
+                                        <th class="p-2 border border-gray-400 text-left">Wgt</th>
+                                        <th class="p-2 border border-gray-400 text-left">L</th>
+                                        <th class="p-2 border border-gray-400 text-left">B</th>
+                                        <th class="p-2 border border-gray-400 text-left">H</th>
+                                        <th class="p-2 border border-gray-400 text-left">Vol.Wt</th>
+                                        <th class="p-2 border border-gray-400 text-left">Chg.Wt</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="multiboxTableBody">
+                                    <!-- Multibox rows will be added here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="multiboxTotals" class="flex justify-between items-center mt-4">
+                            <div id="multiboxTotalsText" class="text-sm font-semibold text-gray-700 space-y-1 hidden">
+                                <!-- Totals will be displayed here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Section -->
+                    <div id="productSection" class="p-4 bg-white border-t border-gray-400">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border-collapse border border-gray-400">
+                                <thead>
+                                    <tr class="bg-gray-200 text-gray-700 text-sm">
+                                        <th class="p-2 border border-gray-400 text-left">SrNo</th>
+                                        <th class="p-2 border border-gray-400 text-left">Product</th>
+                                        <th class="p-2 border border-gray-400 text-left">DocNo</th>
+                                        <th class="p-2 border border-gray-400 text-left">EWay</th>
+                                        <th class="p-2 border border-gray-400 text-left">Type</th>
+                                        <th class="p-2 border border-gray-400 text-left">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productTableBody">
+                                    <!-- Product rows will be added here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="productTotals" class="flex justify-end items-center mt-4 space-x-2">
+                            <div id="productTotalsText" class="text-sm font-semibold text-gray-700 space-y-1 hidden">
+                                <!-- Totals will be displayed here dynamically -->
+                            </div>
+                            <button id="clearMultiboxButton" class="bg-yellow-500 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-yellow-600">
+                                Clear Multibox
+                            </button>
+                            <button id="clearProductsButton" class="bg-red-500 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-red-600">
+                                Clear Product
+                            </button>
+                            <button id="clearAllButton" class="bg-gray-500 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-600">
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Combined Summary and Charges Row -->
+            <div class="flex flex-col md:flex-row border-b border-gray-400">
+                <!-- Left: Summary -->
+                <div class="w-full md:w-1/2 border-r border-gray-400">
+                    <div id="summarySection" class="p-4 bg-white">
+                        <div class="grid grid-cols-4 gap-4 text-center">
+                            <div>
+                                <p class="text-sm text-gray-500">WEIGHT</p>
+                                <p id="display_weight" class="text-lg font-bold text-gray-800">---</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">CHG_WT</p>
+                                <p id="display_chg_wt" class="text-lg font-bold text-gray-800">---</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">PIECES</p>
+                                <p id="display_pieces" class="text-lg font-bold text-gray-800">---</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">VALUE</p>
+                                <p id="display_value" class="text-lg font-bold text-gray-800">---</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Helper Table Section -->
+                    <div id="helperTableSection" class="p-4 bg-white border-t border-gray-400 hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border-collapse border border-gray-400 text-sm">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600">
+                                        <th class="p-2 border border-gray-400 text-left">WEIGHT_CEILING</th>
+                                        <th class="p-2 border border-gray-400 text-left">WEIGHT_ZONE</th>
+                                        <th class="p-2 border border-gray-400 text-left">RATE_UID</th>
+                                        <th class="p-2 border border-gray-400 text-left">RATE</th>
+                                        <th class="p-2 border border-gray-400 text-left">ADD_RATE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="helperTableBody">
+                                    <tr>
+                                        <td class="p-2 border border-gray-400" id="display_weight_ceiling">---</td>
+                                        <td class="p-2 border border-gray-400" id="display_weight_zone">---</td>
+                                        <td class="p-2 border border-gray-400" id="display_rate_uid">---</td>
+                                        <td class="p-2 border border-gray-400" id="display_rate">---</td>
+                                        <td class="p-2 border border-gray-400" id="display_add_rate">---</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right: Charges -->
+                <div class="w-full md:w-1/2">
+                     <div id="chargesSection" class="p-4 bg-white">
+                        <h3 class="text-lg font-semibold mb-2 text-gray-800 hidden">Charges & Taxes</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm">
+                                <tbody class="divide-y divide-gray-300">
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">FRIGHT</td>
+                                        <td id="display_fright" class="px-2 py-1 w-1/4 text-right">0.00</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">OTHER CHARGES</td>
+                                        <td id="display_other_chg" class="px-2 py-1 w-1/4 text-right">0.00</td>
+                                    </tr>
+                                    <tr class="divide-x divide-gray-300">
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-gray-50 w-1/4">GST</td>
+                                        <td id="display_gst_total" class="px-2 py-1 w-1/4 text-right">0.00</td>
+                                        <td class="px-2 py-1 font-medium text-gray-600 bg-blue-100 text-blue-800 text-base w-1/4">TOTAL</td>
+                                        <td id="display_total" class="px-2 py-1 text-right font-bold text-blue-800 text-base w-1/4">0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                             <!-- Hidden elements for preserving post data -->
+                            <div class="hidden">
+                                <span id="display_fuel_chg"></span>
+                                <span id="display_cod_chg"></span>
+                                <span id="display_topay_chg"></span>
+                                <span id="display_fov_chg"></span>
+                                <span id="display_eway_chg"></span>
+                                <span id="display_awb_chg"></span>
+                                <span id="display_pack_chg"></span>
+                                <span id="display_dev_chg"></span>
+                                <span id="display_taxable"></span>
+                                <span id="display_sgst"></span>
+                                <span id="display_cgst"></span>
+                                <span id="display_igst"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
-
+    
     <div id="footer-placeholder"></div>
 
     <script src="layout.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- PAGE PROTECTION ---
-            // This is a protected page. Redirect to login if the user is not authenticated.
-            const loginDataJSON = localStorage.getItem('loginData');
-            let isLoggedIn = false;
-            if (loginDataJSON) {
-                try {
-                    const loginData = JSON.parse(loginDataJSON);
-                    if (loginData.expires && new Date().getTime() <= loginData.expires) {
-                        isLoggedIn = true;
-                    }
-                } catch(e) { console.error("Error parsing login data", e); }
-            }
+            const timestampInput = document.getElementById('timestamp');
+            const orderDateInput = document.getElementById('order_date');
+            const senderNameInput = document.getElementById('sender_name');
+            const senderDetailsDisplay = document.getElementById('senderDetailsDisplay');
+            const senderAutocompleteResults = document.getElementById('sender_autocomplete_results');
+            const receiverNameInput = document.getElementById('receiver_name');
+            const receiverDetailsDisplay = document.getElementById('receiverDetailsDisplay');
+            const receiverAutocompleteResults = document.getElementById('receiver_autocomplete_results');
+            const originPincodeInput = document.getElementById('origin_pincode');
+            const destPincodeInput = document.getElementById('dest_pincode');
+            const actualWeightInput = document.getElementById('actual_weight');
+            const lengthInput = document.getElementById('length');
+            const breadthInput = document.getElementById('breadth');
+            const heightInput = document.getElementById('height');
+            const multiboxTableBody = document.getElementById('multiboxTableBody');
+            const multiboxTotalsTextDiv = document.getElementById('multiboxTotalsText');
+            const clearMultiboxButton = document.getElementById('clearMultiboxButton');
+            const multiboxErrorMessage = document.getElementById('multiboxErrorMessage');
+            const modeChangeMessage = document.getElementById('modeChangeMessage');
+            const productTableBody = document.getElementById('productTableBody');
+            const productNameInput = document.getElementById('product_name');
+            const docNoInput = document.getElementById('doc_no');
+            const ewayBillInput = document.getElementById('eway_bill');
+            const productTypeSelect = document.getElementById('product_type');
+            const amountInput = document.getElementById('amount');
+            const ewayStatusMessage = document.getElementById('ewayStatusMessage');
+            const productTotalsTextDiv = document.getElementById('productTotalsText');
+            const clearProductsButton = document.getElementById('clearProductsButton');
+            const clearAllButton = document.getElementById('clearAllButton');
+            const bookButton = document.getElementById('book_button');
+            const cancelButton = document.getElementById('cancel_button');
+            const getAwbButton = document.getElementById('getAwbButton');
+            const customerNameSelect = document.getElementById('customer_name');
+            const transportTypeSelect = document.getElementById('transport_type');
+            const carrierSelect = document.getElementById('carrier_select');
+            const bookingMessage = document.getElementById('bookingMessage');
 
-            if (!isLoggedIn) {
-                // Using replace to prevent user from coming back to this page via back button
-                window.location.replace('https://post4ex.github.io/postman/login.html');
-                return; // Stop script execution
-            }
+            let loginData = {};
+            let isBookingLocked = false;
+            let wasModeUnlocked = false; 
+            let userMadeInitialModeChoice = false;
+            let fetchedGSheetData = {};
+            let consignmentBoxes = [];
+            let consignmentProducts = [];
+            let selectedCustomerDetails = {};
+            let selectedContacts = { sender: null, receiver: null };
+            let summaryTotals = {
+                totalWgt: 0,
+                totalChgWt: 0,
+                boxCount: 0,
+                totalAmount: 0
+            };
 
-            // --- DOM ELEMENT CONSTANTS ---
-            const form = document.getElementById('partialUpdateForm');
-            const submitButton = document.getElementById('submitButton');
-            const buttonText = document.getElementById('buttonText');
-            const spinner = document.getElementById('spinner');
-            const responseMessage = document.getElementById('responseMessage');
-            const shipmentsListContainer = document.getElementById('shipmentsListContainer');
-            const shipmentsPlaceholder = document.getElementById('shipmentsPlaceholder');
-            const shipmentsSpinner = document.getElementById('shipmentsSpinner');
-            const referenceInput = document.getElementById('reference');
-            const carrierSelect = document.getElementById('carrier');
-            const loadMoreContainer = document.getElementById('loadMoreContainer');
-            const loadMoreButton = document.getElementById('loadMoreButton');
-            const codeInput = document.getElementById('code');
-            const tokenInput = document.getElementById('token');
-
-            // --- STATE & CONFIG ---
-            let activeShipmentElement = null;
-            let allShipments = [];
-            let currentIndex = 0;
-            const shipmentsPerLoad = 10; 
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5PZJRnnDmyDtYbWctF6d0428h1haJnDfVA4HKQR4hcsdAolcmkhLG9MgntAhPSQyi/exec';
-
-            // --- MAIN INITIALIZATION LOGIC ---
-            function initializeAppLogic() {
-                shipmentsPlaceholder.classList.add('hidden');
-                shipmentsSpinner.classList.remove('hidden');
-                
-                const loginDataJSON = localStorage.getItem('loginData');
-                const appDataJSON = localStorage.getItem('appData');
-
-                if (!loginDataJSON || !appDataJSON) {
-                    shipmentsSpinner.classList.add('hidden');
-                    shipmentsListContainer.innerHTML = `<p class="text-center text-red-500 p-4">Could not find required login or application data. Please try refreshing.</p>`;
+            // =================================================================================
+            // UPGRADED REFRESH HANDLER & INITIALIZATION
+            // =================================================================================
+            function initializeAppLogic(eventDetail) {
+                if (!eventDetail || !eventDetail.data) {
+                    bookingMessage.textContent = 'Application data could not be loaded.';
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
                     return;
                 }
+                fetchedGSheetData = eventDetail.data;
 
-                try {
-                    const loginData = JSON.parse(loginDataJSON);
-                    const appData = JSON.parse(appDataJSON);
-                    
-                    codeInput.value = loginData.CODE || loginData.code;
-                    tokenInput.value = loginData.TOKEN || loginData.token;
+                // Call the new smart update function for dropdowns
+                updateAllDropdowns();
 
-                    const b2b2cData = appData.data.B2B2C || [];
-                    const ordersData = appData.data.ORDERS || [];
-                    const carrierData = appData.data.CARRIER || [];
+                setupAutocomplete(senderNameInput, senderAutocompleteResults, senderDetailsDisplay, 'sender');
+                setupAutocomplete(receiverNameInput, receiverAutocompleteResults, receiverDetailsDisplay, 'receiver');
+                
+                // Auto-select if there is only one customer
+                if (customerNameSelect.options.length === 2) {
+                    customerNameSelect.selectedIndex = 1;
+                    handleCustomerSelectionChange();
+                }
+            }
 
-                    carrierSelect.innerHTML = '<option value="">Select a carrier</option>';
-                    carrierData.forEach(carrier => {
+            function handleDataRefresh(eventDetail) {
+                console.log('Booking Page: App data refreshed. Preserving selections.');
+                if (!eventDetail || !eventDetail.data) return;
+                
+                fetchedGSheetData = eventDetail.data;
+                updateAllDropdowns();
+            }
+
+            function updateAllDropdowns() {
+                // 1. Save current selections
+                const selectedCustomer = customerNameSelect.value;
+                const selectedCarrier = carrierSelect.value;
+                const selectedMode = transportTypeSelect.value;
+
+                // 2. Repopulate dropdowns
+                populateCustomerDropdown();
+                populateCarrierDropdown();
+                populateModeDropdown(selectedContacts.receiver?.ZONE);
+
+                // 3. Restore selections
+                customerNameSelect.value = selectedCustomer;
+                carrierSelect.value = selectedCarrier;
+                transportTypeSelect.value = selectedMode;
+            }
+
+
+            function setBookingFieldsLocked(locked) {
+                const fieldsToLock = [
+                    'order_date', 'sender_name', 'receiver_name',
+                    'transport_type', 'carrier_select', 'payment_global',
+                    'payment_topay', 'payment_cod', 'payment_fov'
+                ];
+                fieldsToLock.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        if (locked && id === 'carrier_select' && element.value === '') {
+                           return;
+                        }
+                        element.disabled = locked;
+                        if (locked) {
+                            element.classList.add('bg-gray-200', 'cursor-not-allowed');
+                        } else {
+                            element.classList.remove('bg-gray-200', 'cursor-not-allowed');
+                        }
+                    }
+                });
+                isBookingLocked = locked;
+            }
+            
+             function toggleWeightProductEntry(locked) {
+                const fields = [
+                    actualWeightInput, lengthInput, breadthInput, heightInput,
+                    productNameInput, docNoInput, ewayBillInput, productTypeSelect, amountInput
+                ];
+                fields.forEach(field => {
+                    field.disabled = locked;
+                    if(locked) {
+                        field.classList.add('bg-gray-200', 'cursor-not-allowed');
+                    } else {
+                        field.classList.remove('bg-gray-200', 'cursor-not-allowed');
+                    }
+                });
+            }
+
+            function areMainDetailsComplete() {
+                const isCustomerSelected = customerNameSelect.value !== '';
+                const isSenderSelected = !!selectedContacts.sender;
+                const isReceiverSelected = !!selectedContacts.receiver;
+                const isModeSelected = transportTypeSelect.value !== '';
+                const isCarrierSelected = carrierSelect.value !== '';
+                return isCustomerSelected && isSenderSelected && isReceiverSelected && isModeSelected && isCarrierSelected;
+            }
+
+             function checkMainDetailsAndToggleInputs() {
+                if (areMainDetailsComplete()) {
+                    toggleWeightProductEntry(false);
+                } else {
+                    toggleWeightProductEntry(true);
+                }
+            }
+
+            function resetForNextBooking() {
+                consignmentBoxes = [];
+                consignmentProducts = [];
+                document.getElementById('receiver_name').value = '';
+                document.getElementById('awb').value = '';
+                document.getElementById('actual_weight').value = '';
+                document.getElementById('length').value = '';
+                document.getElementById('breadth').value = '';
+                document.getElementById('height').value = '';
+                document.getElementById('product_name').value = '';
+                document.getElementById('doc_no').value = '';
+                document.getElementById('eway_bill').value = '';
+                document.getElementById('amount').value = '';
+                ['payment_global', 'payment_topay', 'payment_cod', 'payment_fov'].forEach(id => document.getElementById(id).checked = false);
+                selectedContacts.receiver = null;
+                document.getElementById('receiverDetailsDisplay').innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
+                document.getElementById('transport_type').value = '';
+                document.getElementById('carrier_select').value = '';
+                renderMultiboxTable();
+                renderProductTable();
+                setBookingFieldsLocked(false); 
+                toggleWeightProductEntry(true); 
+                updateDisplayTables();
+            }
+
+            function resetFullForm() {
+                consignmentBoxes = [];
+                consignmentProducts = [];
+                renderMultiboxTable();
+                renderProductTable();
+                setBookingFieldsLocked(false);
+                userMadeInitialModeChoice = false;
+                document.getElementById('bookingForm').reset();
+                orderDateInput.value = formatDate(new Date());
+                senderDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Select a customer to autofill sender.</span>`;
+                receiverDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
+                bookingMessage.textContent = '';
+                bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
+                selectedContacts.sender = null;
+                selectedContacts.receiver = null;
+                selectedCustomerDetails = {};
+                updateDisplayTables();
+                updateCharges();
+                toggleWeightProductEntry(true);
+            }
+
+            function formatDate(date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            function formatTime(date) {
+                const hh = String(date.getHours()).padStart(2, '0');
+                const min = String(date.getMinutes()).padStart(2, '0');
+                return `${hh}:${min}`;
+            }
+
+            function updateTimestamp() {
+                const now = new Date();
+                timestampInput.value = `${formatDate(now)} ${formatTime(now)}`;
+                updateDisplayTables();
+            }
+            
+            function calculateFreight() {
+                const rate = parseFloat(document.getElementById('display_rate').textContent);
+                const addRate = parseFloat(document.getElementById('display_add_rate').textContent);
+                const weightCeiling = parseFloat(document.getElementById('display_weight_ceiling').textContent);
+                const weightZone = parseFloat(document.getElementById('display_weight_zone').textContent);
+                const selectedMode = transportTypeSelect.value;
+
+                if (isNaN(rate) || isNaN(weightCeiling)) return 0;
+
+                let fright = 0;
+                if (selectedMode === 'E' || selectedMode === 'P') {
+                     if (!isNaN(addRate)) {
+                        fright = rate + ((weightCeiling * 2) - 1) * addRate;
+                     } else {
+                        fright = rate;
+                     }
+                } else {
+                     if (!isNaN(addRate) && !isNaN(weightZone)) {
+                        const weightDiv = weightCeiling - weightZone;
+                        fright = rate + (weightDiv * addRate);
+                    } else {
+                       fright = weightCeiling * rate; 
+                    }
+                }
+                return fright > 0 ? fright : 0;
+            }
+
+            function updateHelperTable() {
+                let weightCeiling = 0;
+                const chgWt = parseFloat(document.getElementById('display_chg_wt').textContent) || 0;
+                const weightChange = parseFloat(selectedCustomerDetails.WEIGHT_CHANGE);
+
+                if (!isNaN(weightChange) && chgWt >= weightChange) {
+                    weightCeiling = Math.ceil(chgWt * 2) / 2;
+                } else {
+                    weightCeiling = Math.ceil(chgWt);
+                }
+
+                document.getElementById('display_weight_ceiling').textContent = weightCeiling.toFixed(2);
+                
+                let weightZone = '---';
+                const selectedMode = transportTypeSelect.value;
+                if (selectedMode) {
+                    if (selectedMode === 'E' || selectedMode === 'P') {
+                        weightZone = 0.5;
+                    } else {
+                        const zoneThresholds = [3, 10, 25, 50, 100, 500, 1000];
+                        let calculatedZone = 0; 
+                        for(const threshold of zoneThresholds) {
+                             if (weightCeiling >= threshold) calculatedZone = threshold;
+                             else break;
+                        }
+                        weightZone = calculatedZone;
+                    }
+                }
+                document.getElementById('display_weight_zone').textContent = weightZone;
+                
+                let rateUid = '---';
+                const customerCode = selectedCustomerDetails.CODE;
+                if (customerCode && selectedMode && weightZone !== '---') {
+                    rateUid = `${customerCode}${selectedMode}${weightZone}`;
+                }
+                document.getElementById('display_rate_uid').textContent = rateUid;
+
+                let rate = '---', addRate = '---';
+                const receiverZone = selectedContacts.receiver?.ZONE;
+                const ratesData = fetchedGSheetData.RATES;
+                if (rateUid !== '---' && receiverZone && ratesData) {
+                    const rateRow = ratesData.find(r => r.UID === rateUid);
+                    if (rateRow && rateRow[receiverZone]) rate = rateRow[receiverZone];
+                    const addRateUid = `${rateUid}A`;
+                    const addRateRow = ratesData.find(r => r.UID === addRateUid);
+                    if (addRateRow && addRateRow[receiverZone]) addRate = addRateRow[receiverZone];
+                }
+                document.getElementById('display_rate').textContent = rate;
+                document.getElementById('display_add_rate').textContent = addRate;
+                
+                updateCharges();
+            }
+
+            function updateSummaryDisplay() {
+                const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
+                const minWt = (selectedModeOption && selectedModeOption.dataset.minWt) ? parseFloat(selectedModeOption.dataset.minWt) : 0;
+                
+                const finalTotalChgWt = Math.max(summaryTotals.totalChgWt, minWt);
+
+                document.getElementById('display_weight').textContent = summaryTotals.totalWgt ? summaryTotals.totalWgt.toFixed(2) : '---';
+                document.getElementById('display_chg_wt').textContent = finalTotalChgWt ? finalTotalChgWt.toFixed(2) : '---';
+                document.getElementById('display_pieces').textContent = summaryTotals.boxCount || '---';
+                document.getElementById('display_value').textContent = summaryTotals.totalAmount ? `₹${summaryTotals.totalAmount.toFixed(2)}` : '---';
+                
+                updateHelperTable();
+            }
+
+            function updateDisplayTables() {
+                document.getElementById('display_timestamp').textContent = timestampInput.value || '---';
+                document.getElementById('display_order_date').textContent = orderDateInput.value || '---';
+                document.getElementById('display_transit_date').textContent = orderDateInput.value || '---';
+                document.getElementById('display_carrier').textContent = document.getElementById('carrier_select').value || '---';
+                document.getElementById('display_awb_number').textContent = document.getElementById('awb').value || '---';
+                document.getElementById('display_consignor').textContent = selectedContacts.sender?.UID || '---';
+                document.getElementById('display_origin_pincode').textContent = originPincodeInput.value || '---';
+                document.getElementById('display_origin_city').textContent = selectedContacts.sender?.CITY || '---';
+                document.getElementById('display_consignee').textContent = selectedContacts.receiver?.UID || '---';
+                document.getElementById('display_dest_pincode').textContent = destPincodeInput.value || '---';
+                document.getElementById('display_dest_city').textContent = selectedContacts.receiver?.CITY || '---';
+                const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
+                const selectedModeText = selectedModeOption ? selectedModeOption.text.toUpperCase().replace(/ /g, '_') : '';
+                const tatColumnName = `${selectedModeText}_TAT`;
+
+                let tatValue = '---';
+                if (selectedContacts.receiver && selectedModeText) {
+                    tatValue = selectedContacts.receiver[tatColumnName] || '---';
+                }
+                document.getElementById('display_tat').textContent = tatValue;
+                document.getElementById('display_mode').textContent = transportTypeSelect.value || '---';
+                document.getElementById('display_zone').textContent = selectedContacts.receiver?.ZONE || '---';
+                document.getElementById('display_global').textContent = document.getElementById('payment_global').checked ? 'Yes' : 'No';
+                document.getElementById('display_cod').textContent = document.getElementById('payment_cod').checked ? 'Yes' : 'No';
+                document.getElementById('display_topay').textContent = document.getElementById('payment_topay').checked ? 'Yes' : 'No';
+                document.getElementById('display_fov').textContent = document.getElementById('payment_fov').checked ? 'Yes' : 'No';
+                document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
+                document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
+                document.getElementById('display_branch').textContent = loginData.BRANCH || loginData.branch || '---';
+            }
+
+            function revalidateMode() {
+                if (userMadeInitialModeChoice && isBookingLocked) return;
+                let initialMode = transportTypeSelect.value;
+                let newMode = initialMode;
+                let message = '';
+                let temporaryUnlock = false;
+                const weightChangeLimit = parseFloat(selectedCustomerDetails.WEIGHT_CHANGE);
+                const expressOption = Array.from(transportTypeSelect.options).find(opt => opt.text.toUpperCase() === 'EXPRESS');
+                if (!isNaN(weightChangeLimit) && expressOption && !userMadeInitialModeChoice) {
+                    const isOverWeight = summaryTotals.totalChgWt > weightChangeLimit;
+                    if (isOverWeight && initialMode === expressOption.value) {
+                        const preferredMode = selectedContacts.receiver?.MODE;
+                        if (preferredMode) {
+                            newMode = preferredMode;
+                            message = `Mode auto-switched to ${preferredMode} based on weight.`;
+                        } else {
+                            message = `Weight exceeds Express limit (${weightChangeLimit}kg). Please select a new mode.`;
+                            temporaryUnlock = true;
+                        }
+                    } else if (!isOverWeight && initialMode !== expressOption.value) {
+                        newMode = expressOption.value;
+                        message = `Weight is within limit. Mode reverted to Express.`;
+                    }
+                }
+                if(newMode !== initialMode) transportTypeSelect.value = newMode;
+                const receiverZone = selectedContacts.receiver?.ZONE;
+                if(receiverZone && fetchedGSheetData.MODE){
+                    const currentModeData = fetchedGSheetData.MODE.find(m => m.SHORT === transportTypeSelect.value);
+                    if(currentModeData && currentModeData[receiverZone] === 'N'){
+                        const surfaceOption = fetchedGSheetData.MODE.find(m => m.MODE.toUpperCase() === 'SURFACE');
+                        if(surfaceOption){
+                            transportTypeSelect.value = surfaceOption.SHORT;
+                            message = `Mode ${currentModeData.MODE} not available for ${receiverZone}. Switched to Surface. Select another mode if needed.`;
+                            temporaryUnlock = true;
+                        }
+                    }
+                }
+                if(transportTypeSelect.value !== initialMode) recalculateAllBoxWeights();
+                modeChangeMessage.textContent = message;
+                if (isBookingLocked) {
+                    if (temporaryUnlock) {
+                        transportTypeSelect.disabled = false;
+                        transportTypeSelect.classList.remove('bg-gray-200', 'cursor-not-allowed');
+                        wasModeUnlocked = true;
+                    } else if (!wasModeUnlocked) { 
+                        transportTypeSelect.disabled = true;
+                        transportTypeSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
+                    }
+                }
+                updateDisplayTables();
+            }
+
+            function renderMultiboxTable() {
+                multiboxTableBody.innerHTML = '';
+                let totalWgt = 0, totalVolWt = 0, calculatedTotalChgWt = 0;
+                consignmentBoxes.forEach(box => {
+                    const row = document.createElement('tr');
+                    row.classList.add('hover:bg-gray-50');
+                    row.innerHTML = `
+                        <td class="p-2 border border-gray-400">${box.boxNum}</td>
+                        <td class="p-2 border border-gray-400">${box.actualWeight}</td>
+                        <td class="p-2 border border-gray-400">${box.length}</td>
+                        <td class="p-2 border border-gray-400">${box.breadth}</td>
+                        <td class="p-2 border border-gray-400">${box.height}</td>
+                        <td class="p-2 border border-gray-400">${box.volWeight.toFixed(2)}</td>
+                        <td class="p-2 border border-gray-400">${box.chargeWeight.toFixed(2)}</td>
+                    `;
+                    multiboxTableBody.appendChild(row);
+                    totalWgt += box.actualWeight;
+                    totalVolWt += box.volWeight;
+                    calculatedTotalChgWt += box.chargeWeight;
+                });
+                summaryTotals.totalWgt = totalWgt;
+                summaryTotals.totalChgWt = calculatedTotalChgWt;
+                summaryTotals.boxCount = consignmentBoxes.length;
+                updateSummaryDisplay();
+                revalidateMode(); 
+            }
+
+            function addMultiboxEntry() {
+                const actualWeight = parseFloat(actualWeightInput.value);
+                const length = parseFloat(lengthInput.value);
+                const breadth = parseFloat(breadthInput.value);
+                const height = parseFloat(heightInput.value);
+                const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
+                const volIngr = parseFloat(selectedModeOption.dataset.volIngr) || 4700; 
+                multiboxErrorMessage.textContent = ''; 
+                if (!actualWeight || !length || !breadth || !height) {
+                    multiboxErrorMessage.textContent = 'Please fill all Wgt, L, B, and H fields to add a box.';
+                    return;
+                }
+                let volWeight = (length * breadth * height) / volIngr;
+                const chargeWeight = Math.max(actualWeight || 0, volWeight);
+                const boxNum = consignmentBoxes.length + 1;
+                consignmentBoxes.push({ boxNum, actualWeight: actualWeight || 0, length: length || 0, breadth: breadth || 0, height: height || 0, volWeight, chargeWeight });
+                if (!isBookingLocked) {
+                    setBookingFieldsLocked(true);
+                } else if (wasModeUnlocked) {
+                    transportTypeSelect.disabled = true;
+                    transportTypeSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
+                    wasModeUnlocked = false;
+                    modeChangeMessage.textContent = '';
+                }
+                renderMultiboxTable();
+                actualWeightInput.value = '';
+                lengthInput.value = '';
+                breadthInput.value = '';
+                heightInput.value = '';
+            }
+            
+            function updateCharges() {
+                const frightValue = calculateFreight();
+                document.getElementById('display_fright').textContent = frightValue.toFixed(2);
+                const totalValue = summaryTotals.totalAmount;
+                const chgWt = parseFloat(document.getElementById('display_chg_wt').textContent) || 0;
+                const codCheckbox = document.getElementById('payment_cod');
+                const topayCheckbox = document.getElementById('payment_topay');
+                const fovCheckbox = document.getElementById('payment_fov');
+                let codCharge = 0, topayCharge = 0, fovCharge = 0, awbCharge = 0, fuelCharge = 0, ewayCharge = 0, packCharge = 0, devCharge = 0;
+                if(Object.keys(selectedCustomerDetails).length > 0){
+                    if (codCheckbox.checked && selectedCustomerDetails['%_COD_IF']) {
+                        const rate = parseFloat(selectedCustomerDetails['%_COD_IF']);
+                        codCharge = Math.max(150, totalValue * rate);
+                    }
+                    if (topayCheckbox.checked && selectedCustomerDetails['%_TOPAY_IF']) {
+                        const rate = parseFloat(selectedCustomerDetails['%_TOPAY_IF']);
+                        topayCharge = Math.max(150, frightValue * rate);
+                    }
+                    if (fovCheckbox.checked && selectedCustomerDetails['%_FOV_IF']) {
+                        const rate = parseFloat(selectedCustomerDetails['%_FOV_IF']);
+                        fovCharge = Math.max(100, totalValue * rate);
+                    }
+                    awbCharge = parseFloat(selectedCustomerDetails['AWB_CHARGES']) || 0;
+                    fuelCharge = frightValue * (parseFloat(selectedCustomerDetails['FUEL_CHARGES']) || 0);
+                    const ewayCount = consignmentProducts.filter(p => p.ewayBill).length;
+                    ewayCharge = ewayCount * (parseFloat(selectedCustomerDetails['EWAY_IF']) || 0);
+                    packCharge = chgWt * (parseFloat(selectedCustomerDetails['PACKING_CHARGES']) || 0);
+                    devCharge = frightValue * (parseFloat(selectedCustomerDetails['DEV_CHARGES']) || 0);
+                }
+                document.getElementById('display_cod_chg').textContent = codCharge.toFixed(2);
+                document.getElementById('display_topay_chg').textContent = topayCharge.toFixed(2);
+                document.getElementById('display_fov_chg').textContent = fovCharge.toFixed(2);
+                document.getElementById('display_awb_chg').textContent = awbCharge.toFixed(2);
+                document.getElementById('display_fuel_chg').textContent = fuelCharge.toFixed(2);
+                document.getElementById('display_eway_chg').textContent = ewayCharge.toFixed(2);
+                document.getElementById('display_pack_chg').textContent = packCharge.toFixed(2);
+                document.getElementById('display_dev_chg').textContent = devCharge.toFixed(2);
+                const otherCharges = fuelCharge + codCharge + topayCharge + fovCharge + ewayCharge + awbCharge + packCharge + devCharge;
+                document.getElementById('display_other_chg').textContent = otherCharges.toFixed(2);
+                const subtotal = frightValue + otherCharges;
+                let taxableAmount = 0, sgst = 0, cgst = 0, igst = 0, total = 0;
+                if (selectedCustomerDetails.GST_INC === 'Y') {
+                    taxableAmount = subtotal;
+                    if (selectedCustomerDetails.BILLING_STATE === 'Uttarakhand-05') {
+                        const totalTax = taxableAmount - (taxableAmount / 1.18);
+                        sgst = totalTax / 2;
+                        cgst = totalTax / 2;
+                    } else {
+                        igst = taxableAmount - (taxableAmount / 1.18);
+                    }
+                    total = taxableAmount;
+                } else {
+                    taxableAmount = subtotal;
+                    if (selectedCustomerDetails.BILLING_STATE === 'Uttarakhand-05') {
+                        sgst = taxableAmount * 0.09;
+                        cgst = taxableAmount * 0.09;
+                    } else {
+                        igst = taxableAmount * 0.18;
+                    }
+                    total = taxableAmount + sgst + cgst + igst;
+                }
+                document.getElementById('display_taxable').textContent = taxableAmount.toFixed(2);
+                document.getElementById('display_sgst').textContent = sgst.toFixed(2);
+                document.getElementById('display_cgst').textContent = cgst.toFixed(2);
+                document.getElementById('display_igst').textContent = igst.toFixed(2);
+                const totalGst = sgst + cgst + igst;
+                document.getElementById('display_gst_total').textContent = totalGst.toFixed(2);
+                document.getElementById('display_total').textContent = total.toFixed(2);
+            }
+
+            function renderProductTable() {
+                productTableBody.innerHTML = '';
+                let totalAmount = 0;
+                consignmentProducts.forEach((product, index) => {
+                    const row = document.createElement('tr');
+                    row.classList.add('hover:bg-gray-50');
+                    row.innerHTML = `
+                        <td class="p-2 border border-gray-400">${index + 1}</td>
+                        <td class="p-2 border border-gray-400">${product.name}</td>
+                        <td class="p-2 border border-gray-400">${product.docNo}</td>
+                        <td class="p-2 border border-gray-400">${product.ewayBill}</td>
+                        <td class="p-2 border border-gray-400">${product.type}</td>
+                        <td class="p-2 border border-gray-400">₹${product.amount.toFixed(2)}</td>
+                    `;
+                    productTableBody.appendChild(row);
+                    totalAmount += product.amount;
+                });
+                summaryTotals.totalAmount = totalAmount;
+                updateSummaryDisplay();
+                updateCharges(); 
+            }
+
+            function addProductEntry() {
+                const productName = productNameInput.value.trim();
+                const docNo = docNoInput.value.trim();
+                const ewayBill = ewayBillInput.value.trim();
+                const productType = productTypeSelect.value;
+                const amount = parseFloat(amountInput.value);
+                ewayStatusMessage.textContent = '';
+                if (!productName || !docNo || !amountInput.value) {
+                    ewayStatusMessage.textContent = 'Product, DocNo and Amount fields are required.';
+                    return;
+                }
+                if (amount >= 50000 && !ewayBill) {
+                    ewayStatusMessage.textContent = 'EWay Bill is mandatory for invoice value ₹50,000 and above.';
+                    return;
+                }
+                if (ewayBill && !/^\d{12}$/.test(ewayBill)) {
+                    ewayStatusMessage.textContent = 'EWay bill must be a 12-digit numeric number.';
+                    return;
+                }
+                consignmentProducts.push({ name: productName, docNo, ewayBill, type: productType, amount: amount || 0 });
+                if (!isBookingLocked) setBookingFieldsLocked(true);
+                renderProductTable();
+                productNameInput.value = '';
+                docNoInput.value = '';
+                ewayBillInput.value = '';
+                amountInput.value = '';
+                productTypeSelect.value = 'INV';
+            }
+            
+            function handleCustomerSelectionChange() {
+                const selectedCustomerName = customerNameSelect.value;
+                selectedCustomerDetails = {}; 
+                if (selectedCustomerName && fetchedGSheetData.B2B) {
+                    selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === selectedCustomerName) || {};
+                }
+                if (selectedCustomerName && fetchedGSheetData.B2B2C) {
+                    const contactDetails = fetchedGSheetData.B2B2C.find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
+                    if (contactDetails) {
+                        senderNameInput.value = contactDetails.NAME;
+                        originPincodeInput.value = contactDetails.PINCODE || '';
+                        selectedContacts.sender = contactDetails;
+                        displayContactDetails(contactDetails, senderDetailsDisplay);
+                    }
+                } else {
+                    senderNameInput.value = '';
+                    originPincodeInput.value = '';
+                    selectedContacts.sender = null;
+                    senderDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Select a customer to autofill sender.</span>`;
+                }
+                populateModeDropdown(null); 
+                const expressOption = Array.from(transportTypeSelect.options).find(opt => opt.text.toUpperCase() === 'EXPRESS');
+                if (expressOption) transportTypeSelect.value = expressOption.value;
+                updateDisplayTables();
+                checkMainDetailsAndToggleInputs();
+            }
+
+            function populateCustomerDropdown() {
+                customerNameSelect.innerHTML = '<option value="">Select Customer</option>';
+                if (fetchedGSheetData.B2B && fetchedGSheetData.B2B.length > 0) {
+                    fetchedGSheetData.B2B.forEach(client => {
+                        const option = document.createElement('option');
+                        option.value = client.CLIENT_NAME;
+                        option.textContent = client.CLIENT_NAME;
+                        customerNameSelect.appendChild(option);
+                    });
+                }
+            }
+
+            function populateModeDropdown(zone) {
+                transportTypeSelect.innerHTML = '<option value="">Select Mode</option>';
+                if (fetchedGSheetData.MODE && fetchedGSheetData.MODE.length > 0) {
+                    fetchedGSheetData.MODE.forEach(mode => {
+                        const isAvailableForZone = !zone || mode[zone] === 'Y';
+                        const option = document.createElement('option');
+                        option.value = mode.SHORT;
+                        option.textContent = mode.MODE;
+                        option.dataset.volIngr = mode.VOL_INGR;
+                        option.dataset.minWt = mode.MIN_WT;
+                        if (!isAvailableForZone) option.disabled = true;
+                        transportTypeSelect.appendChild(option);
+                    });
+                }
+            }
+
+            function populateCarrierDropdown() {
+                carrierSelect.innerHTML = '<option value="">Select Carrier</option>';
+                if (fetchedGSheetData.CARRIER && fetchedGSheetData.CARRIER.length > 0) {
+                    fetchedGSheetData.CARRIER.forEach(carrier => {
                         const option = document.createElement('option');
                         option.value = carrier.COMPANY_CODE;
                         option.textContent = carrier.COMPANY_CODE;
                         carrierSelect.appendChild(option);
                     });
-                    
-                    const nameLookup = new Map(b2b2cData.map(client => [client.UID, client.NAME]));
-                    const processedOrders = ordersData.map(shipment => ({
-                        ...shipment,
-                        CONSIGNOR: nameLookup.get(shipment.CONSIGNOR) || shipment.CONSIGNOR,
-                        CONSIGNEE: nameLookup.get(shipment.CONSIGNEE) || shipment.CONSIGNEE
-                    }));
-
-                    const incompleteShipments = processedOrders.filter(s => !s.CARRIER || !s.AWB_NUMBER);
-                    const completeShipments = processedOrders.filter(s => s.CARRIER && s.AWB_NUMBER);
-
-                    incompleteShipments.sort((a, b) => new Date(b.ORDER_DATE) - new Date(a.ORDER_DATE));
-                    completeShipments.sort((a, b) => new Date(b.ORDER_DATE) - new Date(a.ORDER_DATE));
-
-                    allShipments = [...incompleteShipments, ...completeShipments];
-                    currentIndex = 0;
-                    
-                    shipmentsSpinner.classList.add('hidden');
-                    shipmentsListContainer.innerHTML = '';
-
-                    if (allShipments.length === 0) {
-                        shipmentsListContainer.innerHTML = '<p class="text-center text-gray-500">No shipments found.</p>';
-                        loadMoreContainer.classList.add('hidden');
-                        return;
-                    }
-                    
-                    renderMoreShipments();
-
-                } catch (error) {
-                    shipmentsSpinner.classList.add('hidden');
-                    shipmentsListContainer.innerHTML = `<p class="text-center text-red-500 p-4">Failed to process data: ${error.message}</p>`;
                 }
-            }
-
-            // --- FORM SUBMISSION ---
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                submitButton.disabled = true;
-                buttonText.textContent = 'Updating...';
-                spinner.classList.remove('hidden');
-                responseMessage.classList.add('hidden');
-                
-                const formData = new FormData(form);
-                const payload = {
-                    code: formData.get('code'),
-                    token: formData.get('token'),
-                    orderDetails: {
-                        action: 'partial_update',
-                        REFERANCE: formData.get('REFERANCE')
-                    }
-                };
-                
-                const updatableFields = ['ORDER_DATE', 'TRANSIT_DATE', 'CARRIER', 'AWB_NUMBER', 'DYNA_AWB'];
-                updatableFields.forEach(field => {
-                    const value = formData.get(field);
-                    if (value) payload.orderDetails[field] = value;
-                });
-                
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST', mode: 'cors', body: JSON.stringify(payload)
-                    });
-                    const resultText = await response.text();
-                    if (!resultText.trim().startsWith('{')) throw new Error(`Unexpected server response: ${resultText}`);
-                    const result = JSON.parse(resultText);
-
-                    if (result.success) {
-                        responseMessage.textContent = result.message;
-                        responseMessage.className = 'mt-4 p-4 text-sm rounded-md bg-green-100 text-green-800';
-                        form.reset();
-                        
-                        const loginData = JSON.parse(localStorage.getItem('loginData'));
-                        codeInput.value = loginData.CODE || loginData.code;
-                        tokenInput.value = loginData.TOKEN || loginData.token;
-
-                        if (activeShipmentElement) {
-                             activeShipmentElement.classList.add('border-green-400', 'bg-green-50');
-                             setTimeout(() => {
-                                 activeShipmentElement.classList.remove('border-green-400', 'bg-green-50');
-                             }, 2000);
-                             activeShipmentElement = null;
-                        }
-
-                    } else {
-                        throw new Error(result.message || 'An unknown error occurred.');
-                    }
-                } catch (error) {
-                    responseMessage.textContent = `Error: ${error.message}`;
-                    responseMessage.className = 'mt-4 p-4 text-sm rounded-md bg-red-100 text-red-800';
-                } finally {
-                    submitButton.disabled = false;
-                    buttonText.textContent = 'Update Order';
-                    spinner.classList.add('hidden');
-                    responseMessage.classList.remove('hidden');
-                }
-            });
-
-            // --- RENDER SHIPMENTS ---
-            function renderMoreShipments() {
-                const fragment = document.createDocumentFragment();
-                const nextBatch = allShipments.slice(currentIndex, currentIndex + shipmentsPerLoad);
-
-                if (currentIndex === 0) shipmentsListContainer.innerHTML = '';
-
-                nextBatch.forEach(shipment => {
-                    const div = document.createElement('div');
-                    let classList = 'p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors';
-                    if (!shipment.CARRIER || !shipment.AWB_NUMBER) {
-                        classList = 'p-3 border border-amber-300 rounded-lg cursor-pointer bg-amber-50 hover:bg-amber-100 transition-colors';
-                    }
-                    div.className = classList;
-                    div.dataset.referenceId = shipment.REFERANCE; 
-                    const orderDate = shipment.ORDER_DATE ? new Date(shipment.ORDER_DATE).toISOString().split('T')[0] : 'No Date';
-
-                    div.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <p class="font-semibold text-gray-800">Ref: ${shipment.REFERANCE}</p>
-                            <p class="text-xs text-gray-500">${orderDate}</p>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">From: ${shipment.CONSIGNOR || 'N/A'}</p>
-                        <p class="text-sm text-gray-600 mt-1">To: ${shipment.CONSIGNEE || 'N/A'} - ${shipment.DEST_CITY || 'N/A'}</p>
-                        <p class="text-sm text-gray-600 mt-1">Carrier: ${shipment.CARRIER || 'Not Assigned'}</p>
-                        <p class="text-sm text-gray-600 mt-1">AWB: ${shipment.AWB_NUMBER || 'Not Assigned'}</p>
-                    `;
-                    fragment.appendChild(div);
-                });
-
-                shipmentsListContainer.appendChild(fragment);
-                currentIndex += nextBatch.length;
-                updateLoadMoreButton();
             }
             
-            function updateLoadMoreButton() {
-                if (currentIndex < allShipments.length) {
-                    loadMoreContainer.classList.remove('hidden');
+            function recalculateAllBoxWeights() {
+                const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
+                const volIngr = parseFloat(selectedModeOption.dataset.volIngr) || 4700;
+                consignmentBoxes.forEach(box => {
+                    box.volWeight = (box.length * box.breadth * box.height) / volIngr;
+                    box.chargeWeight = Math.max(box.actualWeight, box.volWeight);
+                });
+                renderMultiboxTable();
+            }
+
+            function displayContactDetails(contact, displayElement) {
+                if (contact) {
+                    displayElement.innerHTML = `
+                        <p class="text-xs text-gray-600">${contact.ADDRESS || ''}</p>
+                        <p class="text-xs text-gray-600">${contact.CITY || ''}, ${contact.STATE || ''} - ${contact.PINCODE || ''}</p>
+                        <p class="text-xs text-gray-600">Ph: ${contact.MOBILE || ''}</p>
+                    `;
                 } else {
-                    loadMoreContainer.classList.add('hidden');
-                    if (!shipmentsListContainer.querySelector('.end-of-list')) {
-                        const endMessage = document.createElement('p');
-                        endMessage.className = 'end-of-list text-center text-xs text-gray-400 py-2';
-                        endMessage.textContent = 'End of list';
-                        shipmentsListContainer.appendChild(endMessage);
-                    }
+                    displayElement.innerHTML = `<span class="italic text-gray-500">No details found.</span>`;
                 }
             }
 
-            // --- UI EVENT LISTENERS ---
-            loadMoreButton.addEventListener('click', renderMoreShipments);
-
-            shipmentsListContainer.addEventListener('click', (e) => {
-                const shipmentElement = e.target.closest('[data-reference-id]');
-                if (shipmentElement) {
-                    const refId = shipmentElement.dataset.referenceId;
-                    const selectedShipment = allShipments.find(s => s.REFERANCE == refId);
-
-                    if (selectedShipment) {
-                        referenceInput.value = selectedShipment.REFERANCE || '';
-                        document.getElementById('order_date').value = selectedShipment.ORDER_DATE ? new Date(selectedShipment.ORDER_DATE).toISOString().split('T')[0] : '';
-                        document.getElementById('transit_date').value = selectedShipment.TRANSIT_DATE ? new Date(selectedShipment.TRANSIT_DATE).toISOString().split('T')[0] : '';
-                        carrierSelect.value = selectedShipment.CARRIER || '';
-                        document.getElementById('awb_number').value = selectedShipment.AWB_NUMBER || '';
-                        document.getElementById('dyna_awb').value = selectedShipment.DYNA_AWB || '';
+            function setupAutocomplete(inputElement, resultsElement, displayElement, type) {
+                inputElement.addEventListener('input', () => {
+                    const query = inputElement.value.toLowerCase();
+                    resultsElement.innerHTML = '';
+                    resultsElement.classList.add('hidden');
+                    if (type === 'sender') selectedContacts.sender = null;
+                    if (type === 'receiver') {
+                        selectedContacts.receiver = null;
+                        populateModeDropdown(null);
                     }
-
-                    if (activeShipmentElement) {
-                        activeShipmentElement.classList.remove('bg-indigo-50', 'border-indigo-300');
+                    updateDisplayTables();
+                    checkMainDetailsAndToggleInputs();
+                    if (query.length < 2 || !fetchedGSheetData.B2B2C) return;
+                    const customerCode = selectedCustomerDetails.CODE;
+                    if (!customerCode) return;
+                    const customerSpecificContacts = fetchedGSheetData.B2B2C.filter(contact => contact.CODE === customerCode);
+                    const filteredResults = customerSpecificContacts.filter(contact => 
+                        (contact.NAME && contact.NAME.toLowerCase().includes(query)) || 
+                        (contact.PINCODE && contact.PINCODE.toString().includes(query)) || 
+                        (contact.CITY && contact.CITY.toLowerCase().includes(query))
+                    );
+                    if (filteredResults.length > 0 || query) {
+                        filteredResults.forEach(contact => {
+                            const li = document.createElement('li');
+                            li.textContent = `${contact.NAME} - ${contact.CITY}, ${contact.PINCODE}`;
+                            li.addEventListener('click', () => {
+                                inputElement.value = contact.NAME;
+                                displayContactDetails(contact, displayElement);
+                                if (type === 'sender') {
+                                    selectedContacts.sender = contact;
+                                    originPincodeInput.value = contact.PINCODE || '';
+                                } else {
+                                    selectedContacts.receiver = contact;
+                                    destPincodeInput.value = contact.PINCODE || '';
+                                    carrierSelect.value = contact.CARRIER || '';
+                                    populateModeDropdown(contact.ZONE);
+                                }
+                                resultsElement.classList.add('hidden');
+                                revalidateMode(); 
+                                updateDisplayTables();
+                                checkMainDetailsAndToggleInputs();
+                            });
+                            resultsElement.appendChild(li);
+                        });
+                        const addNewLi = document.createElement('li');
+                        addNewLi.className = 'bg-gray-100 font-semibold';
+                        addNewLi.textContent = '+ Add New Contact';
+                        addNewLi.addEventListener('click', () => {
+                            displayElement.innerHTML = `<span class="italic text-gray-500">Enter new contact details manually.</span>`;
+                            resultsElement.classList.add('hidden');
+                        });
+                        resultsElement.appendChild(addNewLi);
+                        resultsElement.classList.remove('hidden');
                     }
-                    
-                    shipmentElement.classList.add('bg-indigo-50', 'border-indigo-300');
-                    activeShipmentElement = shipmentElement;
-                    form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            });
+                });
+            }
 
-            // --- INITIALIZATION ---
-            window.addEventListener('appDataLoaded', initializeAppLogic);
-            window.addEventListener('appDataRefreshed', initializeAppLogic);
+            // --- MAIN INITIALIZATION ---
+            const loginDataJSON = localStorage.getItem('loginData');
+            if (loginDataJSON) loginData = JSON.parse(loginDataJSON);
 
-            // Proactively check if data is already available in localStorage.
+            window.addEventListener('appDataLoaded', (e) => initializeAppLogic(e.detail));
+            window.addEventListener('appDataRefreshed', (e) => handleDataRefresh(e.detail));
+            
             const appDataJSON = localStorage.getItem('appData');
             if (appDataJSON) {
                 try {
                     const appData = JSON.parse(appDataJSON);
-                    if (appData && appData.data && new Date().getTime() < appData.expires) {
-                        initializeAppLogic();
-                    }
-                } catch (e) {
-                    console.error("AssignCarrier.html: Error parsing cached appData.", e);
-                }
+                    if (appData.data) initializeAppLogic({ data: appData.data });
+                } catch(e) { console.error("Error parsing initial appData", e); }
             }
+            
+            customerNameSelect.addEventListener('change', handleCustomerSelectionChange);
+            transportTypeSelect.addEventListener('change', () => {
+                if (!isBookingLocked) userMadeInitialModeChoice = true;
+                recalculateAllBoxWeights();
+                if (isBookingLocked) {
+                    transportTypeSelect.disabled = true;
+                    transportTypeSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
+                    wasModeUnlocked = false; 
+                    modeChangeMessage.textContent = '';
+                }
+                checkMainDetailsAndToggleInputs();
+            });
+            carrierSelect.addEventListener('change', () => {
+                if (isBookingLocked && carrierSelect.value !== '') {
+                    carrierSelect.disabled = true;
+                    carrierSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
+                }
+                checkMainDetailsAndToggleInputs();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.autocomplete-container')) {
+                    senderAutocompleteResults.classList.add('hidden');
+                    receiverAutocompleteResults.classList.add('hidden');
+                }
+            });
+
+            ['order_date', 'carrier_select', 'awb', 'sender_name', 'origin_pincode', 'receiver_name', 'dest_pincode', 'transport_type'].forEach(id => {
+                const element = document.getElementById(id);
+                if(element) element.addEventListener('input', updateDisplayTables);
+            });
+            ['payment_global', 'payment_topay', 'payment_cod', 'payment_fov'].forEach(id => {
+                document.getElementById(id).addEventListener('change', () => {
+                    updateDisplayTables();
+                    updateCharges();
+                });
+            });
+
+            actualWeightInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lengthInput.focus(); } });
+            lengthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); breadthInput.focus(); } });
+            breadthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); heightInput.focus(); } });
+            heightInput.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); addMultiboxEntry(); actualWeightInput.focus(); } });
+            productNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); docNoInput.focus(); } });
+            docNoInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ewayBillInput.focus(); } });
+            ewayBillInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); amountInput.focus(); } });
+            amountInput.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); addProductEntry(); productNameInput.focus(); } });
+            clearMultiboxButton.addEventListener('click', () => {
+                consignmentBoxes.pop();
+                renderMultiboxTable();
+                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+            });
+            clearMultiboxButton.addEventListener('dblclick', () => {
+                consignmentBoxes = [];
+                renderMultiboxTable();
+                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+            });
+            clearProductsButton.addEventListener('click', () => {
+                consignmentProducts.pop();
+                renderProductTable();
+                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+            });
+            clearProductsButton.addEventListener('dblclick', () => {
+                consignmentProducts = [];
+                renderProductTable();
+                 if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+            });
+            clearAllButton.addEventListener('click', () => {
+                consignmentBoxes = [];
+                consignmentProducts = [];
+                renderMultiboxTable();
+                renderProductTable();
+                setBookingFieldsLocked(false);
+            });
+            cancelButton.addEventListener('click', resetFullForm);
+            bookButton.addEventListener('click', async () => {
+                 bookingMessage.textContent = '';
+                 bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
+                 if (!areMainDetailsComplete() || (consignmentBoxes.length === 0 && consignmentProducts.length === 0)) {
+                    bookingMessage.textContent = 'Please fill all required fields (Customer, Sender, Receiver, Mode, Carrier) and add at least one box or product.';
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
+                    return;
+                }
+                bookButton.disabled = true;
+                bookButton.textContent = 'Booking...';
+                const orderData = {
+                    'CODE': document.getElementById('display_code').textContent || '',
+                    'TIME_STAMP': document.getElementById('display_timestamp').textContent,
+                    'ORDER_DATE': document.getElementById('display_order_date').textContent,
+                    'CARRIER': document.getElementById('display_carrier').textContent,
+                    'AWB_NUMBER': document.getElementById('awb').value.trim(),
+                    'TRANSIT_DATE': document.getElementById('display_transit_date').textContent,
+                    'CONSIGNOR': document.getElementById('display_consignor').textContent,
+                    'ORIGIN_CITY': document.getElementById('display_origin_city').textContent,
+                    'ORIGIN_PINCODE': document.getElementById('display_origin_pincode').textContent,
+                    'CONSIGNEE': document.getElementById('display_consignee').textContent,
+                    'DEST_CITY': document.getElementById('display_dest_city').textContent,
+                    'DEST_PINCODE': document.getElementById('display_dest_pincode').textContent,
+                    'TAT': document.getElementById('display_tat').textContent,
+                    'ZONE': document.getElementById('display_zone').textContent,
+                    'MODE': document.getElementById('display_mode').textContent,
+                    'GLOBAL': document.getElementById('display_global').textContent,
+                    'COD': document.getElementById('display_cod').textContent,
+                    'TOPAY': document.getElementById('display_topay').textContent,
+                    'FOV': document.getElementById('display_fov').textContent,
+                    'WEIGHT': document.getElementById('display_weight').textContent,
+                    'CHG_WT': document.getElementById('display_chg_wt').textContent,
+                    'PIECS': document.getElementById('display_pieces').textContent,
+                    'VALUE': summaryTotals.totalAmount,
+                    'FRIGHT': document.getElementById('display_fright').textContent,
+                    'FUEL_CHG': document.getElementById('display_fuel_chg').textContent,
+                    'COD_CHG': document.getElementById('display_cod_chg').textContent,
+                    'TOPAY_CHG': document.getElementById('display_topay_chg').textContent,
+                    'FOV_CHG': document.getElementById('display_fov_chg').textContent,
+                    'EWAY_CHG': document.getElementById('display_eway_chg').textContent,
+                    'AWB_CHG': document.getElementById('display_awb_chg').textContent,
+                    'PACK_CHG': document.getElementById('display_pack_chg').textContent,
+                    'DEV_CHG': document.getElementById('display_dev_chg').textContent,
+                    'TAXABLE': document.getElementById('display_taxable').textContent,
+                    'SGST': document.getElementById('display_sgst').textContent,
+                    'CGST': document.getElementById('display_cgst').textContent,
+                    'IGST': document.getElementById('display_igst').textContent,
+                    'TOTAL': document.getElementById('display_total').textContent,
+                };
+                const payload = {
+                    code: loginData.CODE || loginData.code,
+                    token: loginData.TOKEN || loginData.token,
+                    orderDetails: orderData,
+                    multiboxDetails: consignmentBoxes,
+                    productDetails: consignmentProducts
+                };
+                try {
+                    const response = await fetch('https://script.google.com/macros/s/AKfycbx5PZJRnnDmyDtYbWctF6d0428h1haJnDfVA4HKQR4hcsdAolcmkhLG9MgntAhPSQyi/exec', { 
+                        method: 'POST',
+                        mode: 'cors',
+                        cache: 'no-cache',
+                        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                        redirect: 'follow',
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        bookingMessage.textContent = result.message;
+                        bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-green-700 bg-green-100';
+                        resetForNextBooking();
+                    } else { throw new Error(result.message); }
+                } catch (error) {
+                    console.error('Error posting data:', error);
+                    bookingMessage.textContent = `Booking failed: ${error.message}`;
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
+                } finally {
+                    bookButton.disabled = false;
+                    bookButton.textContent = 'Book';
+                }
+            });
+            
+            if(getAwbButton) {
+                getAwbButton.addEventListener('click', () => {
+                    bookingMessage.textContent = 'AWB fetch logic not implemented yet.';
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-blue-700 bg-blue-100';
+                });
+            }
+
+            updateTimestamp();
+            orderDateInput.value = formatDate(new Date());
+            setInterval(updateTimestamp, 60000);
+            updateDisplayTables();
+            updateSummaryDisplay();
+            toggleWeightProductEntry(true);
         });
     </script>
-
 </body>
 </html>
-
