@@ -92,23 +92,23 @@ body {
 }
 
 /* ============================================================ */
-/* FLOATING ACTION BUTTON (FAB) STYLES                          */
+/* FLOATING ACTION BUTTON (FAB) STYLES (CORRECTED)              */
 /* ============================================================ */
 #fab-container {
     position: fixed;
-    bottom: 4rem; /* MODIFIED: Positioned from the bottom */
+    bottom: 4rem; 
     right: 1.5rem;
     z-index: 90;
     display: flex;
-    flex-direction: column-reverse; /* MODIFIED: This makes the menu expand upwards */
+    flex-direction: column-reverse; /* This makes the menu expand upwards */
     align-items: center;
 }
 
 #fab-main {
-    width: 3.5rem; /* 56px */
-    height: 3.5rem; /* 56px */
+    width: 3.5rem;
+    height: 3.5rem;
     border-radius: 50%;
-    background-color: #1e3a8a; /* A darker blue */
+    background-color: #1e3a8a;
     color: white;
     display: flex;
     align-items: center;
@@ -118,6 +118,7 @@ body {
     transition: transform 0.3s ease, background-color 0.3s ease;
     border: none;
     outline: none;
+    z-index: 1; /* Ensure main button is on top */
 }
 
 #fab-main:hover {
@@ -135,26 +136,28 @@ body {
 
 #fab-actions {
     display: flex;
-    flex-direction: column-reverse; /* MODIFIED: Ensures items are ordered correctly when expanding up */
+    flex-direction: column-reverse; /* Order items correctly when expanding up */
     align-items: center;
-    margin-bottom: 1rem; /* Space between main button and action items */
-    transition: all 0.3s ease;
+    margin-bottom: 1rem; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* MODIFIED: Use visibility and opacity for hiding */
+    visibility: hidden;
     opacity: 0;
     transform: translateY(10px);
-    visibility: hidden;
 }
 
 #fab-container.active #fab-actions {
+    visibility: visible;
     opacity: 1;
     transform: translateY(0);
-    visibility: visible;
 }
 
 .fab-action {
     display: flex;
     align-items: center;
-    justify-content: flex-end; /* Aligns items to the right */
-    margin-bottom: 0.75rem; /* Space between action items */
+    justify-content: flex-end; 
+    margin-top: 0.75rem; /* MODIFIED: use margin-top because of column-reverse */
     cursor: pointer;
     text-decoration: none;
     color: inherit;
@@ -173,6 +176,7 @@ body {
     opacity: 0;
     transform: translateX(10px);
     transition: all 0.3s ease;
+    transition-delay: 0.1s; /* Add a slight delay for a nicer effect */
 }
 
 #fab-container.active .fab-action-label {
@@ -181,8 +185,8 @@ body {
 }
 
 .fab-action-icon {
-    width: 3rem; /* 48px */
-    height: 3rem; /* 48px */
+    width: 3rem;
+    height: 3rem;
     border-radius: 50%;
     background-color: #f9fafb;
     color: #1e3a8a;
