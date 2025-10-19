@@ -65,7 +65,12 @@ window.addEventListener('footerLoaded', () => {
             const action = target.dataset.action;
             
             // This is the core logic: it finds a function on the page with the specified name and calls it
-            if (window[action] && typeof window[action] === 'function') {
+            if (action.startsWith('navigate_')) {
+                const page = action.split('_')[1];
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = `${baseUrl}${page}.html`;
+            }
+            else if (window[action] && typeof window[action] === 'function') {
                 window[action]();
             } 
             // This allows triggering clicks on buttons, e.g., 'book_button_click'
