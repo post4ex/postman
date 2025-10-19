@@ -1,6 +1,6 @@
 /**
- * Fetches and injects HTML content from a component file into a placeholder element,
- * and executes any scripts within the component.
+ * UPGRADED: Fetches and injects HTML content, and now reliably waits for
+ * any scripts within that component to finish loading before resolving.
  * @param {string} componentUrl - The URL of the HTML component to load.
  * @param {string} placeholderId - The ID of the element to inject the content into.
  * @returns {Promise<void>}
@@ -13,31 +13,46 @@ async function loadComponent(componentUrl, placeholderId) {
         }
         const text = await response.text();
         const placeholder = document.getElementById(placeholderId);
-        if (placeholder) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(text, 'text/html');
-            const componentBody = doc.body;
+        if (!placeholder) return;
 
-            // Find and execute any script tags within the component
-            const scripts = componentBody.querySelectorAll('script');
-            scripts.forEach(script => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        
+        // Find all scripts and create promises for them
+        const scripts = Array.from(doc.querySelectorAll('script'));
+        const scriptLoadPromises = scripts.map(script => {
+            return new Promise((resolve, reject) => {
                 const newScript = document.createElement('script');
-                if (script.src) {
-                    newScript.src = script.src;
-                } else {
-                    newScript.textContent = script.textContent;
+                // Copy all attributes
+                for (const { name, value } of script.attributes) {
+                    newScript.setAttribute(name, value);
                 }
-                document.body.appendChild(newScript).remove();
-            });
+                newScript.textContent = script.textContent;
 
-            // Append the component's HTML content to the placeholder
-            while (componentBody.firstChild) {
-                placeholder.appendChild(componentBody.firstChild);
-            }
+                // Handle external scripts loading
+                if (script.src) {
+                    newScript.onload = () => resolve();
+                    newScript.onerror = () => reject(new Error(`Script load error for ${script.src}`));
+                } else {
+                    // Inline scripts execute immediately, so we can resolve right away
+                    resolve();
+                }
+                // Append to head to ensure they are loaded and executed
+                document.head.appendChild(newScript);
+            });
+        });
+        
+        // Wait for all scripts to be loaded and executed
+        await Promise.all(scriptLoadPromises);
+
+        // Now, inject the HTML content (without the scripts, which have been moved)
+        scripts.forEach(s => s.remove()); // Remove script tags from the fragment
+        while (doc.body.firstChild) {
+            placeholder.appendChild(doc.body.firstChild);
         }
+
     } catch (error) {
         console.error(error);
-        const placeholder = document.getElementById(placeholderId);
         if (placeholder) {
             placeholder.innerHTML = `<p class="text-red-500 text-center">Failed to load component.</p>`;
         }
@@ -116,6 +131,7 @@ function checkLoginStatus() {
     const sidebarToggleContainer = document.getElementById('sidebar-toggle-container');
     const ledgerMenuItem = document.getElementById('ledger-menu-item');
     const mastersMenuItem = document.getElementById('masters-menu-item');
+    const copyrightText = document.getElementById('copyright-text');
 
     let isLoggedIn = false;
     let userData = null;
@@ -151,6 +167,10 @@ function checkLoginStatus() {
         dropdownPrivateLinks.classList.remove('hidden');
         
         sidebarToggleContainer.classList.remove('hidden');
+
+        if (copyrightText) {
+            copyrightText.innerHTML = 'Designed & Hardcoded by Arun Tomar with Gemini.';
+        }
         
         const profileFieldsToShow = ['name', 'code', 'role', 'branch', 'email', 'mobile', 'token'];
         
@@ -207,16 +227,6 @@ function checkLoginStatus() {
         sidebarToggleContainer.classList.add('hidden');
         if (ledgerMenuItem) ledgerMenuItem.classList.add('hidden');
         if (mastersMenuItem) mastersMenuItem.classList.add('hidden');
-    }
-
-    // Dynamic footer text change
-    const copyrightText = document.getElementById('copyright-text');
-    if (copyrightText) {
-        if (isLoggedIn) {
-            copyrightText.innerHTML = 'Designed & Hardcoded by Arun Tomar with Gemini.';
-        } else {
-            copyrightText.innerHTML = '&copy; 2022 The Postman. All rights reserved.';
-        }
     }
 }
 
@@ -360,11 +370,9 @@ function smartDataSync(oldData, newData) {
         
         changes[key] = { added: [], updated: [] };
         const oldDataMap = new Map(syncedData[key].map(item => [item[uniqueKey], item]));
-        const newDataMap = new Map();
-
+        
         for (const newItem of newData[key]) {
             const id = newItem[uniqueKey];
-            newDataMap.set(id, newItem);
             const oldItem = oldDataMap.get(id);
 
             if (!oldItem) {
@@ -375,7 +383,6 @@ function smartDataSync(oldData, newData) {
                 }
             }
         }
-        
         syncedData[key] = newData[key];
     }
     
@@ -534,11 +541,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadComponent('https://post4ex.github.io/postman/header.html', 'header-placeholder'),
         loadComponent('https://post4ex.github.io/postman/footer.html', 'footer-placeholder')
     ]).then(() => {
-        // =====================================================================
-        // MODIFIED: Dispatch event after footer is loaded to fix race condition
-        // =====================================================================
+        // This event guarantees that the footer's HTML and its scripts (fab.js) are loaded.
         window.dispatchEvent(new CustomEvent('footerLoaded'));
-        // =====================================================================
         
         initializeUI();
         setActiveNavOnLoad();
