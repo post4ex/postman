@@ -5,88 +5,94 @@
 // the buttons automatically. You should not need to edit this file.
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-    // This needs to run after the main layout has finished loading components.
-    // A small delay ensures the footer and FAB HTML are present.
-    setTimeout(() => {
-        const fabContainer = document.getElementById('fab-container');
-        if (!fabContainer) {
-            // This can happen if the footer isn't loaded yet. Silently fail.
+// MODIFIED: Wait for the 'footerLoaded' event from layout.js to prevent race conditions
+window.addEventListener('footerLoaded', () => {
+    const fabContainer = document.getElementById('fab-container');
+    if (!fabContainer) {
+        console.error('FAB Error: fab-container element not found in the footer.');
+        return;
+    }
+
+    const fabMain = document.getElementById('fab-main');
+    const fabActions = document.getElementById('fab-actions');
+
+    function initializeFab() {
+        // Check if the configuration object from fab-config.js exists
+        if (typeof fabPageActions === 'undefined') {
+            console.warn('FAB configuration (fab-config.js) not found.');
+            fabContainer.classList.add('hidden');
             return;
         }
 
-        const fabMain = document.getElementById('fab-main');
-        const fabActions = document.getElementById('fab-actions');
+        // Get the current page's filename (e.g., "BookOrder.html")
+        const currentPage = window.location.pathname.split('/').pop();
+        const actions = fabPageActions[currentPage];
 
-        function initializeFab() {
-            if (typeof fabPageActions === 'undefined') {
-                console.warn('FAB configuration (fab-config.js) not found.');
-                fabContainer.classList.add('hidden');
-                return;
-            }
-
-            const currentPage = window.location.pathname.split('/').pop();
-            const actions = fabPageActions[currentPage];
-
-            if (!actions || actions.length === 0) {
-                fabContainer.classList.add('hidden'); // Hide FAB if no actions for this page
-                return;
-            }
-
-            // If there are actions, make sure the button is visible
-            fabContainer.classList.remove('hidden');
-
-            fabActions.innerHTML = '';
-            actions.forEach(action => {
-                const actionButton = document.createElement('a');
-                actionButton.className = 'fab-action';
-                actionButton.setAttribute('data-action', action.action);
-                actionButton.innerHTML = `
-                    <span class="fab-action-label">${action.label}</span>
-                    <div class="fab-action-icon">${action.icon}</div>
-                `;
-                fabActions.appendChild(actionButton);
-            });
+        // If there are no actions defined for the current page, hide the FAB
+        if (!actions || actions.length === 0) {
+            fabContainer.classList.add('hidden');
+            return;
         }
 
-        fabMain.addEventListener('click', (e) => {
-            e.stopPropagation();
-            fabContainer.classList.toggle('active');
-        });
+        // If actions exist, ensure the FAB is visible
+        fabContainer.classList.remove('hidden');
 
-        fabActions.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const target = e.target.closest('.fab-action');
-            if (target) {
-                const action = target.dataset.action;
-                
-                // This is the magic: it finds the function on the page and calls it.
-                if (window[action] && typeof window[action] === 'function') {
-                    window[action]();
-                } 
-                // Special case for triggering button clicks, e.g., action: 'book_button_click'
-                else if (action.endsWith('_click')) {
-                     const buttonId = action.replace('_click', '');
-                     const button = document.getElementById(buttonId);
-                     if(button) {
-                         button.click();
-                     } else {
-                        console.warn(`FAB action error: Button with ID "${buttonId}" not found.`);
-                     }
-                } 
-                else {
-                    console.warn(`FAB action error: Function named "${action}" was not found on this page (window object).`);
-                }
-                
-                fabContainer.classList.remove('active');
+        // Clear any previous actions and build the new ones
+        fabActions.innerHTML = '';
+        actions.forEach(action => {
+            const actionButton = document.createElement('a');
+            actionButton.className = 'fab-action';
+            actionButton.setAttribute('data-action', action.action);
+            actionButton.innerHTML = `
+                <span class="fab-action-label">${action.label}</span>
+                <div class="fab-action-icon">${action.icon}</div>
+            `;
+            fabActions.appendChild(actionButton);
+        });
+    }
+
+    // Event listener for the main FAB to open/close the menu
+    fabMain.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent the document click listener from closing it immediately
+        fabContainer.classList.toggle('active');
+    });
+
+    // Event listener for the action buttons container
+    fabActions.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent clicks on the menu from closing it
+        const target = e.target.closest('.fab-action');
+        if (target) {
+            const action = target.dataset.action;
+            
+            // This is the core logic: it finds a function on the page with the specified name and calls it
+            if (window[action] && typeof window[action] === 'function') {
+                window[action]();
+            } 
+            // This allows triggering clicks on buttons, e.g., 'book_button_click'
+            else if (action.endsWith('_click')) {
+                 const buttonId = action.replace('_click', '');
+                 const button = document.getElementById(buttonId);
+                 if(button) {
+                     button.click();
+                 } else {
+                    console.warn(`FAB action error: Button with ID "${buttonId}" not found.`);
+                 }
+            } 
+            else {
+                console.warn(`FAB action error: Function named "${action}" was not found on this page (window object).`);
             }
-        });
-
-        document.addEventListener('click', () => {
+            
+            // Close the menu after an action is clicked
             fabContainer.classList.remove('active');
-        });
+        }
+    });
 
-        initializeFab();
-    }, 500); // A 500ms delay is robust enough to wait for layout.js to finish loading components.
+    // Add a global listener to close the FAB menu when clicking anywhere else on the page
+    document.addEventListener('click', () => {
+        fabContainer.classList.remove('active');
+    });
+
+    // Initialize the FAB logic
+    initializeFab();
 });
 
