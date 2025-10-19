@@ -91,3 +91,103 @@ body {
     z-index: 50;
 }
 
+
+/* ============================================================ */
+/* STYLES FOR FLOATING ACTION BUTTON (FAB)                      */
+/* ============================================================ */
+
+/* FAB Container Styling */
+.fab-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 100; /* Higher z-index to be above other floating items */
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+}
+
+/* Main FAB Styling */
+.fab-main {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 9999px;
+    background-color: #1e3a8a; /* Your brand's blue */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out, background-color 0.3s ease;
+}
+
+.fab-main:hover {
+    background-color: #1e40af;
+    transform: scale(1.05);
+}
+
+.fab-main svg {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Rotate icon when active */
+.fab-container.active .fab-main svg {
+    transform: rotate(135deg);
+}
+
+/* Action Menu Styling */
+.fab-actions {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease-in-out;
+    /* Start hidden */
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.fab-container.active .fab-actions {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Individual Action Button Styling */
+.fab-action {
+    display: flex;
+    align-items: center;
+    margin-top: 0.75rem;
+    cursor: pointer;
+    text-decoration: none;
+    color: #1f2937;
+}
+
+.fab-action-label {
+    background-color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    margin-right: 0.75rem;
+    font-weight: 500;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    white-space: nowrap;
+}
+
+.fab-action-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease;
+}
+
+.fab-action:hover .fab-action-icon {
+    transform: scale(1.1);
+}
+
