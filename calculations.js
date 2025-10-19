@@ -1,3 +1,12 @@
+/**
+ * Calculates the freight charge based on various rate parameters.
+ * @param {string} transportType - The selected mode of transport (e.g., 'E', 'P').
+ * @param {number} rate - The base rate for the zone.
+ * @param {number} addRate - The additional rate for weight increments.
+ * @param {number} weightCeiling - The calculated weight ceiling.
+ * @param {number} weightZone - The determined weight zone.
+ * @returns {number} The calculated freight cost.
+ */
 function calculateFreight(transportType, rate, addRate, weightCeiling, weightZone) {
     if (isNaN(rate) || isNaN(weightCeiling)) return 0;
 
@@ -21,6 +30,15 @@ function calculateFreight(transportType, rate, addRate, weightCeiling, weightZon
     return fright > 0 ? fright : 0;
 }
 
+/**
+ * Determines helper data for rate calculation (weight ceiling, zone, rate UID, etc.).
+ * @param {number} chgWt - The chargeable weight.
+ * @param {object} selectedCustomerDetails - Details of the selected customer.
+ * @param {string} transportType - The selected mode of transport.
+ * @param {string} receiverZone - The zone of the receiver.
+ * @param {Array} ratesData - The array of rate objects.
+ * @returns {object} An object containing all helper data for display.
+ */
 function getHelperTableData(chgWt, selectedCustomerDetails, transportType, receiverZone, ratesData) {
     let weightCeiling = 0;
     const weightChange = parseFloat(selectedCustomerDetails.WEIGHT_CHANGE);
@@ -70,8 +88,17 @@ function getHelperTableData(chgWt, selectedCustomerDetails, transportType, recei
     };
 }
 
-
-function updateCharges(frightValue, summaryTotals, selectedCustomerDetails, paymentCheckboxes, consignmentProducts, chgWt) {
+/**
+ * Calculates all additional charges, taxes, and the final total.
+ * @param {number} frightValue - The base freight value.
+ * @param {object} summaryTotals - Object containing total amount.
+ * @param {object} selectedCustomerDetails - Details of the selected customer.
+ * @param {object} paymentCheckboxes - Object with the state of payment checkboxes.
+ * @param {Array} consignmentProducts - Array of product objects.
+ * @param {number} chgWt - The chargeable weight.
+ * @returns {object} An object containing all calculated charge values.
+ */
+function calculateAllCharges(frightValue, summaryTotals, selectedCustomerDetails, paymentCheckboxes, consignmentProducts, chgWt) {
     const totalValue = summaryTotals.totalAmount;
     
     const codCheckbox = paymentCheckboxes.cod;
@@ -109,11 +136,11 @@ function updateCharges(frightValue, summaryTotals, selectedCustomerDetails, paym
     if (selectedCustomerDetails.GST_INC === 'Y') {
         taxableAmount = subtotal;
         if (selectedCustomerDetails.BILLING_STATE === 'Uttarakhand-05') {
-            const totalTax = taxableAmount - (taxableAmount / 1.18);
+            const totalTax = taxableAmount / 1.18 * 0.18;
             sgst = totalTax / 2;
             cgst = totalTax / 2;
         } else {
-            igst = taxableAmount - (taxableAmount / 1.18);
+            igst = taxableAmount / 1.18 * 0.18;
         }
         total = taxableAmount;
     } else {
@@ -148,7 +175,12 @@ function updateCharges(frightValue, summaryTotals, selectedCustomerDetails, paym
     };
 }
 
-
+/**
+ * Recalculates weights for all boxes in the consignment.
+ * @param {Array} consignmentBoxes - The array of box objects.
+ * @param {number} volIngr - The volumetric ingredient/divisor for the current mode.
+ * @returns {Array} The updated array of box objects.
+ */
 function recalculateAllBoxWeights(consignmentBoxes, volIngr) {
     const volDivisor = volIngr || 4700;
     consignmentBoxes.forEach(box => {
@@ -157,3 +189,4 @@ function recalculateAllBoxWeights(consignmentBoxes, volIngr) {
     });
     return consignmentBoxes;
 }
+
