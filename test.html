@@ -436,6 +436,7 @@
     <div id="footer-placeholder"></div>
 
     <script src="layout.js"></script>
+    <script src="calculations.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const timestampInput = document.getElementById('timestamp');
@@ -491,9 +492,6 @@
                 totalAmount: 0
             };
 
-            // =================================================================================
-            // UPGRADED REFRESH HANDLER & INITIALIZATION
-            // =================================================================================
             function initializeAppLogic(eventDetail) {
                 if (!eventDetail || !eventDetail.data) {
                     bookingMessage.textContent = 'Application data could not be loaded.';
@@ -501,14 +499,9 @@
                     return;
                 }
                 fetchedGSheetData = eventDetail.data;
-
-                // Call the new smart update function for dropdowns
                 updateAllDropdowns();
-
                 setupAutocomplete(senderNameInput, senderAutocompleteResults, senderDetailsDisplay, 'sender');
                 setupAutocomplete(receiverNameInput, receiverAutocompleteResults, receiverDetailsDisplay, 'receiver');
-                
-                // Auto-select if there is only one customer
                 if (customerNameSelect.options.length === 2) {
                     customerNameSelect.selectedIndex = 1;
                     handleCustomerSelectionChange();
@@ -518,28 +511,21 @@
             function handleDataRefresh(eventDetail) {
                 console.log('Booking Page: App data refreshed. Preserving selections.');
                 if (!eventDetail || !eventDetail.data) return;
-                
                 fetchedGSheetData = eventDetail.data;
                 updateAllDropdowns();
             }
 
             function updateAllDropdowns() {
-                // 1. Save current selections
                 const selectedCustomer = customerNameSelect.value;
                 const selectedCarrier = carrierSelect.value;
                 const selectedMode = transportTypeSelect.value;
-
-                // 2. Repopulate dropdowns
                 populateCustomerDropdown();
                 populateCarrierDropdown();
                 populateModeDropdown(selectedContacts.receiver?.ZONE);
-
-                // 3. Restore selections
                 customerNameSelect.value = selectedCustomer;
                 carrierSelect.value = selectedCarrier;
                 transportTypeSelect.value = selectedMode;
             }
-
 
             function setBookingFieldsLocked(locked) {
                 const fieldsToLock = [
@@ -554,11 +540,8 @@
                            return;
                         }
                         element.disabled = locked;
-                        if (locked) {
-                            element.classList.add('bg-gray-200', 'cursor-not-allowed');
-                        } else {
-                            element.classList.remove('bg-gray-200', 'cursor-not-allowed');
-                        }
+                        element.classList.toggle('bg-gray-200', locked);
+                        element.classList.toggle('cursor-not-allowed', locked);
                     }
                 });
                 isBookingLocked = locked;
@@ -571,49 +554,28 @@
                 ];
                 fields.forEach(field => {
                     field.disabled = locked;
-                    if(locked) {
-                        field.classList.add('bg-gray-200', 'cursor-not-allowed');
-                    } else {
-                        field.classList.remove('bg-gray-200', 'cursor-not-allowed');
-                    }
+                    field.classList.toggle('bg-gray-200', locked);
+                    field.classList.toggle('cursor-not-allowed', locked);
                 });
             }
 
             function areMainDetailsComplete() {
-                const isCustomerSelected = customerNameSelect.value !== '';
-                const isSenderSelected = !!selectedContacts.sender;
-                const isReceiverSelected = !!selectedContacts.receiver;
-                const isModeSelected = transportTypeSelect.value !== '';
-                const isCarrierSelected = carrierSelect.value !== '';
-                return isCustomerSelected && isSenderSelected && isReceiverSelected && isModeSelected && isCarrierSelected;
+                return customerNameSelect.value && selectedContacts.sender && selectedContacts.receiver && transportTypeSelect.value && carrierSelect.value;
             }
 
              function checkMainDetailsAndToggleInputs() {
-                if (areMainDetailsComplete()) {
-                    toggleWeightProductEntry(false);
-                } else {
-                    toggleWeightProductEntry(true);
-                }
+                toggleWeightProductEntry(!areMainDetailsComplete());
             }
 
             function resetForNextBooking() {
                 consignmentBoxes = [];
                 consignmentProducts = [];
-                document.getElementById('receiver_name').value = '';
-                document.getElementById('awb').value = '';
-                document.getElementById('actual_weight').value = '';
-                document.getElementById('length').value = '';
-                document.getElementById('breadth').value = '';
-                document.getElementById('height').value = '';
-                document.getElementById('product_name').value = '';
-                document.getElementById('doc_no').value = '';
-                document.getElementById('eway_bill').value = '';
-                document.getElementById('amount').value = '';
+                ['receiver_name', 'awb', 'actual_weight', 'length', 'breadth', 'height', 'product_name', 'doc_no', 'eway_bill', 'amount'].forEach(id => document.getElementById(id).value = '');
                 ['payment_global', 'payment_topay', 'payment_cod', 'payment_fov'].forEach(id => document.getElementById(id).checked = false);
                 selectedContacts.receiver = null;
-                document.getElementById('receiverDetailsDisplay').innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
-                document.getElementById('transport_type').value = '';
-                document.getElementById('carrier_select').value = '';
+                receiverDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
+                transportTypeSelect.value = '';
+                carrierSelect.value = '';
                 renderMultiboxTable();
                 renderProductTable();
                 setBookingFieldsLocked(false); 
@@ -634,19 +596,15 @@
                 receiverDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
                 bookingMessage.textContent = '';
                 bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
-                selectedContacts.sender = null;
-                selectedContacts.receiver = null;
+                selectedContacts = { sender: null, receiver: null };
                 selectedCustomerDetails = {};
                 updateDisplayTables();
-                updateCharges();
+                updateAndDisplayCharges();
                 toggleWeightProductEntry(true);
             }
 
             function formatDate(date) {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
+                return date.toISOString().split('T')[0];
             }
 
             function formatTime(date) {
@@ -661,97 +619,61 @@
                 updateDisplayTables();
             }
             
-            function calculateFreight() {
-                const rate = parseFloat(document.getElementById('display_rate').textContent);
-                const addRate = parseFloat(document.getElementById('display_add_rate').textContent);
-                const weightCeiling = parseFloat(document.getElementById('display_weight_ceiling').textContent);
-                const weightZone = parseFloat(document.getElementById('display_weight_zone').textContent);
-                const selectedMode = transportTypeSelect.value;
+            function updateAndDisplayCharges() {
+                const frightVal = calculateFreight(
+                    transportTypeSelect.value,
+                    parseFloat(document.getElementById('display_rate').textContent),
+                    parseFloat(document.getElementById('display_add_rate').textContent),
+                    parseFloat(document.getElementById('display_weight_ceiling').textContent),
+                    parseFloat(document.getElementById('display_weight_zone').textContent)
+                );
 
-                if (isNaN(rate) || isNaN(weightCeiling)) return 0;
+                const charges = updateCharges(
+                    frightVal,
+                    summaryTotals,
+                    selectedCustomerDetails,
+                    {
+                        cod: document.getElementById('payment_cod'),
+                        topay: document.getElementById('payment_topay'),
+                        fov: document.getElementById('payment_fov')
+                    },
+                    consignmentProducts,
+                    parseFloat(document.getElementById('display_chg_wt').textContent) || 0
+                );
 
-                let fright = 0;
-                if (selectedMode === 'E' || selectedMode === 'P') {
-                     if (!isNaN(addRate)) {
-                        fright = rate + ((weightCeiling * 2) - 1) * addRate;
-                     } else {
-                        fright = rate;
-                     }
-                } else {
-                     if (!isNaN(addRate) && !isNaN(weightZone)) {
-                        const weightDiv = weightCeiling - weightZone;
-                        fright = rate + (weightDiv * addRate);
-                    } else {
-                       fright = weightCeiling * rate; 
+                for (const key in charges) {
+                    const element = document.getElementById(`display_${key}`);
+                    if (element) {
+                        element.textContent = charges[key];
                     }
                 }
-                return fright > 0 ? fright : 0;
             }
-
+            
             function updateHelperTable() {
-                let weightCeiling = 0;
-                const chgWt = parseFloat(document.getElementById('display_chg_wt').textContent) || 0;
-                const weightChange = parseFloat(selectedCustomerDetails.WEIGHT_CHANGE);
-
-                if (!isNaN(weightChange) && chgWt >= weightChange) {
-                    weightCeiling = Math.ceil(chgWt * 2) / 2;
-                } else {
-                    weightCeiling = Math.ceil(chgWt);
-                }
-
-                document.getElementById('display_weight_ceiling').textContent = weightCeiling.toFixed(2);
+                const helperData = getHelperTableData(
+                    parseFloat(document.getElementById('display_chg_wt').textContent) || 0,
+                    selectedCustomerDetails,
+                    transportTypeSelect.value,
+                    selectedContacts.receiver?.ZONE,
+                    fetchedGSheetData.RATES
+                );
                 
-                let weightZone = '---';
-                const selectedMode = transportTypeSelect.value;
-                if (selectedMode) {
-                    if (selectedMode === 'E' || selectedMode === 'P') {
-                        weightZone = 0.5;
-                    } else {
-                        const zoneThresholds = [3, 10, 25, 50, 100, 500, 1000];
-                        let calculatedZone = 0; 
-                        for(const threshold of zoneThresholds) {
-                             if (weightCeiling >= threshold) calculatedZone = threshold;
-                             else break;
-                        }
-                        weightZone = calculatedZone;
-                    }
+                for(const key in helperData) {
+                    const element = document.getElementById(`display_${key}`);
+                    if(element) element.textContent = helperData[key];
                 }
-                document.getElementById('display_weight_zone').textContent = weightZone;
                 
-                let rateUid = '---';
-                const customerCode = selectedCustomerDetails.CODE;
-                if (customerCode && selectedMode && weightZone !== '---') {
-                    rateUid = `${customerCode}${selectedMode}${weightZone}`;
-                }
-                document.getElementById('display_rate_uid').textContent = rateUid;
-
-                let rate = '---', addRate = '---';
-                const receiverZone = selectedContacts.receiver?.ZONE;
-                const ratesData = fetchedGSheetData.RATES;
-                if (rateUid !== '---' && receiverZone && ratesData) {
-                    const rateRow = ratesData.find(r => r.UID === rateUid);
-                    if (rateRow && rateRow[receiverZone]) rate = rateRow[receiverZone];
-                    const addRateUid = `${rateUid}A`;
-                    const addRateRow = ratesData.find(r => r.UID === addRateUid);
-                    if (addRateRow && addRateRow[receiverZone]) addRate = addRateRow[receiverZone];
-                }
-                document.getElementById('display_rate').textContent = rate;
-                document.getElementById('display_add_rate').textContent = addRate;
-                
-                updateCharges();
+                updateAndDisplayCharges();
             }
 
             function updateSummaryDisplay() {
                 const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
                 const minWt = (selectedModeOption && selectedModeOption.dataset.minWt) ? parseFloat(selectedModeOption.dataset.minWt) : 0;
-                
                 const finalTotalChgWt = Math.max(summaryTotals.totalChgWt, minWt);
-
                 document.getElementById('display_weight').textContent = summaryTotals.totalWgt ? summaryTotals.totalWgt.toFixed(2) : '---';
                 document.getElementById('display_chg_wt').textContent = finalTotalChgWt ? finalTotalChgWt.toFixed(2) : '---';
                 document.getElementById('display_pieces').textContent = summaryTotals.boxCount || '---';
                 document.getElementById('display_value').textContent = summaryTotals.totalAmount ? `₹${summaryTotals.totalAmount.toFixed(2)}` : '---';
-                
                 updateHelperTable();
             }
 
@@ -759,7 +681,7 @@
                 document.getElementById('display_timestamp').textContent = timestampInput.value || '---';
                 document.getElementById('display_order_date').textContent = orderDateInput.value || '---';
                 document.getElementById('display_transit_date').textContent = orderDateInput.value || '---';
-                document.getElementById('display_carrier').textContent = document.getElementById('carrier_select').value || '---';
+                document.getElementById('display_carrier').textContent = carrierSelect.value || '---';
                 document.getElementById('display_awb_number').textContent = document.getElementById('awb').value || '---';
                 document.getElementById('display_consignor').textContent = selectedContacts.sender?.UID || '---';
                 document.getElementById('display_origin_pincode').textContent = originPincodeInput.value || '---';
@@ -770,18 +692,12 @@
                 const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
                 const selectedModeText = selectedModeOption ? selectedModeOption.text.toUpperCase().replace(/ /g, '_') : '';
                 const tatColumnName = `${selectedModeText}_TAT`;
-
-                let tatValue = '---';
-                if (selectedContacts.receiver && selectedModeText) {
-                    tatValue = selectedContacts.receiver[tatColumnName] || '---';
-                }
-                document.getElementById('display_tat').textContent = tatValue;
+                document.getElementById('display_tat').textContent = (selectedContacts.receiver && selectedModeText && selectedContacts.receiver[tatColumnName]) || '---';
                 document.getElementById('display_mode').textContent = transportTypeSelect.value || '---';
                 document.getElementById('display_zone').textContent = selectedContacts.receiver?.ZONE || '---';
-                document.getElementById('display_global').textContent = document.getElementById('payment_global').checked ? 'Yes' : 'No';
-                document.getElementById('display_cod').textContent = document.getElementById('payment_cod').checked ? 'Yes' : 'No';
-                document.getElementById('display_topay').textContent = document.getElementById('payment_topay').checked ? 'Yes' : 'No';
-                document.getElementById('display_fov').textContent = document.getElementById('payment_fov').checked ? 'Yes' : 'No';
+                ['global', 'cod', 'topay', 'fov'].forEach(type => {
+                    document.getElementById(`display_${type}`).textContent = document.getElementById(`payment_${type}`).checked ? 'Yes' : 'No';
+                });
                 document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
                 document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
                 document.getElementById('display_branch').textContent = loginData.BRANCH || loginData.branch || '---';
@@ -796,17 +712,11 @@
                 const weightChangeLimit = parseFloat(selectedCustomerDetails.WEIGHT_CHANGE);
                 const expressOption = Array.from(transportTypeSelect.options).find(opt => opt.text.toUpperCase() === 'EXPRESS');
                 if (!isNaN(weightChangeLimit) && expressOption && !userMadeInitialModeChoice) {
-                    const isOverWeight = summaryTotals.totalChgWt > weightChangeLimit;
-                    if (isOverWeight && initialMode === expressOption.value) {
-                        const preferredMode = selectedContacts.receiver?.MODE;
-                        if (preferredMode) {
-                            newMode = preferredMode;
-                            message = `Mode auto-switched to ${preferredMode} based on weight.`;
-                        } else {
-                            message = `Weight exceeds Express limit (${weightChangeLimit}kg). Please select a new mode.`;
-                            temporaryUnlock = true;
-                        }
-                    } else if (!isOverWeight && initialMode !== expressOption.value) {
+                    if (summaryTotals.totalChgWt > weightChangeLimit && initialMode === expressOption.value) {
+                        newMode = selectedContacts.receiver?.MODE || newMode;
+                        message = newMode !== initialMode ? `Mode auto-switched to ${newMode} based on weight.` : `Weight exceeds Express limit (${weightChangeLimit}kg). Please select a new mode.`;
+                        if (newMode === initialMode) temporaryUnlock = true;
+                    } else if (summaryTotals.totalChgWt <= weightChangeLimit && initialMode !== expressOption.value) {
                         newMode = expressOption.value;
                         message = `Weight is within limit. Mode reverted to Express.`;
                     }
@@ -824,17 +734,13 @@
                         }
                     }
                 }
-                if(transportTypeSelect.value !== initialMode) recalculateAllBoxWeights();
+                if(transportTypeSelect.value !== initialMode) renderMultiboxTable();
                 modeChangeMessage.textContent = message;
                 if (isBookingLocked) {
-                    if (temporaryUnlock) {
-                        transportTypeSelect.disabled = false;
-                        transportTypeSelect.classList.remove('bg-gray-200', 'cursor-not-allowed');
-                        wasModeUnlocked = true;
-                    } else if (!wasModeUnlocked) { 
-                        transportTypeSelect.disabled = true;
-                        transportTypeSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
-                    }
+                    transportTypeSelect.disabled = temporaryUnlock ? false : true;
+                    transportTypeSelect.classList.toggle('bg-gray-200', !temporaryUnlock);
+                    transportTypeSelect.classList.toggle('cursor-not-allowed', !temporaryUnlock);
+                    wasModeUnlocked = temporaryUnlock;
                 }
                 updateDisplayTables();
             }
@@ -872,16 +778,20 @@
                 const breadth = parseFloat(breadthInput.value);
                 const height = parseFloat(heightInput.value);
                 const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
-                const volIngr = parseFloat(selectedModeOption.dataset.volIngr) || 4700; 
+                const volIngr = parseFloat(selectedModeOption.dataset.volIngr); 
                 multiboxErrorMessage.textContent = ''; 
                 if (!actualWeight || !length || !breadth || !height) {
                     multiboxErrorMessage.textContent = 'Please fill all Wgt, L, B, and H fields to add a box.';
                     return;
                 }
-                let volWeight = (length * breadth * height) / volIngr;
-                const chargeWeight = Math.max(actualWeight || 0, volWeight);
-                const boxNum = consignmentBoxes.length + 1;
-                consignmentBoxes.push({ boxNum, actualWeight: actualWeight || 0, length: length || 0, breadth: breadth || 0, height: height || 0, volWeight, chargeWeight });
+                
+                consignmentBoxes = recalculateAllBoxWeights(
+                    [...consignmentBoxes, { actualWeight, length, breadth, height }],
+                    volIngr
+                );
+                
+                consignmentBoxes.forEach((box, index) => box.boxNum = index + 1);
+
                 if (!isBookingLocked) {
                     setBookingFieldsLocked(true);
                 } else if (wasModeUnlocked) {
@@ -895,76 +805,6 @@
                 lengthInput.value = '';
                 breadthInput.value = '';
                 heightInput.value = '';
-            }
-            
-            function updateCharges() {
-                const frightValue = calculateFreight();
-                document.getElementById('display_fright').textContent = frightValue.toFixed(2);
-                const totalValue = summaryTotals.totalAmount;
-                const chgWt = parseFloat(document.getElementById('display_chg_wt').textContent) || 0;
-                const codCheckbox = document.getElementById('payment_cod');
-                const topayCheckbox = document.getElementById('payment_topay');
-                const fovCheckbox = document.getElementById('payment_fov');
-                let codCharge = 0, topayCharge = 0, fovCharge = 0, awbCharge = 0, fuelCharge = 0, ewayCharge = 0, packCharge = 0, devCharge = 0;
-                if(Object.keys(selectedCustomerDetails).length > 0){
-                    if (codCheckbox.checked && selectedCustomerDetails['%_COD_IF']) {
-                        const rate = parseFloat(selectedCustomerDetails['%_COD_IF']);
-                        codCharge = Math.max(150, totalValue * rate);
-                    }
-                    if (topayCheckbox.checked && selectedCustomerDetails['%_TOPAY_IF']) {
-                        const rate = parseFloat(selectedCustomerDetails['%_TOPAY_IF']);
-                        topayCharge = Math.max(150, frightValue * rate);
-                    }
-                    if (fovCheckbox.checked && selectedCustomerDetails['%_FOV_IF']) {
-                        const rate = parseFloat(selectedCustomerDetails['%_FOV_IF']);
-                        fovCharge = Math.max(100, totalValue * rate);
-                    }
-                    awbCharge = parseFloat(selectedCustomerDetails['AWB_CHARGES']) || 0;
-                    fuelCharge = frightValue * (parseFloat(selectedCustomerDetails['FUEL_CHARGES']) || 0);
-                    const ewayCount = consignmentProducts.filter(p => p.ewayBill).length;
-                    ewayCharge = ewayCount * (parseFloat(selectedCustomerDetails['EWAY_IF']) || 0);
-                    packCharge = chgWt * (parseFloat(selectedCustomerDetails['PACKING_CHARGES']) || 0);
-                    devCharge = frightValue * (parseFloat(selectedCustomerDetails['DEV_CHARGES']) || 0);
-                }
-                document.getElementById('display_cod_chg').textContent = codCharge.toFixed(2);
-                document.getElementById('display_topay_chg').textContent = topayCharge.toFixed(2);
-                document.getElementById('display_fov_chg').textContent = fovCharge.toFixed(2);
-                document.getElementById('display_awb_chg').textContent = awbCharge.toFixed(2);
-                document.getElementById('display_fuel_chg').textContent = fuelCharge.toFixed(2);
-                document.getElementById('display_eway_chg').textContent = ewayCharge.toFixed(2);
-                document.getElementById('display_pack_chg').textContent = packCharge.toFixed(2);
-                document.getElementById('display_dev_chg').textContent = devCharge.toFixed(2);
-                const otherCharges = fuelCharge + codCharge + topayCharge + fovCharge + ewayCharge + awbCharge + packCharge + devCharge;
-                document.getElementById('display_other_chg').textContent = otherCharges.toFixed(2);
-                const subtotal = frightValue + otherCharges;
-                let taxableAmount = 0, sgst = 0, cgst = 0, igst = 0, total = 0;
-                if (selectedCustomerDetails.GST_INC === 'Y') {
-                    taxableAmount = subtotal;
-                    if (selectedCustomerDetails.BILLING_STATE === 'Uttarakhand-05') {
-                        const totalTax = taxableAmount - (taxableAmount / 1.18);
-                        sgst = totalTax / 2;
-                        cgst = totalTax / 2;
-                    } else {
-                        igst = taxableAmount - (taxableAmount / 1.18);
-                    }
-                    total = taxableAmount;
-                } else {
-                    taxableAmount = subtotal;
-                    if (selectedCustomerDetails.BILLING_STATE === 'Uttarakhand-05') {
-                        sgst = taxableAmount * 0.09;
-                        cgst = taxableAmount * 0.09;
-                    } else {
-                        igst = taxableAmount * 0.18;
-                    }
-                    total = taxableAmount + sgst + cgst + igst;
-                }
-                document.getElementById('display_taxable').textContent = taxableAmount.toFixed(2);
-                document.getElementById('display_sgst').textContent = sgst.toFixed(2);
-                document.getElementById('display_cgst').textContent = cgst.toFixed(2);
-                document.getElementById('display_igst').textContent = igst.toFixed(2);
-                const totalGst = sgst + cgst + igst;
-                document.getElementById('display_gst_total').textContent = totalGst.toFixed(2);
-                document.getElementById('display_total').textContent = total.toFixed(2);
             }
 
             function renderProductTable() {
@@ -986,7 +826,7 @@
                 });
                 summaryTotals.totalAmount = totalAmount;
                 updateSummaryDisplay();
-                updateCharges(); 
+                updateAndDisplayCharges(); 
             }
 
             function addProductEntry() {
@@ -1020,18 +860,13 @@
             
             function handleCustomerSelectionChange() {
                 const selectedCustomerName = customerNameSelect.value;
-                selectedCustomerDetails = {}; 
-                if (selectedCustomerName && fetchedGSheetData.B2B) {
-                    selectedCustomerDetails = fetchedGSheetData.B2B.find(c => c.CLIENT_NAME === selectedCustomerName) || {};
-                }
-                if (selectedCustomerName && fetchedGSheetData.B2B2C) {
-                    const contactDetails = fetchedGSheetData.B2B2C.find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
-                    if (contactDetails) {
-                        senderNameInput.value = contactDetails.NAME;
-                        originPincodeInput.value = contactDetails.PINCODE || '';
-                        selectedContacts.sender = contactDetails;
-                        displayContactDetails(contactDetails, senderDetailsDisplay);
-                    }
+                selectedCustomerDetails = (fetchedGSheetData.B2B || []).find(c => c.CLIENT_NAME === selectedCustomerName) || {};
+                const contactDetails = (fetchedGSheetData.B2B2C || []).find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
+                if (contactDetails) {
+                    senderNameInput.value = contactDetails.NAME;
+                    originPincodeInput.value = contactDetails.PINCODE || '';
+                    selectedContacts.sender = contactDetails;
+                    displayContactDetails(contactDetails, senderDetailsDisplay);
                 } else {
                     senderNameInput.value = '';
                     originPincodeInput.value = '';
@@ -1047,7 +882,7 @@
 
             function populateCustomerDropdown() {
                 customerNameSelect.innerHTML = '<option value="">Select Customer</option>';
-                if (fetchedGSheetData.B2B && fetchedGSheetData.B2B.length > 0) {
+                if (fetchedGSheetData.B2B?.length > 0) {
                     fetchedGSheetData.B2B.forEach(client => {
                         const option = document.createElement('option');
                         option.value = client.CLIENT_NAME;
@@ -1059,7 +894,7 @@
 
             function populateModeDropdown(zone) {
                 transportTypeSelect.innerHTML = '<option value="">Select Mode</option>';
-                if (fetchedGSheetData.MODE && fetchedGSheetData.MODE.length > 0) {
+                if (fetchedGSheetData.MODE?.length > 0) {
                     fetchedGSheetData.MODE.forEach(mode => {
                         const isAvailableForZone = !zone || mode[zone] === 'Y';
                         const option = document.createElement('option');
@@ -1067,7 +902,7 @@
                         option.textContent = mode.MODE;
                         option.dataset.volIngr = mode.VOL_INGR;
                         option.dataset.minWt = mode.MIN_WT;
-                        if (!isAvailableForZone) option.disabled = true;
+                        option.disabled = !isAvailableForZone;
                         transportTypeSelect.appendChild(option);
                     });
                 }
@@ -1075,7 +910,7 @@
 
             function populateCarrierDropdown() {
                 carrierSelect.innerHTML = '<option value="">Select Carrier</option>';
-                if (fetchedGSheetData.CARRIER && fetchedGSheetData.CARRIER.length > 0) {
+                if (fetchedGSheetData.CARRIER?.length > 0) {
                     fetchedGSheetData.CARRIER.forEach(carrier => {
                         const option = document.createElement('option');
                         option.value = carrier.COMPANY_CODE;
@@ -1085,16 +920,6 @@
                 }
             }
             
-            function recalculateAllBoxWeights() {
-                const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
-                const volIngr = parseFloat(selectedModeOption.dataset.volIngr) || 4700;
-                consignmentBoxes.forEach(box => {
-                    box.volWeight = (box.length * box.breadth * box.height) / volIngr;
-                    box.chargeWeight = Math.max(box.actualWeight, box.volWeight);
-                });
-                renderMultiboxTable();
-            }
-
             function displayContactDetails(contact, displayElement) {
                 if (contact) {
                     displayElement.innerHTML = `
@@ -1164,13 +989,10 @@
                 });
             }
 
-            // --- MAIN INITIALIZATION ---
-            const loginDataJSON = localStorage.getItem('loginData');
-            if (loginDataJSON) loginData = JSON.parse(loginDataJSON);
-
+            // --- MAIN INITIALIZATION & EVENT LISTENERS ---
+            loginData = JSON.parse(localStorage.getItem('loginData')) || {};
             window.addEventListener('appDataLoaded', (e) => initializeAppLogic(e.detail));
             window.addEventListener('appDataRefreshed', (e) => handleDataRefresh(e.detail));
-            
             const appDataJSON = localStorage.getItem('appData');
             if (appDataJSON) {
                 try {
@@ -1182,7 +1004,8 @@
             customerNameSelect.addEventListener('change', handleCustomerSelectionChange);
             transportTypeSelect.addEventListener('change', () => {
                 if (!isBookingLocked) userMadeInitialModeChoice = true;
-                recalculateAllBoxWeights();
+                consignmentBoxes = recalculateAllBoxWeights(consignmentBoxes, parseFloat(transportTypeSelect.options[transportTypeSelect.selectedIndex].dataset.volIngr));
+                renderMultiboxTable();
                 if (isBookingLocked) {
                     transportTypeSelect.disabled = true;
                     transportTypeSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
@@ -1207,13 +1030,12 @@
             });
 
             ['order_date', 'carrier_select', 'awb', 'sender_name', 'origin_pincode', 'receiver_name', 'dest_pincode', 'transport_type'].forEach(id => {
-                const element = document.getElementById(id);
-                if(element) element.addEventListener('input', updateDisplayTables);
+                document.getElementById(id)?.addEventListener('input', updateDisplayTables);
             });
             ['payment_global', 'payment_topay', 'payment_cod', 'payment_fov'].forEach(id => {
                 document.getElementById(id).addEventListener('change', () => {
                     updateDisplayTables();
-                    updateCharges();
+                    updateAndDisplayCharges();
                 });
             });
 
