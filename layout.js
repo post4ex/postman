@@ -327,66 +327,6 @@ const setActiveNavOnLoad = () => {
     }, 150);
 };
 
-async function verifyAndFetchAppData(force = false) {
-    const loginDataJSON = localStorage.getItem('loginData');
-    if (!loginDataJSON) return;
-    
-    const appDataJSON = localStorage.getItem('appData');
-    if (appDataJSON && !force) {
-        try {
-            const appData = JSON.parse(appDataJSON);
-            if (new Date().getTime() < appData.expires) {
-                console.log('App data exists and is valid. Skipping fetch.');
-                startSilentRefresh();
-                return;
-            }
-        } catch (e) {
-            console.error('Could not parse appData from localStorage.', e);
-        }
-    }
-
-    try {
-        const loginData = JSON.parse(loginDataJSON);
-        const code = loginData.CODE || loginData.code;
-        const token = loginData.TOKEN || loginData.token;
-
-        if (!code || !token) {
-            console.error('Code or Token is missing from login data.');
-            return;
-        }
-
-        const DATA_LOADER_URL = 'https://script.google.com/macros/s/AKfycbwq2ZIniCkLN-3SCaPKgVhy74Rqpt9b9Kovz1ANj2z0Iwg-Ad3jHC9N3xrYatDnbpwR5A/exec';
-        
-        console.log(force ? 'Forcing data refresh...' : 'Verifying token and fetching initial application data...');
-        const response = await fetch(`${DATA_LOADER_URL}?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`);
-
-        if (!response.ok) {
-            throw new Error(`Network error while fetching app data: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-
-        if (result.success) {
-            const expiry = new Date().getTime() + (2 * 60 * 60 * 1000); // 2 hours
-            const appDataToStore = {
-                data: result.data,
-                expires: expiry
-            };
-            localStorage.setItem('appData', JSON.stringify(appDataToStore));
-            console.log('App data was fetched and stored successfully.');
-            
-            startSilentRefresh();
-            
-            window.dispatchEvent(new CustomEvent('appDataLoaded', { detail: result.data }));
-        } else {
-            console.error('Failed to verify and fetch app data:', result.message);
-        }
-
-    } catch (error) {
-        console.error('An unexpected error occurred during app data fetch:', error);
-    }
-}
-
 // ====================================================================================
 // NEW: SMART DATA SYNC FUNCTION
 // This function intelligently merges new data into the old data without overwriting.
@@ -413,13 +353,11 @@ function smartDataSync(oldData, newData) {
             }
 
             const oldDataMap = new Map(oldData[key].map(item => [item[uniqueKey], item]));
-            const newDataSet = new Set();
             const mergedData = [];
 
             // Update existing items and add new ones
             for (const newItem of newData[key]) {
                 const id = newItem[uniqueKey];
-                newDataSet.add(id);
                 const oldItem = oldDataMap.get(id);
 
                 if (oldItem) {
@@ -431,9 +369,6 @@ function smartDataSync(oldData, newData) {
                 }
             }
             
-            // Add back any old items that were not in the new data (optional, depends on logic)
-            // For this application, we assume the new data is the source of truth, so we don't add back old items.
-            
             syncedData[key] = mergedData;
         } else {
             // Not an array or doesn't exist in old data, just replace.
@@ -443,6 +378,86 @@ function smartDataSync(oldData, newData) {
     return syncedData;
 }
 
+
+async function verifyAndFetchAppData(force = false) {
+    const loginDataJSON = localStorage.getItem('loginData');
+    if (!loginDataJSON) return;
+    
+    // If not a forced refresh, check for valid, non-expired data first.
+    if (!force) {
+        const appDataJSON = localStorage.getItem('appData');
+        if (appDataJSON) {
+            try {
+                const appData = JSON.parse(appDataJSON);
+                if (new Date().getTime() < appData.expires) {
+                    console.log('App data exists and is valid. Skipping fetch.');
+                    startSilentRefresh(); // Start the timer for the next silent refresh
+                    return;
+                }
+            } catch (e) {
+                console.error('Could not parse appData from localStorage.', e);
+            }
+        }
+    }
+
+    try {
+        const loginData = JSON.parse(loginDataJSON);
+        const code = loginData.CODE || loginData.code;
+        const token = loginData.TOKEN || loginData.token;
+
+        if (!code || !token) {
+            console.error('Code or Token is missing from login data.');
+            return;
+        }
+
+        const DATA_LOADER_URL = 'https://script.google.com/macros/s/AKfycbwq2ZIniCkLN-3SCaPKgVhy74Rqpt9b9Kovz1ANj2z0Iwg-Ad3jHC9N3xrYatDnbpwR5A/exec';
+        
+        console.log(force ? 'Forcing data refresh...' : 'Fetching initial application data...');
+        const response = await fetch(`${DATA_LOADER_URL}?code=${encodeURIComponent(code)}&token=${encodeURIComponent(token)}`);
+
+        if (!response.ok) {
+            throw new Error(`Network error while fetching app data: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            const expiry = new Date().getTime() + (2 * 60 * 60 * 1000); // 2 hours
+            let finalData = result.data;
+            
+            // =====================================================================
+            // MODIFIED: Smart sync logic applied to manual refresh as well
+            // =====================================================================
+            const existingAppDataJSON = localStorage.getItem('appData');
+            if (existingAppDataJSON) {
+                try {
+                    const existingAppData = JSON.parse(existingAppDataJSON);
+                    console.log('Merging new data into existing cache.');
+                    finalData = smartDataSync(existingAppData.data, result.data);
+                } catch(e) {
+                    console.error("Could not parse existing app data for merging, will overwrite.", e);
+                }
+            }
+            // =====================================================================
+
+            const appDataToStore = { data: finalData, expires: expiry };
+            localStorage.setItem('appData', JSON.stringify(appDataToStore));
+            console.log('App data was successfully fetched and stored/merged.');
+            
+            if (force) {
+                window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: finalData }));
+            } else {
+                startSilentRefresh();
+                window.dispatchEvent(new CustomEvent('appDataLoaded', { detail: finalData }));
+            }
+        } else {
+            console.error('Failed to verify and fetch app data:', result.message);
+        }
+
+    } catch (error) {
+        console.error('An unexpected error occurred during app data fetch:', error);
+    }
+}
 
 function startSilentRefresh() {
     if (silentRefreshInterval) {
@@ -475,15 +490,10 @@ function startSilentRefresh() {
                     if (appDataJSON) {
                         const existingAppData = JSON.parse(appDataJSON);
                         
-                        // =============================================================
-                        // MODIFIED: Use the new smart sync instead of overwriting
-                        // =============================================================
                         existingAppData.data = smartDataSync(existingAppData.data, result.data);
-                        // =============================================================
 
                         localStorage.setItem('appData', JSON.stringify(existingAppData));
                         console.log('Silent data refresh successful and merged.');
-                        // Dispatch the event with the newly merged data
                         window.dispatchEvent(new CustomEvent('appDataRefreshed', { detail: existingAppData.data }));
                     }
                 }
@@ -558,3 +568,4 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Failed to initialize page layout:", error);
     });
 });
+
