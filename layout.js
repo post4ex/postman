@@ -97,6 +97,7 @@ async function loadDynamicContent(url, targetElementId) {
  */
 function checkLoginStatus() {
     const loginDataJSON = localStorage.getItem('loginData');
+    const copyrightTextElement = document.getElementById('copyright-text');
     
     // Auth-related elements
     const loginButton = document.getElementById('login-button');
@@ -138,6 +139,9 @@ function checkLoginStatus() {
 
     if (isLoggedIn && userData) {
         // --- UI for LOGGED IN user ---
+        if (copyrightTextElement) {
+            copyrightTextElement.innerHTML = 'Designed & Hardcoded by Arun Tomar with Gemini.';
+        }
         loginButton.classList.add('hidden');
         profileSection.classList.remove('hidden');
         searchButtonPrivate.classList.remove('hidden');
@@ -192,6 +196,9 @@ function checkLoginStatus() {
 
     } else {
         // --- UI for LOGGED OUT user ---
+        if (copyrightTextElement) {
+            copyrightTextElement.innerHTML = '&copy; 2022 The Postman. All rights reserved.';
+        }
         loginButton.classList.remove('hidden');
         profileSection.classList.add('hidden');
         searchButtonPrivate.classList.add('hidden');
@@ -327,20 +334,17 @@ const setActiveNavOnLoad = () => {
     }, 150);
 };
 
-// ====================================================================================
-// UPGRADED: SMART DATA SYNC FUNCTION WITH CHANGE TRACKING
-// ====================================================================================
 function smartDataSync(oldData, newData) {
     const uniqueKeys = {
         ORDERS: 'REFERANCE', B2B2C: 'UID', CARRIER: 'COMPANY_CODE', CLIENTS: 'UID',
     };
     
     const changes = {};
-    const syncedData = JSON.parse(JSON.stringify(oldData)); // Deep copy
+    const syncedData = JSON.parse(JSON.stringify(oldData));
 
     for (const key in newData) {
         if (!Array.isArray(newData[key]) || !syncedData[key] || !Array.isArray(syncedData[key])) {
-            syncedData[key] = newData[key]; // Not an array or not in old data, just replace.
+            syncedData[key] = newData[key];
             continue;
         }
 
@@ -361,16 +365,14 @@ function smartDataSync(oldData, newData) {
             const oldItem = oldDataMap.get(id);
 
             if (!oldItem) {
-                changes[key].added.push(newItem); // New item
+                changes[key].added.push(newItem);
             } else {
-                // Check for updates by comparing JSON strings
                 if (JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
                     changes[key].updated.push(newItem);
                 }
             }
         }
         
-        // The new data from the server is the source of truth, so we just replace the whole array
         syncedData[key] = newData[key];
     }
     
