@@ -2,7 +2,7 @@
 // You only need to edit this file to add, remove, or change buttons.
 
 const fabPageActions = {
-    // NEW: Global actions that will appear on EVERY page.
+    // Global actions that will appear on EVERY page after login.
     global: [
         {
             label: 'WhatsApp',
@@ -17,15 +17,38 @@ const fabPageActions = {
     ],
     // Page-specific actions
     'BookOrder.html': [
-        { label: 'Add Client', icon: 'CLIENT_ICON_SVG', action: 'navigate_Clients.html' },
-        { label: 'Add Customer', icon: 'CUSTOMER_ICON_SVG', action: 'navigate_Customer.html' },
-        { label: 'Delete Order', icon: 'DELETE_ICON_SVG', action: 'deleteOrder' },
-        { label: 'Update Order', icon: 'UPDATE_ICON_SVG', action: 'updateOrder' },
-        { label: 'Assign Carrier', icon: 'CARRIER_ICON_SVG', action: 'navigate_AssignCarrier.html' }
+        { 
+            label: 'Add Client', 
+            icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>`, 
+            action: 'navigate_Clients.html' 
+        },
+        { 
+            label: 'Add Customer', 
+            icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`, 
+            action: 'navigate_Customer.html' 
+        },
+        { 
+            label: 'Delete Order', 
+            icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`, 
+            action: 'deleteOrder' 
+        },
+        { 
+            label: 'Update Order', 
+            icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>`, 
+            action: 'updateOrder' 
+        },
+        { 
+            label: 'Assign Carrier', 
+            icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h8a1 1 0 001-1zM3 11h10"></path></svg>`, 
+            action: 'navigate_AssignCarrier.html' 
+        }
     ],
     'AssignCarrier.html': [
-        { label: 'Refresh List', icon: 'REFRESH_ICON_SVG', action: 'refreshShipments' }
+        { 
+            label: 'Refresh List', 
+            icon: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M4 9a9 9 0 0115.12-4.38M20 20v-5h-5M20 15a9 9 0 01-15.12 4.38"></path></svg>`, 
+            action: 'refreshShipments' 
+        }
     ]
-    // Add other pages and their specific buttons here
 };
 
