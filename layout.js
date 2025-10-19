@@ -97,7 +97,6 @@ async function loadDynamicContent(url, targetElementId) {
  */
 function checkLoginStatus() {
     const loginDataJSON = localStorage.getItem('loginData');
-    const copyrightTextElement = document.getElementById('copyright-text');
     
     // Auth-related elements
     const loginButton = document.getElementById('login-button');
@@ -139,9 +138,6 @@ function checkLoginStatus() {
 
     if (isLoggedIn && userData) {
         // --- UI for LOGGED IN user ---
-        if (copyrightTextElement) {
-            copyrightTextElement.innerHTML = 'Designed & Hardcoded by Arun Tomar with Gemini.';
-        }
         loginButton.classList.add('hidden');
         profileSection.classList.remove('hidden');
         searchButtonPrivate.classList.remove('hidden');
@@ -196,9 +192,6 @@ function checkLoginStatus() {
 
     } else {
         // --- UI for LOGGED OUT user ---
-        if (copyrightTextElement) {
-            copyrightTextElement.innerHTML = '&copy; 2022 The Postman. All rights reserved.';
-        }
         loginButton.classList.remove('hidden');
         profileSection.classList.add('hidden');
         searchButtonPrivate.classList.add('hidden');
@@ -214,6 +207,16 @@ function checkLoginStatus() {
         sidebarToggleContainer.classList.add('hidden');
         if (ledgerMenuItem) ledgerMenuItem.classList.add('hidden');
         if (mastersMenuItem) mastersMenuItem.classList.add('hidden');
+    }
+
+    // Dynamic footer text change
+    const copyrightText = document.getElementById('copyright-text');
+    if (copyrightText) {
+        if (isLoggedIn) {
+            copyrightText.innerHTML = 'Designed & Hardcoded by Arun Tomar with Gemini.';
+        } else {
+            copyrightText.innerHTML = '&copy; 2022 The Postman. All rights reserved.';
+        }
     }
 }
 
@@ -531,6 +534,12 @@ document.addEventListener('DOMContentLoaded', () => {
         loadComponent('https://post4ex.github.io/postman/header.html', 'header-placeholder'),
         loadComponent('https://post4ex.github.io/postman/footer.html', 'footer-placeholder')
     ]).then(() => {
+        // =====================================================================
+        // MODIFIED: Dispatch event after footer is loaded to fix race condition
+        // =====================================================================
+        window.dispatchEvent(new CustomEvent('footerLoaded'));
+        // =====================================================================
+        
         initializeUI();
         setActiveNavOnLoad();
         
