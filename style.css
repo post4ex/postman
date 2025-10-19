@@ -80,16 +80,7 @@ body {
     position: relative;
 }
 
-/* Floating social buttons for mobile */
-.social-buttons-floating {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 50;
-}
+/* REMOVED: Redundant social buttons styles */
 
 /* ============================================================ */
 /* FLOATING ACTION BUTTON (FAB) STYLES (FINAL CORRECTED VERSION)*/
