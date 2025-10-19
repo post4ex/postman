@@ -92,7 +92,7 @@ body {
 }
 
 /* ============================================================ */
-/* FLOATING ACTION BUTTON (FAB) STYLES (CORRECTED)              */
+/* FLOATING ACTION BUTTON (FAB) STYLES (FINAL CORRECTED VERSION)*/
 /* ============================================================ */
 #fab-container {
     position: fixed;
@@ -100,7 +100,7 @@ body {
     right: 1.5rem;
     z-index: 90;
     display: flex;
-    flex-direction: column-reverse; /* This makes the menu expand upwards */
+    flex-direction: column;
     align-items: center;
 }
 
@@ -118,7 +118,7 @@ body {
     transition: transform 0.3s ease, background-color 0.3s ease;
     border: none;
     outline: none;
-    z-index: 1; /* Ensure main button is on top */
+    z-index: 91; /* Sits above the action menu */
 }
 
 #fab-main:hover {
@@ -135,10 +135,13 @@ body {
 }
 
 #fab-actions {
+    /* MODIFIED: Use absolute positioning */
+    position: absolute;
+    bottom: 100%; /* Position it directly above the container */
+    margin-bottom: 1rem; /* Add space between actions and main button */
     display: flex;
-    flex-direction: column-reverse; /* Order items correctly when expanding up */
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 1rem; 
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
     /* MODIFIED: Use visibility and opacity for hiding */
@@ -157,7 +160,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-end; 
-    margin-top: 0.75rem; /* MODIFIED: use margin-top because of column-reverse */
+    margin-top: 0.75rem; 
     cursor: pointer;
     text-decoration: none;
     color: inherit;
@@ -176,7 +179,7 @@ body {
     opacity: 0;
     transform: translateX(10px);
     transition: all 0.3s ease;
-    transition-delay: 0.1s; /* Add a slight delay for a nicer effect */
+    transition-delay: 0.1s; 
 }
 
 #fab-container.active .fab-action-label {
