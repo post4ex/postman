@@ -1,6 +1,6 @@
 <!-- This is a partial file. It contains only the footer content. -->
 <footer class="w-full bg-blue-900 text-gray-200">
-    <div class="container flex flex-col sm:flex-row items-center justify-between py-3 px-6 mx-auto">
+    <div class="container flex flex-col sm:flex-row items-center justify-between py-3 px-6">
         <p id="copyright-text" class="text-center sm:text-left text-sm mb-4 sm:mb-0">&copy; 2022 The Postman. All rights reserved.</p>
         
         <!-- Social Media Icons for Desktop -->
@@ -11,14 +11,16 @@
     </div>
 </footer>
 
-<!-- Floating social buttons for mobile view -->
-<div class="social-buttons-floating sm:hidden">
-    <a href="https://wa.me/919410512115" target="_blank" rel="noopener noreferrer" class="text-white bg-blue-800 p-3 rounded-full shadow-lg hover:bg-blue-900 transition-colors">
-        <i class="fa-brands fa-whatsapp text-2xl"></i>
-    </a>
-    <a href="mailto:post4ex@gmail.com" target="_blank" class="text-white bg-blue-800 p-3 rounded-full shadow-lg hover:bg-blue-900 transition-colors">
-        <i class="fa-regular fa-envelope text-2xl"></i>
-    </a>
+<!-- NEW: Floating Action Button (FAB) Structure -->
+<div id="fab-container" class="hidden">
+    <!-- Action buttons will be populated here by fab.js -->
+    <div id="fab-actions"></div>
+    <!-- Main FAB button -->
+    <button id="fab-main">
+        <div class="fab-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </div>
+    </button>
 </div>
 
 <!-- The Contact Pop-up Modal -->
@@ -43,21 +45,7 @@
     </div>
 </div>
 
-<!-- ============================================================ -->
-<!-- FLOATING ACTION BUTTON (FAB) IMPLEMENTATION                  -->
-<!-- ============================================================ -->
-<div id="fab-container" class="fab-container hidden">
-    <div id="fab-actions" class="fab-actions">
-        <!-- Page-specific buttons will be injected here by JavaScript -->
-    </div>
-    <button id="fab-main" class="fab-main" aria-label="Open actions menu">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-    </button>
-</div>
-
-<!-- Scripts for the FAB system -->
+<!-- Load FAB scripts -->
 <script src="fab-config.js"></script>
 <script src="fab.js"></script>
 
