@@ -454,7 +454,6 @@
             const breadthInput = document.getElementById('breadth');
             const heightInput = document.getElementById('height');
             const multiboxTableBody = document.getElementById('multiboxTableBody');
-            const multiboxTotalsTextDiv = document.getElementById('multiboxTotalsText');
             const clearMultiboxButton = document.getElementById('clearMultiboxButton');
             const multiboxErrorMessage = document.getElementById('multiboxErrorMessage');
             const modeChangeMessage = document.getElementById('modeChangeMessage');
@@ -465,7 +464,6 @@
             const productTypeSelect = document.getElementById('product_type');
             const amountInput = document.getElementById('amount');
             const ewayStatusMessage = document.getElementById('ewayStatusMessage');
-            const productTotalsTextDiv = document.getElementById('productTotalsText');
             const clearProductsButton = document.getElementById('clearProductsButton');
             const clearAllButton = document.getElementById('clearAllButton');
             const bookButton = document.getElementById('book_button');
@@ -628,7 +626,7 @@
                     parseFloat(document.getElementById('display_weight_zone').textContent)
                 );
 
-                const charges = updateCharges(
+                const charges = calculateAllCharges(
                     frightVal,
                     summaryTotals,
                     selectedCustomerDetails,
