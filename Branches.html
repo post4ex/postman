@@ -261,15 +261,29 @@
         confirmDeleteBtn.addEventListener('click', async () => {
             setDeleteLoading(true);
 
-            const loginData = JSON.parse(localStorage.getItem('loginData'));
-            if (!loginData || !loginData.code || !loginData.token) {
+            // --- THIS IS THE FIX ---
+            const loginDataJSON = localStorage.getItem('loginData');
+            if (!loginDataJSON) {
                 showResponseMessage('Authentication error. Please log in again.', 'error');
                 setDeleteLoading(false);
                 deleteModal.classList.add('hidden');
                 return;
             }
+            
+            const loginData = JSON.parse(loginDataJSON);
+            const userCode = loginData.CODE || loginData.code;
+            const userToken = loginData.TOKEN || loginData.token;
 
-            const auth = { code: loginData.code, token: loginData.token };
+            if (!userCode || !userToken) {
+                showResponseMessage('Authentication error. Please log in again.', 'error');
+                setDeleteLoading(false);
+                deleteModal.classList.add('hidden');
+                return;
+            }
+            
+            const auth = { code: userCode, token: userToken };
+            // --- END OF FIX ---
+
             const data = { BRANCH_CODE: branchCodeInput.value };
             const payload = { auth, data, action: 'delete' };
 
@@ -310,14 +324,26 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             setLoading(true);
-            const loginData = JSON.parse(localStorage.getItem('loginData'));
-            if (!loginData || !loginData.code || !loginData.token) {
+
+            // --- THIS IS THE FIX ---
+            const loginDataJSON = localStorage.getItem('loginData');
+            if (!loginDataJSON) {
                 showResponseMessage('Authentication error. Please log in again.', 'error');
                 setLoading(false);
                 return;
             }
+            const loginData = JSON.parse(loginDataJSON);
+            const userCode = loginData.CODE || loginData.code;
+            const userToken = loginData.TOKEN || loginData.token;
 
-            const auth = { code: loginData.code, token: loginData.token };
+            if (!userCode || !userToken) {
+                showResponseMessage('Authentication error. Please log in again.', 'error');
+                setLoading(false);
+                return;
+            }
+            const auth = { code: userCode, token: userToken };
+            // --- END OF FIX ---
+            
             const data = {};
             new FormData(form).forEach((value, key) => {
                 if (key !== 'userCode' && key !== 'userToken') data[key] = value;
