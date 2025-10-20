@@ -264,20 +264,30 @@
             }
             
             const auth = { code: userCode, token: userToken };
-            let data = {};
             
             // --- THIS IS THE FIX ---
-            // We now create the data object explicitly to avoid any confusion.
+            // The payload is now built differently for each action to ensure clarity and correctness.
+            let payload;
             if (action === 'delete') {
-                // For deletion, the payload *only* needs the primary key for the 'MODE'.
-                data = { MODE: modeInput.value };
+                // For deletion, construct a payload with only the necessary data.
+                payload = {
+                    auth: auth,
+                    data: { MODE: modeInput.value },
+                    action: 'delete',
+                    type: 'mode'
+                };
             } else {
-                // For add/update, the payload needs all the form data.
-                new FormData(form).forEach((value, key) => { data[key] = value; });
+                // For add/update, collect all form data for the payload.
+                const formData = {};
+                new FormData(form).forEach((value, key) => { formData[key] = value; });
+                payload = {
+                    auth: auth,
+                    data: formData,
+                    action: 'submit',
+                    type: 'mode'
+                };
             }
             // --- END OF FIX ---
-
-            const payload = { auth, data, action, type: 'mode' };
 
             try {
                 const response = await fetch(SCRIPT_URL, { 
