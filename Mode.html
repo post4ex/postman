@@ -266,16 +266,20 @@
             const auth = { code: userCode, token: userToken };
             let data = {};
             
+            // --- THIS IS THE FIX ---
+            // We now create the data object explicitly to avoid any confusion.
             if (action === 'delete') {
-                data.MODE = modeInput.value;
+                // For deletion, the payload *only* needs the primary key for the 'MODE'.
+                data = { MODE: modeInput.value };
             } else {
+                // For add/update, the payload needs all the form data.
                 new FormData(form).forEach((value, key) => { data[key] = value; });
             }
+            // --- END OF FIX ---
 
             const payload = { auth, data, action, type: 'mode' };
 
             try {
-                // THIS IS THE FIX: Removed the incorrect 'headers' property
                 const response = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     body: JSON.stringify(payload)
