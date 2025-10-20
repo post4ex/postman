@@ -517,18 +517,38 @@ function startSilentRefresh() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
+    
+    // --- THIS IS THE FIX ---
+    // This list now includes all pages from the sidebar to ensure they are protected.
     const protectedPages = [
         'dashboard.html', 'BookOrder.html', 'tracking.html', 'Calculator.html', 
-        'ticket.html', 'task.html', 'wallet.html', 'search.html', 'uploader.html', 'AssignCarrier.html'
+        'ticket.html', 'task.html', 'wallet.html', 'search.html', 'uploader.html', 
+        'AssignCarrier.html', 'Branches.html', 'CreateOrder.html', 'PickupRequest.html', 
+        'EditOrder.html', 'Shipments.html', 'OutMenifest.html', 'InMenifest.html', 
+        'RunSheet.html', 'Update.html', 'POD.html', 'CRM.html', 'ReportBooking.html', 
+        'ReportMenifest.html', 'ReportUpdate.html', 'ReportRunsheet.html', 'ReportCRM.html',
+        'Billing.html', 'LedgerSummary.html', 'LedgerAccounts.html', 'LedgerReceipts.html', 
+        'LedgerPayments.html', 'LedgerExpenseClaims.html', 'LedgerCustomers.html', 
+        'LedgerSalesInvoices.html', 'LedgerCreditNotes.html', 'LedgerDeliveryNotes.html', 
+        'LedgerSuppliers.html', 'LedgerPurchaseInvoices.html', 'LedgerDebitNotes.html', 
+        'LedgerEmployees.html', 'LedgerJournalEntries.html', 'LedgerReports.html', 
+        'Customer.html', 'Clients.html', 'Suppliers.html', 'Vendors.html', 'Staff.html', 'Stock.html'
     ];
+    // --- END OF FIX ---
+
     const isProtected = protectedPages.some(page => path.includes(page));
 
     let isLoggedIn = false;
     const loginDataJSON = localStorage.getItem('loginData');
     if (loginDataJSON) {
-        const loginData = JSON.parse(loginDataJSON);
-        if (new Date().getTime() <= loginData.expires) {
-            isLoggedIn = true;
+        try {
+            const loginData = JSON.parse(loginDataJSON);
+            if (new Date().getTime() <= loginData.expires) {
+                isLoggedIn = true;
+            }
+        } catch(e) {
+            // Malformed data, treat as not logged in
+            isLoggedIn = false;
         }
     }
 
