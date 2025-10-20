@@ -66,15 +66,15 @@
                     
                     <!-- Section for Zones -->
                     <div class="mt-8">
-                        <h2 class="text-xl font-semibold mb-6 text-indigo-600">Zone Rates</h2>
-                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                            <!-- Dynamically creating 14 zone inputs -->
+                        <h2 class="text-xl font-semibold mb-6 text-indigo-600">Zone Service Availability</h2>
+                        <div class="grid grid-cols-4 md:grid-cols-7 lg:grid-cols-14 gap-4">
+                            <!-- Dynamically creating 14 zone inputs for Y/N values -->
                             <script>
                                 for(let i = 1; i <= 14; i++) {
                                     document.write(`
                                         <div>
-                                            <label for="z${i}" class="block mb-2 text-sm font-medium text-gray-700">Z${i}</label>
-                                            <input type="number" step="any" id="z${i}" name="Z${i}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5">
+                                            <label for="z${i}" class="block mb-2 text-sm font-medium text-gray-700 text-center">Z${i}</label>
+                                            <input type="text" maxlength="1" placeholder="Y/N" id="z${i}" name="Z${i}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 text-center uppercase">
                                         </div>
                                     `);
                                 }
@@ -319,3 +319,4 @@
     </script>
 </body>
 </html>
+
