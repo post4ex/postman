@@ -30,6 +30,32 @@
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <!-- THIS IS THE FIX: A self-contained security script that runs before anything else. -->
+    <script>
+        (function() {
+            let isLoggedIn = false;
+            const loginDataJSON = localStorage.getItem('loginData');
+            if (loginDataJSON) {
+                try {
+                    const loginData = JSON.parse(loginDataJSON);
+                    // Check if the login data has an expiry date and it has not passed
+                    if (loginData.expires && new Date().getTime() <= loginData.expires) {
+                        isLoggedIn = true;
+                    }
+                } catch (e) {
+                    // If parsing fails, treat the user as not logged in
+                    isLoggedIn = false;
+                }
+            }
+
+            if (!isLoggedIn) {
+                // If the user is not logged in, redirect them to the login page immediately.
+                window.location.href = 'https://post4ex.github.io/postman/login.html';
+            }
+        })();
+    </script>
+    <!-- END OF FIX -->
+
     <div id="header-placeholder"></div>
 
     <!-- ROBUST LAYOUT FIX: Main content uses flex-grow to fill available space -->
