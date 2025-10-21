@@ -127,6 +127,9 @@
     <div id="footer-placeholder"></div>
     <script src="layout.js"></script>
     <script>
+        // --- GLOBAL STATE ---
+        let allStaff = [], allAttendance = [], allBranches = [], selectedStaffCode = null;
+
         // --- UTILITY FUNCTIONS ---
         function calculateDistance(lat1, lon1, lat2, lon2) {
             if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) return null;
@@ -170,7 +173,10 @@
                     if (!staffMember || !staffMember.BRANCH) return;
                     
                     const branch = allBranches.find(b => b.BRANCH_CODE === staffMember.BRANCH);
-                    if (!branch || !branch.BRANCH_GEO_TEG) return;
+                    if (!branch || !branch.BRANCH_GEO_TEG) {
+                        console.warn(`Geo-tag not found for branch ${staffMember.BRANCH}`);
+                        return;
+                    }
 
                     const [staffLat, staffLon] = staffCoordsStr.split(',').map(Number);
                     const [branchLat, branchLon] = branch.BRANCH_GEO_TEG.split(',').map(Number);
@@ -193,7 +199,7 @@
             };
 
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
-            let allStaff = [], allAttendance = [], allBranches = [], isUpdateMode = false, pincodeTimeout, selectedStaffCode = null;
+            let isUpdateMode = false, pincodeTimeout;
             
             const isMobileView = () => window.innerWidth < 768;
 
@@ -216,7 +222,7 @@
                 }
             };
             
-            async function fetchInitialData() {
+            function fetchInitialData() {
                 const appDataJSON = localStorage.getItem('appData');
                 if (appDataJSON) {
                     try {
