@@ -518,24 +518,34 @@ function startSilentRefresh() {
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
     
-    // --- THIS IS THE FIX ---
-    // This list now includes all pages from the sidebar to ensure they are protected.
     const protectedPages = [
+        // Main Nav links
         'dashboard.html', 'BookOrder.html', 'tracking.html', 'Calculator.html', 
-        'ticket.html', 'task.html', 'wallet.html', 'search.html', 'uploader.html', 
-        'AssignCarrier.html', 'Branches.html', 'CreateOrder.html', 'PickupRequest.html', 
-        'EditOrder.html', 'Shipments.html', 'OutMenifest.html', 'InMenifest.html', 
-        'RunSheet.html', 'Update.html', 'POD.html', 'CRM.html', 'ReportBooking.html', 
-        'ReportMenifest.html', 'ReportUpdate.html', 'ReportRunsheet.html', 'ReportCRM.html',
-        'Billing.html', 'LedgerSummary.html', 'LedgerAccounts.html', 'LedgerReceipts.html', 
+        'ticket.html', 'task.html', 'wallet.html', 'search.html', 'uploader.html', 'AssignCarrier.html',
+
+        // Orders Submenu
+        'CreateOrder.html', 'PickupRequest.html', 'EditOrder.html', 
+        
+        // Shipments & Scans
+        'Shipments.html', 'OutMenifest.html', 'InMenifest.html', 'RunSheet.html', 
+        'Update.html', 'POD.html', 
+        
+        // CRM & Reports
+        'CRM.html', 'ReportBooking.html', 'ReportMenifest.html', 'ReportUpdate.html', 
+        'ReportRunsheet.html', 'ReportCRM.html', 'Billing.html',
+        
+        // Ledger Submenu
+        'LedgerSummary.html', 'LedgerAccounts.html', 'LedgerReceipts.html', 
         'LedgerPayments.html', 'LedgerExpenseClaims.html', 'LedgerCustomers.html', 
         'LedgerSalesInvoices.html', 'LedgerCreditNotes.html', 'LedgerDeliveryNotes.html', 
         'LedgerSuppliers.html', 'LedgerPurchaseInvoices.html', 'LedgerDebitNotes.html', 
         'LedgerEmployees.html', 'LedgerJournalEntries.html', 'LedgerReports.html', 
-        'Customer.html', 'Clients.html', 'Suppliers.html', 'Vendors.html', 'Staff.html', 'Stock.html'
+        
+        // Masters Submenu
+        'PincodeMaster.html', 'Branches.html', 'Mode.html', 'Carrier.html', 'Customer.html', 'Clients.html', 'Suppliers.html', 
+        'Vendors.html', 'Staff.html', 'Stock.html'
     ];
-    // --- END OF FIX ---
-
+    
     const isProtected = protectedPages.some(page => path.includes(page));
 
     let isLoggedIn = false;
@@ -546,10 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (new Date().getTime() <= loginData.expires) {
                 isLoggedIn = true;
             }
-        } catch(e) {
-            // Malformed data, treat as not logged in
-            isLoggedIn = false;
-        }
+        } catch(e) { /* ignore */ }
     }
 
     if (isProtected && !isLoggedIn) {
@@ -561,15 +568,10 @@ document.addEventListener('DOMContentLoaded', () => {
         loadComponent('https://post4ex.github.io/postman/header.html', 'header-placeholder'),
         loadComponent('https://post4ex.github.io/postman/footer.html', 'footer-placeholder')
     ]).then(() => {
-        // This event guarantees that the footer's HTML and its scripts (fab.js) are loaded.
         window.dispatchEvent(new CustomEvent('footerLoaded'));
-        
         initializeUI();
         setActiveNavOnLoad();
-        
-        if (isLoggedIn) {
-            verifyAndFetchAppData();
-        }
+        if (isLoggedIn) { verifyAndFetchAppData(); }
         
         if (path.includes('main.html') || path.endsWith('/postman/') || path.endsWith('/')) {
             loadDynamicContent('https://post4ex.github.io/postman/tracking.html', 'tracking-content-area');
@@ -581,17 +583,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const observer = new MutationObserver(() => {
                     const resultsContainer = trackingArea.querySelector('#results-container');
                     const searchButton = trackingArea.querySelector('#tracking-search-button');
-
                     if (resultsContainer && resultsContainer.innerHTML.trim() !== '' && !resultsContainer.classList.contains('hidden')) {
                         servicesArea.classList.add('hidden');
                     }
-
                     if (searchButton && !searchButton.hasAttribute('data-listener-added')) {
-                        searchButton.addEventListener('click', () => {
-                            if (servicesArea) {
-                                servicesArea.classList.remove('hidden');
-                            }
-                        });
+                        searchButton.addEventListener('click', () => { if (servicesArea) { servicesArea.classList.remove('hidden'); } });
                         searchButton.setAttribute('data-listener-added', 'true');
                     }
                 });
