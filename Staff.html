@@ -407,7 +407,16 @@
                 if(!selectedStaffCode) { showResponseMessage('No staff selected.', 'error'); return; }
                 if (ui.attOutTimeInput.value && !ui.attInTimeInput.value) { showResponseMessage("Cannot submit 'Out Time' without an 'In Time'.", "error"); return; }
                 
-                const data = { ...Object.fromEntries(new FormData(ui.attendanceForm)), STAFF_CODE: selectedStaffCode, STAFF_NAME: ui.attendanceStaffName.textContent, ATTENDANCE_ID: `${selectedStaffCode}-${ui.attDateInput.value}` };
+                const staffMember = allStaff.find(p => p.STAFF_CODE === selectedStaffCode);
+                const branch = staffMember ? staffMember.BRANCH : '';
+
+                const data = { 
+                    ...Object.fromEntries(new FormData(ui.attendanceForm)), 
+                    STAFF_CODE: selectedStaffCode, 
+                    STAFF_NAME: ui.attendanceStaffName.textContent, 
+                    ATTENDANCE_ID: `${selectedStaffCode}-${ui.attDateInput.value}`,
+                    BRANCH: branch
+                };
                 handleRequest({ data, action: 'submit', type: 'attendance'});
             });
             
