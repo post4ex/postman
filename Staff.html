@@ -49,7 +49,6 @@
                     <div id="attendanceContent" class="hidden">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-2xl font-bold text-gray-900">Recording for <span id="attendanceStaffName" class="text-indigo-600"></span></h2>
-                            <button id="editStaffBtn" class="text-sm bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded-lg hover:bg-gray-300 transition-colors">Edit Staff Details</button>
                         </div>
                         <form id="attendanceForm" class="p-6 bg-white rounded-lg shadow-sm border mb-8">
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
@@ -124,12 +123,22 @@
                 return value.slice(0, 5);
             }
             try {
+                // Handle cases where Google Sheets returns a full Date object for a time value
                 const date = new Date(value);
-                if (isNaN(date.getTime())) return '';
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${hours}:${minutes}`;
+                if (isNaN(date.getTime())) return ''; // Invalid date
+                
+                // Check if it's a date object representing just time (often defaults to 1899)
+                if (date.getFullYear() < 1970) {
+                     const hours = String(date.getHours()).padStart(2, '0');
+                     const minutes = String(date.getMinutes()).padStart(2, '0');
+                     return `${hours}:${minutes}`;
+                }
+                
+                // For full date-time objects, format to local time
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
             } catch (e) {
+                console.error("Time formatting error:", e, "Original value:", value);
                 return '';
             }
         }
@@ -161,7 +170,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- ELEMENT SELECTORS ---
             const staffForm = document.getElementById('staffForm'), submitButton = document.getElementById('submitButton'), buttonText = document.getElementById('buttonText'), spinner = document.getElementById('spinner'), responseMessage = document.getElementById('responseMessage'), staffList = document.getElementById('staffList'), staffLoader = document.getElementById('staffLoader'), searchStaffInput = document.getElementById('searchStaff'), newStaffBtn = document.getElementById('newStaffBtn'), staffCodeInput = document.getElementById('staffCode'), branchSelect = document.getElementById('branch'), pincodeInput = document.getElementById('pincode'), cityInput = document.getElementById('city'), stateInput = document.getElementById('state'), staffNameInput = document.getElementById('staffName'), adharNumInput = document.getElementById('adharNum');
-            const attendanceForm = document.getElementById('attendanceForm'), attendanceHistory = document.getElementById('attendanceHistory'), attendanceStaffName = document.getElementById('attendanceStaffName'), attendancePlaceholder = document.getElementById('attendancePlaceholder'), attendanceContent = document.getElementById('attendanceContent'), editStaffBtn = document.getElementById('editStaffBtn'), attDateInput = document.getElementById('attDate'), attStatusInput = document.getElementById('attStatus'), attInTimeInput = document.getElementById('attInTime'), attOutTimeInput = document.getElementById('attOutTime'), attRemarksInput = document.getElementById('attRemarks'), submitAttendanceButton = document.getElementById('submitAttendanceButton');
+            const attendanceForm = document.getElementById('attendanceForm'), attendanceHistory = document.getElementById('attendanceHistory'), attendanceStaffName = document.getElementById('attendanceStaffName'), attendancePlaceholder = document.getElementById('attendancePlaceholder'), attendanceContent = document.getElementById('attendanceContent'), attDateInput = document.getElementById('attDate'), attStatusInput = document.getElementById('attStatus'), attInTimeInput = document.getElementById('attInTime'), attOutTimeInput = document.getElementById('attOutTime'), attRemarksInput = document.getElementById('attRemarks'), submitAttendanceButton = document.getElementById('submitAttendanceButton');
             const staffModal = document.getElementById('staffModal'), closeModalBtn = document.getElementById('closeModalBtn'), modalTitle = document.getElementById('modalTitle'), deleteStaffBtn = document.getElementById('deleteStaffBtn'), formTitle = document.getElementById('form-title'), formSubtitle = document.getElementById('form-subtitle');
 
             // --- STATE & CONFIG ---
@@ -229,6 +238,7 @@
                 const person = allStaff.find(p => p.STAFF_CODE === staffCode);
                 if (!person) return;
                 selectedStaffCode = staffCode;
+                newStaffBtn.textContent = "Edit Staff";
                 attendanceStaffName.textContent = person.STAFF_NAME || staffCode;
                 attendancePlaceholder.classList.add('hidden');
                 attendanceContent.classList.remove('hidden');
@@ -287,6 +297,7 @@
                 isUpdateMode = false;
                 if (clearSelection) {
                     selectedStaffCode = null;
+                    newStaffBtn.textContent = "New Staff";
                     attendancePlaceholder.classList.remove('hidden');
                     attendanceContent.classList.add('hidden');
                     renderStaffList(allStaff);
@@ -314,12 +325,6 @@
             
             const checkAttendanceForDate = () => {
                 const currentDate = attDateInput.value;
-                // THIS IS THE FIX: Manually clear fields instead of reset()
-                attStatusInput.value = 'Present';
-                attInTimeInput.value = '';
-                attOutTimeInput.value = '';
-                attRemarksInput.value = '';
-
                 const selectedDate = new Date(currentDate);
                 const timezoneOffset = selectedDate.getTimezoneOffset() * 60000;
                 const adjustedDate = new Date(selectedDate.getTime() - timezoneOffset);
@@ -331,6 +336,9 @@
                     const attDateString = new Date(attDate.getTime() - (attDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
                     return att.STAFF_CODE === selectedStaffCode && attDateString === dateString;
                 });
+                
+                attendanceForm.reset();
+                attDateInput.value = currentDate;
                 
                 if (record) {
                     attStatusInput.value = record.STATUS || 'Present';
@@ -355,9 +363,15 @@
             }
 
             // --- EVENT LISTENERS ---
-            newStaffBtn.addEventListener('click', () => { resetForm(); openStaffModal(); });
+            newStaffBtn.addEventListener('click', () => {
+                if(selectedStaffCode && !isUpdateMode) {
+                    editSelectedStaff();
+                } else {
+                    resetForm();
+                    openStaffModal();
+                }
+            });
             closeModalBtn.addEventListener('click', closeStaffModal);
-            editStaffBtn.addEventListener('click', editSelectedStaff);
             staffModal.addEventListener('click', (e) => { if (e.target === staffModal) closeStaffModal(); });
             searchStaffInput.addEventListener('input', (e) => {
                 const term = e.target.value.toLowerCase();
