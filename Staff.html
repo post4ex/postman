@@ -58,8 +58,20 @@
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                                 <div><label for="attDate" class="block mb-2 text-sm font-medium">Date</label><input type="date" id="attDate" name="DATE" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" required></div>
                                 <div><label for="attStatus" class="block mb-2 text-sm font-medium">Status</label><select id="attStatus" name="STATUS" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5"><option value="Present">Present</option><option value="Absent">Absent</option><option value="Half Day">Half Day</option><option value="Leave">Leave</option></select></div>
-                                <div class="relative"><label for="attInTime" class="block mb-2 text-sm font-medium">In Time</label><input type="time" id="attInTime" name="IN_TIME" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5"><input type="hidden" id="geoInTime" name="GEO_TAG_IN_TIME"><button type="button" onclick="setNow('attInTime', 'geoInTime')" class="absolute right-1 bottom-1 text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Now</button></div>
-                                <div class="relative"><label for="attOutTime" class="block mb-2 text-sm font-medium">Out Time</label><input type="time" id="attOutTime" name="OUT_TIME" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" disabled><input type="hidden" id="geoOutTime" name="GEO_TAG_OUT_TIME"><button type="button" onclick="setNow('attOutTime', 'geoOutTime')" class="absolute right-1 bottom-1 text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Now</button></div>
+                                <div class="relative">
+                                    <label for="attInTime" class="block mb-2 text-sm font-medium">In Time</label>
+                                    <input type="time" id="attInTime" name="IN_TIME" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
+                                    <input type="hidden" id="geoInTime" name="GEO_TAG_IN_TIME">
+                                    <input type="hidden" id="inTimeDist" name="IN_TIME_DIST">
+                                    <button type="button" onclick="setNow('attInTime', 'geoInTime', 'inTimeDist')" class="absolute right-1 bottom-1 text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Now</button>
+                                </div>
+                                <div class="relative">
+                                    <label for="attOutTime" class="block mb-2 text-sm font-medium">Out Time</label>
+                                    <input type="time" id="attOutTime" name="OUT_TIME" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" disabled>
+                                    <input type="hidden" id="geoOutTime" name="GEO_TAG_OUT_TIME">
+                                    <input type="hidden" id="outTimeDist" name="OUT_TIME_DIST">
+                                    <button type="button" onclick="setNow('attOutTime', 'geoOutTime', 'outTimeDist')" class="absolute right-1 bottom-1 text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Now</button>
+                                </div>
                                 <div class="md:col-span-4"><label for="attRemarks" class="block mb-2 text-sm font-medium">Remarks</label><input type="text" id="attRemarks" name="REMARKS" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Any specific notes..."></div>
                             </div>
                             <div class="mt-6 text-right">
@@ -116,6 +128,19 @@
     <script src="layout.js"></script>
     <script>
         // --- UTILITY FUNCTIONS ---
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) return null;
+            const R = 6371; // Radius of the Earth in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return (R * c).toFixed(2); // Distance in km, rounded
+        }
+
         function formatTimeFromSheet(value) {
             if (!value) return '';
             if (typeof value === 'string' && value.match(/^\d{2}:\d{2}(:\d{2})?$/)) return value.slice(0, 5);
@@ -129,7 +154,7 @@
             } catch (e) { console.error("Time formatting error:", e, "Original value:", value); return ''; }
         }
         
-        function setNow(timeFieldId, geoFieldId) {
+        function setNow(timeFieldId, geoFieldId, distFieldId) {
             const timeInput = document.getElementById(timeFieldId);
             if (timeInput.disabled) { showResponseMessage("Please record an 'In Time' for this day first.", 'error'); return; }
             const now = new Date();
@@ -138,7 +163,23 @@
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
-                    document.getElementById(geoFieldId).value = `${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}`;
+                    const staffCoordsStr = `${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}`;
+                    document.getElementById(geoFieldId).value = staffCoordsStr;
+
+                    const staffMember = allStaff.find(p => p.STAFF_CODE === selectedStaffCode);
+                    if (!staffMember || !staffMember.BRANCH) return;
+                    
+                    const branch = allBranches.find(b => b.BRANCH_CODE === staffMember.BRANCH);
+                    if (!branch || !branch.BRANCH_GEO_TEG) return;
+
+                    const [staffLat, staffLon] = staffCoordsStr.split(',').map(Number);
+                    const [branchLat, branchLon] = branch.BRANCH_GEO_TEG.split(',').map(Number);
+
+                    const distance = calculateDistance(staffLat, staffLon, branchLat, branchLon);
+                    if (distance !== null) {
+                        document.getElementById(distFieldId).value = distance;
+                    }
+
                 }, () => { document.getElementById(geoFieldId).value = 'Unavailable'; });
             } else { document.getElementById(geoFieldId).value = 'Not Supported'; }
         }
@@ -267,10 +308,10 @@
                 if(history.length === 0) { ui.attendanceHistory.innerHTML = '<p class="text-gray-500">No recent attendance records found.</p>'; return; }
                 const table = document.createElement('table');
                 table.className = 'w-full text-sm text-left';
-                table.innerHTML = `<thead><tr class="bg-gray-50"><th class="p-2">Date</th><th>Status</th><th>In</th><th>Out</th><th>Remarks</th></tr></thead><tbody></tbody>`;
+                table.innerHTML = `<thead><tr class="bg-gray-50"><th class="p-2">Date</th><th>Status</th><th>In</th><th>In Dist(km)</th><th>Out</th><th>Out Dist(km)</th><th>Remarks</th></tr></thead><tbody></tbody>`;
                 const tbody = table.querySelector('tbody');
                 history.forEach(rec => {
-                    tbody.innerHTML += `<tr class="border-b"><td class="p-2">${new Date(rec.DATE).toLocaleDateString()}</td><td>${rec.STATUS || ''}</td><td>${formatTimeFromSheet(rec.IN_TIME)}</td><td>${formatTimeFromSheet(rec.OUT_TIME)}</td><td>${rec.REMARKS || ''}</td></tr>`;
+                    tbody.innerHTML += `<tr class="border-b"><td class="p-2">${new Date(rec.DATE).toLocaleDateString()}</td><td>${rec.STATUS || ''}</td><td>${formatTimeFromSheet(rec.IN_TIME)}</td><td>${rec.IN_TIME_DIST || ''}</td><td>${formatTimeFromSheet(rec.OUT_TIME)}</td><td>${rec.OUT_TIME_DIST || ''}</td><td>${rec.REMARKS || ''}</td></tr>`;
                 });
                 ui.attendanceHistory.appendChild(table);
             };
