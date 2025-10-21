@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StaffAttention - Postman</title>
+    <title>Staff & Attendance Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -45,12 +45,12 @@
             
             <div class="p-8">
                 <!-- Attendance Section -->
-                <div id="attendanceSection" class="hidden">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Attendance Management</h1>
+                <div id="attendanceSection">
+                     <h1 class="text-3xl font-bold text-gray-900 mb-2">Attendance Management</h1>
                     <div id="attendancePlaceholder" class="text-center p-8 bg-white rounded-lg border shadow-sm">
                         <p class="text-gray-500">Please select a staff member from the list to view or record their attendance.</p>
                     </div>
-                    <div id="attendanceContent">
+                    <div id="attendanceContent" class="hidden">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-2xl font-bold text-gray-900">Recording for <span id="attendanceStaffName" class="text-indigo-600"></span></h2>
                         </div>
@@ -146,9 +146,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             const ui = {
                 staffForm: document.getElementById('staffForm'), submitButton: document.getElementById('submitButton'), buttonText: document.getElementById('buttonText'), spinner: document.getElementById('spinner'), responseMessage: document.getElementById('responseMessage'), staffList: document.getElementById('staffList'), staffLoader: document.getElementById('staffLoader'), searchStaffInput: document.getElementById('searchStaff'), newStaffBtn: document.getElementById('newStaffBtn'), staffCodeInput: document.getElementById('staffCode'), branchSelect: document.getElementById('branch'), pincodeInput: document.getElementById('pincode'), cityInput: document.getElementById('city'), stateInput: document.getElementById('state'), staffNameInput: document.getElementById('staffName'), adharNumInput: document.getElementById('adharNum'),
-                attendanceForm: document.getElementById('attendanceForm'), attendanceHistory: document.getElementById('attendanceHistory'), attendanceStaffName: document.getElementById('attendanceStaffName'), attendanceContent: document.getElementById('attendanceContent'), attDateInput: document.getElementById('attDate'), attStatusInput: document.getElementById('attStatus'), attInTimeInput: document.getElementById('attInTime'), attOutTimeInput: document.getElementById('attOutTime'), submitAttendanceButton: document.getElementById('submitAttendanceButton'),
+                attendanceForm: document.getElementById('attendanceForm'), attendanceHistory: document.getElementById('attendanceHistory'), attendanceStaffName: document.getElementById('attendanceStaffName'), attendanceContent: document.getElementById('attendanceContent'), attDateInput: document.getElementById('attDate'), attStatusInput: document.getElementById('attStatus'), attInTimeInput: document.getElementById('attInTime'), attOutTimeInput: document.getElementById('attOutTime'), submitAttendanceButton: document.getElementById('submitAttendanceButton'), attRemarks: document.getElementById('attRemarks'),
                 staffListContainer: document.getElementById('staffListContainer'), mainContentContainer: document.getElementById('mainContentContainer'), backToListBtn: document.getElementById('backToListBtn'), attendanceSection: document.getElementById('attendanceSection'), staffFormSection: document.getElementById('staffFormSection'),
-                deleteStaffBtn: document.getElementById('deleteStaffBtn'), formTitle: document.getElementById('form-title'), formSubtitle: document.getElementById('form-subtitle'),
+                deleteStaffBtn: document.getElementById('deleteStaffBtn'), formTitle: document.getElementById('form-title'), formSubtitle: document.getElementById('form-subtitle'), attendancePlaceholder: document.getElementById('attendancePlaceholder')
             };
 
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
@@ -169,7 +169,8 @@
                         ui.mainContentContainer.classList.add('hidden');
                     } else {
                         ui.staffListContainer.classList.add('hidden');
-                        ui.mainContentContainer.classList.remove('hidden');
+                        ui.mainContentContainer.classList.remove('hidden', 'md:flex');
+                        ui.mainContentContainer.classList.add('flex');
                     }
                 }
             };
@@ -222,9 +223,13 @@
                 ui.newStaffBtn.textContent = "Edit Staff";
                 ui.attendanceStaffName.textContent = person.STAFF_NAME || staffCode;
                 ui.attDateInput.valueAsDate = new Date();
+                
+                ui.attendancePlaceholder.classList.add('hidden');
+                ui.attendanceContent.classList.remove('hidden');
+
                 checkAttendanceForDate();
                 renderAttendanceHistory(staffCode);
-                renderStaffList(allStaff); // Re-render to highlight selection
+                renderStaffList(allStaff);
                 switchView('attendance');
             };
 
@@ -236,8 +241,14 @@
                 resetForm(false);
                 Object.keys(person).forEach(key => {
                     const input = ui.staffForm.querySelector(`[name="${key}"]`);
-                    if (input && person[key]) {
-                        input.type === 'date' ? input.value = new Date(person[key]).toISOString().split('T')[0] : input.value = person[key];
+                    if (input && person[key] !== undefined && person[key] !== null) {
+                        if (input.type === 'date') {
+                            try {
+                                input.value = new Date(person[key]).toISOString().split('T')[0];
+                            } catch(e) { console.warn(`Invalid date for ${key}: ${person[key]}`); }
+                        } else {
+                            input.value = person[key];
+                        }
                     }
                 });
 
@@ -271,6 +282,8 @@
                     selectedStaffCode = null;
                     ui.newStaffBtn.textContent = "New Staff";
                     renderStaffList(allStaff);
+                    ui.attendancePlaceholder.classList.remove('hidden');
+                    ui.attendanceContent.classList.add('hidden');
                 }
                 ui.staffCodeInput.readOnly = true;
                 ui.formTitle.textContent = 'New Staff Member';
@@ -285,7 +298,7 @@
                 const name = ui.staffNameInput.value.replace(/\s+/g, '').toUpperCase();
                 const branch = ui.branchSelect.value;
                 const adhar = ui.adharNumInput.value;
-                ui.staffCodeInput.value = (name && branch && adhar.length >= 4) ? `${name}${branch}${adhar.slice(-4)}` : '';
+                ui.staffCodeInput.value = (name && branch && adhar.length >= 4) ? `${name.substring(0,4)}${branch}${adhar.slice(-4)}` : '';
             };
             
             const checkAttendanceForDate = () => {
@@ -323,7 +336,14 @@
                 }
             });
 
-            ui.newStaffBtn.addEventListener('click', () => { selectedStaffCode && !isUpdateMode ? editSelectedStaff() : (resetForm(), switchView('staffForm')); });
+            ui.newStaffBtn.addEventListener('click', () => { 
+                if (selectedStaffCode) {
+                    editSelectedStaff();
+                } else {
+                    resetForm();
+                    switchView('staffForm');
+                }
+            });
             ui.backToListBtn.addEventListener('click', () => { resetForm(); switchView('list'); });
             ui.searchStaffInput.addEventListener('input', (e) => {
                 const term = e.target.value.toLowerCase();
@@ -350,7 +370,11 @@
                     
                     if (payload.type === 'attendance') {
                         const idx = allAttendance.findIndex(r => r.ATTENDANCE_ID === payload.data.ATTENDANCE_ID);
-                        idx > -1 ? allAttendance[idx] = {...allAttendance[idx], ...payload.data} : allAttendance.push(payload.data);
+                        if (idx > -1) {
+                            allAttendance[idx] = {...allAttendance[idx], ...payload.data};
+                        } else {
+                            allAttendance.push(payload.data);
+                        }
                         renderAttendanceHistory(selectedStaffCode);
                         checkAttendanceForDate();
                     } else {
@@ -413,7 +437,10 @@
             }
 
             fetchInitialData();
-            if(!isMobileView()) switchView('attendance'); // Default view for desktop
+            if(!isMobileView()) {
+                ui.attendanceSection.classList.remove('hidden');
+                ui.mainContentContainer.classList.remove('hidden');
+            }
         });
     </script>
 </body>
