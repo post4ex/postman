@@ -70,13 +70,13 @@
             <form id="staffForm">
                 <div class="modal-body">
                      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div><label for="staffCode" class="block mb-2 text-sm font-medium text-gray-700">Staff Code*</label><input type="text" id="staffCode" name="STAFF_CODE" class="form-input" required></div>
                         <div><label for="staffName" class="block mb-2 text-sm font-medium text-gray-700">Staff Name</label><input type="text" id="staffName" name="STAFF_NAME" class="form-input"></div>
+                        <div><label for="branch" class="block mb-2 text-sm font-medium text-gray-700">Branch</label><select id="branch" name="BRANCH" class="form-input"></select></div>
+                        <div><label for="adharNum" class="block mb-2 text-sm font-medium text-gray-700">Aadhar Number</label><input type="text" id="adharNum" name="ADHAR_NUM" class="form-input" maxlength="12"></div>
+                        <div><label for="staffCode" class="block mb-2 text-sm font-medium text-gray-700">Staff Code*</label><input type="text" id="staffCode" name="STAFF_CODE" class="form-input bg-gray-200" required readonly></div>
                         <div><label for="fathersName" class="block mb-2 text-sm font-medium text-gray-700">Father's Name</label><input type="text" id="fathersName" name="FATHERS_NAME" class="form-input"></div>
                         <div><label for="dateBirth" class="block mb-2 text-sm font-medium text-gray-700">Date of Birth</label><input type="date" id="dateBirth" name="DATE_BIRTH" class="form-input"></div>
                         <div><label for="dateJoin" class="block mb-2 text-sm font-medium text-gray-700">Date of Joining</label><input type="date" id="dateJoin" name="DATE_JOIN" class="form-input"></div>
-                        <div><label for="branch" class="block mb-2 text-sm font-medium text-gray-700">Branch</label><select id="branch" name="BRANCH" class="form-input"></select></div>
-                        <div><label for="adharNum" class="block mb-2 text-sm font-medium text-gray-700">Aadhar Number</label><input type="text" id="adharNum" name="ADHAR_NUM" class="form-input"></div>
                         <div><label for="panNum" class="block mb-2 text-sm font-medium text-gray-700">PAN Number</label><input type="text" id="panNum" name="PAN_NUM" class="form-input"></div>
                         <div><label for="epfUid" class="block mb-2 text-sm font-medium text-gray-700">EPF UID</label><input type="text" id="epfUid" name="EPF_UID" class="form-input"></div>
                         <div><label for="esiUid" class="block mb-2 text-sm font-medium text-gray-700">ESI UID</label><input type="text" id="esiUid" name="ESI_UID" class="form-input"></div>
@@ -102,6 +102,10 @@
     <script src="layout.js"></script>
     <script>
         function setNow(timeFieldId, geoFieldId) {
+            if (timeFieldId === 'attOutTime' && !document.getElementById('attInTime').value) {
+                showResponseMessage("Please record 'In Time' before marking 'Out Time'.", 'error');
+                return;
+            }
             const now = new Date();
             const timeString = now.toTimeString().slice(0, 5);
             document.getElementById(timeFieldId).value = timeString;
@@ -118,8 +122,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const staffForm = document.getElementById('staffForm'), submitButton = document.getElementById('submitButton'), buttonText = document.getElementById('buttonText'), spinner = document.getElementById('spinner'), responseMessage = document.getElementById('responseMessage'), staffList = document.getElementById('staffList'), staffLoader = document.getElementById('staffLoader'), searchStaffInput = document.getElementById('searchStaff'), newStaffBtn = document.getElementById('newStaffBtn'), staffCodeInput = document.getElementById('staffCode'), branchSelect = document.getElementById('branch'), pincodeInput = document.getElementById('pincode'), cityInput = document.getElementById('city'), stateInput = document.getElementById('state');
-            const attendanceForm = document.getElementById('attendanceForm'), attendanceHistory = document.getElementById('attendanceHistory'), attendanceStaffName = document.getElementById('attendanceStaffName'), attendancePlaceholder = document.getElementById('attendancePlaceholder'), attendanceContent = document.getElementById('attendanceContent'), editStaffBtn = document.getElementById('editStaffBtn'), attDateInput = document.getElementById('attDate');
+            const staffForm = document.getElementById('staffForm'), submitButton = document.getElementById('submitButton'), buttonText = document.getElementById('buttonText'), spinner = document.getElementById('spinner'), responseMessage = document.getElementById('responseMessage'), staffList = document.getElementById('staffList'), staffLoader = document.getElementById('staffLoader'), searchStaffInput = document.getElementById('searchStaff'), newStaffBtn = document.getElementById('newStaffBtn'), staffCodeInput = document.getElementById('staffCode'), branchSelect = document.getElementById('branch'), pincodeInput = document.getElementById('pincode'), cityInput = document.getElementById('city'), stateInput = document.getElementById('state'), staffNameInput = document.getElementById('staffName'), adharNumInput = document.getElementById('adharNum');
+            const attendanceForm = document.getElementById('attendanceForm'), attendanceHistory = document.getElementById('attendanceHistory'), attendanceStaffName = document.getElementById('attendanceStaffName'), attendancePlaceholder = document.getElementById('attendancePlaceholder'), attendanceContent = document.getElementById('attendanceContent'), editStaffBtn = document.getElementById('editStaffBtn'), attDateInput = document.getElementById('attDate'), attStatusInput = document.getElementById('attStatus'), attInTimeInput = document.getElementById('attInTime'), attOutTimeInput = document.getElementById('attOutTime'), attRemarksInput = document.getElementById('attRemarks');
             const staffModal = document.getElementById('staffModal'), closeModalBtn = document.getElementById('closeModalBtn'), modalTitle = document.getElementById('modalTitle'), deleteStaffBtn = document.getElementById('deleteStaffBtn');
 
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
@@ -136,20 +140,13 @@
                 const auth = { code: loginData.CODE || loginData.code, token: loginData.TOKEN || loginData.token };
 
                 try {
-                    const res = await fetch(SCRIPT_URL, { 
-                        method: 'POST', 
-                        body: JSON.stringify({ auth, action: 'get_all', type: 'staff' }) 
-                    });
+                    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ auth, action: 'get_all', type: 'staff' }) });
                     const result = await res.json();
                     if (result.error) throw new Error(result.message);
                     
                     allStaff = result.data.staff || [];
                     allAttendance = result.data.attendance || [];
-                    
-                    const appDataJSON = localStorage.getItem('appData');
-                    if(appDataJSON) {
-                        allBranches = JSON.parse(appDataJSON).data.BRANCHES || [];
-                    }
+                    allBranches = result.data.branches || [];
 
                     renderStaffList(allStaff);
                     populateBranchDropdown(allBranches);
@@ -195,6 +192,7 @@
                 attendancePlaceholder.classList.add('hidden');
                 attendanceContent.classList.remove('hidden');
                 attDateInput.valueAsDate = new Date();
+                checkAttendanceForDate();
                 renderAttendanceHistory(staffCode);
                 renderStaffList(allStaff);
             };
@@ -252,7 +250,7 @@
                     attendanceContent.classList.add('hidden');
                     renderStaffList(allStaff);
                 }
-                staffCodeInput.readOnly = false;
+                staffCodeInput.readOnly = true;
                 modalTitle.textContent = 'Add New Staff';
                 buttonText.textContent = 'Submit New Staff';
                 deleteStaffBtn.classList.add('hidden');
@@ -290,7 +288,44 @@
                 } catch (e) { console.error('Pincode fetch failed', e); }
             }
 
-            async function handleRequest(payload) {
+            const generateStaffCode = () => {
+                if(isUpdateMode) return; // Don't generate for existing staff
+                const name = staffNameInput.value.replace(/\s+/g, '').toUpperCase();
+                const branch = branchSelect.value;
+                const adhar = adharNumInput.value;
+                if (name && branch && adhar.length >= 4) {
+                    staffCodeInput.value = `${name}${branch}${adhar.slice(-4)}`;
+                } else {
+                    staffCodeInput.value = '';
+                }
+            };
+            staffNameInput.addEventListener('input', generateStaffCode);
+            branchSelect.addEventListener('change', generateStaffCode);
+            adharNumInput.addEventListener('input', generateStaffCode);
+
+
+            const checkAttendanceForDate = () => {
+                const selectedDate = new Date(attDateInput.value).setHours(0,0,0,0);
+                const record = allAttendance.find(att => {
+                    const attDate = new Date(att.DATE).setHours(0,0,0,0);
+                    return att.STAFF_CODE === selectedStaffCode && attDate === selectedDate;
+                });
+
+                if (record) {
+                    attStatusInput.value = record.STATUS || 'Present';
+                    attInTimeInput.value = record.IN_TIME || '';
+                    attOutTimeInput.value = record.OUT_TIME || '';
+                    attRemarksInput.value = record.REMARKS || '';
+                } else {
+                    attStatusInput.value = 'Present';
+                    attInTimeInput.value = '';
+                    attOutTimeInput.value = '';
+                    attRemarksInput.value = '';
+                }
+            };
+            attDateInput.addEventListener('change', checkAttendanceForDate);
+
+            async function handleRequest(payload, refreshOnSuccess = true) {
                 const loginDataJSON = localStorage.getItem('loginData');
                 if (!loginDataJSON) { showResponseMessage('Authentication error.', 'error'); return Promise.reject('No auth'); }
                 const loginData = JSON.parse(loginDataJSON);
@@ -302,8 +337,10 @@
                     const result = await res.json();
                     if (result.error) throw new Error(result.message);
                     showResponseMessage(result.message, 'success');
-                    await fetchInitialData(); // Force refresh all data on success
-                    return Promise.resolve();
+                    if (refreshOnSuccess) {
+                        await fetchInitialData(); 
+                    }
+                    return Promise.resolve(result);
                 } catch (err) {
                     showResponseMessage(err.message, 'error');
                     return Promise.reject(err.message);
@@ -333,11 +370,29 @@
             attendanceForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if(!selectedStaffCode) { alert('No staff selected.'); return; }
-                const data = { STAFF_CODE: selectedStaffCode, STAFF_NAME: attendanceStaffName.textContent };
+                
+                if (!attInTimeInput.value && attOutTimeInput.value) {
+                    showResponseMessage("Cannot submit 'Out Time' without an 'In Time'.", "error");
+                    return;
+                }
+
+                const data = { 
+                    STAFF_CODE: selectedStaffCode, 
+                    STAFF_NAME: attendanceStaffName.textContent,
+                    ATTENDANCE_ID: `${selectedStaffCode}-${attDateInput.value}`
+                };
                 new FormData(attendanceForm).forEach((val, key) => data[key] = val);
-                await handleRequest({ data, action: 'submit', type: 'attendance'});
-                attendanceForm.reset();
-                attDateInput.valueAsDate = new Date();
+                
+                await handleRequest({ data, action: 'submit', type: 'attendance'}, false); // Don't refresh all data
+                
+                // Manually update local attendance data for instant feedback
+                const recordIndex = allAttendance.findIndex(rec => rec.ATTENDANCE_ID === data.ATTENDANCE_ID);
+                if (recordIndex > -1) {
+                    allAttendance[recordIndex] = {...allAttendance[recordIndex], ...data};
+                } else {
+                    allAttendance.push(data);
+                }
+                renderAttendanceHistory(selectedStaffCode);
             });
             
             function setLoading(isLoading) {
