@@ -56,7 +56,7 @@
                                 <div><label for="attDate" class="block mb-2 text-sm font-medium">Date</label><input type="date" id="attDate" name="DATE" class="form-input" required></div>
                                 <div><label for="attStatus" class="block mb-2 text-sm font-medium">Status</label><select id="attStatus" name="STATUS" class="form-input"><option value="Present">Present</option><option value="Absent">Absent</option><option value="Half Day">Half Day</option><option value="Leave">Leave</option></select></div>
                                 <div class="relative"><label for="attInTime" class="block mb-2 text-sm font-medium">In Time</label><input type="time" id="attInTime" name="IN_TIME" class="form-input"><input type="hidden" id="geoInTime" name="GEO_TAG_IN_TIME"><button type="button" onclick="setNow('attInTime', 'geoInTime')" class="absolute right-1 bottom-1 text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Now</button></div>
-                                <div class="relative"><label for="attOutTime" class="block mb-2 text-sm font-medium">Out Time</label><input type="time" id="attOutTime" name="OUT_TIME" class="form-input"><input type="hidden" id="geoOutTime" name="GEO_TAG_OUT_TIME"><button type="button" onclick="setNow('attOutTime', 'geoOutTime')" class="absolute right-1 bottom-1 text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Now</button></div>
+                                <div class="relative"><label for="attOutTime" class="block mb-2 text-sm font-medium">Out Time</label><input type="time" id="attOutTime" name="OUT_TIME" class="form-input" disabled><input type="hidden" id="geoOutTime" name="GEO_TAG_OUT_TIME"><button type="button" onclick="setNow('attOutTime', 'geoOutTime')" class="absolute right-1 bottom-1 text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Now</button></div>
                                 <div class="md:col-span-4"><label for="attRemarks" class="block mb-2 text-sm font-medium">Remarks</label><input type="text" id="attRemarks" name="REMARKS" class="form-input"></div>
                             </div>
                             <div class="mt-6 text-right">
@@ -117,11 +117,11 @@
         function formatTimeFromSheet(value) {
             if (!value) return '';
             if (typeof value === 'string' && value.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
-                return value.slice(0, 5); // Return HH:MM if already formatted
+                return value.slice(0, 5);
             }
             try {
                 const date = new Date(value);
-                if (isNaN(date.getTime())) return ''; // Invalid date
+                if (isNaN(date.getTime())) return '';
                 const hours = String(date.getHours()).padStart(2, '0');
                 const minutes = String(date.getMinutes()).padStart(2, '0');
                 return `${hours}:${minutes}`;
@@ -140,7 +140,7 @@
             const timeString = now.toTimeString().slice(0, 5);
             const timeInput = document.getElementById(timeFieldId);
             timeInput.value = timeString;
-            timeInput.dispatchEvent(new Event('input')); // Trigger input event for locking logic
+            timeInput.dispatchEvent(new Event('input'));
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
@@ -306,15 +306,23 @@
             };
             
             const checkAttendanceForDate = () => {
-                const selectedDate = new Date(attDateInput.value).setHours(0,0,0,0);
-                const record = allAttendance.find(att => {
-                    const attDate = new Date(att.DATE).setHours(0,0,0,0);
-                    return att.STAFF_CODE === selectedStaffCode && attDate === selectedDate;
-                });
-
+                // THIS IS THE FIX: Reset the form correctly first.
+                const currentDate = attDateInput.value;
                 attendanceForm.reset();
-                attDateInput.value = new Date(selectedDate).toISOString().split('T')[0];
+                attDateInput.value = currentDate;
+                
+                const selectedDate = new Date(currentDate);
+                const timezoneOffset = selectedDate.getTimezoneOffset() * 60000;
+                const adjustedDate = new Date(selectedDate.getTime() - timezoneOffset);
+                const dateString = adjustedDate.toISOString().split('T')[0];
 
+                const record = allAttendance.find(att => {
+                    if (!att.DATE) return false;
+                    const attDate = new Date(att.DATE);
+                    const attDateString = new Date(attDate.getTime() - (attDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                    return att.STAFF_CODE === selectedStaffCode && attDateString === dateString;
+                });
+                
                 if (record) {
                     attStatusInput.value = record.STATUS || 'Present';
                     attInTimeInput.value = formatTimeFromSheet(record.IN_TIME);
@@ -322,8 +330,7 @@
                     attRemarksInput.value = record.REMARKS || '';
                 }
                 
-                // Trigger input event to handle locking logic
-                attOutTimeInput.dispatchEvent(new Event('input')); 
+                attInTimeInput.dispatchEvent(new Event('input')); 
             };
             
             async function fetchPincodeDetails(pincode) {
@@ -359,15 +366,29 @@
             branchSelect.addEventListener('change', generateStaffCode);
             adharNumInput.addEventListener('input', generateStaffCode);
             attDateInput.addEventListener('change', checkAttendanceForDate);
-            attOutTimeInput.addEventListener('input', () => {
+            
+            // THIS IS THE FIX: Combined and improved locking logic
+            attInTimeInput.addEventListener('input', () => {
+                if (attInTimeInput.value) {
+                    attOutTimeInput.disabled = false;
+                    attOutTimeInput.classList.remove('bg-gray-200');
+                } else {
+                    attOutTimeInput.disabled = true;
+                    attOutTimeInput.classList.add('bg-gray-200');
+                }
+
                 if (attOutTimeInput.value && attInTimeInput.value) {
                     attInTimeInput.readOnly = true;
-                    attInTimeInput.classList.add('bg-gray-200');
+                    attInTimeInput.classList.add('bg-gray-200', 'cursor-not-allowed');
                 } else {
                     attInTimeInput.readOnly = false;
-                    attInTimeInput.classList.remove('bg-gray-200');
+                    attInTimeInput.classList.remove('bg-gray-200', 'cursor-not-allowed');
                 }
             });
+            attOutTimeInput.addEventListener('input', () => {
+                 attInTimeInput.dispatchEvent(new Event('input'));
+            });
+
 
             // --- FORM SUBMISSION ---
             async function handleRequest(payload, refreshOnSuccess = true) {
@@ -439,6 +460,7 @@
                     allAttendance.push(data);
                 }
                 renderAttendanceHistory(selectedStaffCode);
+                checkAttendanceForDate();
             });
             
             function setLoading(isLoading, type = 'staff') {
