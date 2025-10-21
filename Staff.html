@@ -30,7 +30,7 @@
                 <div class="flex justify-between items-center"><h2 class="text-xl font-bold text-gray-800">Staff</h2><button id="newStaffBtn" class="text-sm bg-indigo-100 text-indigo-700 font-semibold py-1 px-3 rounded-lg hover:bg-indigo-200 transition-colors">New Staff</button></div>
                 <input type="text" id="searchStaff" placeholder="Search by name or code..." class="mt-2 w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500">
             </div>
-            <ul id="staffList" class="overflow-y-auto flex-grow p-4 space-y-2"><li id="staffLoader" class="text-center text-gray-500">Waiting for data...</li></ul>
+            <ul id="staffList" class="overflow-y-auto flex-grow p-4 space-y-2"><li id="staffLoader" class="text-center text-gray-500">Fetching data...</li></ul>
         </aside>
 
         <!-- Main Content Area for Attendance -->
@@ -118,26 +118,49 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const staffForm = document.getElementById('staffForm'), submitButton = document.getElementById('submitButton'), buttonText = document.getElementById('buttonText'), spinner = document.getElementById('spinner'), responseMessage = document.getElementById('responseMessage'), staffList = document.getElementById('staffList'), searchStaffInput = document.getElementById('searchStaff'), newStaffBtn = document.getElementById('newStaffBtn'), staffCodeInput = document.getElementById('staffCode'), branchSelect = document.getElementById('branch'), pincodeInput = document.getElementById('pincode'), cityInput = document.getElementById('city'), stateInput = document.getElementById('state');
+            const staffForm = document.getElementById('staffForm'), submitButton = document.getElementById('submitButton'), buttonText = document.getElementById('buttonText'), spinner = document.getElementById('spinner'), responseMessage = document.getElementById('responseMessage'), staffList = document.getElementById('staffList'), staffLoader = document.getElementById('staffLoader'), searchStaffInput = document.getElementById('searchStaff'), newStaffBtn = document.getElementById('newStaffBtn'), staffCodeInput = document.getElementById('staffCode'), branchSelect = document.getElementById('branch'), pincodeInput = document.getElementById('pincode'), cityInput = document.getElementById('city'), stateInput = document.getElementById('state');
             const attendanceForm = document.getElementById('attendanceForm'), attendanceHistory = document.getElementById('attendanceHistory'), attendanceStaffName = document.getElementById('attendanceStaffName'), attendancePlaceholder = document.getElementById('attendancePlaceholder'), attendanceContent = document.getElementById('attendanceContent'), editStaffBtn = document.getElementById('editStaffBtn'), attDateInput = document.getElementById('attDate');
             const staffModal = document.getElementById('staffModal'), closeModalBtn = document.getElementById('closeModalBtn'), modalTitle = document.getElementById('modalTitle'), deleteStaffBtn = document.getElementById('deleteStaffBtn');
 
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
             let allStaff = [], allAttendance = [], allBranches = [], isUpdateMode = false, pincodeTimeout, selectedStaffCode = null;
 
-            const handleDataLoaded = (event) => {
-                if (!event.detail || !event.detail.data) return;
-                const appData = event.detail.data;
-                allStaff = appData.STAFF || [];
-                allAttendance = appData.ATTENDANCE || [];
-                allBranches = appData.BRANCHES || [];
-                renderStaffList(allStaff);
-                populateBranchDropdown(allBranches);
-                document.getElementById('staffLoader').textContent = 'No staff found.';
-            };
-            window.addEventListener('appDataLoaded', handleDataLoaded);
-            window.addEventListener('appDataRefreshed', handleDataLoaded);
+            async function fetchInitialData() {
+                staffLoader.textContent = 'Fetching staff data...';
+                const loginDataJSON = localStorage.getItem('loginData');
+                if (!loginDataJSON) { 
+                    staffLoader.textContent = 'Authentication error. Please log in.';
+                    return;
+                }
+                const loginData = JSON.parse(loginDataJSON);
+                const auth = { code: loginData.CODE || loginData.code, token: loginData.TOKEN || loginData.token };
 
+                try {
+                    const res = await fetch(SCRIPT_URL, { 
+                        method: 'POST', 
+                        body: JSON.stringify({ auth, action: 'get_all', type: 'staff' }) 
+                    });
+                    const result = await res.json();
+                    if (result.error) throw new Error(result.message);
+                    
+                    allStaff = result.data.staff || [];
+                    allAttendance = result.data.attendance || [];
+                    
+                    const appDataJSON = localStorage.getItem('appData');
+                    if(appDataJSON) {
+                        allBranches = JSON.parse(appDataJSON).data.BRANCHES || [];
+                    }
+
+                    renderStaffList(allStaff);
+                    populateBranchDropdown(allBranches);
+                    if(staffLoader) staffLoader.remove();
+
+                } catch (err) {
+                    staffLoader.textContent = 'Failed to load data: ' + err.message;
+                    showResponseMessage('Failed to load initial data. ' + err.message, 'error');
+                }
+            }
+            
             const openStaffModal = () => staffModal.classList.remove('hidden');
             const closeStaffModal = () => staffModal.classList.add('hidden');
 
@@ -173,7 +196,7 @@
                 attendanceContent.classList.remove('hidden');
                 attDateInput.valueAsDate = new Date();
                 renderAttendanceHistory(staffCode);
-                renderStaffList(allStaff); // Re-render to highlight selection
+                renderStaffList(allStaff);
             };
 
             const editSelectedStaff = () => {
@@ -184,7 +207,13 @@
                 resetForm(false);
                 Object.keys(person).forEach(key => {
                     const input = staffForm.querySelector(`[name="${key}"]`);
-                    if (input) input.value = person[key] || '';
+                    if (input && person[key]) {
+                        if (input.type === 'date') {
+                            input.value = new Date(person[key]).toISOString().split('T')[0];
+                        } else {
+                            input.value = person[key];
+                        }
+                    }
                 });
 
                 isUpdateMode = true;
@@ -237,7 +266,7 @@
 
             searchStaffInput.addEventListener('input', (e) => {
                 const term = e.target.value.toLowerCase();
-                const filtered = allStaff.filter(p => (p.STAFF_CODE.toLowerCase().includes(term) || p.STAFF_NAME.toLowerCase().includes(term)));
+                const filtered = allStaff.filter(p => (p.STAFF_CODE.toLowerCase().includes(term) || (p.STAFF_NAME || '').toLowerCase().includes(term)));
                 renderStaffList(filtered);
             });
 
@@ -263,28 +292,31 @@
 
             async function handleRequest(payload) {
                 const loginDataJSON = localStorage.getItem('loginData');
-                if (!loginDataJSON) { showResponseMessage('Authentication error.', 'error'); return; }
+                if (!loginDataJSON) { showResponseMessage('Authentication error.', 'error'); return Promise.reject('No auth'); }
                 const loginData = JSON.parse(loginDataJSON);
                 payload.auth = { code: loginData.CODE || loginData.code, token: loginData.TOKEN || loginData.token };
 
                 try {
+                    setLoading(true);
                     const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const result = await res.json();
                     if (result.error) throw new Error(result.message);
                     showResponseMessage(result.message, 'success');
-                    if (window.verifyAndFetchAppData) await window.verifyAndFetchAppData(true); // Force refresh
+                    await fetchInitialData(); // Force refresh all data on success
+                    return Promise.resolve();
                 } catch (err) {
                     showResponseMessage(err.message, 'error');
+                    return Promise.reject(err.message);
+                } finally {
+                    setLoading(false);
                 }
             }
             
             staffForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                setLoading(true);
                 const data = {};
                 new FormData(staffForm).forEach((value, key) => data[key] = value);
                 await handleRequest({ data, action: 'submit', type: 'staff' });
-                setLoading(false);
                 closeStaffModal();
                 resetForm();
             });
@@ -312,11 +344,17 @@
                 spinner.classList.toggle('hidden', !isLoading);
                 submitButton.disabled = isLoading;
             }
+
             function showResponseMessage(message, type) {
                 responseMessage.textContent = message;
-                responseMessage.className = `mt-6 text-center p-4 rounded-lg text-sm ${type === 'success' ? 'bg-green-10 H' : 'bg-red-100 text-red-800'}`;
+                responseMessage.classList.remove('hidden');
+                responseMessage.className = `mt-6 text-center p-4 rounded-lg text-sm ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+                setTimeout(() => responseMessage.classList.add('hidden'), 5000);
             }
+
+            fetchInitialData();
         });
     </script>
 </body>
 </html>
+
