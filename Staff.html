@@ -52,7 +52,12 @@
                                 <div class="relative"><label for="attOutTime" class="block mb-2 text-sm font-medium">Out Time</label><input type="time" id="attOutTime" name="OUT_TIME" class="form-input"><input type="hidden" id="geoOutTime" name="GEO_TAG_OUT_TIME"><button type="button" onclick="setNow('attOutTime', 'geoOutTime')" class="absolute right-1 bottom-1 text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300">Now</button></div>
                                 <div class="md:col-span-4"><label for="attRemarks" class="block mb-2 text-sm font-medium">Remarks</label><input type="text" id="attRemarks" name="REMARKS" class="form-input"></div>
                             </div>
-                            <div class="mt-6 text-right"><button type="submit" id="submitAttendanceButton" class="text-white bg-green-600 hover:bg-green-700 font-medium rounded-lg text-sm px-6 py-2.5">Submit Attendance</button></div>
+                            <div class="mt-6 text-right">
+                                <button type="submit" id="submitAttendanceButton" class="text-white bg-green-600 hover:bg-green-700 font-medium rounded-lg text-sm px-6 py-2.5 disabled:bg-green-400 flex items-center justify-center ml-auto transition-colors duration-300">
+                                    <span id="attendanceButtonText">Submit Attendance</span>
+                                    <div id="attendanceSpinner" class="spinner hidden ml-3" style="width: 20px; height: 20px; border-top-color: white;"></div>
+                                </button>
+                            </div>
                         </form>
                         <h3 class="text-xl font-semibold mb-4">Recent Activity</h3>
                         <div id="attendanceHistory" class="bg-white p-4 rounded-lg border"></div>
@@ -92,7 +97,7 @@
                 </div>
                 <div class="modal-footer flex justify-between items-center">
                     <button type="button" id="deleteStaffBtn" class="hidden text-white bg-red-600 hover:bg-red-700 font-medium rounded-lg text-sm px-5 py-2.5">Delete Staff</button>
-                    <button type="submit" id="submitButton" class="text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-8 py-3 disabled:bg-indigo-400 flex items-center"><span id="buttonText">Submit</span><div id="spinner" class="spinner hidden ml-3"></div></button>
+                    <button type="submit" id="submitButton" class="text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-8 py-3 disabled:bg-indigo-400 flex items-center transition-colors duration-300"><span id="buttonText">Submit</span><div id="spinner" class="spinner hidden ml-3"></div></button>
                 </div>
             </form>
         </div>
@@ -123,7 +128,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const staffForm = document.getElementById('staffForm'), submitButton = document.getElementById('submitButton'), buttonText = document.getElementById('buttonText'), spinner = document.getElementById('spinner'), responseMessage = document.getElementById('responseMessage'), staffList = document.getElementById('staffList'), staffLoader = document.getElementById('staffLoader'), searchStaffInput = document.getElementById('searchStaff'), newStaffBtn = document.getElementById('newStaffBtn'), staffCodeInput = document.getElementById('staffCode'), branchSelect = document.getElementById('branch'), pincodeInput = document.getElementById('pincode'), cityInput = document.getElementById('city'), stateInput = document.getElementById('state'), staffNameInput = document.getElementById('staffName'), adharNumInput = document.getElementById('adharNum');
-            const attendanceForm = document.getElementById('attendanceForm'), attendanceHistory = document.getElementById('attendanceHistory'), attendanceStaffName = document.getElementById('attendanceStaffName'), attendancePlaceholder = document.getElementById('attendancePlaceholder'), attendanceContent = document.getElementById('attendanceContent'), editStaffBtn = document.getElementById('editStaffBtn'), attDateInput = document.getElementById('attDate'), attStatusInput = document.getElementById('attStatus'), attInTimeInput = document.getElementById('attInTime'), attOutTimeInput = document.getElementById('attOutTime'), attRemarksInput = document.getElementById('attRemarks');
+            const attendanceForm = document.getElementById('attendanceForm'), attendanceHistory = document.getElementById('attendanceHistory'), attendanceStaffName = document.getElementById('attendanceStaffName'), attendancePlaceholder = document.getElementById('attendancePlaceholder'), attendanceContent = document.getElementById('attendanceContent'), editStaffBtn = document.getElementById('editStaffBtn'), attDateInput = document.getElementById('attDate'), attStatusInput = document.getElementById('attStatus'), attInTimeInput = document.getElementById('attInTime'), attOutTimeInput = document.getElementById('attOutTime'), attRemarksInput = document.getElementById('attRemarks'), submitAttendanceButton = document.getElementById('submitAttendanceButton');
             const staffModal = document.getElementById('staffModal'), closeModalBtn = document.getElementById('closeModalBtn'), modalTitle = document.getElementById('modalTitle'), deleteStaffBtn = document.getElementById('deleteStaffBtn');
 
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
@@ -289,7 +294,7 @@
             }
 
             const generateStaffCode = () => {
-                if(isUpdateMode) return; // Don't generate for existing staff
+                if(isUpdateMode) return;
                 const name = staffNameInput.value.replace(/\s+/g, '').toUpperCase();
                 const branch = branchSelect.value;
                 const adhar = adharNumInput.value;
@@ -330,9 +335,11 @@
                 if (!loginDataJSON) { showResponseMessage('Authentication error.', 'error'); return Promise.reject('No auth'); }
                 const loginData = JSON.parse(loginDataJSON);
                 payload.auth = { code: loginData.CODE || loginData.code, token: loginData.TOKEN || loginData.token };
+                
+                const type = payload.type || 'staff';
+                setLoading(true, type);
 
                 try {
-                    setLoading(true);
                     const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const result = await res.json();
                     if (result.error) throw new Error(result.message);
@@ -345,7 +352,7 @@
                     showResponseMessage(err.message, 'error');
                     return Promise.reject(err.message);
                 } finally {
-                    setLoading(false);
+                    setLoading(false, type);
                 }
             }
             
@@ -383,9 +390,8 @@
                 };
                 new FormData(attendanceForm).forEach((val, key) => data[key] = val);
                 
-                await handleRequest({ data, action: 'submit', type: 'attendance'}, false); // Don't refresh all data
+                await handleRequest({ data, action: 'submit', type: 'attendance'}, false);
                 
-                // Manually update local attendance data for instant feedback
                 const recordIndex = allAttendance.findIndex(rec => rec.ATTENDANCE_ID === data.ATTENDANCE_ID);
                 if (recordIndex > -1) {
                     allAttendance[recordIndex] = {...allAttendance[recordIndex], ...data};
@@ -395,9 +401,22 @@
                 renderAttendanceHistory(selectedStaffCode);
             });
             
-            function setLoading(isLoading) {
-                spinner.classList.toggle('hidden', !isLoading);
-                submitButton.disabled = isLoading;
+            function setLoading(isLoading, type = 'staff') {
+                const isStaff = type === 'staff';
+                const btn = isStaff ? submitButton : submitAttendanceButton;
+                const btnText = isStaff ? buttonText : document.getElementById('attendanceButtonText');
+                const spin = isStaff ? spinner : document.getElementById('attendanceSpinner');
+
+                if (!btn || !btnText || !spin) return;
+
+                btn.disabled = isLoading;
+                spin.classList.toggle('hidden', !isLoading);
+
+                if (isLoading) {
+                    btnText.textContent = isStaff ? (isUpdateMode ? 'Updating...' : 'Submitting...') : 'Submitting...';
+                } else {
+                    btnText.textContent = isStaff ? (isUpdateMode ? 'Update Staff' : 'Submit New Staff') : 'Submit Attendance';
+                }
             }
 
             function showResponseMessage(message, type) {
