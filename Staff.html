@@ -393,7 +393,7 @@
             ui.staffForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const data = Object.fromEntries(new FormData(ui.staffForm));
-                handleRequest({ data, action: isUpdateMode ? 'update' : 'submit', type: 'staff' });
+                handleRequest({ data, action: 'submit', type: 'staff' });
             });
             
             ui.deleteStaffBtn.addEventListener('click', () => {
