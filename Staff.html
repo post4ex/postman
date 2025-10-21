@@ -291,7 +291,10 @@
                     if (input && person[key] !== undefined && person[key] !== null) {
                         if (input.type === 'date') {
                             try {
-                                input.value = new Date(person[key]).toISOString().split('T')[0];
+                                // Handles cases where date might be invalid from sheets
+                                if(person[key]) {
+                                    input.value = new Date(person[key]).toISOString().split('T')[0];
+                                }
                             } catch(e) { console.warn(`Invalid date for ${key}: ${person[key]}`); }
                         } else {
                             input.value = person[key];
@@ -360,7 +363,7 @@
                     ui.attStatusInput.value = record.STATUS || 'Present';
                     ui.attInTimeInput.value = formatTimeFromSheet(record.IN_TIME);
                     ui.attOutTimeInput.value = formatTimeFromSheet(record.OUT_TIME);
-                    ui.attRemarks.value = record.REMARKS || '';
+                    if(ui.attRemarks) ui.attRemarks.value = record.REMARKS || '';
                 }
                 ui.attInTimeInput.dispatchEvent(new Event('input')); 
             };
@@ -483,7 +486,9 @@
                 if (data && typeof data === 'object') {
                     content += '<div class="mt-2 text-left text-xs bg-gray-50 p-3 rounded border border-gray-200 max-w-md mx-auto">';
                     for (const [key, value] of Object.entries(data)) {
-                        if (value) content += `<p><strong class="font-medium text-gray-600">${key.replace(/_/g, ' ')}:</strong> <span class="text-gray-800">${value}</span></p>`;
+                        if (value || value === 0) { // <-- FIX: Check for 0 as a valid value
+                           content += `<p><strong class="font-medium text-gray-600">${key.replace(/_/g, ' ')}:</strong> <span class="text-gray-800">${value}</span></p>`;
+                        }
                     }
                     content += '</div>';
                 }
