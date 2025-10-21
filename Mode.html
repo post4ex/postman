@@ -17,9 +17,9 @@
 
     <div id="header-placeholder"></div>
 
-    <div class="flex flex-grow w-full">
+    <div class="flex flex-col md:flex-row flex-grow w-full md:h-[calc(100vh-88px)]">
         <!-- Left Sidebar for Mode List -->
-        <aside class="w-1/4 bg-white border-r flex flex-col">
+        <aside id="modeListContainer" class="w-full md:w-1/4 bg-white border-r flex flex-col">
             <div class="p-4 border-b sticky top-0 bg-white z-10">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-bold text-gray-800">Modes</h2>
@@ -27,13 +27,21 @@
                 </div>
                 <input type="text" id="searchMode" placeholder="Search modes..." class="mt-2 w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500">
             </div>
-            <ul id="modeList" class="overflow-y-auto flex-grow p-4 space-y-2">
-                <li id="modeLoader" class="text-center text-gray-500">Loading modes...</li>
-            </ul>
+            <div class="overflow-y-auto flex-grow">
+                <ul id="modeList" class="p-4 space-y-2">
+                    <li id="modeLoader" class="text-center text-gray-500">Loading modes...</li>
+                </ul>
+            </div>
         </aside>
 
         <!-- Main Content Area for the Form -->
-        <main class="w-3/4 p-8 overflow-y-auto">
+        <main id="modeFormContainer" class="w-full md:w-3/4 p-8 overflow-y-auto hidden md:block">
+             <div class="p-4 border-b md:hidden bg-white -mt-8 -mx-8 mb-8">
+                 <button type="button" id="backToListBtn" class="text-sm bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded-lg hover:bg-gray-300 flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to List
+                </button>
+            </div>
             <div class="w-full mx-auto">
                 <div class="text-center mb-8">
                     <h1 class="text-3xl font-bold text-gray-900">Mode Management</h1>
@@ -67,18 +75,8 @@
                     <!-- Section for Zones -->
                     <div class="mt-8">
                         <h2 class="text-xl font-semibold mb-6 text-indigo-600">Zone Service Availability</h2>
-                        <div class="grid grid-cols-4 md:grid-cols-7 lg:grid-cols-14 gap-4">
+                        <div class="grid grid-cols-4 md:grid-cols-7 lg:grid-cols-14 gap-4" id="zoneInputsContainer">
                             <!-- Dynamically creating 14 zone inputs for Y/N values -->
-                            <script>
-                                for(let i = 1; i <= 14; i++) {
-                                    document.write(`
-                                        <div>
-                                            <label for="z${i}" class="block mb-2 text-sm font-medium text-gray-700 text-center">Z${i}</label>
-                                            <input type="text" maxlength="1" placeholder="Y/N" id="z${i}" name="Z${i}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 text-center uppercase">
-                                        </div>
-                                    `);
-                                }
-                            </script>
                         </div>
                     </div>
                     
@@ -120,67 +118,79 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // ---ELEMENT SELECTORS---
-        const form = document.getElementById('modeForm');
-        const submitButton = document.getElementById('submitButton');
-        const buttonText = document.getElementById('buttonText');
-        const spinner = document.getElementById('spinner');
-        const responseMessage = document.getElementById('responseMessage');
-        const modeList = document.getElementById('modeList');
-        const searchModeInput = document.getElementById('searchMode');
-        const newModeBtn = document.getElementById('newModeBtn');
-        const modeInput = document.getElementById('mode');
-        const deleteButton = document.getElementById('deleteButton');
-        const deleteModal = document.getElementById('deleteModal');
-        const modeToDeleteSpan = document.getElementById('modeToDelete');
-        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-        const deleteSpinner = document.getElementById('deleteSpinner');
+        const ui = {
+            form: document.getElementById('modeForm'),
+            submitButton: document.getElementById('submitButton'),
+            buttonText: document.getElementById('buttonText'),
+            spinner: document.getElementById('spinner'),
+            responseMessage: document.getElementById('responseMessage'),
+            modeList: document.getElementById('modeList'),
+            searchModeInput: document.getElementById('searchMode'),
+            newModeBtn: document.getElementById('newModeBtn'),
+            modeInput: document.getElementById('mode'),
+            deleteButton: document.getElementById('deleteButton'),
+            deleteModal: document.getElementById('deleteModal'),
+            modeToDeleteSpan: document.getElementById('modeToDelete'),
+            cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
+            confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+            deleteSpinner: document.getElementById('deleteSpinner'),
+            modeListContainer: document.getElementById('modeListContainer'),
+            modeFormContainer: document.getElementById('modeFormContainer'),
+            backToListBtn: document.getElementById('backToListBtn'),
+            zoneInputsContainer: document.getElementById('zoneInputsContainer')
+        };
 
-        // ---CONFIG & STATE---
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
         let allModes = [];
         let isUpdateMode = false;
 
-        // ---INITIAL DATA LOAD---
-        const initializePageData = () => {
-            const appDataJSON = localStorage.getItem('appData');
-            if (!appDataJSON) { 
-                document.getElementById('modeLoader').textContent = 'Please refresh data from the header icon.';
-                return; 
-            }
-            try {
-                const appData = JSON.parse(appDataJSON);
-                if (appData.data && appData.data.MODE) {
-                    allModes = appData.data.MODE;
-                    renderModeList(allModes);
-                } else {
-                    document.getElementById('modeLoader').textContent = 'No modes found.';
-                }
-            } catch (e) {
-                document.getElementById('modeLoader').textContent = 'Could not load modes.';
+        const isMobileView = () => window.innerWidth < 768;
+
+        const showFormView = () => {
+            if (isMobileView()) {
+                ui.modeListContainer.classList.add('hidden');
+                ui.modeFormContainer.classList.remove('hidden', 'md:block');
+                 ui.modeFormContainer.classList.add('block');
             }
         };
 
+        const showListView = () => {
+            if (isMobileView()) {
+                ui.modeListContainer.classList.remove('hidden');
+                ui.modeFormContainer.classList.add('hidden');
+            }
+        };
+        
+        const createZoneInputs = () => {
+            let inputsHTML = '';
+            for(let i = 1; i <= 14; i++) {
+                inputsHTML += `
+                    <div>
+                        <label for="z${i}" class="block mb-2 text-sm font-medium text-gray-700 text-center">Z${i}</label>
+                        <input type="text" maxlength="1" placeholder="Y/N" id="z${i}" name="Z${i}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 text-center uppercase">
+                    </div>
+                `;
+            }
+            ui.zoneInputsContainer.innerHTML = inputsHTML;
+        };
+
         const handleDataLoaded = (event) => {
-            if (!event.detail || !event.detail.data) return;
             const appData = event.detail.data;
             if (appData && appData.MODE) {
                 allModes = appData.MODE;
                 renderModeList(allModes);
             } else {
-                document.getElementById('modeLoader').textContent = 'No modes found in refreshed data.';
+                document.getElementById('modeLoader').textContent = 'No modes found.';
             }
         };
         
         window.addEventListener('appDataLoaded', handleDataLoaded);
         window.addEventListener('appDataRefreshed', handleDataLoaded);
 
-        // ---UI RENDERING & STATE FUNCTIONS---
         const renderModeList = (modes) => {
-            modeList.innerHTML = '';
+            ui.modeList.innerHTML = '';
             if (!modes || modes.length === 0) {
-                modeList.innerHTML = '<li class="text-center text-gray-500">No matching modes.</li>';
+                ui.modeList.innerHTML = '<li class="text-center text-gray-500">No matching modes.</li>';
                 return;
             }
             modes.forEach(mode => {
@@ -189,38 +199,37 @@
                 li.textContent = `${mode.MODE} - ${mode.SHORT || ''}`;
                 li.dataset.mode = mode.MODE;
                 li.addEventListener('click', () => populateFormForEdit(mode.MODE));
-                modeList.appendChild(li);
+                ui.modeList.appendChild(li);
             });
         };
 
         const populateFormForEdit = (modeId) => {
             const mode = allModes.find(m => m.MODE === modeId);
             if (!mode) return;
-            form.reset();
+            resetForm();
             for (const key in mode) {
-                const input = form.querySelector(`[name="${key}"]`);
+                const input = ui.form.querySelector(`[name="${key}"]`);
                 if (input) input.value = mode[key] || '';
             }
             isUpdateMode = true;
-            modeInput.readOnly = true;
-            modeInput.classList.add('bg-gray-200', 'cursor-not-allowed');
-            buttonText.textContent = `Update Mode ${modeId}`;
-            deleteButton.classList.remove('hidden');
-            responseMessage.classList.add('hidden');
+            ui.modeInput.readOnly = true;
+            ui.modeInput.classList.add('bg-gray-200', 'cursor-not-allowed');
+            ui.buttonText.textContent = `Update Mode ${modeId}`;
+            ui.deleteButton.classList.remove('hidden');
+            showFormView();
         };
 
         const resetForm = () => {
-            form.reset();
+            ui.form.reset();
             isUpdateMode = false;
-            modeInput.readOnly = false;
-            modeInput.classList.remove('bg-gray-200', 'cursor-not-allowed');
-            buttonText.textContent = 'Submit New Mode';
-            deleteButton.classList.add('hidden');
-            responseMessage.classList.add('hidden');
+            ui.modeInput.readOnly = false;
+            ui.modeInput.classList.remove('bg-gray-200', 'cursor-not-allowed');
+            ui.buttonText.textContent = 'Submit New Mode';
+            ui.deleteButton.classList.add('hidden');
+            ui.responseMessage.classList.add('hidden');
         };
 
-        // ---EVENT LISTENERS---
-        searchModeInput.addEventListener('input', (e) => {
+        ui.searchModeInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             const filteredModes = allModes.filter(mode => 
                 (mode.MODE || '').toLowerCase().includes(searchTerm) || 
@@ -229,112 +238,121 @@
             renderModeList(filteredModes);
         });
 
-        newModeBtn.addEventListener('click', resetForm);
+        ui.newModeBtn.addEventListener('click', () => {
+            resetForm();
+            showFormView();
+        });
         
-        deleteButton.addEventListener('click', () => {
-            const modeId = modeInput.value;
+         ui.backToListBtn.addEventListener('click', () => {
+            resetForm();
+            showListView();
+        });
+        
+        ui.deleteButton.addEventListener('click', () => {
+            const modeId = ui.modeInput.value;
             if (!modeId) return;
-            modeToDeleteSpan.textContent = modeId;
-            deleteModal.classList.remove('hidden');
+            ui.modeToDeleteSpan.textContent = modeId;
+            ui.deleteModal.classList.remove('hidden');
         });
 
-        cancelDeleteBtn.addEventListener('click', () => deleteModal.classList.add('hidden'));
-        confirmDeleteBtn.addEventListener('click', () => handleRequest('delete'));
+        ui.cancelDeleteBtn.addEventListener('click', () => ui.deleteModal.classList.add('hidden'));
+        ui.confirmDeleteBtn.addEventListener('click', () => handleRequest('delete'));
 
-        form.addEventListener('submit', (e) => {
+        ui.form.addEventListener('submit', (e) => {
             e.preventDefault();
             handleRequest('submit');
         });
         
-        // ---API REQUEST HANDLER---
         async function handleRequest(action) {
             const isLoading = action === 'delete';
             setLoading(true, isLoading ? 'delete' : 'submit');
 
             const loginDataJSON = localStorage.getItem('loginData');
             const loginData = loginDataJSON ? JSON.parse(loginDataJSON) : null;
-            const userCode = loginData?.CODE || loginData?.code;
-            const userToken = loginData?.TOKEN || loginData?.token;
+            const auth = { code: loginData?.CODE || loginData?.code, token: loginData?.TOKEN || loginData?.token };
 
-            if (!userCode || !userToken) {
+            if (!auth.code || !auth.token) {
                 showResponseMessage('Authentication error. Please log in again.', 'error');
                 setLoading(false, isLoading ? 'delete' : 'submit');
-                if (isLoading) deleteModal.classList.add('hidden');
                 return;
             }
             
-            const auth = { code: userCode, token: userToken };
-            
-            // --- THIS IS THE FIX ---
-            // The payload is now built differently for each action to ensure clarity and correctness.
-            let payload;
-            if (action === 'delete') {
-                // For deletion, construct a payload with only the necessary data.
-                payload = {
-                    auth: auth,
-                    data: { MODE: modeInput.value },
-                    action: 'delete',
-                    type: 'mode'
-                };
+            let data = {};
+            if (action === 'submit') {
+                new FormData(ui.form).forEach((value, key) => { data[key] = value; });
             } else {
-                // For add/update, collect all form data for the payload.
-                const formData = {};
-                new FormData(form).forEach((value, key) => { formData[key] = value; });
-                payload = {
-                    auth: auth,
-                    data: formData,
-                    action: 'submit',
-                    type: 'mode'
-                };
+                data.MODE = ui.modeInput.value;
             }
-            // --- END OF FIX ---
+
+            const payload = { auth, data, action, type: 'mode' };
 
             try {
-                const response = await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(payload)
-                });
+                const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                 if (!response.ok) throw new Error(`Network error: ${response.status}`);
                 const result = await response.json();
                 if (result.error) throw new Error(result.message);
                 
-                showResponseMessage(result.message, 'success');
+                showResponseMessage(result.message, 'success', result.data);
                 resetForm();
+                showListView();
                 
                 if (window.verifyAndFetchAppData) {
-                    await window.verifyAndFetchAppData(true); // Force data refresh
+                    await window.verifyAndFetchAppData(true);
                 }
             } catch (error) {
                 showResponseMessage(error.message, 'error');
             } finally {
                 setLoading(false, isLoading ? 'delete' : 'submit');
-                if (isLoading) deleteModal.classList.add('hidden');
+                if (isLoading) ui.deleteModal.classList.add('hidden');
             }
         }
         
-        // ---UI HELPER FUNCTIONS---
         function setLoading(isLoading, type) {
             if (type === 'delete') {
-                deleteSpinner.classList.toggle('hidden', !isLoading);
-                confirmDeleteBtn.disabled = isLoading;
-                cancelDeleteBtn.disabled = isLoading;
+                ui.deleteSpinner.classList.toggle('hidden', !isLoading);
+                ui.confirmDeleteBtn.disabled = isLoading;
+                ui.cancelDeleteBtn.disabled = isLoading;
             } else {
-                spinner.classList.toggle('hidden', !isLoading);
-                submitButton.disabled = isLoading;
-                buttonText.textContent = isLoading ? (isUpdateMode ? 'Updating...' : 'Submitting...') : (isUpdateMode ? `Update Mode ${modeInput.value}` : 'Submit New Mode');
+                ui.spinner.classList.toggle('hidden', !isLoading);
+                ui.submitButton.disabled = isLoading;
+                ui.buttonText.textContent = isLoading ? (isUpdateMode ? 'Updating...' : 'Submitting...') : (isUpdateMode ? `Update Mode ${ui.modeInput.value}` : 'Submit New Mode');
             }
         }
 
-        function showResponseMessage(message, type) {
-            responseMessage.textContent = message;
-            responseMessage.classList.remove('hidden');
-            responseMessage.className = `mt-6 text-center p-4 rounded-lg text-sm ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+        function showResponseMessage(message, type, data = null) {
+            let content = `<p class="font-semibold">${message}</p>`;
+            if (data && typeof data === 'object') {
+                content += '<div class="mt-2 text-left text-xs bg-gray-50 p-3 rounded border border-gray-200 max-w-md mx-auto">';
+                for (const [key, value] of Object.entries(data)) {
+                    if (value) {
+                       content += `<p><strong class="font-medium text-gray-600">${key.replace(/_/g, ' ')}:</strong> <span class="text-gray-800">${value}</span></p>`;
+                    }
+                }
+                content += '</div>';
+            }
+            
+            ui.responseMessage.innerHTML = content;
+            ui.responseMessage.className = `mt-6 text-center p-4 rounded-lg text-sm ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            ui.responseMessage.classList.remove('hidden');
         }
 
-        // --- KICKSTART THE PAGE ---
-        initializePageData();
+        const appDataJSON = localStorage.getItem('appData');
+        if (appDataJSON) {
+            try {
+                const appData = JSON.parse(appDataJSON);
+                if (appData.data && appData.data.MODE) {
+                    allModes = appData.data.MODE;
+                    renderModeList(allModes);
+                } else {
+                     document.getElementById('modeLoader').textContent = 'No modes found.';
+                }
+            } catch (e) {
+                 document.getElementById('modeLoader').textContent = 'Could not load modes.';
+            }
+        }
+        
+        createZoneInputs();
     });
     </script>
 </body>
 </html>
-
