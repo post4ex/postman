@@ -27,10 +27,15 @@
         <!-- Left Sidebar for Staff List -->
         <aside class="w-1/3 bg-white border-r flex flex-col">
             <div class="p-4 border-b sticky top-0 bg-white z-10">
-                <div class="flex justify-between items-center"><h2 class="text-xl font-bold text-gray-800">Staff</h2><button id="newStaffBtn" class="text-sm bg-indigo-100 text-indigo-700 font-semibold py-1 px-3 rounded-lg hover:bg-indigo-200 transition-colors">New Staff</button></div>
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Staff</h2>
+                    <button id="newStaffBtn" class="text-sm bg-indigo-100 text-indigo-700 font-semibold py-1 px-3 rounded-lg hover:bg-indigo-200 transition-colors">New Staff</button>
+                </div>
                 <input type="text" id="searchStaff" placeholder="Search by name or code..." class="mt-2 w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500">
             </div>
-            <ul id="staffList" class="overflow-y-auto flex-grow p-4 space-y-2"><li id="staffLoader" class="text-center text-gray-500">Fetching data...</li></ul>
+            <ul id="staffList" class="overflow-y-auto flex-grow p-4 space-y-2">
+                <li id="staffLoader" class="text-center text-gray-500">Fetching data...</li>
+            </ul>
         </aside>
 
         <!-- Main Content Area for Attendance -->
@@ -38,7 +43,9 @@
             <div class="w-full mx-auto">
                 <div id="attendanceSection">
                     <h1 class="text-3xl font-bold text-gray-900 mb-2">Attendance Management</h1>
-                    <div id="attendancePlaceholder" class="text-center p-8 bg-white rounded-lg border shadow-sm"><p class="text-gray-500">Please select a staff member from the list to view or record their attendance.</p></div>
+                    <div id="attendancePlaceholder" class="text-center p-8 bg-white rounded-lg border shadow-sm">
+                        <p class="text-gray-500">Please select a staff member from the list to view or record their attendance.</p>
+                    </div>
                     <div id="attendanceContent" class="hidden">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-2xl font-bold text-gray-900">Recording for <span id="attendanceStaffName" class="text-indigo-600"></span></h2>
@@ -106,14 +113,35 @@
     <div id="footer-placeholder"></div>
     <script src="layout.js"></script>
     <script>
+        // --- UTILITY FUNCTIONS ---
+        function formatTimeFromSheet(value) {
+            if (!value) return '';
+            if (typeof value === 'string' && value.match(/^\d{2}:\d{2}(:\d{2})?$/)) {
+                return value.slice(0, 5); // Return HH:MM if already formatted
+            }
+            try {
+                const date = new Date(value);
+                if (isNaN(date.getTime())) return ''; // Invalid date
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${hours}:${minutes}`;
+            } catch (e) {
+                return '';
+            }
+        }
+        
         function setNow(timeFieldId, geoFieldId) {
-            if (timeFieldId === 'attOutTime' && !document.getElementById('attInTime').value) {
+            const inTimeInput = document.getElementById('attInTime');
+            if (timeFieldId === 'attOutTime' && !inTimeInput.value) {
                 showResponseMessage("Please record 'In Time' before marking 'Out Time'.", 'error');
                 return;
             }
             const now = new Date();
             const timeString = now.toTimeString().slice(0, 5);
-            document.getElementById(timeFieldId).value = timeString;
+            const timeInput = document.getElementById(timeFieldId);
+            timeInput.value = timeString;
+            timeInput.dispatchEvent(new Event('input')); // Trigger input event for locking logic
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
                     const coords = `${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}`;
@@ -126,14 +154,18 @@
             }
         }
 
+        // --- MAIN SCRIPT ---
         document.addEventListener('DOMContentLoaded', () => {
+            // --- ELEMENT SELECTORS ---
             const staffForm = document.getElementById('staffForm'), submitButton = document.getElementById('submitButton'), buttonText = document.getElementById('buttonText'), spinner = document.getElementById('spinner'), responseMessage = document.getElementById('responseMessage'), staffList = document.getElementById('staffList'), staffLoader = document.getElementById('staffLoader'), searchStaffInput = document.getElementById('searchStaff'), newStaffBtn = document.getElementById('newStaffBtn'), staffCodeInput = document.getElementById('staffCode'), branchSelect = document.getElementById('branch'), pincodeInput = document.getElementById('pincode'), cityInput = document.getElementById('city'), stateInput = document.getElementById('state'), staffNameInput = document.getElementById('staffName'), adharNumInput = document.getElementById('adharNum');
             const attendanceForm = document.getElementById('attendanceForm'), attendanceHistory = document.getElementById('attendanceHistory'), attendanceStaffName = document.getElementById('attendanceStaffName'), attendancePlaceholder = document.getElementById('attendancePlaceholder'), attendanceContent = document.getElementById('attendanceContent'), editStaffBtn = document.getElementById('editStaffBtn'), attDateInput = document.getElementById('attDate'), attStatusInput = document.getElementById('attStatus'), attInTimeInput = document.getElementById('attInTime'), attOutTimeInput = document.getElementById('attOutTime'), attRemarksInput = document.getElementById('attRemarks'), submitAttendanceButton = document.getElementById('submitAttendanceButton');
             const staffModal = document.getElementById('staffModal'), closeModalBtn = document.getElementById('closeModalBtn'), modalTitle = document.getElementById('modalTitle'), deleteStaffBtn = document.getElementById('deleteStaffBtn');
 
+            // --- STATE & CONFIG ---
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
             let allStaff = [], allAttendance = [], allBranches = [], isUpdateMode = false, pincodeTimeout, selectedStaffCode = null;
 
+            // --- DATA HANDLING ---
             async function fetchInitialData() {
                 staffLoader.textContent = 'Fetching staff data...';
                 const loginDataJSON = localStorage.getItem('loginData');
@@ -162,13 +194,14 @@
                     showResponseMessage('Failed to load initial data. ' + err.message, 'error');
                 }
             }
-            
+
+            // --- UI & FORM LOGIC ---
             const openStaffModal = () => staffModal.classList.remove('hidden');
             const closeStaffModal = () => staffModal.classList.add('hidden');
 
             const populateBranchDropdown = (branches) => {
                 branchSelect.innerHTML = '<option value="">Select Branch</option>';
-                branches.forEach(branch => {
+                (branches || []).forEach(branch => {
                     const option = document.createElement('option');
                     option.value = branch.BRANCH_CODE;
                     option.textContent = `${branch.BRANCH_CODE} - ${branch.BRANCH_NAME}`;
@@ -233,14 +266,12 @@
                 if(history.length === 0) { attendanceHistory.innerHTML = '<p class="text-gray-500">No recent attendance records found.</p>'; return; }
                 const table = document.createElement('table');
                 table.className = 'w-full text-sm text-left';
-                table.innerHTML = `<thead><tr class="bg-gray-50">
-                    <th class="p-2">Date</th><th>Status</th><th>In Time</th><th>Out Time</th><th>Remarks</th>
-                </tr></thead><tbody></tbody>`;
+                table.innerHTML = `<thead><tr class="bg-gray-50"><th class="p-2">Date</th><th>Status</th><th>In Time</th><th>Out Time</th><th>Remarks</th></tr></thead><tbody></tbody>`;
                 const tbody = table.querySelector('tbody');
                 history.forEach(rec => {
                     const tr = document.createElement('tr');
                     tr.className = 'border-b';
-                    tr.innerHTML = `<td class="p-2">${new Date(rec.DATE).toLocaleDateString()}</td><td>${rec.STATUS || ''}</td><td>${rec.IN_TIME || ''}</td><td>${rec.OUT_TIME || ''}</td><td>${rec.REMARKS || ''}</td>`;
+                    tr.innerHTML = `<td class="p-2">${new Date(rec.DATE).toLocaleDateString()}</td><td>${rec.STATUS || ''}</td><td>${formatTimeFromSheet(rec.IN_TIME)}</td><td>${formatTimeFromSheet(rec.OUT_TIME)}</td><td>${rec.REMARKS || ''}</td>`;
                     tbody.appendChild(tr);
                 });
                 attendanceHistory.appendChild(table);
@@ -261,25 +292,39 @@
                 deleteStaffBtn.classList.add('hidden');
                 responseMessage.classList.add('hidden');
             };
-            
-            newStaffBtn.addEventListener('click', () => { resetForm(); openStaffModal(); });
-            closeModalBtn.addEventListener('click', closeStaffModal);
-            editStaffBtn.addEventListener('click', editSelectedStaff);
-            staffModal.addEventListener('click', (e) => { if (e.target === staffModal) closeStaffModal(); });
 
-            searchStaffInput.addEventListener('input', (e) => {
-                const term = e.target.value.toLowerCase();
-                const filtered = allStaff.filter(p => (p.STAFF_CODE.toLowerCase().includes(term) || (p.STAFF_NAME || '').toLowerCase().includes(term)));
-                renderStaffList(filtered);
-            });
-
-            pincodeInput.addEventListener('input', () => {
-                clearTimeout(pincodeTimeout);
-                const pincode = pincodeInput.value.trim();
-                if (pincode.length === 6) {
-                    pincodeTimeout = setTimeout(() => fetchPincodeDetails(pincode), 300);
+            const generateStaffCode = () => {
+                if(isUpdateMode) return;
+                const name = staffNameInput.value.replace(/\s+/g, '').toUpperCase();
+                const branch = branchSelect.value;
+                const adhar = adharNumInput.value;
+                if (name && branch && adhar.length >= 4) {
+                    staffCodeInput.value = `${name}${branch}${adhar.slice(-4)}`;
+                } else {
+                    staffCodeInput.value = '';
                 }
-            });
+            };
+            
+            const checkAttendanceForDate = () => {
+                const selectedDate = new Date(attDateInput.value).setHours(0,0,0,0);
+                const record = allAttendance.find(att => {
+                    const attDate = new Date(att.DATE).setHours(0,0,0,0);
+                    return att.STAFF_CODE === selectedStaffCode && attDate === selectedDate;
+                });
+
+                attendanceForm.reset();
+                attDateInput.value = new Date(selectedDate).toISOString().split('T')[0];
+
+                if (record) {
+                    attStatusInput.value = record.STATUS || 'Present';
+                    attInTimeInput.value = formatTimeFromSheet(record.IN_TIME);
+                    attOutTimeInput.value = formatTimeFromSheet(record.OUT_TIME);
+                    attRemarksInput.value = record.REMARKS || '';
+                }
+                
+                // Trigger input event to handle locking logic
+                attOutTimeInput.dispatchEvent(new Event('input')); 
+            };
             
             async function fetchPincodeDetails(pincode) {
                 try {
@@ -293,43 +338,38 @@
                 } catch (e) { console.error('Pincode fetch failed', e); }
             }
 
-            const generateStaffCode = () => {
-                if(isUpdateMode) return;
-                const name = staffNameInput.value.replace(/\s+/g, '').toUpperCase();
-                const branch = branchSelect.value;
-                const adhar = adharNumInput.value;
-                if (name && branch && adhar.length >= 4) {
-                    staffCodeInput.value = `${name}${branch}${adhar.slice(-4)}`;
-                } else {
-                    staffCodeInput.value = '';
+            // --- EVENT LISTENERS ---
+            newStaffBtn.addEventListener('click', () => { resetForm(); openStaffModal(); });
+            closeModalBtn.addEventListener('click', closeStaffModal);
+            editStaffBtn.addEventListener('click', editSelectedStaff);
+            staffModal.addEventListener('click', (e) => { if (e.target === staffModal) closeStaffModal(); });
+            searchStaffInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const filtered = allStaff.filter(p => (p.STAFF_CODE.toLowerCase().includes(term) || (p.STAFF_NAME || '').toLowerCase().includes(term)));
+                renderStaffList(filtered);
+            });
+            pincodeInput.addEventListener('input', () => {
+                clearTimeout(pincodeTimeout);
+                const pincode = pincodeInput.value.trim();
+                if (pincode.length === 6) {
+                    pincodeTimeout = setTimeout(() => fetchPincodeDetails(pincode), 300);
                 }
-            };
+            });
             staffNameInput.addEventListener('input', generateStaffCode);
             branchSelect.addEventListener('change', generateStaffCode);
             adharNumInput.addEventListener('input', generateStaffCode);
-
-
-            const checkAttendanceForDate = () => {
-                const selectedDate = new Date(attDateInput.value).setHours(0,0,0,0);
-                const record = allAttendance.find(att => {
-                    const attDate = new Date(att.DATE).setHours(0,0,0,0);
-                    return att.STAFF_CODE === selectedStaffCode && attDate === selectedDate;
-                });
-
-                if (record) {
-                    attStatusInput.value = record.STATUS || 'Present';
-                    attInTimeInput.value = record.IN_TIME || '';
-                    attOutTimeInput.value = record.OUT_TIME || '';
-                    attRemarksInput.value = record.REMARKS || '';
-                } else {
-                    attStatusInput.value = 'Present';
-                    attInTimeInput.value = '';
-                    attOutTimeInput.value = '';
-                    attRemarksInput.value = '';
-                }
-            };
             attDateInput.addEventListener('change', checkAttendanceForDate);
+            attOutTimeInput.addEventListener('input', () => {
+                if (attOutTimeInput.value && attInTimeInput.value) {
+                    attInTimeInput.readOnly = true;
+                    attInTimeInput.classList.add('bg-gray-200');
+                } else {
+                    attInTimeInput.readOnly = false;
+                    attInTimeInput.classList.remove('bg-gray-200');
+                }
+            });
 
+            // --- FORM SUBMISSION ---
             async function handleRequest(payload, refreshOnSuccess = true) {
                 const loginDataJSON = localStorage.getItem('loginData');
                 if (!loginDataJSON) { showResponseMessage('Authentication error.', 'error'); return Promise.reject('No auth'); }
@@ -362,7 +402,7 @@
                 new FormData(staffForm).forEach((value, key) => data[key] = value);
                 await handleRequest({ data, action: 'submit', type: 'staff' });
                 closeStaffModal();
-                resetForm();
+                resetForm(true);
             });
             
             deleteStaffBtn.addEventListener('click', async () => {
@@ -370,7 +410,7 @@
                 if (confirm(`Are you sure you want to delete staff member ${selectedStaffCode}?`)) {
                     await handleRequest({ data: { STAFF_CODE: selectedStaffCode }, action: 'delete', type: 'staff' });
                     closeStaffModal();
-                    resetForm();
+                    resetForm(true);
                 }
             });
 
@@ -378,7 +418,7 @@
                 e.preventDefault();
                 if(!selectedStaffCode) { alert('No staff selected.'); return; }
                 
-                if (!attInTimeInput.value && attOutTimeInput.value) {
+                if (attOutTimeInput.value && !attInTimeInput.value) {
                     showResponseMessage("Cannot submit 'Out Time' without an 'In Time'.", "error");
                     return;
                 }
@@ -390,7 +430,7 @@
                 };
                 new FormData(attendanceForm).forEach((val, key) => data[key] = val);
                 
-                await handleRequest({ data, action: 'submit', type: 'attendance'}, false);
+                const result = await handleRequest({ data, action: 'submit', type: 'attendance'}, false);
                 
                 const recordIndex = allAttendance.findIndex(rec => rec.ATTENDANCE_ID === data.ATTENDANCE_ID);
                 if (recordIndex > -1) {
