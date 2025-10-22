@@ -112,7 +112,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
                             
                             <!-- CARRIER IS NOW UNLOCKED AND HAS A DATALIST -->
-                            <input type="text" name="CARRIER" id="carrier" placeholder="Carrier" class="form-input" list="carrier-list">
+                            <input type="text" name="CARRIER" id="carrier" placeholder="Carrier" class="form-input" list="carrier-list" autocomplete="off">
                             <datalist id="carrier-list">
                                 <!-- Carrier options will be injected here -->
                             </datalist>
@@ -243,7 +243,7 @@
 
         // NEW: Handle window resizing to prevent "stuck" views
         const handleResize = () => {
-            if (window.innerWidth >= 768) {
+            if (!isMobileView()) {
                 // Desktop view: always show both list and form
                 ui.clientListContainer.classList.remove('hidden');
                 ui.clientFormContainer.classList.remove('hidden');
@@ -310,19 +310,31 @@
             });
         };
 
-        // NEW: Function to populate the carrier datalist
+        // UPDATED: Function to populate the carrier datalist
         const populateCarrierDataList = (carriers) => {
             ui.carrierDataList.innerHTML = '';
             carriers.forEach(carrier => {
-                if (carrier.COMPANY_NAME) {
+                // Create one entry in the "CODE - NAME" format
+                if (carrier.COMPANY_CODE && carrier.COMPANY_NAME) {
                     const option = document.createElement('option');
-                    option.value = carrier.COMPANY_NAME;
+                    // The value is the full descriptive text shown in the dropdown
+                    option.value = `${carrier.COMPANY_CODE} - ${carrier.COMPANY_NAME}`;
+                    // We store the short code in a data attribute
+                    option.dataset.code = carrier.COMPANY_CODE; 
                     ui.carrierDataList.appendChild(option);
                 }
-                if (carrier.COMPANY_CODE) {
-                    const option = document.createElement('option');
-                    option.value = carrier.COMPANY_CODE;
-                    ui.carrierDataList.appendChild(option);
+                // Fallbacks for incomplete data
+                else if (carrier.COMPANY_CODE) {
+                     const option = document.createElement('option');
+                     option.value = carrier.COMPANY_CODE;
+                     option.dataset.code = carrier.COMPANY_CODE;
+                     ui.carrierDataList.appendChild(option);
+                }
+                else if (carrier.COMPANY_NAME) {
+                     const option = document.createElement('option');
+                     option.value = carrier.COMPANY_NAME;
+                     option.dataset.code = carrier.COMPANY_NAME; // Fallback to full name
+                     ui.carrierDataList.appendChild(option);
                 }
             });
         };
@@ -352,6 +364,19 @@
                     ui.parentClientSearchInput.value = client.CODE;
                 }
             }
+            
+            // Handle Carrier field: Check if the saved value is a combined string
+            if (client.CARRIER) {
+                const matchingOption = Array.from(ui.carrierDataList.options).find(opt => opt.dataset.code === client.CARRIER);
+                if (matchingOption) {
+                    // If we find a match, fill the input with the short code
+                    ui.carrierInput.value = matchingOption.dataset.code;
+                } else {
+                    // Otherwise, just use the raw value from the sheet
+                    ui.carrierInput.value = client.CARRIER;
+                }
+            }
+
 
             isUpdateMode = true;
             ui.uidInput.readOnly = true;
@@ -417,6 +442,22 @@
         }
 
         // --- EVENT LISTENERS ---
+
+        // NEW: Handle selection from carrier datalist
+        ui.carrierInput.addEventListener('input', (e) => {
+            const inputValue = e.target.value;
+            // Find the option in the datalist that matches the input
+            const selectedOption = Array.from(ui.carrierDataList.options).find(opt => opt.value === inputValue);
+            
+            if (selectedOption && selectedOption.dataset.code) {
+                // Found a match! Replace the input's value with the short code.
+                // We do this in a setTimeout to allow the browser to finish its datalist action.
+                setTimeout(() => {
+                    e.target.value = selectedOption.dataset.code;
+                }, 0);
+            }
+        });
+
         ui.searchClientInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             const filteredClients = allClients.filter(client => 
