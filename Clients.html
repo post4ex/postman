@@ -76,7 +76,15 @@
                             <input type="text" name="NAME" id="name" placeholder="Name*" required class="form-input md:col-span-2">
                             <input type="tel" name="MOBILE" id="mobile" placeholder="Mobile*" required class="form-input">
                             <input type="text" name="BRANCH" id="branch" placeholder="Branch Code*" required class="form-input">
-                            <input type="text" name="CODE" id="code" placeholder="Parent Client Code*" required class="form-input">
+                            
+                            <!-- Parent Client Search Box -->
+                            <div class="relative">
+                                <input type="text" id="parentClientSearch" placeholder="Search Parent Client (Name/Code)*" class="form-input w-full" autocomplete="off">
+                                <!-- This hidden input holds the actual CODE value for the form -->
+                                <input type="hidden" name="CODE" id="code" required>
+                                <div id="parentClientResults" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto hidden"></div>
+                            </div>
+
                             <input type="text" name="GST_ID_PAN_ADHAR" id="gst_id" placeholder="GST/PAN/ADHAR" class="form-input">
                             <input type="email" name="EMAIL" id="email" placeholder="Email" class="form-input">
                         </div>
@@ -111,8 +119,8 @@
                         </div>
                     </div>
 
-                    <!-- Section 4: Meta Data -->
-                    <div>
+                    <!-- Section 4: Meta Data (Hidden) -->
+                    <div class="hidden">
                         <h2 class="text-lg font-semibold text-indigo-600 border-b pb-2 mb-4">Meta Data</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="text" name="USER_NAME" id="user_name" placeholder="Last Modified By" class="form-input readonly-input" readonly>
@@ -162,13 +170,12 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONFIGURATION ---
-        // THIS IS THE SCRIPT URL FROM YOUR NEW DEPLOYMENT
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcZAkvu9JAxVpVeWT5pTOi6j2yEbJuFb48B-pweCG5BWZNLhbVYXP9Rzm_v6iXmdUGrw/exec';
-        // THIS IS THE PINCODE API URL FROM YOUR OTHER PAGES (like Carrier.html)
         const PINCODE_API_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
 
         // --- STATE ---
-        let allClients = [];
+        let allClients = []; // B2B2C list
+        let allParentClients = []; // B2B list
         let isUpdateMode = false;
         let pincodeTimeout;
 
@@ -194,7 +201,6 @@
             backToListBtn: document.getElementById('backToListBtn'),
             pincodeInput: document.getElementById('pincode'),
             pincodeStatus: document.getElementById('pincodeStatus'),
-            // Readonly pincode fields
             cityInput: document.getElementById('city'),
             stateInput: document.getElementById('state'),
             carrierInput: document.getElementById('carrier'),
@@ -203,7 +209,12 @@
             surfaceTatInput: document.getElementById('surface_tat'),
             premiumTatInput: document.getElementById('premium_tat'),
             odaInput: document.getElementById('oda'),
-            zoneInput: document.getElementById('zone')
+            zoneInput: document.getElementById('zone'),
+            // New UI elements for Parent Client Search
+            parentClientSearchInput: document.getElementById('parentClientSearch'),
+            parentClientResultsContainer: document.getElementById('parentClientResults'),
+            codeHiddenInput: document.getElementById('code'), // The hidden input for CODE
+            branchInput: document.getElementById('branch') // To auto-fill
         };
 
         // --- VIEW LOGIC ---
@@ -227,7 +238,8 @@
         // --- DATA & RENDERING ---
         const handleDataLoaded = (event) => {
             const appData = event.detail.data;
-            // WE ASSUME THE DATA IS ON THE 'B2B2C' key from your Apps Script
+            
+            // Load B2B2C clients for the main list
             if (appData && appData.B2B2C) {
                 allClients = appData.B2B2C;
                 renderClientList(allClients);
@@ -235,9 +247,15 @@
                 document.getElementById('clientLoader').textContent = 'No B2B2C clients found.';
                 console.warn("Data loaded, but 'B2B2C' array not found in appData.", appData);
             }
+
+            // Load B2B clients for the parent search
+            if (appData && appData.B2B) {
+                allParentClients = appData.B2B.filter(client => client.CODE && client.CLIENT_NAME);
+            } else {
+                console.warn("Data loaded, but 'B2B' array not found for parent client search.");
+            }
         };
         
-        // Listen for global data load events from layout.js
         window.addEventListener('appDataLoaded', handleDataLoaded);
         window.addEventListener('appDataRefreshed', handleDataLoaded);
 
@@ -262,40 +280,55 @@
             const client = allClients.find(m => m.UID === uid);
             if (!client) return;
             resetForm();
-            // Loop through all keys in the client object and fill the form
+            
             for (const key in client) {
                 const input = ui.form.querySelector(`[name="${key}"]`);
                 if (input) {
                      if (key === 'TIME_STAMP' && client[key]) {
-                        // Format the date string nicely
                         input.value = new Date(client[key]).toLocaleString();
                     } else {
                         input.value = client[key] || '';
                     }
                 }
             }
+
+            // Manually set the Parent Client Search box text
+            if (client.CODE) {
+                const parentClient = allParentClients.find(p => p.CODE === client.CODE);
+                if (parentClient) {
+                    ui.parentClientSearchInput.value = `${parentClient.CLIENT_NAME} (${parentClient.CODE})`;
+                } else {
+                    ui.parentClientSearchInput.value = client.CODE; // Fallback if not found in B2B
+                }
+                // The hidden input ui.codeHiddenInput is already set by the loop above
+            }
+
             isUpdateMode = true;
             ui.uidInput.readOnly = true;
             ui.uidInput.classList.add('readonly-input');
             ui.buttonText.textContent = `Update Client ${uid}`;
             ui.deleteButton.classList.remove('hidden');
-            showFormView(); // Switch to form view on mobile
+            showFormView(); 
         };
 
         const resetForm = () => {
             ui.form.reset();
             isUpdateMode = false;
-            ui.uidInput.readOnly = true; // UID is always readonly
+            ui.uidInput.readOnly = true; 
             ui.uidInput.classList.add('readonly-input');
             ui.buttonText.textContent = 'Submit New Client';
             ui.deleteButton.classList.add('hidden');
             ui.responseMessage.classList.add('hidden');
             ui.pincodeStatus.innerHTML = '';
             clearPincodeDataFields();
+            // Clear parent client search
+            ui.parentClientSearchInput.value = '';
+            ui.parentClientResultsContainer.innerHTML = '';
+            ui.parentClientResultsContainer.classList.add('hidden');
+            ui.codeHiddenInput.value = ''; // Ensure hidden field is cleared
         };
         
         const clearPincodeDataFields = () => {
-            // Clear all fields that are auto-filled by the pincode API
             const fields = [ui.cityInput, ui.stateInput, ui.carrierInput, ui.expressTatInput, ui.airlineTatInput, ui.surfaceTatInput, ui.premiumTatInput, ui.odaInput, ui.zoneInput];
             fields.forEach(field => field.value = '');
         };
@@ -303,14 +336,12 @@
         async function fetchPincodeData(pincode) {
             ui.pincodeStatus.innerHTML = '<div class="spinner field-spinner"></div>';
             try {
-                // Use the master Pincode API URL
                 const response = await fetch(`${PINCODE_API_URL}?pincode=${pincode}`);
                 if (!response.ok) throw new Error('Network response was not OK');
                 const result = await response.json();
 
                 if (result.found && result.data) {
                     const data = result.data;
-                    // Fill form fields from pincode data
                     ui.stateInput.value = data.StateName || '';
                     ui.cityInput.value = data.DestinationName || '';
                     ui.carrierInput.value = data.Carrier || '';
@@ -322,7 +353,6 @@
                     ui.zoneInput.value = data.ZONE || '';
                     ui.pincodeStatus.innerHTML = '<span class="text-green-500">✔</span>';
                 } else {
-                    // Pincode not found
                     clearPincodeDataFields();
                     ui.pincodeStatus.innerHTML = '<span class="text-red-500">✖</span>';
                 }
@@ -344,14 +374,57 @@
             renderClientList(filteredClients);
         });
 
+        // Parent Client Search Listener
+        ui.parentClientSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            ui.parentClientResultsContainer.innerHTML = '';
+            ui.parentClientResultsContainer.classList.add('hidden');
+            ui.codeHiddenInput.value = ''; // Clear hidden code
+
+            if (!searchTerm) return;
+
+            const filteredClients = allParentClients.filter(client => 
+                (client.CLIENT_NAME || '').toLowerCase().includes(searchTerm) || 
+                (client.CODE || '').toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredClients.length > 0) {
+                filteredClients.forEach(client => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'p-2 hover:bg-gray-100 cursor-pointer';
+                    resultItem.textContent = `${client.CLIENT_NAME} (${client.CODE})`;
+                    
+                    resultItem.addEventListener('mousedown', () => { // mousedown to fire before blur
+                        ui.parentClientSearchInput.value = resultItem.textContent;
+                        ui.codeHiddenInput.value = client.CODE; // Set the hidden input
+                        ui.parentClientResultsContainer.classList.add('hidden');
+                        // Auto-fill branch from parent
+                        if (client.BRANCH) {
+                            ui.branchInput.value = client.BRANCH;
+                        }
+                    });
+                    ui.parentClientResultsContainer.appendChild(resultItem);
+                });
+                ui.parentClientResultsContainer.classList.remove('hidden');
+            }
+        });
+
+        // Hide parent client results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!ui.parentClientSearchInput.contains(e.target) && !ui.parentClientResultsContainer.contains(e.target)) {
+                ui.parentClientResultsContainer.classList.add('hidden');
+            }
+        });
+
+
         ui.newClientBtn.addEventListener('click', () => {
             resetForm();
-            showFormView(); // Switch to form view on mobile
+            showFormView(); 
         });
         
          ui.backToListBtn.addEventListener('click', () => {
             resetForm();
-            showListView(); // Switch to list view on mobile
+            showListView(); 
         });
         
         ui.pincodeInput.addEventListener('input', () => {
@@ -362,7 +435,6 @@
                 clearPincodeDataFields();
             }
             if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
-                // Wait 500ms after user stops typing to fetch
                 pincodeTimeout = setTimeout(() => fetchPincodeData(pincode), 500);
             }
         });
@@ -380,7 +452,13 @@
 
         ui.form.addEventListener('submit', (e) => {
             e.preventDefault();
-            handleRequest('submit'); // 'submit' handles both create and update
+            // Simple validation for parent client
+            if (!ui.codeHiddenInput.value) {
+                showResponseMessage("Please select a valid Parent Client from the search.", "error");
+                ui.parentClientSearchInput.focus();
+                return;
+            }
+            handleRequest('submit'); 
         });
         
         // --- NETWORK REQUEST (THE CORE) ---
@@ -388,7 +466,6 @@
             const isLoading = action === 'delete';
             setLoading(true, isLoading ? 'delete' : 'submit');
 
-            // 1. Get auth data from localStorage (saved by layout.js)
             const loginDataJSON = localStorage.getItem('loginData');
             const loginData = loginDataJSON ? JSON.parse(loginDataJSON) : null;
             const auth = { 
@@ -402,30 +479,28 @@
                 return;
             }
             
-            // 2. Prepare form data
             let data = {};
             new FormData(ui.form).forEach((value, key) => { data[key] = value; });
             
-            // For delete, we only need the UID
             if (action === 'delete') {
                 data = { UID: ui.uidInput.value };
             }
 
-            // 3. Create the payload for the Google Apps Script
             const payload = { 
                 auth: auth, 
                 data: data, 
                 action: action, 
-                type: 'client' // Good practice, though script may not use it
+                type: 'client' 
             };
 
-            // 4. Send the request
             try {
+                // *** THIS IS THE FIX ***
+                // No 'headers' object. No 'Content-Type'.
+                // This sends as 'text/plain', which avoids the 'OPTIONS' preflight request.
                 const response = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     body: JSON.stringify(payload),
-                    headers: { 'Content-Type': 'application/json' },
-                    mode: 'cors' // Required for cross-origin requests
+                    mode: 'cors' 
                 });
                 
                 if (!response.ok) {
@@ -435,25 +510,20 @@
                 const result = await response.json();
                 
                 if (result.error) {
-                    // Handle errors returned from the script
                     throw new Error(result.message);
                 }
                 
-                // 5. Handle success
                 showResponseMessage(result.message, 'success', result.data);
                 resetForm();
-                showListView(); // Go back to list on mobile
+                showListView(); 
                 
-                // 6. Force refresh the global data cache in layout.js
                 if (window.verifyAndFetchAppData) {
                     await window.verifyAndFetchAppData(true); 
                 }
 
             } catch (error) {
-                // Handle fetch errors (network, CORS, script errors)
                 showResponseMessage(error.message, 'error');
             } finally {
-                // 7. Always turn off the spinners
                 setLoading(false, isLoading ? 'delete' : 'submit');
                 if (isLoading) ui.deleteModal.classList.add('hidden');
             }
@@ -475,7 +545,6 @@
 
         function showResponseMessage(message, type, data = null) {
             let content = `<p class="font-semibold">${message}</p>`;
-            // Optionally display the returned data
             if (data && typeof data === 'object') {
                 content += '<div class="mt-2 text-left text-xs bg-gray-50 p-3 rounded border border-gray-200 max-w-lg mx-auto">';
                 for (const [key, value] of Object.entries(data)) {
@@ -492,16 +561,19 @@
         }
 
         // --- INITIAL LOAD ---
-        // Try to load data from localStorage immediately while layout.js fetches fresh data
         const appDataJSON = localStorage.getItem('appData');
         if (appDataJSON) {
             try {
                 const appData = JSON.parse(appDataJSON);
+                // Pre-load both lists from cache
                 if (appData.data && appData.data.B2B2C) {
                     allClients = appData.data.B2B2C;
                     renderClientList(allClients);
                 } else {
                      document.getElementById('clientLoader').textContent = 'No B2B2C clients found.';
+                }
+                if (appData.data && appData.data.B2B) {
+                    allParentClients = appData.data.B2B.filter(client => client.CODE && client.CLIENT_NAME);
                 }
             } catch (e) {
                  document.getElementById('clientLoader').textContent = 'Could not load clients.';
