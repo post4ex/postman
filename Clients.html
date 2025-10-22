@@ -13,13 +13,29 @@
         .field-spinner { width: 16px; height: 16px; border-top-color: #6d28d9; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .readonly-input { background-color: #f3f4f6; cursor: not-allowed; }
+        /* Ensure form inputs are styled consistently */
+        .form-input {
+            border-radius: 0.375rem; /* rounded-md */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            padding: 0.5rem 0.75rem;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6; /* focus:border-blue-500 */
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <!-- Header will be injected here by layout.js -->
     <div id="header-placeholder"></div>
 
+    <!-- Main Content -->
     <div class="flex flex-col md:flex-row flex-grow w-full md:h-[calc(100vh-88px)]">
+        
+        <!-- Left Sidebar for Client List -->
         <aside id="clientListContainer" class="w-full md:w-1/3 lg:w-1/4 bg-white border-r flex flex-col">
             <div class="p-4 border-b sticky top-0 bg-white z-10">
                 <div class="flex justify-between items-center">
@@ -35,13 +51,16 @@
             </div>
         </aside>
 
+        <!-- Main Content Area for the Form -->
         <main id="clientFormContainer" class="w-full md:w-2/3 lg:w-3/4 p-8 overflow-y-auto hidden md:block">
+             <!-- Mobile: Back to List Button -->
              <div class="p-4 border-b md:hidden bg-white -mt-8 -mx-8 mb-8">
                  <button type="button" id="backToListBtn" class="text-sm bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded-lg hover:bg-gray-300 flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     Back to List
                 </button>
             </div>
+            
             <div class="w-full mx-auto">
                 <div class="text-center mb-8">
                     <h1 class="text-3xl font-bold text-gray-900">Client Management</h1>
@@ -49,54 +68,59 @@
                 </div>
 
                 <form id="clientForm" class="space-y-6">
+                    <!-- Section 1: Core Details -->
                     <div>
                         <h2 class="text-lg font-semibold text-indigo-600 border-b pb-2 mb-4">Core Information</h2>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <input type="text" name="UID" id="uid" placeholder="UID (Auto-generated)" class="form-input w-full readonly-input" readonly>
-                            <input type="text" name="NAME" id="name" placeholder="Name*" required class="form-input w-full md:col-span-2">
-                            <input type="tel" name="MOBILE" id="mobile" placeholder="Mobile*" required class="form-input w-full">
-                            <input type="text" name="BRANCH" id="branch" placeholder="Branch Code*" required class="form-input w-full">
-                            <input type="text" name="CODE" id="code" placeholder="Parent Client Code*" required class="form-input w-full">
-                            <input type="text" name="GST_ID_PAN_ADHAR" id="gst_id" placeholder="GST/PAN/ADHAR" class="form-input w-full">
-                            <input type="email" name="EMAIL" id="email" placeholder="Email" class="form-input w-full">
+                            <input type="text" name="UID" id="uid" placeholder="UID (Auto-generated)" class="form-input readonly-input" readonly>
+                            <input type="text" name="NAME" id="name" placeholder="Name*" required class="form-input md:col-span-2">
+                            <input type="tel" name="MOBILE" id="mobile" placeholder="Mobile*" required class="form-input">
+                            <input type="text" name="BRANCH" id="branch" placeholder="Branch Code*" required class="form-input">
+                            <input type="text" name="CODE" id="code" placeholder="Parent Client Code*" required class="form-input">
+                            <input type="text" name="GST_ID_PAN_ADHAR" id="gst_id" placeholder="GST/PAN/ADHAR" class="form-input">
+                            <input type="email" name="EMAIL" id="email" placeholder="Email" class="form-input">
                         </div>
                     </div>
                     
+                    <!-- Section 2: Address Details -->
                     <div>
                         <h2 class="text-lg font-semibold text-indigo-600 border-b pb-2 mb-4">Address & Pincode</h2>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <input type="text" name="ADDRESS" id="address" placeholder="Address*" required class="form-input w-full md:col-span-4">
+                            <input type="text" name="ADDRESS" id="address" placeholder="Address*" required class="form-input md:col-span-4">
                             
                             <div class="relative">
-                                <input type="text" name="PINCODE" id="pincode" placeholder="Pincode*" required class="form-input w-full" maxlength="6">
+                                <input type="text" name="PINCODE" id="pincode" placeholder="Pincode*" required class="form-input" maxlength="6">
                                 <div id="pincodeStatus" class="absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-500 pointer-events-none"></div>
                             </div>
-                            <input type="text" name="CITY" id="city" placeholder="City" class="form-input w-full readonly-input" readonly>
-                            <input type="text" name="STATE" id="state" placeholder="State" class="form-input w-full readonly-input" readonly>
-                            <input type="text" name="ZONE" id="zone" placeholder="Zone" class="form-input w-full readonly-input" readonly>
+                            <input type="text" name="CITY" id="city" placeholder="City" class="form-input readonly-input" readonly>
+                            <input type="text" name="STATE" id="state" placeholder="State" class="form-input readonly-input" readonly>
+                            <input type="text" name="ZONE" id="zone" placeholder="Zone" class="form-input readonly-input" readonly>
                         </div>
                     </div>
 
+                    <!-- Section 3: Pincode-Derived Data -->
                     <div>
                         <h2 class="text-lg font-semibold text-indigo-600 border-b pb-2 mb-4">Service Details (from Pincode)</h2>
                         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                            <input type="text" name="CARRIER" id="carrier" placeholder="Carrier" class="form-input w-full readonly-input" readonly>
-                            <input type="text" name="EXPRESS_TAT" id="express_tat" placeholder="Express TAT" class="form-input w-full readonly-input" readonly>
-                            <input type="text" name="AIRLINE_TAT" id="airline_tat" placeholder="Airline TAT" class="form-input w-full readonly-input" readonly>
-                            <input type="text" name="SURFACE_TAT" id="surface_tat" placeholder="Surface TAT" class="form-input w-full readonly-input" readonly>
-                            <input type="text" name="PREMIUM_TAT" id="premium_tat" placeholder="Premium TAT" class="form-input w-full readonly-input" readonly>
-                            <input type="text" name="ODA" id="oda" placeholder="ODA" class="form-input w-full readonly-input md:col-start-1 lg:col-start-auto" readonly>
+                            <input type="text" name="CARRIER" id="carrier" placeholder="Carrier" class="form-input readonly-input" readonly>
+                            <input type="text" name="EXPRESS_TAT" id="express_tat" placeholder="Express TAT" class="form-input readonly-input" readonly>
+                            <input type="text" name="AIRLINE_TAT" id="airline_tat" placeholder="Airline TAT" class="form-input readonly-input" readonly>
+                            <input type="text" name="SURFACE_TAT" id="surface_tat" placeholder="Surface TAT" class="form-input readonly-input" readonly>
+                            <input type="text" name="PREMIUM_TAT" id="premium_tat" placeholder="Premium TAT" class="form-input readonly-input" readonly>
+                            <input type="text" name="ODA" id="oda" placeholder="ODA" class="form-input readonly-input md:col-start-1 lg:col-start-auto" readonly>
                         </div>
                     </div>
 
+                    <!-- Section 4: Meta Data -->
                     <div>
                         <h2 class="text-lg font-semibold text-indigo-600 border-b pb-2 mb-4">Meta Data</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" name="USER_NAME" id="user_name" placeholder="Last Modified By" class="form-input w-full readonly-input" readonly>
-                            <input type="text" name="TIME_STAMP" id="time_stamp" placeholder="Last Modified On" class="form-input w-full readonly-input" readonly>
+                            <input type="text" name="USER_NAME" id="user_name" placeholder="Last Modified By" class="form-input readonly-input" readonly>
+                            <input type="text" name="TIME_STAMP" id="time_stamp" placeholder="Last Modified On" class="form-input readonly-input" readonly>
                         </div>
                     </div>
 
+                    <!-- Action Buttons -->
                     <div class="mt-8 flex justify-center items-center gap-4 flex-wrap border-t pt-6">
                         <button type="submit" id="submitButton" class="text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-8 py-3 text-center flex items-center justify-center disabled:bg-indigo-400">
                             <span id="buttonText">Submit New Client</span>
@@ -113,6 +137,7 @@
         </main>
     </div>
 
+    <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="modal-overlay hidden">
         <div class="modal-content relative card text-center">
             <h2 class="text-xl font-semibold text-gray-800 mb-4">Confirm Deletion</h2>
@@ -127,15 +152,18 @@
         </div>
     </div>
 
+    <!-- Footer will be injected here by layout.js -->
     <div id="footer-placeholder"></div>
 
+    <!-- layout.js MUST be loaded first -->
     <script src="layout.js"></script>
 
+    <!-- Page-specific script -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONFIGURATION ---
-        // THIS IS THE SCRIPT URL FROM YOUR PROVIDED GSA CODE
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwb5gqe6hep6orsrnviSzD-LDNt4axEnLKNPCfWJl8GINS55FzWEOKSMVVTy8M8KlO4w/exec';
+        // THIS IS THE SCRIPT URL FROM YOUR NEW DEPLOYMENT
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcZAkvu9JAxVpVeWT5pTOi6j2yEbJuFb48B-pweCG5BWZNLhbVYXP9Rzm_v6iXmdUGrw/exec';
         // THIS IS THE PINCODE API URL FROM YOUR OTHER PAGES (like Carrier.html)
         const PINCODE_API_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
 
@@ -199,7 +227,7 @@
         // --- DATA & RENDERING ---
         const handleDataLoaded = (event) => {
             const appData = event.detail.data;
-            // WE ASSUME THE DATA IS ON THE 'B2B2C' key
+            // WE ASSUME THE DATA IS ON THE 'B2B2C' key from your Apps Script
             if (appData && appData.B2B2C) {
                 allClients = appData.B2B2C;
                 renderClientList(allClients);
@@ -209,6 +237,7 @@
             }
         };
         
+        // Listen for global data load events from layout.js
         window.addEventListener('appDataLoaded', handleDataLoaded);
         window.addEventListener('appDataRefreshed', handleDataLoaded);
 
@@ -233,10 +262,12 @@
             const client = allClients.find(m => m.UID === uid);
             if (!client) return;
             resetForm();
+            // Loop through all keys in the client object and fill the form
             for (const key in client) {
                 const input = ui.form.querySelector(`[name="${key}"]`);
                 if (input) {
                      if (key === 'TIME_STAMP' && client[key]) {
+                        // Format the date string nicely
                         input.value = new Date(client[key]).toLocaleString();
                     } else {
                         input.value = client[key] || '';
@@ -248,7 +279,7 @@
             ui.uidInput.classList.add('readonly-input');
             ui.buttonText.textContent = `Update Client ${uid}`;
             ui.deleteButton.classList.remove('hidden');
-            showFormView();
+            showFormView(); // Switch to form view on mobile
         };
 
         const resetForm = () => {
@@ -264,6 +295,7 @@
         };
         
         const clearPincodeDataFields = () => {
+            // Clear all fields that are auto-filled by the pincode API
             const fields = [ui.cityInput, ui.stateInput, ui.carrierInput, ui.expressTatInput, ui.airlineTatInput, ui.surfaceTatInput, ui.premiumTatInput, ui.odaInput, ui.zoneInput];
             fields.forEach(field => field.value = '');
         };
@@ -278,6 +310,7 @@
 
                 if (result.found && result.data) {
                     const data = result.data;
+                    // Fill form fields from pincode data
                     ui.stateInput.value = data.StateName || '';
                     ui.cityInput.value = data.DestinationName || '';
                     ui.carrierInput.value = data.Carrier || '';
@@ -289,6 +322,7 @@
                     ui.zoneInput.value = data.ZONE || '';
                     ui.pincodeStatus.innerHTML = '<span class="text-green-500">✔</span>';
                 } else {
+                    // Pincode not found
                     clearPincodeDataFields();
                     ui.pincodeStatus.innerHTML = '<span class="text-red-500">✖</span>';
                 }
@@ -312,12 +346,12 @@
 
         ui.newClientBtn.addEventListener('click', () => {
             resetForm();
-            showFormView();
+            showFormView(); // Switch to form view on mobile
         });
         
          ui.backToListBtn.addEventListener('click', () => {
             resetForm();
-            showListView();
+            showListView(); // Switch to list view on mobile
         });
         
         ui.pincodeInput.addEventListener('input', () => {
@@ -328,6 +362,7 @@
                 clearPincodeDataFields();
             }
             if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+                // Wait 500ms after user stops typing to fetch
                 pincodeTimeout = setTimeout(() => fetchPincodeData(pincode), 500);
             }
         });
@@ -345,14 +380,15 @@
 
         ui.form.addEventListener('submit', (e) => {
             e.preventDefault();
-            handleRequest('submit');
+            handleRequest('submit'); // 'submit' handles both create and update
         });
         
-        // --- NETWORK REQUEST ---
+        // --- NETWORK REQUEST (THE CORE) ---
         async function handleRequest(action) {
             const isLoading = action === 'delete';
             setLoading(true, isLoading ? 'delete' : 'submit');
 
+            // 1. Get auth data from localStorage (saved by layout.js)
             const loginDataJSON = localStorage.getItem('loginData');
             const loginData = loginDataJSON ? JSON.parse(loginDataJSON) : null;
             const auth = { 
@@ -366,6 +402,7 @@
                 return;
             }
             
+            // 2. Prepare form data
             let data = {};
             new FormData(ui.form).forEach((value, key) => { data[key] = value; });
             
@@ -374,35 +411,55 @@
                 data = { UID: ui.uidInput.value };
             }
 
-            const payload = { auth, data, action, type: 'client' }; // 'type' is good practice
+            // 3. Create the payload for the Google Apps Script
+            const payload = { 
+                auth: auth, 
+                data: data, 
+                action: action, 
+                type: 'client' // Good practice, though script may not use it
+            };
 
+            // 4. Send the request
             try {
                 const response = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     body: JSON.stringify(payload),
                     headers: { 'Content-Type': 'application/json' },
-                    mode: 'cors'
+                    mode: 'cors' // Required for cross-origin requests
                 });
-                if (!response.ok) throw new Error(`Network error: ${response.status}`);
-                const result = await response.json();
-                if (result.error) throw new Error(result.message);
                 
+                if (!response.ok) {
+                    throw new Error(`Network error: ${response.status} ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    // Handle errors returned from the script
+                    throw new Error(result.message);
+                }
+                
+                // 5. Handle success
                 showResponseMessage(result.message, 'success', result.data);
                 resetForm();
-                showListView();
+                showListView(); // Go back to list on mobile
                 
+                // 6. Force refresh the global data cache in layout.js
                 if (window.verifyAndFetchAppData) {
-                    await window.verifyAndFetchAppData(true); // Force refresh global data
+                    await window.verifyAndFetchAppData(true); 
                 }
+
             } catch (error) {
+                // Handle fetch errors (network, CORS, script errors)
                 showResponseMessage(error.message, 'error');
             } finally {
+                // 7. Always turn off the spinners
                 setLoading(false, isLoading ? 'delete' : 'submit');
                 if (isLoading) ui.deleteModal.classList.add('hidden');
             }
         }
         
-        // --- UI HELPERS ---
+        // --- UI HELPER FUNCTIONS ---
         function setLoading(isLoading, type) {
             if (type === 'delete') {
                 ui.deleteSpinner.classList.toggle('hidden', !isLoading);
@@ -411,12 +468,14 @@
             } else {
                 ui.spinner.classList.toggle('hidden', !isLoading);
                 ui.submitButton.disabled = isLoading;
-                ui.buttonText.textContent = isLoading ? (isUpdateMode ? 'Updating...' : 'Submitting...') : (isUpdateMode ? `Update Client ${ui.uidInput.value}` : 'Submit New Client');
+                const uid = ui.uidInput.value;
+                ui.buttonText.textContent = isLoading ? (isUpdateMode ? 'Updating...' : 'Submitting...') : (isUpdateMode ? `Update Client ${uid}` : 'Submit New Client');
             }
         }
 
         function showResponseMessage(message, type, data = null) {
             let content = `<p class="font-semibold">${message}</p>`;
+            // Optionally display the returned data
             if (data && typeof data === 'object') {
                 content += '<div class="mt-2 text-left text-xs bg-gray-50 p-3 rounded border border-gray-200 max-w-lg mx-auto">';
                 for (const [key, value] of Object.entries(data)) {
@@ -433,6 +492,7 @@
         }
 
         // --- INITIAL LOAD ---
+        // Try to load data from localStorage immediately while layout.js fetches fresh data
         const appDataJSON = localStorage.getItem('appData');
         if (appDataJSON) {
             try {
@@ -451,3 +511,4 @@
     </script>
 </body>
 </html>
+
