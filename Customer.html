@@ -529,7 +529,10 @@
                  return;
             }
 
-            const customerRates = allRates.filter(rate => rate.Code === customerCode);
+            // *** FIX HERE ***
+            // Changed rate.Code to rate.CODE to match the likely data structure from the Google Sheet.
+            const customerRates = allRates.filter(rate => rate.CODE === customerCode);
+            
             const rateMap = customerRates.reduce((acc, rate) => {
                 if(rate.UID) acc[rate.UID.trim()] = rate;
                 return acc;
@@ -871,4 +874,3 @@
     </script>
 </body>
 </html>
-
