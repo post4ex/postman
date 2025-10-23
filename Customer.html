@@ -765,11 +765,19 @@
                  const uid = nameParts[1];
                  const field = nameParts.slice(2).join('_');
                  if (!ratesGroupedByUID[uid]) ratesGroupedByUID[uid] = { UID: uid };
-                // FIX: Send null for empty fields, as the backend might skip empty strings
-                ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined || input.value === '') ? null : input.value;
+
+                // FIX: Check if this is a Zone field and parse it as a number
+                if (field.startsWith('Z') && !isNaN(parseInt(field.substring(1)))) {
+                    const numValue = parseFloat(input.value);
+                    // Set to null if it's empty, NaN, or undefined
+                    ratesGroupedByUID[uid][field] = (isNaN(numValue) || input.value === null || input.value === '' || input.value === undefined) ? null : numValue;
+                } else {
+                    // This is a hidden field (UID, Service, etc.)
+                    ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined) ? '' : input.value;
+                }
              });
 
-            // FIX: Filter out empty rows
+            // FIX: Filter out empty rows (This logic is now robust)
              for (const uid in ratesGroupedByUID) {
                  const rateData = ratesGroupedByUID[uid];
                  let hasValue = false;
@@ -907,4 +915,5 @@
     </script>
 </body>
 </html>
+
 
