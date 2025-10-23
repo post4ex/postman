@@ -6,7 +6,7 @@
     <title>Customer Management - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <!-- The user provided a "style.css" which is not available, so I will embed the styles from the <style> tag. -->
     <style>
         body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
         .spinner { border: 4px solid rgba(0, 0, 0, 0.1); border-radius: 50%; border-top: 4px solid #4338ca; width: 24px; height: 24px; animation: spin 1s linear infinite; }
@@ -40,12 +40,36 @@
          #rateTableContainer thead th:nth-child(1),
          #rateTableContainer thead th:nth-child(2) { position: sticky; left: 0; z-index: 6; }
          #rateTableContainer thead th:nth-child(2) { left: 80px; } /* Match tbody */
+         
+        /* Basic Modal Styles (assuming from layout.js/style.css) */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .card { /* Assuming .card is used by modal */
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
 
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
-    <div id="header-placeholder"></div>
+    <div id="header-placeholder">
+        <!-- This div will be populated by layout.js -->
+    </div>
 
     <div class="flex flex-col md:flex-row flex-grow w-full md:h-[calc(100vh-88px)]">
         <!-- Left Sidebar for Customer List -->
@@ -250,10 +274,11 @@
         </div>
     </div>
 
-    <div id="footer-placeholder"></div>
-
-    <script src="layout.js"></script>
-
+    <div id="footer-placeholder">
+        <!-- This div will be populated by layout.js -->
+    </div>
+    
+    <!-- The main script for this page ONLY -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONFIGURATION ---
@@ -408,8 +433,9 @@
         }
 
         function handleDataLoaded(event) {
+            // This event is dispatched by the main layout.js
             const appData = event.detail.data;
-            console.log('handleDataLoaded received appData:', appData); // DEBUG: Log received data
+            console.log('handleDataLoaded (Customer Page) received appData:', appData); // DEBUG: Log received data
             let customersLoaded = false, modesLoaded = false, ratesLoaded = false;
 
             if (appData && appData.B2B && Array.isArray(appData.B2B)) {
@@ -429,13 +455,13 @@
                 console.warn("MODE data not found in appData.");
             }
 
-            // FIX: Check for "RATES" key as per user's cache data
-            if (appData && appData.RATES && Array.isArray(appData.RATES)) {
-                allRates = appData.RATES;
+            // FIX: Check for "RATES" or "RATELISTS" key
+            if (appData && (appData.RATES || appData.RATELISTS) && Array.isArray(appData.RATES || appData.RATELISTS)) {
+                allRates = appData.RATES || appData.RATELISTS; // Accept both keys
                 ratesLoaded = true;
-                 console.log('Found RATES data:', appData.RATES.length, 'rates'); // DEBUG
+                 console.log('Found RATES data:', allRates.length, 'rates'); // DEBUG
             } else {
-                 console.warn("Expected 'RATES' array not found in appData. Using empty array.", appData);
+                 console.warn("Expected 'RATES' or 'RATELISTS' array not found in appData. Using empty array.", appData);
                  allRates = [];
             }
 
@@ -444,6 +470,7 @@
             }
         }
         
+        // Listen for the data load events dispatched by layout.js
         window.addEventListener('appDataLoaded', handleDataLoaded);
         window.addEventListener('appDataRefreshed', handleDataLoaded);
 
@@ -519,20 +546,23 @@
         function generateRateForm(customerCode) {
              if (!customerCode) return;
             ui.rateListCustomerCodeSpan.textContent = customerCode;
-            ui.rateLoader.textContent = "Generating rate table...";
-            ui.rateLoader.classList.remove('hidden');
-            ui.rateTableContainer.innerHTML = '';
+            const rateLoaderP = document.createElement('p');
+            rateLoaderP.id = 'rateLoader';
+            rateLoaderP.className = "text-center p-4 text-gray-500";
+            rateLoaderP.textContent = "Generating rate table...";
+            ui.rateTableContainer.innerHTML = ''; // Clear previous table
+            ui.rateTableContainer.appendChild(rateLoaderP);
+
 
             if (!allModes || allModes.length === 0) {
                  ui.rateTableContainer.innerHTML = '<p class="text-center p-4 text-red-500">Error: Mode list not available.</p>';
-                 ui.rateLoader.classList.add('hidden');
                  return;
             }
 
-            // *** FIX HERE ***
-            // Changed rate.Code to rate.CODE to match the likely data structure from the Google Sheet.
+            // Filter rates for the current customer
             const customerRates = allRates.filter(rate => rate.CODE === customerCode);
             
+            // Create a map for quick lookup
             const rateMap = customerRates.reduce((acc, rate) => {
                 if(rate.UID) acc[rate.UID.trim()] = rate;
                 return acc;
@@ -543,13 +573,12 @@
 
             const thead = table.createTHead();
             const headerRow = thead.insertRow();
-            // FIX: Removed UID from header
+            
             const headersInfo = [
                 { text: 'Mode', width: 'w-24' }, // Increased width
                 { text: 'Wt', width: 'w-16' }, // Increased width
             ];
 
-            // FIX: Adjust left-offsets for 2 columns
              headersInfo.forEach((info, index) => {
                 const th = document.createElement('th');
                 th.textContent = info.text;
@@ -576,7 +605,6 @@
                 const uid = `${customerCode}${modeShortCode}${weight}`;
                 const existingRate = rateMap[uid];
 
-                // FIX: Only create 2 sticky columns
                 const labelsInfo = [
                     { value: modeName, width: headersInfo[0].width },
                     { value: weight, width: headersInfo[1].width, isWeight: true },
@@ -592,11 +620,9 @@
                      cell.style.left = `${leftOffset}px`;
                      cell.style.zIndex = '1';
                      
-                     // FIX: Add all hidden inputs to the *second* cell
                      if (info.isWeight) { 
                          cell.classList.add('text-gray-600');
                          
-                         // REFORMATTED: Broke multi-statement lines into single statements to fix syntax error.
                          const hiddenUid = document.createElement('input'); 
                          hiddenUid.type='hidden'; 
                          hiddenUid.name=`rate_${uid}_UID`; 
@@ -643,7 +669,8 @@
                     input.step = 'any';
                     input.name = `rate_${uid}_Z${i}`;
                     input.className = 'form-input rate-input w-full';
-                    input.value = existingRate && existingRate[`Z${i}`] !== undefined ? existingRate[`Z${i}`] : '';
+                    // Check for null/undefined explicitly, 0 is a valid value
+                    input.value = (existingRate && (existingRate[`Z${i}`] !== undefined && existingRate[`Z${i}`] !== null)) ? existingRate[`Z${i}`] : '';
                     input.placeholder = `Z${i}`;
                     cell.appendChild(input);
                 }
@@ -667,9 +694,9 @@
                     addRateRow(modeName, uidShortCode, weight, customerBranch);
                 });
             });
-
+            
+            ui.rateTableContainer.innerHTML = ''; // Clear the "Loading..." text
             ui.rateTableContainer.appendChild(table);
-            ui.rateLoader.classList.add('hidden');
         }
 
 
@@ -829,6 +856,7 @@
                  submitData = dataOrForm;
              }
 
+             // This now correctly reads the loginData set by the REAL layout.js
              const loginDataJSON = localStorage.getItem('loginData');
              const loginData = loginDataJSON ? JSON.parse(loginDataJSON) : null;
              const auth = {
@@ -859,9 +887,19 @@
                     method: 'POST',
                     body: JSON.stringify(payload),
                     mode: 'cors',
+                    redirect: 'follow', 
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (!response.ok) throw new Error(`Network error: ${response.status} ${response.statusText}`);
+                
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") === -1) {
+                    throw new Error("Received non-JSON response from server. Check script for errors.");
+                }
+
                 const result = await response.json();
                 if (result.error) throw new Error(result.message || 'Unknown script error.');
 
@@ -869,6 +907,7 @@
 
                 const isWrite = (action === 'submit' || action === 'delete');
                  if (isWrite && window.verifyAndFetchAppData) {
+                    // This now calls the REAL verifyAndFetchAppData from layout.js
                     await window.verifyAndFetchAppData(true);
                 }
 
@@ -876,6 +915,7 @@
 
 
             } catch (error) {
+                console.error("Error in handleRequest:", error); // Log full error
                 showResponseMessage(error.message, 'error');
                  if(errorCallback) errorCallback(error);
 
@@ -894,26 +934,40 @@
             ui.responseMessage.className = `my-4 text-center p-3 rounded-lg text-sm ${type === 'success' ? 'bg-green-100 text-green-800' : type === 'error' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`;
             ui.responseMessage.classList.remove('hidden');
 
-            // setTimeout(() => { ui.responseMessage.classList.add('hidden'); }, 5000); // Optional: Auto-hide
+            // Optional: Auto-hide after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => { ui.responseMessage.classList.add('hidden'); }, 5000);
+            }
         }
 
         // --- INITIALIZE ---
         resetFormsAndTabs();
         handleResize();
         
-        // --- INITIAL LOAD FROM CACHE ---
+        // --- INITIAL LOAD FROM CACHE (provided by layout.js) ---
         const appDataJSON = localStorage.getItem('appData');
          if (appDataJSON) {
              try {
                  const cachedData = JSON.parse(appDataJSON).data;
-                 console.log('Initial load from cache:', cachedData); // Line 433
-                 handleDataLoaded({ detail: { data: cachedData } }); // Line 434
-             } catch (e) { console.error("Error parsing cached appData", e); } // Line 435
+                 console.log('Initial load from cache (Customer Page):', cachedData); 
+                 handleDataLoaded({ detail: { data: cachedData } }); 
+             } catch (e) { 
+                 console.error("Error parsing cached appData (Customer Page)", e); 
+                 // If cache is bad, layout.js's verifyAndFetchAppData should have already run or will run.
+                 // We can also trigger it as a fallback.
+                 if (window.verifyAndFetchAppData) {
+                     console.log("Forcing data fetch due to bad cache...");
+                     window.verifyAndFetchAppData(true);
+                 }
+             }
+         } else {
+             // If cache is empty, layout.js should be fetching it.
+             // We'll just wait for the 'appDataLoaded' event.
+             console.log("No appData in cache. Waiting for layout.js to provide it.");
          }
 
     });
     </script>
 </body>
 </html>
-
 
