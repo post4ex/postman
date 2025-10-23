@@ -261,7 +261,6 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONFIGURATION ---
-        // Use the B2B2C script URL which now manages B2B and Rates too
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcZAkvu9JAxVpVeWT5pTOi6j2yEbJuFb48B-pweCG5BWZNLhbVYXP9Rzm_v6iXmdUGrw/exec';
 
         // --- STATE ---
@@ -321,31 +320,33 @@
         };
 
         // --- VIEW LOGIC ---
-        const isMobileView = () => window.innerWidth < 768;
+        // FIX: Changed all helper functions from const to function declarations
+        // This 'hoists' them, making them available immediately, solving the initialization error.
+        
+        function isMobileView() { return window.innerWidth < 768; }
 
-        const showFormView = () => {
+        function showFormView() {
             if (isMobileView()) {
                 ui.customerListContainer.classList.add('hidden');
                 ui.customerFormContainer.classList.remove('hidden', 'md:block');
                 ui.customerFormContainer.classList.add('block');
             }
              ui.customerFormContainer.classList.remove('hidden'); // Ensure visible on desktop
-        };
+        }
 
-        const showListView = () => {
+        function showListView() {
             resetFormsAndTabs(); // Reset form state when going back
             if (isMobileView()) {
                 ui.customerListContainer.classList.remove('hidden');
                 ui.customerFormContainer.classList.add('hidden');
                 ui.customerFormContainer.classList.remove('block');
             } else {
-                 // On desktop, simply reset form, don't hide container
                  ui.customerListContainer.classList.remove('hidden');
                  ui.customerFormContainer.classList.remove('hidden');
             }
-        };
+        }
 
-        const handleResize = () => {
+        function handleResize() {
              if (!isMobileView()) {
                 ui.customerListContainer.classList.remove('hidden');
                 ui.customerFormContainer.classList.remove('hidden');
@@ -353,7 +354,7 @@
             } else {
                  if (!ui.customerFormContainer.classList.contains('hidden')) {
                     ui.customerListContainer.classList.add('hidden');
-                    ui.customerFormContainer.classList.add('block'); // ensure block is set on mobile form view
+                    ui.customerFormContainer.classList.add('block');
                      ui.customerFormContainer.classList.remove('md:block');
                 } else {
                      ui.customerListContainer.classList.remove('hidden');
@@ -361,11 +362,11 @@
                      ui.customerFormContainer.classList.remove('block');
                 }
             }
-        };
+        }
         window.addEventListener('resize', handleResize);
 
         // --- TAB SWITCHING ---
-        const switchTab = (activeTab) => {
+        function switchTab(activeTab) {
             const isDetailsActive = activeTab === 'details';
             ui.tabCustomerDetails.classList.toggle('active', isDetailsActive);
             ui.tabRateList.classList.toggle('active', !isDetailsActive);
@@ -375,7 +376,7 @@
             if (!isDetailsActive && currentCustomerCode && !ui.tabRateList.disabled) {
                 generateRateForm(currentCustomerCode); // Load rates when switching TO rates tab
             }
-        };
+        }
 
         ui.tabCustomerDetails.addEventListener('click', () => switchTab('details'));
         ui.tabRateList.addEventListener('click', () => {
@@ -383,67 +384,13 @@
         });
 
         // --- DATA LOADING & RENDERING ---
-        const handleDataLoaded = (event) => {
-            const appData = event.detail.data;
-            console.log('handleDataLoaded received appData:', appData); // DEBUG: Log received data
-            let customersLoaded = false, modesLoaded = false, ratesLoaded = false; // Track updates
-
-            // Use B2B data for customer list
-            if (appData && appData.B2B && Array.isArray(appData.B2B)) { // Check if B2B exists and is an array
-                console.log('Found B2B data:', appData.B2B.length, 'customers'); // DEBUG
-                allCustomers = appData.B2B;
-                renderCustomerList(allCustomers);
-                customersLoaded = true;
-            } else {
-                ui.customerLoader.textContent = 'No B2B customers found in appData.';
-                console.warn("Expected 'B2B' array not found or not an array in appData.", appData);
-            }
-
-            if (appData && appData.MODE) {
-                allModes = appData.MODE;
-                modesLoaded = true;
-            } else {
-                console.warn("MODE data not found in appData.");
-            }
-
-            // Use RATES data - **FIXED KEY**
-            if (appData && appData.RATES && Array.isArray(appData.RATES)) {
-                allRates = appData.RATES;
-                ratesLoaded = true;
-                 console.log('Found RATES data:', appData.RATES.length, 'rates'); // DEBUG
-            } else {
-                 console.warn("Expected 'RATES' array not found in appData. Using empty array.", appData);
-                 allRates = [];
-            }
-
-             // Refresh rate form if needed
-            if (currentCustomerCode && !ui.contentRateList.classList.contains('hidden') && (modesLoaded || ratesLoaded)) {
-                 generateRateForm(currentCustomerCode);
-            }
-        };
-
-        window.addEventListener('appDataLoaded', handleDataLoaded);
-        window.addEventListener('appDataRefreshed', handleDataLoaded);
-
-         // Initial Load from Cache
-         const appDataJSON = localStorage.getItem('appData');
-         if (appDataJSON) {
-             try {
-                 const cachedData = JSON.parse(appDataJSON).data;
-                 console.log('Initial load from cache:', cachedData); // DEBUG: Log cached data
-                 handleDataLoaded({ detail: { data: cachedData } });
-             } catch (e) { console.error("Error parsing cached appData", e); }
-         }
-
-
-        const renderCustomerList = (customers) => {
+        function renderCustomerList(customers) {
             ui.customerList.innerHTML = '';
             ui.customerLoader.classList.remove('hidden');
             console.log('Rendering customer list with:', customers); // DEBUG: Log data being rendered
 
             if (!customers || customers.length === 0) {
                  ui.customerLoader.textContent = 'No matching customers.';
-                 // Keep loader visible with the message
                 return;
             }
             customers.sort((a, b) => (a.CODE || '').localeCompare(b.CODE || ''));
@@ -461,11 +408,50 @@
                 li.addEventListener('click', () => populateFormForEdit(cust.CODE));
                 ui.customerList.appendChild(li);
             });
-             ui.customerLoader.classList.add('hidden'); // Hide only if list has items
-        };
+             ui.customerLoader.classList.add('hidden');
+        }
+
+        function handleDataLoaded(event) {
+            const appData = event.detail.data;
+            console.log('handleDataLoaded received appData:', appData); // DEBUG: Log received data
+            let customersLoaded = false, modesLoaded = false, ratesLoaded = false;
+
+            if (appData && appData.B2B && Array.isArray(appData.B2B)) {
+                console.log('Found B2B data:', appData.B2B.length, 'customers'); // DEBUG
+                allCustomers = appData.B2B;
+                renderCustomerList(allCustomers); // THIS IS NOW SAFE TO CALL
+                customersLoaded = true;
+            } else {
+                ui.customerLoader.textContent = 'No B2B customers found in appData.';
+                console.warn("Expected 'B2B' array not found or not an array in appData.", appData);
+            }
+
+            if (appData && appData.MODE) {
+                allModes = appData.MODE;
+                modesLoaded = true;
+            } else {
+                console.warn("MODE data not found in appData.");
+            }
+
+            if (appData && appData.RATES && Array.isArray(appData.RATES)) {
+                allRates = appData.RATES;
+                ratesLoaded = true;
+                 console.log('Found RATES data:', appData.RATES.length, 'rates'); // DEBUG
+            } else {
+                 console.warn("Expected 'RATES' array not found in appData. Using empty array.", appData);
+                 allRates = [];
+            }
+
+            if (currentCustomerCode && !ui.contentRateList.classList.contains('hidden') && (modesLoaded || ratesLoaded)) {
+                 generateRateForm(currentCustomerCode);
+            }
+        }
+        
+        window.addEventListener('appDataLoaded', handleDataLoaded);
+        window.addEventListener('appDataRefreshed', handleDataLoaded);
 
         // --- FORM LOGIC ---
-        const populateFormForEdit = (code) => {
+        function populateFormForEdit(code) {
             const customer = allCustomers.find(c => c.CODE === code);
             if (!customer) {
                  showResponseMessage(`Customer with code ${code} not found.`, 'error');
@@ -476,7 +462,6 @@
             currentCustomerCode = code;
             isUpdateMode = true;
 
-            // Populate Customer Details
             for (const key in customer) {
                 const input = ui.customerForm.querySelector(`[name="${key}"]`);
                  if (input) {
@@ -504,9 +489,9 @@
 
             showFormView();
             switchTab('details');
-        };
+        }
 
-        const resetFormsAndTabs = () => {
+        function resetFormsAndTabs() {
             ui.customerForm.reset();
             ui.rateForm.reset();
             ui.rateTableContainer.innerHTML = `<p id="rateLoader" class="text-center p-4 text-gray-500">Select or save a customer to view/edit rates.</p>`;
@@ -527,14 +512,14 @@
 
 
             switchTab('details');
-        };
+        }
 
         ui.gstIncCheck.addEventListener('change', () => {
             ui.gstIncHidden.value = ui.gstIncCheck.checked ? 'Y' : 'N';
         });
 
         // --- RATE LIST FORM GENERATION ---
-        const generateRateForm = (customerCode) => {
+        function generateRateForm(customerCode) {
              if (!customerCode) return;
             ui.rateListCustomerCodeSpan.textContent = customerCode;
             ui.rateLoader.textContent = "Generating rate table...";
@@ -568,17 +553,15 @@
                 const th = document.createElement('th');
                 th.textContent = info.text;
                 th.className = `rate-header sticky top-0 ${info.width}`;
-                // Adjust left positioning based on cumulative width (approximate)
                 let leftOffset = 0;
                 for(let i=0; i < index; i++) {
-                    // Estimate width in pixels (adjust these based on your w-* classes)
                     if (headersInfo[i].width === 'w-20') leftOffset += 80;
                     else if (headersInfo[i].width === 'w-12') leftOffset += 50;
                     else if (headersInfo[i].width === 'w-24') leftOffset += 100;
-                    else leftOffset += 60; // Default estimate
+                    else leftOffset += 60;
                 }
                 th.style.left = `${leftOffset}px`;
-                th.style.zIndex = '6'; // Header z-index higher than body
+                th.style.zIndex = '6';
                 headerRow.appendChild(th);
             });
 
@@ -591,6 +574,7 @@
 
             const tbody = table.createTBody();
 
+            // This function is defined *inside* generateRateForm, so a const is fine here.
             const addRateRow = (modeName, modeShortCode, weight, branchCode) => {
                 const row = tbody.insertRow();
                 const uid = `${customerCode}${modeShortCode}${weight}`;
@@ -606,7 +590,6 @@
                      const cell = row.insertCell();
                      cell.className = `rate-label-col sticky ${info.width}`;
                      cell.textContent = info.value;
-                      // Adjust left positioning based on cumulative width (approximate)
                      let leftOffset = 0;
                      for(let i=0; i < index; i++) {
                          if (headersInfo[i].width === 'w-20') leftOffset += 80;
@@ -662,7 +645,7 @@
 
             ui.rateTableContainer.appendChild(table);
             ui.rateLoader.classList.add('hidden');
-        };
+        }
 
 
         // --- EVENT LISTENERS ---
@@ -866,6 +849,16 @@
         // --- INITIALIZE ---
         resetFormsAndTabs();
         handleResize();
+        
+        // --- INITIAL LOAD FROM CACHE ---
+        const appDataJSON = localStorage.getItem('appData');
+         if (appDataJSON) {
+             try {
+                 const cachedData = JSON.parse(appDataJSON).data;
+                 console.log('Initial load from cache:', cachedData); // Line 433
+                 handleDataLoaded({ detail: { data: cachedData } }); // Line 434
+             } catch (e) { console.error("Error parsing cached appData", e); } // Line 435
+         }
 
     });
     </script>
