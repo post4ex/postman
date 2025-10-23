@@ -765,9 +765,8 @@
                  const uid = nameParts[1];
                  const field = nameParts.slice(2).join('_');
                  if (!ratesGroupedByUID[uid]) ratesGroupedByUID[uid] = { UID: uid };
--                ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined) ? '' : input.value;
-+                // FIX: Send null for empty fields, as the backend might skip empty strings
-+                ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined || input.value === '') ? null : input.value;
+                // FIX: Send null for empty fields, as the backend might skip empty strings
+                ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined || input.value === '') ? null : input.value;
              });
 
             // FIX: Filter out empty rows
@@ -776,9 +775,8 @@
                  let hasValue = false;
                  // Check if any Z1-Z14 field has a value
                  for (let i = 1; i <= 14; i++) {
--                    if (rateData[`Z${i}`] && rateData[`Z${i}`] !== '') {
-+                    // FIX: Check for not null, which correctly includes "0" and other values
-+                    if (rateData[`Z${i}`] !== null) {
+                    // FIX: Check for not null, which correctly includes "0" and other values
+                    if (rateData[`Z${i}`] !== null) {
                          hasValue = true;
                          break; // Found a value, no need to check further
                      }
@@ -909,5 +907,4 @@
     </script>
 </body>
 </html>
-
 
