@@ -17,9 +17,9 @@
         }
         .form-input:focus { outline: none; border-color: #3b82f6; }
         .rate-input { text-align: right; padding: 0.3rem 0.5rem; width: 60px; /* Fixed width */ appearance: textfield; /* Remove number spinners */ margin: 0;}
-        .rate-input::-webkit-outer-spin-button, 
+        .rate-input::-webkit-outer-spin-button,
         .rate-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        
+
         .rate-header { font-size: 0.75rem; /* text-xs */ font-weight: 600; text-align: center; padding: 0.4rem 0.2rem; background-color: #f9fafb; border: 1px solid #e5e7eb; white-space: nowrap; }
         .rate-label-col { font-size: 0.75rem; font-weight: 500; text-align: left; padding: 0.4rem 0.5rem; border: 1px solid #e5e7eb; background-color:#f9fafb; white-space: nowrap;}
         .rate-data-cell { border: 1px solid #e5e7eb; padding: 1px; /* Minimal padding */ text-align: center; }
@@ -27,7 +27,7 @@
         .tab-button { padding: 0.5rem 1rem; border: 1px solid transparent; border-bottom: none; cursor: pointer; font-weight: 500; transition: all 0.2s; background-color: #f3f4f6; color: #6b7280; border-top-left-radius: 0.375rem; border-top-right-radius: 0.375rem;}
         .tab-button.active { border-color: #d1d5db; background-color: white; border-bottom: 1px solid white; margin-bottom: -1px; z-index: 10; color: #1e3a8a; }
         .tab-button:disabled { cursor: not-allowed; color: #9ca3af; background-color: #e5e7eb;}
-        
+
         .tab-content { border: 1px solid #d1d5db; border-top: none; padding: 1.5rem; background-color: white; border-bottom-left-radius: 0.375rem; border-bottom-right-radius: 0.375rem;}
 
         /* Sticky header for rate table */
@@ -262,15 +262,15 @@
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONFIGURATION ---
         // Use the B2B2C script URL which now manages B2B and Rates too
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcZAkvu9JAxVpVeWT5pTOi6j2yEbJuFb48B-pweCG5BWZNLhbVYXP9Rzm_v6iXmdUGrw/exec'; 
-        
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcZAkvu9JAxVpVeWT5pTOi6j2yEbJuFb48B-pweCG5BWZNLhbVYXP9Rzm_v6iXmdUGrw/exec';
+
         // --- STATE ---
         let allCustomers = []; // B2B list
         let allModes = [];     // MODE list
         let allRates = [];     // RATELISTS data
         let currentCustomerCode = null;
         let isUpdateMode = false;
-        
+
         const staticWeights = ['0.5', '0.5A'];
         const dynamicWeights = ['3', '10', '25', '50', '100', '500', '1000', '2000', '5000', '10000'];
 
@@ -337,7 +337,7 @@
             if (isMobileView()) {
                 ui.customerListContainer.classList.remove('hidden');
                 ui.customerFormContainer.classList.add('hidden');
-                ui.customerFormContainer.classList.remove('block'); 
+                ui.customerFormContainer.classList.remove('block');
             } else {
                  // On desktop, simply reset form, don't hide container
                  ui.customerListContainer.classList.remove('hidden');
@@ -349,7 +349,7 @@
              if (!isMobileView()) {
                 ui.customerListContainer.classList.remove('hidden');
                 ui.customerFormContainer.classList.remove('hidden');
-                ui.customerFormContainer.classList.add('md:block'); 
+                ui.customerFormContainer.classList.add('md:block');
             } else {
                  if (!ui.customerFormContainer.classList.contains('hidden')) {
                     ui.customerListContainer.classList.add('hidden');
@@ -385,15 +385,18 @@
         // --- DATA LOADING & RENDERING ---
         const handleDataLoaded = (event) => {
             const appData = event.detail.data;
+            console.log('handleDataLoaded received appData:', appData); // DEBUG: Log received data
             let customersLoaded = false, modesLoaded = false, ratesLoaded = false; // Track updates
 
             // Use B2B data for customer list
-            if (appData && appData.B2B) {
+            if (appData && appData.B2B && Array.isArray(appData.B2B)) { // Check if B2B exists and is an array
+                console.log('Found B2B data:', appData.B2B.length, 'customers'); // DEBUG
                 allCustomers = appData.B2B;
                 renderCustomerList(allCustomers);
-                customersLoaded = true; // Mark as loaded/refreshed
+                customersLoaded = true;
             } else {
-                ui.customerLoader.textContent = 'No B2B customers found.';
+                ui.customerLoader.textContent = 'No B2B customers found in appData.';
+                console.warn("Expected 'B2B' array not found or not an array in appData.", appData);
             }
 
             if (appData && appData.MODE) {
@@ -402,48 +405,54 @@
             } else {
                 console.warn("MODE data not found in appData.");
             }
-            
+
             // Use RATELISTS data
             if (appData && appData.RATELISTS) {
                 allRates = appData.RATELISTS;
                 ratesLoaded = true;
             } else {
                  console.warn("RATELISTS data not found in appData.");
-                 allRates = []; // Ensure it's an empty array if not found
+                 allRates = [];
             }
 
-             // If currently editing and on the rates tab, refresh the rate form if modes or rates were updated
+             // Refresh rate form if needed
             if (currentCustomerCode && !ui.contentRateList.classList.contains('hidden') && (modesLoaded || ratesLoaded)) {
                  generateRateForm(currentCustomerCode);
             }
         };
-        
+
         window.addEventListener('appDataLoaded', handleDataLoaded);
-        window.addEventListener('appDataRefreshed', handleDataLoaded); // Listen for refreshes too
+        window.addEventListener('appDataRefreshed', handleDataLoaded);
 
          // Initial Load from Cache
          const appDataJSON = localStorage.getItem('appData');
          if (appDataJSON) {
              try {
                  const cachedData = JSON.parse(appDataJSON).data;
-                 handleDataLoaded({ detail: { data: cachedData } }); // Manually trigger with cached data
+                 console.log('Initial load from cache:', cachedData); // DEBUG: Log cached data
+                 handleDataLoaded({ detail: { data: cachedData } });
              } catch (e) { console.error("Error parsing cached appData", e); }
          }
 
 
         const renderCustomerList = (customers) => {
             ui.customerList.innerHTML = '';
-             ui.customerLoader.classList.remove('hidden'); // Show loader initially
+            ui.customerLoader.classList.remove('hidden');
+            console.log('Rendering customer list with:', customers); // DEBUG: Log data being rendered
+
             if (!customers || customers.length === 0) {
                  ui.customerLoader.textContent = 'No matching customers.';
+                 // Keep loader visible with the message
                 return;
             }
             customers.sort((a, b) => (a.CODE || '').localeCompare(b.CODE || ''));
 
             customers.forEach(cust => {
-                // Skip if CODE is missing - essential for functionality
-                if(!cust.CODE) return; 
-                
+                if(!cust.CODE) {
+                     console.warn('Skipping customer render due to missing CODE:', cust); // DEBUG
+                     return;
+                 }
+
                 const li = document.createElement('li');
                 li.className = 'p-3 rounded-lg cursor-pointer hover:bg-indigo-50 transition-colors border border-gray-200';
                 li.innerHTML = `<strong class="text-indigo-700 block text-sm">${cust.CLIENT_NAME || 'Unnamed'}</strong><span class="text-xs text-gray-600">${cust.CODE}</span>`;
@@ -451,9 +460,9 @@
                 li.addEventListener('click', () => populateFormForEdit(cust.CODE));
                 ui.customerList.appendChild(li);
             });
-             ui.customerLoader.classList.add('hidden'); 
+             ui.customerLoader.classList.add('hidden'); // Hide only if list has items
         };
-        
+
         // --- FORM LOGIC ---
         const populateFormForEdit = (code) => {
             const customer = allCustomers.find(c => c.CODE === code);
@@ -461,8 +470,8 @@
                  showResponseMessage(`Customer with code ${code} not found.`, 'error');
                  return;
             };
-            resetFormsAndTabs(); 
-            
+            resetFormsAndTabs();
+
             currentCustomerCode = code;
             isUpdateMode = true;
 
@@ -470,56 +479,53 @@
             for (const key in customer) {
                 const input = ui.customerForm.querySelector(`[name="${key}"]`);
                  if (input) {
-                    // Specific handling for checkbox
                     if (key === 'GST_INC') {
                         ui.gstIncCheck.checked = (customer[key] === 'Y');
-                        ui.gstIncHidden.value = customer[key] || 'N'; // Ensure hidden field has value
-                    } 
-                    // Format Timestamp
+                        ui.gstIncHidden.value = customer[key] || 'N';
+                    }
                     else if ((key === 'TIMESTAMP' || key === 'TIME_STAMP') && customer[key]) {
-                         try { input.value = new Date(customer[key]).toLocaleString(); } catch(e){ input.value = customer[key]; } // Handle invalid dates
-                    } 
-                    // General case
+                         try { input.value = new Date(customer[key]).toLocaleString(); } catch(e){ input.value = customer[key]; }
+                    }
                     else {
                         input.value = customer[key] || '';
                     }
                 }
             }
-            
-            ui.codeInput.value = code; // Ensure code is set correctly
+
+            ui.codeInput.value = code;
             ui.codeInput.readOnly = true;
             ui.codeInput.classList.add('readonly-input');
             ui.formTitle.textContent = `Edit Customer: ${code}`;
             ui.customerButtonText.textContent = `Update Customer`;
             ui.deleteCustomerButton.classList.remove('hidden');
-            ui.tabRateList.disabled = false; 
-            ui.rateListCustomerCodeSpan.textContent = code; // Update code in rate tab title
+            ui.tabRateList.disabled = false;
+            ui.rateListCustomerCodeSpan.textContent = code;
 
-            showFormView(); 
-            switchTab('details'); 
+            showFormView();
+            switchTab('details');
         };
 
         const resetFormsAndTabs = () => {
             ui.customerForm.reset();
-            ui.rateForm.reset(); 
-            ui.rateTableContainer.innerHTML = `<p id="rateLoader" class="text-center p-4 text-gray-500">Select or save a customer to view/edit rates.</p>`; 
-            
+            ui.rateForm.reset();
+            ui.rateTableContainer.innerHTML = `<p id="rateLoader" class="text-center p-4 text-gray-500">Select or save a customer to view/edit rates.</p>`;
+
             currentCustomerCode = null;
             isUpdateMode = false;
-            
+
             ui.codeInput.readOnly = false;
             ui.codeInput.classList.remove('readonly-input');
             ui.formTitle.textContent = 'Create New Customer';
             ui.customerButtonText.textContent = 'Submit New Customer';
             ui.deleteCustomerButton.classList.add('hidden');
-            ui.tabRateList.disabled = true; 
+            ui.tabRateList.disabled = true;
             ui.responseMessage.classList.add('hidden');
             ui.gstIncCheck.checked = false;
             ui.gstIncHidden.value = 'N';
             ui.rateListCustomerCodeSpan.textContent = '';
 
 
-            switchTab('details'); 
+            switchTab('details');
         };
 
         ui.gstIncCheck.addEventListener('change', () => {
@@ -528,11 +534,11 @@
 
         // --- RATE LIST FORM GENERATION ---
         const generateRateForm = (customerCode) => {
-             if (!customerCode) return; // Don't generate if no customer selected
+             if (!customerCode) return;
             ui.rateListCustomerCodeSpan.textContent = customerCode;
             ui.rateLoader.textContent = "Generating rate table...";
-            ui.rateLoader.classList.remove('hidden'); // Show loader
-            ui.rateTableContainer.innerHTML = ''; // Clear previous table
+            ui.rateLoader.classList.remove('hidden');
+            ui.rateTableContainer.innerHTML = '';
 
             if (!allModes || allModes.length === 0) {
                  ui.rateTableContainer.innerHTML = '<p class="text-center p-4 text-red-500">Error: Mode list not available.</p>';
@@ -547,113 +553,122 @@
             }, {});
 
             const table = document.createElement('table');
-            table.className = 'w-full text-xs border-collapse table-fixed'; // Use table-fixed for better sticky column behavior
-            
+            table.className = 'w-full text-xs border-collapse table-fixed';
+
             const thead = table.createTHead();
             const headerRow = thead.insertRow();
-            // Define column widths for sticky behavior
             const headersInfo = [
-                { text: 'Mode', width: 'w-20' }, // Adjust widths as needed
+                { text: 'Mode', width: 'w-20' },
                 { text: 'Wt', width: 'w-12' },
-                { text: 'UID', width: 'w-24' }, // Might need more width
+                { text: 'UID', width: 'w-24' },
             ];
 
              headersInfo.forEach((info, index) => {
                 const th = document.createElement('th');
                 th.textContent = info.text;
-                th.className = `rate-header sticky top-0 ${info.width}`; // Apply width class
-                th.style.left = `${index * 80}px`; // Basic offset, adjust as needed based on actual widths
-                 th.style.zIndex = index === 0 ? '7' : '6'; // Ensure headers stay on top
+                th.className = `rate-header sticky top-0 ${info.width}`;
+                // Adjust left positioning based on cumulative width (approximate)
+                let leftOffset = 0;
+                for(let i=0; i < index; i++) {
+                    // Estimate width in pixels (adjust these based on your w-* classes)
+                    if (headersInfo[i].width === 'w-20') leftOffset += 80;
+                    else if (headersInfo[i].width === 'w-12') leftOffset += 50;
+                    else if (headersInfo[i].width === 'w-24') leftOffset += 100;
+                    else leftOffset += 60; // Default estimate
+                }
+                th.style.left = `${leftOffset}px`;
+                th.style.zIndex = '6'; // Header z-index higher than body
                 headerRow.appendChild(th);
             });
 
             for (let i = 1; i <= 14; i++) {
                 const th = document.createElement('th');
                 th.textContent = `Z${i}`;
-                th.className = 'rate-header w-16'; // Give zone headers a width too
+                th.className = 'rate-header w-16';
                 headerRow.appendChild(th);
             }
 
             const tbody = table.createTBody();
 
-            const addRateRow = (modeName, modeShortCode, weight, branchCode) => { // Added branchCode
+            const addRateRow = (modeName, modeShortCode, weight, branchCode) => {
                 const row = tbody.insertRow();
-                const uid = `${customerCode}${modeShortCode}${weight}`; // UID uses customer CODE
+                const uid = `${customerCode}${modeShortCode}${weight}`;
                 const existingRate = rateMap[uid];
 
-                // Mode, Weight, UID Cells 
                 const labelsInfo = [
                     { value: modeName, width: headersInfo[0].width },
                     { value: weight, width: headersInfo[1].width },
                     { value: uid, width: headersInfo[2].width, isUid: true },
                 ];
-                
+
                 labelsInfo.forEach((info, index) => {
                      const cell = row.insertCell();
-                     cell.className = `rate-label-col sticky ${info.width}`; // Use width class
+                     cell.className = `rate-label-col sticky ${info.width}`;
                      cell.textContent = info.value;
-                     cell.style.left = `${index * 80}px`; // Adjust offset based on widths
-                     cell.style.zIndex = '1'; 
+                      // Adjust left positioning based on cumulative width (approximate)
+                     let leftOffset = 0;
+                     for(let i=0; i < index; i++) {
+                         if (headersInfo[i].width === 'w-20') leftOffset += 80;
+                         else if (headersInfo[i].width === 'w-12') leftOffset += 50;
+                         else if (headersInfo[i].width === 'w-24') leftOffset += 100;
+                         else leftOffset += 60;
+                     }
+                     cell.style.left = `${leftOffset}px`;
+                     cell.style.zIndex = '1';
                      if (info.isUid) {
-                         cell.classList.add('text-gray-400'); // Dim UID
-                         // Add hidden fields within this cell (or another hidden cell)
+                         cell.classList.add('text-gray-400');
                          const hiddenUid = document.createElement('input'); hiddenUid.type='hidden'; hiddenUid.name=`rate_${uid}_UID`; hiddenUid.value=uid; cell.appendChild(hiddenUid);
                          const hiddenService = document.createElement('input'); hiddenService.type='hidden'; hiddenService.name=`rate_${uid}_Service`; hiddenService.value=modeName; cell.appendChild(hiddenService);
                          const hiddenWeight = document.createElement('input'); hiddenWeight.type='hidden'; hiddenWeight.name=`rate_${uid}_Weight`; hiddenWeight.value=weight; cell.appendChild(hiddenWeight);
-                         const hiddenBranch = document.createElement('input'); hiddenBranch.type='hidden'; hiddenBranch.name=`rate_${uid}_Branch`; hiddenBranch.value = branchCode || ''; cell.appendChild(hiddenBranch); // Store branch
-                         const hiddenShortCode = document.createElement('input'); hiddenShortCode.type='hidden'; hiddenShortCode.name=`rate_${uid}_ServiceShortCode`; hiddenShortCode.value = modeShortCode || ''; cell.appendChild(hiddenShortCode); // Store short code
-                         const hiddenType = document.createElement('input'); hiddenType.type='hidden'; hiddenType.name=`rate_${uid}_TYPE`; hiddenType.value = 'CLIENT'; cell.appendChild(hiddenType); // Store TYPE
+                         const hiddenBranch = document.createElement('input'); hiddenBranch.type='hidden'; hiddenBranch.name=`rate_${uid}_Branch`; hiddenBranch.value = branchCode || ''; cell.appendChild(hiddenBranch);
+                         const hiddenShortCode = document.createElement('input'); hiddenShortCode.type='hidden'; hiddenShortCode.name=`rate_${uid}_ServiceShortCode`; hiddenShortCode.value = modeShortCode || ''; cell.appendChild(hiddenShortCode);
+                         const hiddenType = document.createElement('input'); hiddenType.type='hidden'; hiddenType.name=`rate_${uid}_TYPE`; hiddenType.value = 'CLIENT'; cell.appendChild(hiddenType);
                      }
                 });
 
-                // Zone Input Cells
                 for (let i = 1; i <= 14; i++) {
                     const cell = row.insertCell();
                     cell.className = 'rate-data-cell';
                     const input = document.createElement('input');
                     input.type = 'number';
-                    input.step = 'any'; 
-                    input.name = `rate_${uid}_Z${i}`; 
-                    input.className = 'form-input rate-input w-full'; // Ensure it fills cell
+                    input.step = 'any';
+                    input.name = `rate_${uid}_Z${i}`;
+                    input.className = 'form-input rate-input w-full';
                     input.value = existingRate && existingRate[`Z${i}`] !== undefined ? existingRate[`Z${i}`] : '';
                     input.placeholder = `Z${i}`;
                     cell.appendChild(input);
                 }
             };
-            
-            // Get the branch code of the current customer
+
             const currentCustomer = allCustomers.find(c => c.CODE === customerCode);
             const customerBranch = currentCustomer ? currentCustomer.BRANCH : '';
 
-            // Generate rows
              allModes.forEach(mode => {
                 const modeName = mode.MODE;
                 const shortCode = mode.SHORT;
-                if (!shortCode) return; 
+                if (!shortCode) return;
 
-                // Determine weights based on mode name (case-insensitive check)
-                const weightsToUse = (modeName.toLowerCase() === 'express' || modeName.toLowerCase() === 'premium') 
-                                    ? staticWeights 
+                const weightsToUse = (modeName.toLowerCase() === 'express' || modeName.toLowerCase() === 'premium')
+                                    ? staticWeights
                                     : dynamicWeights;
-                 
-                 // Determine the short code to use for UID generation
+
                  const uidShortCode = (modeName.toLowerCase() === 'express') ? 'E' : (modeName.toLowerCase() === 'premium') ? 'P' : shortCode;
 
                 weightsToUse.forEach(weight => {
-                    addRateRow(modeName, uidShortCode, weight, customerBranch); // Pass branch
+                    addRateRow(modeName, uidShortCode, weight, customerBranch);
                 });
             });
 
             ui.rateTableContainer.appendChild(table);
-            ui.rateLoader.classList.add('hidden'); // Hide loader
+            ui.rateLoader.classList.add('hidden');
         };
-        
+
 
         // --- EVENT LISTENERS ---
         ui.searchCustomerInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            const filtered = allCustomers.filter(c => 
-                (c.CLIENT_NAME || '').toLowerCase().includes(searchTerm) || 
+            const filtered = allCustomers.filter(c =>
+                (c.CLIENT_NAME || '').toLowerCase().includes(searchTerm) ||
                 (c.CODE || '').toLowerCase().includes(searchTerm)
             );
             renderCustomerList(filtered);
@@ -661,11 +676,11 @@
 
         ui.newCustomerBtn.addEventListener('click', () => {
             resetFormsAndTabs();
-            showFormView(); 
+            showFormView();
         });
-        
-        ui.backToListBtn.addEventListener('click', showListView); 
-        
+
+        ui.backToListBtn.addEventListener('click', showListView);
+
         ui.deleteCustomerButton.addEventListener('click', () => {
             if (!currentCustomerCode) return;
             const name = ui.clientNameInput.value || currentCustomerCode;
@@ -674,42 +689,36 @@
         });
 
         ui.cancelDeleteBtn.addEventListener('click', () => ui.deleteModal.classList.add('hidden'));
-        
-        // Delete Customer Action
+
         ui.confirmDeleteBtn.addEventListener('click', () => {
              if (!currentCustomerCode) return;
-             // Use the generic handleRequest for deletion
              handleRequest(
-                'customer', 
-                'delete', 
-                { CODE: currentCustomerCode }, // Data only needs the primary key
-                ui.deleteSpinner, 
-                ui.confirmDeleteBtn, 
-                null, // No button text span needed for delete confirm
-                () => { // Success Callback
+                'customer',
+                'delete',
+                { CODE: currentCustomerCode },
+                ui.deleteSpinner,
+                ui.confirmDeleteBtn,
+                null,
+                () => {
                      ui.deleteModal.classList.add('hidden');
-                     showListView(); // Go back to list after delete
-                     // No need to manually reset form here, showListView does it.
+                     showListView();
                 },
-                 () => { // Error Callback
-                     ui.deleteModal.classList.add('hidden'); // Close modal even on error
-                      // Error message is already shown by handleRequest
+                 () => {
+                     ui.deleteModal.classList.add('hidden');
                  }
              );
         });
-        
-        // Submit Customer Details Action
+
         ui.customerForm.addEventListener('submit', (e) => {
             e.preventDefault();
              handleRequest(
-                 'customer', 
-                 'submit', 
-                 ui.customerForm, // Pass the form element
-                 ui.customerSpinner, 
-                 ui.submitCustomerButton, 
+                 'customer',
+                 'submit',
+                 ui.customerForm,
+                 ui.customerSpinner,
+                 ui.submitCustomerButton,
                  ui.customerButtonText,
-                 (responseData) => { // Success Callback
-                    // If adding new, set current code and enable rate tab
+                 (responseData) => {
                     if (!isUpdateMode && responseData && responseData.CODE) {
                         currentCustomerCode = responseData.CODE;
                         ui.codeInput.value = currentCustomerCode;
@@ -720,21 +729,16 @@
                         ui.deleteCustomerButton.classList.remove('hidden');
                         ui.tabRateList.disabled = false;
                         ui.rateListCustomerCodeSpan.textContent = currentCustomerCode;
-                        isUpdateMode = true; // Now we are in update mode
-                        // Optionally switch to rates tab: switchTab('rates');
+                        isUpdateMode = true;
                     } else if (isUpdateMode && responseData && responseData.CODE) {
-                         // If updating, just make sure rate tab is enabled
-                         currentCustomerCode = responseData.CODE; // Update just in case
+                         currentCustomerCode = responseData.CODE;
                          ui.tabRateList.disabled = false;
                          ui.rateListCustomerCodeSpan.textContent = currentCustomerCode;
                     }
-                    // Message is shown by handleRequest
                  }
-                 // No specific error callback needed, handleRequest shows message
             );
         });
 
-        // Submit Rates Action
         ui.rateForm.addEventListener('submit', (e) => {
              e.preventDefault();
              if (!currentCustomerCode) {
@@ -742,162 +746,128 @@
                  return;
              }
 
-             // --- Collect Rate Data ---
              const ratesPayload = [];
              const rateInputs = ui.rateForm.querySelectorAll('input[type="number"], input[type="hidden"]');
              const ratesGroupedByUID = {};
 
              rateInputs.forEach(input => {
-                 const nameParts = input.name.split('_'); // e.g., ['rate', 'UIDVALUE', 'Z1'] or ['rate', 'UIDVALUE', 'Service']
+                 const nameParts = input.name.split('_');
                  if (nameParts.length < 3 || nameParts[0] !== 'rate') return;
-
                  const uid = nameParts[1];
-                 const field = nameParts.slice(2).join('_'); // Rejoin if field name had underscores
-
-                 if (!ratesGroupedByUID[uid]) {
-                     ratesGroupedByUID[uid] = { UID: uid }; // Initialize object for this UID
-                 }
-                 // Add the field and its value (use empty string if value is null/undefined)
-                  ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined) ? '' : input.value;
+                 const field = nameParts.slice(2).join('_');
+                 if (!ratesGroupedByUID[uid]) ratesGroupedByUID[uid] = { UID: uid };
+                 ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined) ? '' : input.value;
              });
-             
-             // Convert grouped object back to array
-             for (const uid in ratesGroupedByUID) {
-                 ratesPayload.push(ratesGroupedByUID[uid]);
-             }
-            
+
+             for (const uid in ratesGroupedByUID) ratesPayload.push(ratesGroupedByUID[uid]);
+
              if (ratesPayload.length === 0) {
                  showResponseMessage("No rate data found to submit.", "warning");
                  return;
              }
-             
-             // Prepare final data structure for the script
+
              const submitData = {
-                 code: currentCustomerCode, // Pass the customer code
-                 branch: ui.customerForm.querySelector('[name="BRANCH"]').value || '', // Pass branch too
-                 rates: ratesPayload // The array of rate objects
+                 code: currentCustomerCode,
+                 branch: ui.customerForm.querySelector('[name="BRANCH"]').value || '',
+                 rates: ratesPayload
              };
 
              handleRequest(
                  'ratelist',
                  'submit',
-                 submitData, // Send the structured rate data
+                 submitData,
                  ui.ratesSpinner,
                  ui.submitRatesButton,
                  ui.ratesButtonText
-                 // No specific success/error callbacks needed here, default message handling is fine
              );
         });
 
-        
+
         // --- CORE NETWORK REQUEST FUNCTION ---
         async function handleRequest(type, action, dataOrForm, spinner, button, buttonTextSpan, successCallback, errorCallback) {
-            
-            // Determine data format
+
             let submitData;
              if (dataOrForm instanceof HTMLFormElement) {
                  submitData = {};
                  new FormData(dataOrForm).forEach((value, key) => { submitData[key] = value; });
              } else {
-                 submitData = dataOrForm; // Assume it's already a JS object
+                 submitData = dataOrForm;
              }
-            
-             // Get auth tokens
+
              const loginDataJSON = localStorage.getItem('loginData');
              const loginData = loginDataJSON ? JSON.parse(loginDataJSON) : null;
-             const auth = { 
-                 code: loginData?.CODE || loginData?.code, 
-                 token: loginData?.TOKEN || loginData?.token 
+             const auth = {
+                 code: loginData?.CODE || loginData?.code,
+                 token: loginData?.TOKEN || loginData?.token
              };
 
              if (!auth.code || !auth.token) {
                  showResponseMessage('Authentication error. Please log in again.', 'error');
-                 return; // Stop if not authenticated
+                 return;
              }
 
-            // Set loading state
             if(spinner) spinner.classList.remove('hidden');
             if(button) button.disabled = true;
             const originalButtonText = buttonTextSpan ? buttonTextSpan.textContent : '';
             if(buttonTextSpan) buttonTextSpan.textContent = 'Processing...';
 
 
-            const payload = { 
-                auth: auth, 
-                data: submitData, 
-                action: action, 
-                type: type 
+            const payload = {
+                auth: auth,
+                data: submitData,
+                action: action,
+                type: type
             };
 
             try {
-                const response = await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
                     body: JSON.stringify(payload),
                     mode: 'cors',
-                     // NO Content-Type header needed if script parses from e.postData.contents
                 });
-                
-                // Check for network errors first
-                if (!response.ok) {
-                    throw new Error(`Network error: ${response.status} ${response.statusText}`);
-                }
-                
+
+                if (!response.ok) throw new Error(`Network error: ${response.status} ${response.statusText}`);
                 const result = await response.json();
-                
-                // Check for application-level errors from the script
-                if (result.error) {
-                    throw new Error(result.message || 'An unknown error occurred in the script.');
-                }
-                
-                // Success
+                if (result.error) throw new Error(result.message || 'Unknown script error.');
+
                 showResponseMessage(result.message || 'Operation successful.', 'success', result.data);
-                
-                // Force data refresh ONLY if it was a write operation
+
                 const isWrite = (action === 'submit' || action === 'delete');
                  if (isWrite && window.verifyAndFetchAppData) {
-                    await window.verifyAndFetchAppData(true); // Force refresh global data
+                    await window.verifyAndFetchAppData(true);
                 }
 
-                // Call success callback if provided
-                if (successCallback) successCallback(result.data); // Pass back the data part of the response
+                if (successCallback) successCallback(result.data);
 
 
             } catch (error) {
-                // Failure
                 showResponseMessage(error.message, 'error');
-                 // Call error callback if provided
                  if(errorCallback) errorCallback(error);
 
             } finally {
-                 // Reset loading state
                  if(spinner) spinner.classList.add('hidden');
                  if(button) button.disabled = false;
                  if(buttonTextSpan) buttonTextSpan.textContent = originalButtonText;
             }
         }
-        
+
         // --- UI HELPER ---
          function showResponseMessage(message, type, data = null) {
             let content = `<p class="font-semibold">${message}</p>`;
-             // Simple data display (optional)
-            // if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-            //     content += `<div class="mt-1 text-left text-xs text-gray-600">(Details: ${JSON.stringify(data)})</div>`;
-            // }
-            
+
             ui.responseMessage.innerHTML = content;
             ui.responseMessage.className = `my-4 text-center p-3 rounded-lg text-sm ${type === 'success' ? 'bg-green-100 text-green-800' : type === 'error' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`;
             ui.responseMessage.classList.remove('hidden');
 
-             // Auto-hide message after a few seconds? (Optional)
-            // setTimeout(() => { ui.responseMessage.classList.add('hidden'); }, 5000);
+            // setTimeout(() => { ui.responseMessage.classList.add('hidden'); }, 5000); // Optional: Auto-hide
         }
 
         // --- INITIALIZE ---
-        resetFormsAndTabs(); // Start with a clean state
-         // Trigger initial resize handler to set correct mobile/desktop view
-         handleResize(); 
+        resetFormsAndTabs();
+        handleResize();
 
     });
     </script>
 </body>
 </html>
+
