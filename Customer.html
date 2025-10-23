@@ -406,12 +406,13 @@
                 console.warn("MODE data not found in appData.");
             }
 
-            // Use RATELISTS data
-            if (appData && appData.RATELISTS) {
-                allRates = appData.RATELISTS;
+            // Use RATES data - **FIXED KEY**
+            if (appData && appData.RATES && Array.isArray(appData.RATES)) {
+                allRates = appData.RATES;
                 ratesLoaded = true;
+                 console.log('Found RATES data:', appData.RATES.length, 'rates'); // DEBUG
             } else {
-                 console.warn("RATELISTS data not found in appData.");
+                 console.warn("Expected 'RATES' array not found in appData. Using empty array.", appData);
                  allRates = [];
             }
 
