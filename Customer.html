@@ -595,12 +595,43 @@
                      // FIX: Add all hidden inputs to the *second* cell
                      if (info.isWeight) { 
                          cell.classList.add('text-gray-600');
-                         const hiddenUid = document.createElement('input'); hiddenUid.type='hidden'; hiddenUid.name=`rate_${uid}_UID`; hiddenUid.value=uid; cell.appendChild(hiddenUid);
-                         const hiddenService = document.createElement('input'); hiddenService.type='hidden'; hiddenService.name=`rate_${uid}_Service`; hiddenService.value=modeName; cell.appendChild(hiddenService);
-                         const hiddenWeight = document.createElement('input'); hiddenWeight.type='hidden'; hiddenWeight.name=`rate_${uid}_Weight`; hiddenWeight.value=weight; cell.appendChild(hiddenWeight);
-                         const hiddenBranch = document.createElement('input'); hiddenBranch.type='hidden'; hiddenBranch.name=`rate_${uid}_Branch`; hiddenBranch.value = branchCode || ''; cell.appendChild(hiddenBranch);
-                         const hiddenShortCode = document.createElement('input'); hiddenShortCode.type='hidden'; hiddenShortCode.name=`rate_${uid}_ServiceShortCode`; hiddenShortCode.value = modeShortCode || ''; cell.appendChild(hiddenShortCode);
-                         const hiddenType = document.createElement('input'); hiddenType.type='hidden'; hiddenType.name=`rate_${uid}_TYPE`; hiddenType.value = 'CLIENT'; cell.appendChild(hiddenType);
+                         
+                         // REFORMATTED: Broke multi-statement lines into single statements to fix syntax error.
+                         const hiddenUid = document.createElement('input'); 
+                         hiddenUid.type='hidden'; 
+                         hiddenUid.name=`rate_${uid}_UID`; 
+                         hiddenUid.value=uid; 
+                         cell.appendChild(hiddenUid);
+                         
+                         const hiddenService = document.createElement('input'); 
+                         hiddenService.type='hidden'; 
+                         hiddenService.name=`rate_${uid}_Service`; 
+                         hiddenService.value=modeName; 
+                         cell.appendChild(hiddenService);
+                         
+                         const hiddenWeight = document.createElement('input'); 
+                         hiddenWeight.type='hidden'; 
+                         hiddenWeight.name=`rate_${uid}_Weight`; 
+                         hiddenWeight.value=weight; 
+                         cell.appendChild(hiddenWeight);
+                         
+                         const hiddenBranch = document.createElement('input'); 
+                         hiddenBranch.type='hidden'; 
+                         hiddenBranch.name=`rate_${uid}_Branch`; 
+                         hiddenBranch.value = branchCode || ''; 
+                         cell.appendChild(hiddenBranch);
+                         
+                         const hiddenShortCode = document.createElement('input'); 
+                         hiddenShortCode.type='hidden'; 
+                         hiddenShortCode.name=`rate_${uid}_ServiceShortCode`; 
+                         hiddenShortCode.value = modeShortCode || ''; 
+                         cell.appendChild(hiddenShortCode);
+                         
+                         const hiddenType = document.createElement('input'); 
+                         hiddenType.type='hidden'; 
+                         hiddenType.name=`rate_${uid}_TYPE`; 
+                         hiddenType.value = 'CLIENT'; 
+                         cell.appendChild(hiddenType);
                      }
                 });
 
@@ -734,7 +765,9 @@
                  const uid = nameParts[1];
                  const field = nameParts.slice(2).join('_');
                  if (!ratesGroupedByUID[uid]) ratesGroupedByUID[uid] = { UID: uid };
-                 ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined) ? '' : input.value;
+-                ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined) ? '' : input.value;
++                // FIX: Send null for empty fields, as the backend might skip empty strings
++                ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined || input.value === '') ? null : input.value;
              });
 
             // FIX: Filter out empty rows
@@ -743,7 +776,9 @@
                  let hasValue = false;
                  // Check if any Z1-Z14 field has a value
                  for (let i = 1; i <= 14; i++) {
-                     if (rateData[`Z${i}`] && rateData[`Z${i}`] !== '') {
+-                    if (rateData[`Z${i}`] && rateData[`Z${i}`] !== '') {
++                    // FIX: Check for not null, which correctly includes "0" and other values
++                    if (rateData[`Z${i}`] !== null) {
                          hasValue = true;
                          break; // Found a value, no need to check further
                      }
@@ -874,3 +909,5 @@
     </script>
 </body>
 </html>
+
+
