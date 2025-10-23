@@ -34,16 +34,12 @@
         #rateTableContainer thead th { position: sticky; top: 0; z-index: 5; }
         /* Sticky first columns for rate table */
          #rateTableContainer tbody td:nth-child(1),
-         #rateTableContainer tbody td:nth-child(2),
-         #rateTableContainer tbody td:nth-child(3) { position: sticky; left: 0; z-index: 1; background-color: #f9fafb; }
+         #rateTableContainer tbody td:nth-child(2) { position: sticky; left: 0; z-index: 1; background-color: #f9fafb; }
          #rateTableContainer tbody td:nth-child(2) { left: 80px; } /* Adjust based on actual width */
-         #rateTableContainer tbody td:nth-child(3) { left: 130px; } /* Adjust based on actual width */
+         
          #rateTableContainer thead th:nth-child(1),
-         #rateTableContainer thead th:nth-child(2),
-         #rateTableContainer thead th:nth-child(3) { position: sticky; left: 0; z-index: 6; }
+         #rateTableContainer thead th:nth-child(2) { position: sticky; left: 0; z-index: 6; }
          #rateTableContainer thead th:nth-child(2) { left: 80px; } /* Match tbody */
-         #rateTableContainer thead th:nth-child(3) { left: 130px; } /* Match tbody */
-
 
     </style>
 </head>
@@ -192,8 +188,8 @@
                             </div>
                         </div>
 
-                        <!-- Meta Data (Readonly) -->
-                        <div class="mt-5 border-t pt-4">
+                        <!-- Meta Data (Readonly & Hidden) -->
+                        <div class="mt-5 border-t pt-4 hidden">
                             <h3 class="text-md font-semibold text-gray-500 mb-3">Meta Data</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <input type="text" name="TIMESTAMP" id="timestamp" placeholder="Last Modified" class="form-input readonly-input" readonly>
@@ -433,6 +429,7 @@
                 console.warn("MODE data not found in appData.");
             }
 
+            // FIX: Check for "RATES" key as per user's cache data
             if (appData && appData.RATES && Array.isArray(appData.RATES)) {
                 allRates = appData.RATES;
                 ratesLoaded = true;
@@ -543,23 +540,20 @@
 
             const thead = table.createTHead();
             const headerRow = thead.insertRow();
+            // FIX: Removed UID from header
             const headersInfo = [
-                { text: 'Mode', width: 'w-20' },
-                { text: 'Wt', width: 'w-12' },
-                { text: 'UID', width: 'w-24' },
+                { text: 'Mode', width: 'w-24' }, // Increased width
+                { text: 'Wt', width: 'w-16' }, // Increased width
             ];
 
+            // FIX: Adjust left-offsets for 2 columns
              headersInfo.forEach((info, index) => {
                 const th = document.createElement('th');
                 th.textContent = info.text;
                 th.className = `rate-header sticky top-0 ${info.width}`;
                 let leftOffset = 0;
-                for(let i=0; i < index; i++) {
-                    if (headersInfo[i].width === 'w-20') leftOffset += 80;
-                    else if (headersInfo[i].width === 'w-12') leftOffset += 50;
-                    else if (headersInfo[i].width === 'w-24') leftOffset += 100;
-                    else leftOffset += 60;
-                }
+                if (index === 1) leftOffset = 96; // Approx width of w-24
+                
                 th.style.left = `${leftOffset}px`;
                 th.style.zIndex = '6';
                 headerRow.appendChild(th);
@@ -574,16 +568,15 @@
 
             const tbody = table.createTBody();
 
-            // This function is defined *inside* generateRateForm, so a const is fine here.
             const addRateRow = (modeName, modeShortCode, weight, branchCode) => {
                 const row = tbody.insertRow();
                 const uid = `${customerCode}${modeShortCode}${weight}`;
                 const existingRate = rateMap[uid];
 
+                // FIX: Only create 2 sticky columns
                 const labelsInfo = [
                     { value: modeName, width: headersInfo[0].width },
-                    { value: weight, width: headersInfo[1].width },
-                    { value: uid, width: headersInfo[2].width, isUid: true },
+                    { value: weight, width: headersInfo[1].width, isWeight: true },
                 ];
 
                 labelsInfo.forEach((info, index) => {
@@ -591,16 +584,14 @@
                      cell.className = `rate-label-col sticky ${info.width}`;
                      cell.textContent = info.value;
                      let leftOffset = 0;
-                     for(let i=0; i < index; i++) {
-                         if (headersInfo[i].width === 'w-20') leftOffset += 80;
-                         else if (headersInfo[i].width === 'w-12') leftOffset += 50;
-                         else if (headersInfo[i].width === 'w-24') leftOffset += 100;
-                         else leftOffset += 60;
-                     }
+                     if (index === 1) leftOffset = 96; // Approx width of w-24
+                     
                      cell.style.left = `${leftOffset}px`;
                      cell.style.zIndex = '1';
-                     if (info.isUid) {
-                         cell.classList.add('text-gray-400');
+                     
+                     // FIX: Add all hidden inputs to the *second* cell
+                     if (info.isWeight) { 
+                         cell.classList.add('text-gray-600');
                          const hiddenUid = document.createElement('input'); hiddenUid.type='hidden'; hiddenUid.name=`rate_${uid}_UID`; hiddenUid.value=uid; cell.appendChild(hiddenUid);
                          const hiddenService = document.createElement('input'); hiddenService.type='hidden'; hiddenService.name=`rate_${uid}_Service`; hiddenService.value=modeName; cell.appendChild(hiddenService);
                          const hiddenWeight = document.createElement('input'); hiddenWeight.type='hidden'; hiddenWeight.name=`rate_${uid}_Weight`; hiddenWeight.value=weight; cell.appendChild(hiddenWeight);
@@ -743,10 +734,26 @@
                  ratesGroupedByUID[uid][field] = (input.value === null || input.value === undefined) ? '' : input.value;
              });
 
-             for (const uid in ratesGroupedByUID) ratesPayload.push(ratesGroupedByUID[uid]);
+            // FIX: Filter out empty rows
+             for (const uid in ratesGroupedByUID) {
+                 const rateData = ratesGroupedByUID[uid];
+                 let hasValue = false;
+                 // Check if any Z1-Z14 field has a value
+                 for (let i = 1; i <= 14; i++) {
+                     if (rateData[`Z${i}`] && rateData[`Z${i}`] !== '') {
+                         hasValue = true;
+                         break; // Found a value, no need to check further
+                     }
+                 }
+                 
+                 // Only add to payload if at least one zone has a rate
+                 if (hasValue) {
+                     ratesPayload.push(rateData);
+                 }
+             }
 
              if (ratesPayload.length === 0) {
-                 showResponseMessage("No rate data found to submit.", "warning");
+                 showResponseMessage("No rate data entered. Nothing to save.", "warning");
                  return;
              }
 
