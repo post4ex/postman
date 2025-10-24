@@ -542,7 +542,10 @@ document.addEventListener('DOMContentLoaded', () => {
         'LedgerEmployees.html', 'LedgerJournalEntries.html', 'LedgerReports.html', 
         
         // Masters Submenu
-        'PincodeMaster.html', 'Branches.html', 'Mode.html', 'Carrier.html', 'Customer.html', 'Clients.html', 'Suppliers.html', 
+        'PincodeMaster.html', 'Branches.html', 'Mode.html', 'Carrier.html', 
+        'Customer.html', 
+        'Agent.html', // <<< ADDED AGENT.HTML HERE
+        'Clients.html', 'Suppliers.html', 
         'Vendors.html', 'Staff.html', 'Stock.html'
     ];
     
