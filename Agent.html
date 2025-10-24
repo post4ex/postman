@@ -302,7 +302,10 @@
             formTitle: document.getElementById('formTitle'),
             codeInput: document.getElementById('code'),
             agentNameInput: document.getElementById('agent_name'),
-            // REMOVED: gstIncCheck and gstIncHidden
+            // NEW: Added pincode, city, and state inputs
+            agentPincodeInput: document.getElementById('agent_pincode'),
+            agentCityInput: document.getElementById('agent_city'),
+            agentStateInput: document.getElementById('agent_state'),
              // Tabs
             tabAgentDetails: document.getElementById('tabAgentDetails'),
             tabRateList: document.getElementById('tabRateList'),
@@ -324,6 +327,57 @@
             // Global Response Message
             responseMessage: document.getElementById('responseMessage'),
         };
+
+        // --- NEW PINCODE FETCH FUNCTION ---
+        /**
+         * Fetches Pincode details to auto-populate City and State.
+         * This function is defined inside DOMContentLoaded to access the 'ui' object
+         * and 'showResponseMessage' function.
+         * @param {string} pincode The 6-digit pincode.
+         */
+        async function fetchPincodeDetails(pincode) {
+            if (!pincode || pincode.length !== 6) return;
+            
+            // Show a temporary loading message and disable fields
+            ui.agentCityInput.value = 'Fetching...';
+            ui.agentStateInput.value = '';
+            ui.agentCityInput.disabled = true;
+            ui.agentStateInput.disabled = true;
+
+            try {
+                const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+                if (!response.ok) throw new Error('Network response was not ok.');
+                
+                const data = await response.json();
+
+                if (data && data[0] && data[0].Status === 'Success') {
+                    const postOffice = data[0].PostOffice[0];
+                    // API uses 'District' for city
+                    ui.agentCityInput.value = postOffice.District || '';
+                    ui.agentStateInput.value = postOffice.State || '';
+                    
+                    // Clear any previous error messages
+                    if (!ui.responseMessage.classList.contains('hidden')) {
+                         ui.responseMessage.classList.add('hidden');
+                    }
+                } else {
+                    // Pincode not found
+                    ui.agentCityInput.value = '';
+                    ui.agentStateInput.value = '';
+                    console.warn('Pincode not found:', data[0].Message);
+                    showResponseMessage(`Pincode ${pincode} not found. Please check the number.`, 'error');
+                }
+            } catch (error) {
+                console.error('Failed to fetch pincode:', error);
+                ui.agentCityInput.value = '';
+                ui.agentStateInput.value = '';
+                showResponseMessage(`Error fetching pincode data: ${error.message}`, 'error');
+            } finally {
+                // Re-enable fields
+                ui.agentCityInput.disabled = false;
+                ui.agentStateInput.disabled = false;
+            }
+        }
 
         // --- VIEW LOGIC ---
         function isMobileView() { return window.innerWidth < 768; }
@@ -682,6 +736,16 @@
             renderAgentList(filtered);
         });
 
+        // --- NEW EVENT LISTENER FOR PINCODE ---
+        ui.agentPincodeInput.addEventListener('input', (e) => {
+            const pincode = e.target.value.trim();
+            // Only trigger API call when length is exactly 6
+            if (pincode.length === 6) {
+                fetchPincodeDetails(pincode);
+            }
+        });
+        // --- END NEW EVENT LISTENER ---
+
         ui.newAgentBtn.addEventListener('click', () => {
             resetFormsAndTabs();
             showFormView();
@@ -905,4 +969,3 @@
     </script>
 </body>
 </html>
-
