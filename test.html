@@ -28,14 +28,13 @@
         .tab-button.active { color: #4f46e5; border-bottom-color: #4f46e5; }
 
         /* Styles for the order list (similar to uploader) */
-        /* --- FIX: Removed max-height, added flex-grow --- */
+        /* --- FIX 2: Removed min-height --- */
         #miniOrderListContainer {
             width: 100%;
-             /* max-height: 300px; Removed */
-            flex-grow: 1; /* Added */
+            flex-grow: 1; /* Make list container grow */
             overflow-y: auto; border: 1px solid #e5e7eb;
             border-radius: 0.375rem; background-color: #f9fafb; padding: 0.5rem; margin-bottom: 0.5rem;
-            min-height: 200px; /* Added minimum height */
+            /* min-height: 200px; Removed */
         }
         #miniOrderList li {
             padding: 0.25rem 0.5rem; font-size: 0.875rem; cursor: pointer; border-radius: 0.25rem; margin-bottom: 0.25rem;
@@ -73,6 +72,12 @@
             #editForm { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
 
+        /* --- FIX 2: Ensure left column takes full height in grid --- */
+        .grid > .flex.flex-col {
+           min-height: 0; /* Allow flex item to shrink if needed */
+        }
+
+
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -90,8 +95,8 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 <!-- Left Column: Order List -->
-                <!-- --- FIX: Added flex container for height adjustment --- -->
-                <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow flex flex-col h-full">
+                <!-- --- FIX 2: Added min-height 0 to allow shrinking, kept h-full --- -->
+                <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow flex flex-col h-full" style="min-height: 0;">
                     <h2 class="text-lg font-semibold mb-3 text-gray-700 flex-shrink-0">Select Order</h2>
                      <input type="text" id="searchMiniOrder" placeholder="Filter orders by AWB, Ref, Client, Dest..." class="w-full p-2 mb-2 border border-gray-300 rounded-md text-sm form-input flex-shrink-0">
                     <div id="miniOrderListContainer" class="flex-grow"> <!-- Container now grows -->
@@ -263,7 +268,7 @@
 
             // Store data globally
             allOrders = Array.isArray(data.ORDERS) ? data.ORDERS : [];
-            // --- FIX: Ensure UPLOADS is an array ---
+            // --- FIX 1: Ensure UPLOADS is an array ---
             allUploads = Array.isArray(data.UPLOADS) ? data.UPLOADS : [];
             allClientsB2B = Array.isArray(data.B2B) ? data.B2B : [];
             allClientsB2B2C = Array.isArray(data.B2B2C) ? data.B2B2C : [];
@@ -275,9 +280,11 @@
 
             // Initial render
             filterAndRenderOrders();
-            // --- FIX: Render uploads if an order was previously selected (e.g., after refresh) ---
+            // --- FIX 1: Render uploads if an order was previously selected (e.g., after refresh) ---
             if (currentOrderRef) {
-                handleOrderSelection(currentOrderRef, null); // Re-render uploads for current order
+                // Find the currently selected LI element if it exists
+                const selectedLi = ui.orderList.querySelector(`li[data-order-ref="${currentOrderRef}"]`);
+                handleOrderSelection(currentOrderRef, selectedLi); // Re-render uploads for current order, passing the LI
             } else {
                  resetEditForm(); // Ensure form is hidden initially if no order selected
             }
@@ -285,7 +292,7 @@
         };
 
         // --- Order List Functions (Adapted from uploader.html) ---
-        // --- FIX: More robust date formatting ---
+        // --- FIX 3: More robust date formatting ---
         function formatDate(dateString) {
             if (!dateString) return 'N/A';
             try {
@@ -294,6 +301,10 @@
 
                 // Check if the date is valid
                 if (isNaN(date.getTime())) {
+                     // Check if it's already in YYYY-MM-DD format perhaps?
+                     if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+                         return dateString; // Assume it's already correct
+                     }
                     console.warn("formatDate: Invalid date string received:", dateString);
                     return 'Invalid Date';
                 }
@@ -336,7 +347,7 @@
                 li.dataset.orderRef = ref;
                 li.addEventListener('click', () => handleOrderSelection(ref, li));
                 // Highlight if it's the currently selected order
-                // --- FIX: Compare as strings for consistency ---
+                // --- FIX 1: Compare as strings for consistency ---
                 if(String(ref) === String(currentOrderRef)) {
                     li.classList.add('selected');
                 }
@@ -392,6 +403,7 @@
         }
 
         const handleOrderSelection = (orderRef, selectedLi) => {
+             console.log("Order selected:", orderRef); // Debug
             currentOrderRef = orderRef;
             selectedUploadData = null; // Clear selected upload when order changes
 
@@ -408,6 +420,7 @@
 
         // --- Uploads Table Functions ---
         const renderUploadsTable = (uploads) => {
+             console.log("Rendering uploads table with:", uploads); // Debug
             ui.uploadsTableBody.innerHTML = ''; // Clear existing rows
             if (!uploads || uploads.length === 0) {
                 ui.uploadsTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 p-4">No uploads found for this order.</td></tr>';
@@ -416,11 +429,10 @@
 
             uploads.forEach(upload => {
                 const tr = document.createElement('tr');
-                // --- FIX: Store identifier directly on the row for easier access ---
-                 const identifierValue = upload.UPLOAD_TYPE === 'KYC' ? upload.CUSTOMER_UID : upload.REFERANCE;
-                 tr.dataset.identifier = identifierValue || ''; // Use REFERANCE as fallback if UID missing
+                 // Store the necessary identifiers directly on the row dataset
+                 tr.dataset.identifier = (upload.UPLOAD_TYPE === 'KYC' ? upload.CUSTOMER_UID : upload.REFERANCE) || '';
+                 tr.dataset.fileUrl = upload.FILE_URL || ''; // Use File URL as the unique key
                  tr.dataset.uploadType = upload.UPLOAD_TYPE || '';
-                 tr.dataset.fileUrl = upload.FILE_URL || ''; // Store URL too for delete/edit verification
 
                 // Determine identifier text and details based on type
                 let identifierText = upload.AWB_NUMBER || upload.KYC_NUMBER || upload.REFERANCE;
@@ -439,24 +451,24 @@
                     <td><a href="${upload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline text-xs">View File</a></td>
                 `;
 
-                // --- FIX: Pass the necessary identifiers directly ---
+                // Add click listener to select the row and populate the form
                 tr.addEventListener('click', () => handleUploadSelection(upload, tr));
                 ui.uploadsTableBody.appendChild(tr);
             });
         };
 
-        // --- FIX: Accept upload data directly ---
+        // Handles clicking a row in the uploads table
         const handleUploadSelection = (uploadData, selectedTr) => {
             console.log("Upload selected:", uploadData); // Debug log
-            selectedUploadData = uploadData; // Store the selected upload data object
+            selectedUploadData = uploadData; // Store the full data object
 
             // Update highlighting in uploads table
              ui.uploadsTableBody.querySelectorAll('tr.selected').forEach(row => row.classList.remove('selected'));
              if(selectedTr) selectedTr.classList.add('selected');
 
-            populateEditForm(uploadData); // Populate form with the object
+            populateEditForm(uploadData); // Populate form with the data object
             ui.editFormContainer.classList.remove('hidden');
-             showResponseMessage(`Editing upload for ${uploadData.REFERANCE || uploadData.CUSTOMER_UID}.`, 'info');
+             showResponseMessage(`Editing upload for ${uploadData.REFERANCE || uploadData.CUSTOMER_UID}. File: ${uploadData.FILE_URL}`, 'info');
         };
 
 
@@ -465,7 +477,7 @@
             resetEditForm(); // Clear and hide all fields first
 
             const type = uploadData.UPLOAD_TYPE;
-            // --- FIX: Set hidden identifier directly from uploadData ---
+            // Store identifiers needed for update/delete in hidden fields
             ui.editIdentifierInput.value = (type === 'KYC' ? uploadData.CUSTOMER_UID : uploadData.REFERANCE) || '';
             ui.editUploadTypeInput.value = type || '';
              ui.editFileUrlHiddenInput.value = uploadData.FILE_URL || ''; // Store original URL
@@ -532,13 +544,13 @@
 
         // --- Action Handlers (Update/Delete) ---
         const handleUpdate = async () => {
-             // --- FIX: Check selectedUploadData directly ---
+             // --- FIX 1: Check selectedUploadData directly ---
              if (!selectedUploadData) {
                  console.error("Update clicked but selectedUploadData is null."); // Debug log
                  showResponseMessage('No upload selected to update. Please click a row in the table.', 'error');
                  return;
              }
-             // --- FIX: Get identifier from selectedUploadData ---
+             // Get identifiers from the stored object
             const identifier = (selectedUploadData.UPLOAD_TYPE === 'KYC' ? selectedUploadData.CUSTOMER_UID : selectedUploadData.REFERANCE) || '';
             const uploadType = selectedUploadData.UPLOAD_TYPE || '';
             const originalFileUrl = selectedUploadData.FILE_URL || ''; // Get original URL for verification
@@ -573,6 +585,10 @@
                      DOC_NUMBER: ui.editDocNumberInput.value.trim(),
                      DOC_TYPE: ui.editDocTypeSelect.value
                  }),
+                 // --- FIX 1: Add Branch, Code, UserName from original data ---
+                 BRANCH: selectedUploadData.BRANCH || '',
+                 CODE: selectedUploadData.CODE || '',
+                 USER_NAME: selectedUploadData.USER_NAME || '' // Keep original user for now
             };
 
             const payload = {
@@ -586,13 +602,13 @@
         };
 
         const handleDelete = async () => {
-              // --- FIX: Check selectedUploadData directly ---
+              // --- FIX 1: Check selectedUploadData directly ---
              if (!selectedUploadData) {
                  console.error("Delete clicked but selectedUploadData is null."); // Debug log
                  showResponseMessage('No upload selected to delete. Please click a row in the table.', 'error');
                  return;
              }
-              // --- FIX: Get identifier from selectedUploadData ---
+              // Get identifiers from the stored object
              const identifier = (selectedUploadData.UPLOAD_TYPE === 'KYC' ? selectedUploadData.CUSTOMER_UID : selectedUploadData.REFERANCE) || '';
              const uploadType = selectedUploadData.UPLOAD_TYPE || '';
              const originalFileUrl = selectedUploadData.FILE_URL || ''; // Get original URL
