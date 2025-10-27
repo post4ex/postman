@@ -28,10 +28,14 @@
         .tab-button.active { color: #4f46e5; border-bottom-color: #4f46e5; }
 
         /* Styles for the order list (similar to uploader) */
+        /* --- FIX: Removed max-height, added flex-grow --- */
         #miniOrderListContainer {
-            width: 100%; max-height: 300px; /* Increased height */
-             overflow-y: auto; border: 1px solid #e5e7eb;
+            width: 100%;
+             /* max-height: 300px; Removed */
+            flex-grow: 1; /* Added */
+            overflow-y: auto; border: 1px solid #e5e7eb;
             border-radius: 0.375rem; background-color: #f9fafb; padding: 0.5rem; margin-bottom: 0.5rem;
+            min-height: 200px; /* Added minimum height */
         }
         #miniOrderList li {
             padding: 0.25rem 0.5rem; font-size: 0.875rem; cursor: pointer; border-radius: 0.25rem; margin-bottom: 0.25rem;
@@ -86,15 +90,16 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 <!-- Left Column: Order List -->
-                <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow">
-                    <h2 class="text-lg font-semibold mb-3 text-gray-700">Select Order</h2>
-                    <div id="miniOrderListContainer">
-                        <input type="text" id="searchMiniOrder" placeholder="Filter orders by AWB, Ref, Client, Dest..." class="w-full p-2 mb-2 border border-gray-300 rounded-md text-sm form-input">
+                <!-- --- FIX: Added flex container for height adjustment --- -->
+                <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow flex flex-col h-full">
+                    <h2 class="text-lg font-semibold mb-3 text-gray-700 flex-shrink-0">Select Order</h2>
+                     <input type="text" id="searchMiniOrder" placeholder="Filter orders by AWB, Ref, Client, Dest..." class="w-full p-2 mb-2 border border-gray-300 rounded-md text-sm form-input flex-shrink-0">
+                    <div id="miniOrderListContainer" class="flex-grow"> <!-- Container now grows -->
                         <ul id="miniOrderList">
                             <li class="text-center text-gray-500 text-sm">Loading orders...</li>
                         </ul>
                     </div>
-                    <button id="loadMoreBtn" style="display: none;">Load More (Older)</button>
+                    <button id="loadMoreBtn" style="display: none;" class="flex-shrink-0">Load More (Older)</button>
                 </div>
 
                 <!-- Right Column: Uploads Table & Edit Form -->
@@ -126,7 +131,7 @@
                     <!-- Edit Form -->
                     <div id="editFormContainer" class="bg-white p-4 rounded-lg shadow hidden">
                         <h2 class="text-lg font-semibold mb-3 text-gray-700">Edit Upload Details</h2>
-                        <form id="editForm" class="space-y-4">
+                        <form id="editForm"> <!-- Removed space-y-4, using grid gap -->
                             <!-- Hidden input to store the primary identifier for update/delete -->
                             <input type="hidden" id="edit-identifier">
                             <input type="hidden" id="edit-upload-type">
@@ -258,6 +263,7 @@
 
             // Store data globally
             allOrders = Array.isArray(data.ORDERS) ? data.ORDERS : [];
+            // --- FIX: Ensure UPLOADS is an array ---
             allUploads = Array.isArray(data.UPLOADS) ? data.UPLOADS : [];
             allClientsB2B = Array.isArray(data.B2B) ? data.B2B : [];
             allClientsB2B2C = Array.isArray(data.B2B2C) ? data.B2B2C : [];
@@ -269,23 +275,40 @@
 
             // Initial render
             filterAndRenderOrders();
-            resetEditForm(); // Ensure form is hidden initially
+            // --- FIX: Render uploads if an order was previously selected (e.g., after refresh) ---
+            if (currentOrderRef) {
+                handleOrderSelection(currentOrderRef, null); // Re-render uploads for current order
+            } else {
+                 resetEditForm(); // Ensure form is hidden initially if no order selected
+            }
             showResponseMessage('Data loaded. Select an order from the list.', 'info');
         };
 
         // --- Order List Functions (Adapted from uploader.html) ---
+        // --- FIX: More robust date formatting ---
         function formatDate(dateString) {
-            // ... (keep the same formatDate function) ...
-             if (!dateString) return 'N/A';
+            if (!dateString) return 'N/A';
             try {
+                // Attempt to parse the date string (handles ISO 8601 like "2025-08-10T14:12:02.000Z")
                 const date = new Date(dateString);
-                if (isNaN(date.getTime())) { return 'Invalid Date'; }
+
+                // Check if the date is valid
+                if (isNaN(date.getTime())) {
+                    console.warn("formatDate: Invalid date string received:", dateString);
+                    return 'Invalid Date';
+                }
+
+                // Format as YYYY-MM-DD
                 const year = date.getFullYear();
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const day = String(date.getDate()).padStart(2, '0');
                 return `${year}-${month}-${day}`;
-            } catch (e) { return 'Invalid Date'; }
+            } catch (e) {
+                console.error("formatDate: Error parsing date:", dateString, e);
+                return 'Error Date'; // Indicate an error occurred
+            }
         }
+
 
         const renderMiniOrderList = (ordersToRender) => {
             ui.orderList.innerHTML = '';
@@ -313,7 +336,8 @@
                 li.dataset.orderRef = ref;
                 li.addEventListener('click', () => handleOrderSelection(ref, li));
                 // Highlight if it's the currently selected order
-                if(ref === currentOrderRef) {
+                // --- FIX: Compare as strings for consistency ---
+                if(String(ref) === String(currentOrderRef)) {
                     li.classList.add('selected');
                 }
                 ui.orderList.appendChild(li);
@@ -392,10 +416,14 @@
 
             uploads.forEach(upload => {
                 const tr = document.createElement('tr');
-                tr.dataset.uploadData = JSON.stringify(upload); // Store all data
+                // --- FIX: Store identifier directly on the row for easier access ---
+                 const identifierValue = upload.UPLOAD_TYPE === 'KYC' ? upload.CUSTOMER_UID : upload.REFERANCE;
+                 tr.dataset.identifier = identifierValue || ''; // Use REFERANCE as fallback if UID missing
+                 tr.dataset.uploadType = upload.UPLOAD_TYPE || '';
+                 tr.dataset.fileUrl = upload.FILE_URL || ''; // Store URL too for delete/edit verification
 
-                // Determine identifier and details based on type
-                let identifier = upload.AWB_NUMBER || upload.KYC_NUMBER || upload.REFERANCE;
+                // Determine identifier text and details based on type
+                let identifierText = upload.AWB_NUMBER || upload.KYC_NUMBER || upload.REFERANCE;
                 let details = '';
                 if(upload.UPLOAD_TYPE === 'MultiBox') details = `Child: ${upload.CHILD_AWB || 'N/A'}`;
                 else if(upload.UPLOAD_TYPE === 'KYC') details = `${upload.CUSTOMER_UID || 'N/A'} (${upload.KYC_TYPE || 'N/A'})`;
@@ -404,26 +432,29 @@
 
                 tr.innerHTML = `
                     <td class="whitespace-nowrap">${upload.UPLOAD_TYPE || 'N/A'}</td>
-                    <td class="whitespace-nowrap">${identifier || 'N/A'}</td>
+                    <td class="whitespace-nowrap">${identifierText || 'N/A'}</td>
                     <td>${details}</td>
                     <td class="whitespace-nowrap">${formatDate(upload.DATE_TIME)}</td>
                     <td class="whitespace-nowrap">${upload.USER_NAME || 'N/A'}</td>
                     <td><a href="${upload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline text-xs">View File</a></td>
                 `;
 
+                // --- FIX: Pass the necessary identifiers directly ---
                 tr.addEventListener('click', () => handleUploadSelection(upload, tr));
                 ui.uploadsTableBody.appendChild(tr);
             });
         };
 
+        // --- FIX: Accept upload data directly ---
         const handleUploadSelection = (uploadData, selectedTr) => {
-            selectedUploadData = uploadData; // Store the selected upload data
+            console.log("Upload selected:", uploadData); // Debug log
+            selectedUploadData = uploadData; // Store the selected upload data object
 
             // Update highlighting in uploads table
              ui.uploadsTableBody.querySelectorAll('tr.selected').forEach(row => row.classList.remove('selected'));
              if(selectedTr) selectedTr.classList.add('selected');
 
-            populateEditForm(uploadData);
+            populateEditForm(uploadData); // Populate form with the object
             ui.editFormContainer.classList.remove('hidden');
              showResponseMessage(`Editing upload for ${uploadData.REFERANCE || uploadData.CUSTOMER_UID}.`, 'info');
         };
@@ -434,7 +465,8 @@
             resetEditForm(); // Clear and hide all fields first
 
             const type = uploadData.UPLOAD_TYPE;
-            ui.editIdentifierInput.value = (type === 'KYC' ? uploadData.CUSTOMER_UID : uploadData.REFERANCE) || ''; // Store the key identifier
+            // --- FIX: Set hidden identifier directly from uploadData ---
+            ui.editIdentifierInput.value = (type === 'KYC' ? uploadData.CUSTOMER_UID : uploadData.REFERANCE) || '';
             ui.editUploadTypeInput.value = type || '';
              ui.editFileUrlHiddenInput.value = uploadData.FILE_URL || ''; // Store original URL
 
@@ -458,7 +490,6 @@
             } else if (type === 'KYC') {
                 ui.fieldKycNumber.style.display = 'block';
                 ui.editKycNumberInput.value = uploadData.KYC_NUMBER || '';
-                 // NOTE: We don't populate Customer UID input as it's the identifier
                 ui.fieldCustomerUid.style.display = 'block';
                  ui.editCustomerUidInput.value = uploadData.CUSTOMER_UID || '';
                  ui.editCustomerUidInput.classList.add('readonly-input'); // Make UID read-only for safety
@@ -501,23 +532,28 @@
 
         // --- Action Handlers (Update/Delete) ---
         const handleUpdate = async () => {
+             // --- FIX: Check selectedUploadData directly ---
              if (!selectedUploadData) {
-                 showResponseMessage('No upload selected to update.', 'error');
+                 console.error("Update clicked but selectedUploadData is null."); // Debug log
+                 showResponseMessage('No upload selected to update. Please click a row in the table.', 'error');
                  return;
              }
-            const identifier = ui.editIdentifierInput.value;
-            const uploadType = ui.editUploadTypeInput.value;
-            if(!identifier){
-                 showResponseMessage('Error: Missing identifier for update.', 'error');
+             // --- FIX: Get identifier from selectedUploadData ---
+            const identifier = (selectedUploadData.UPLOAD_TYPE === 'KYC' ? selectedUploadData.CUSTOMER_UID : selectedUploadData.REFERANCE) || '';
+            const uploadType = selectedUploadData.UPLOAD_TYPE || '';
+            const originalFileUrl = selectedUploadData.FILE_URL || ''; // Get original URL for verification
+
+            if(!identifier || !uploadType || !originalFileUrl){
+                 console.error("Update Error: Missing identifier, uploadType, or original file URL from selected data.", selectedUploadData);
+                 showResponseMessage('Error: Critical data missing from selected upload. Cannot update.', 'error');
                  return;
             }
 
             // Collect updated data based on type
             const newData = {
-                 // Include fields relevant to this upload type
-                 UPLOAD_TYPE: uploadType, // Keep type consistent
-                 REFERANCE: ui.editReferenceInput.value, // Keep original Reference
-                 FILE_URL: ui.editFileUrlHiddenInput.value, // Keep original URL
+                 UPLOAD_TYPE: uploadType,
+                 REFERANCE: ui.editReferenceInput.value, // Read-only, but send it back
+                 FILE_URL: originalFileUrl, // Send original URL back for matching
                  // Add editable fields based on type:
                  ...( (uploadType === 'POD' || uploadType === 'Reciept') && {
                      AWB_NUMBER: ui.editAwbNumberInput.value.trim(),
@@ -528,7 +564,7 @@
                      CHILD_AWB: ui.editChildAwbInput.value.trim()
                  }),
                  ...( uploadType === 'KYC' && {
-                     // CUSTOMER_UID: ui.editCustomerUidInput.value.trim(), // UID is the identifier, typically not edited here
+                     CUSTOMER_UID: selectedUploadData.CUSTOMER_UID, // Send original UID
                      KYC_NUMBER: ui.editKycNumberInput.value.trim(),
                      KYC_TYPE: ui.editKycTypeSelect.value
                  }),
@@ -542,6 +578,7 @@
             const payload = {
                 action: 'edit',
                 identifier: identifier, // This is REFERANCE or CUSTOMER_UID
+                 fileUrl: originalFileUrl, // Add fileUrl for precise matching on GAS side
                 newData: newData
             };
 
@@ -549,26 +586,33 @@
         };
 
         const handleDelete = async () => {
+              // --- FIX: Check selectedUploadData directly ---
              if (!selectedUploadData) {
-                 showResponseMessage('No upload selected to delete.', 'error');
+                 console.error("Delete clicked but selectedUploadData is null."); // Debug log
+                 showResponseMessage('No upload selected to delete. Please click a row in the table.', 'error');
                  return;
              }
-             const identifier = ui.editIdentifierInput.value;
-             const uploadType = ui.editUploadTypeInput.value;
-             if(!identifier){
-                 showResponseMessage('Error: Missing identifier for delete.', 'error');
+              // --- FIX: Get identifier from selectedUploadData ---
+             const identifier = (selectedUploadData.UPLOAD_TYPE === 'KYC' ? selectedUploadData.CUSTOMER_UID : selectedUploadData.REFERANCE) || '';
+             const uploadType = selectedUploadData.UPLOAD_TYPE || '';
+             const originalFileUrl = selectedUploadData.FILE_URL || ''; // Get original URL
+
+             if(!identifier || !uploadType || !originalFileUrl){
+                  console.error("Delete Error: Missing identifier, uploadType, or original file URL from selected data.", selectedUploadData);
+                 showResponseMessage('Error: Critical data missing from selected upload. Cannot delete.', 'error');
                  return;
              }
 
              // Confirmation dialog
-             if (!confirm(`Are you sure you want to delete the upload associated with ${identifier}? This action cannot be undone.`)) {
+             if (!confirm(`Are you sure you want to delete the upload associated with identifier ${identifier} (URL: ${originalFileUrl})? This action cannot be undone.`)) {
                  return;
              }
 
             const payload = {
                 action: 'delete',
                 identifier: identifier,
-                uploadType: uploadType // Send type to help GAS identify (esp. if using UID)
+                fileUrl: originalFileUrl, // Use File URL as the unique key for deletion
+                uploadType: uploadType // Still useful context for GAS
             };
 
              await sendRequestToGAS(payload, ui.deleteButton, ui.deleteSpinner, 'Delete');
@@ -609,6 +653,7 @@
 
 
             showResponseMessage(`Sending ${payload.action} request...`, 'info');
+             console.log("Sending payload to GAS:", payload); // Debug Log
 
             try {
                 const response = await fetch(GSCRIPT_URL, {
@@ -619,15 +664,16 @@
                 });
 
                 const result = await response.json();
+                 console.log("Received response from GAS:", result); // Debug Log
 
                 if (result.status === 'success') {
                     showResponseMessage(result.message || `${payload.action} successful! Refreshing data...`, 'success');
                     resetEditForm();
-                    // Trigger layout.js to refresh all app data
-                    showResponseMessage('Request successful! Refreshing data...', 'success');
+                    // Trigger layout.js to refresh all app data via custom event
+                     window.dispatchEvent(new CustomEvent('forceAppDataRefresh'));
                     // Give user time to see success message before refresh potentially hides it
                     setTimeout(() => {
-                         window.dispatchEvent(new CustomEvent('forceAppDataRefresh'));
+                         showResponseMessage('Data refreshed.', 'info'); // Update message after delay
                     }, 1500);
 
                 } else {
@@ -738,3 +784,4 @@
 
 </body>
 </html>
+
