@@ -242,8 +242,7 @@
 
                             <!-- Preview Area -->
                             <div id="image-view-area">
-                                <!-- ===== FIX 2: Added default centered text ===== -->
-                                <!-- ===== FIX 5: Added width: 100% to ensure text-align works ===== -->
+                                <!-- ===== FIX: Centralized placeholder ===== -->
                                 <span id="placeholder" style="width: 100%;">Select Camera or Upload to begin</span>
                                 <img id="image-preview" src="" alt="Image preview"/>
                                 <canvas id="preview-canvas"></canvas>
@@ -295,7 +294,7 @@
                                     <option value="EWB">EWB</option>
                                     <option value="CLN">CLN</option>
                                     <option value="ADH">ADH</option>
-                                    <option value="DBT">DBT</option>
+                                    <option valueA="DBT">DBT</option>
                                     <option value="CDT">CDT</option>
                                     <option value="HRD">HRD</option>
                                     <option value="AGT">AGT</option>
@@ -513,7 +512,7 @@
 
         function resetUploader() {
             stopCamera();
-            // ===== FIX 2: Set default text on reset =====
+            // ===== FIX: Set default centered text =====
             placeholder.textContent = 'Select Camera or Upload to begin';
             placeholder.style.display = 'block';
             previewCanvas.style.display = 'none';
@@ -589,7 +588,7 @@
             imageViewArea.style.display = 'none';
             scrollerContainer.style.display = 'none'; 
             
-            // ===== FIX 2: Clear placeholder text =====
+            // ===== FIX: Clear placeholder text =====
             placeholder.style.display = 'none';
             placeholder.textContent = ''; 
             
@@ -854,7 +853,7 @@
                     option.value = `Eway: ${product.EWAY_IF}, Type: EWB, Amount: ${product.AMOUNT}`;
                     option.dataset.docNumber = product.EWAY_IF;
                     option.dataset.docType = 'EWB';
-                    // ===== FIX 1: Added missing appendChild call =====
+                    // ===== FIX: Added missing appendChild call =====
                     docNumberDataList.appendChild(option); 
                 }
             });
@@ -972,7 +971,7 @@
             selectionCtx.strokeRect(selectionRect.startX, selectionRect.startY, width, height);
         }
 
-        // ===== FIX 4: Replaced entire onSelectionUp function with rotation-aware logic =====
+        // ===== FIX: Replaced entire onSelectionUp function with rotation-aware logic =====
         async function onSelectionUp(e) {
             if (!isSelecting) return;
             isSelecting = false;
@@ -1425,7 +1424,7 @@
                 } else {
                     // Clear only visual state
                     stopCamera();
-                    // ===== FIX 2: Set default text on camera start =====
+                    // ===== FIX: Set default text on camera start =====
                     placeholder.textContent = 'Starting camera...';
                     placeholder.style.display = 'block';
                     previewCanvas.style.display = 'none';
@@ -1451,7 +1450,7 @@
                         }
                     }
                     cameraFeed.style.display = 'block';
-                    // ===== FIX 2: Hide placeholder once feed starts =====
+                    // ===== FIX: Hide placeholder once feed starts =====
                     placeholder.style.display = 'none';
                     cameraFeed.srcObject = stream;
                     cameraFeed.play(); 
@@ -1552,7 +1551,7 @@
             imageViewArea.addEventListener('mousedown', onSelectionStart);
             imageViewArea.addEventListener('touchstart', onSelectionStart, { passive: false });
             
-            // ===== FIX 3: Added event listener for cropper rotate button =====
+            // ===== FIX: Added event listener for cropper rotate button =====
             cropRotateBtn.addEventListener('click', () => {
                 if (cropper) {
                     cropper.rotate(90); // Use cropper's built-in rotate method
@@ -1653,7 +1652,7 @@
                 }
             });
             
-            // --- MODIFIED: submitBtn ---
+            // --- ===== MODIFIED: submitBtn (Added Authentication) ===== ---
             submitBtn.addEventListener('click', async () => {
                 const rows = tableBody.rows;
                 const gscriptUrl = gscriptUrlInput.value.trim();
@@ -1663,6 +1662,42 @@
                 if (!gscriptUrl || !gscriptUrl.startsWith('https://script.google.com/macros/s/')) {
                     updateStatus("Please provide a valid Google Apps Script Web App URL.", true); gscriptUrlInput.focus(); return;
                 }
+
+                // --- ===== NEW: Get Auth Credentials ===== ---
+                let authCode = '';
+                let authToken = '';
+                let authUser = '';
+                let authRole = '';
+                const loginDataJSON = localStorage.getItem('loginData');
+
+                if (!loginDataJSON) {
+                    updateStatus("Authentication error: loginData not found. Please re-login.", true);
+                    return;
+                }
+                
+                try {
+                    const loginData = JSON.parse(loginDataJSON);
+                    // Find keys case-insensitively to be robust
+                    const codeKey = Object.keys(loginData).find(k => k.toLowerCase() === 'code');
+                    const tokenKey = Object.keys(loginData).find(k => k.toLowerCase() === 'token');
+                    const userKey = Object.keys(loginData).find(k => k.toLowerCase() === 'name'); // 'NAME' is used for USER in layout.js
+                    const roleKey = Object.keys(loginData).find(k => k.toLowerCase() === 'role');
+
+                    if (!codeKey || !tokenKey || !userKey || !roleKey) {
+                         throw new Error("Code, Token, Name, or Role not found in loginData.");
+                    }
+                    
+                    authCode = loginData[codeKey];
+                    authToken = loginData[tokenKey];
+                    authUser = loginData[userKey]; // This will be passed to GAS (obsolete but good for old script)
+                    authRole = loginData[roleKey]; // This will be passed to GAS
+                    
+                } catch (e) {
+                     updateStatus(`Authentication error: ${e.message}. Please re-login.`, true);
+                     return;
+                }
+                // --- ===== End of Auth Credentials ===== ---
+
                 submitBtn.disabled = true;
                 let successCount = 0;
                 
@@ -1677,13 +1712,13 @@
                     rowData.uploadType = rowUploadType;
                     rowData.refNumber = row.dataset.ref || '';
                     rowData.branch = row.dataset.branch || '';
-                    rowData.code = row.dataset.code || '';
+                    rowData.code = row.dataset.code || ''; // This is the Client Code (e.g., AGWL)
 
                     if (rowUploadType === 'KYC') {
                         rowData.kycNumber = row.cells[1].textContent;
-                        rowData.customerName = row.cells[2].textContent;
+                        rowData.customerName = row.cells[2].textContent; // Keep sending name for sheet readability
                         rowData.kycType = row.cells[3].textContent;
-                        rowData.customerUid = row.dataset.customerUid || '';
+                        rowData.customerUid = row.dataset.customerUid || ''; // Send UID
                     } else if (rowUploadType === 'Product') {
                         rowData.awbNumber = row.cells[1].textContent;
                         rowData.docType = row.cells[2].textContent;
@@ -1697,6 +1732,12 @@
                     }
 
                     const payload = {
+                        // --- ===== NEW: Auth fields added to payload ===== ---
+                        code: authCode,     // Auth Code (e.g., DDN)
+                        token: authToken,
+                        // --- End of Auth fields ---
+                        
+                        action: 'append', // Specify the action
                         imageData: imgElement.src,
                         fileName: `${rowData.awbNumber || rowData.kycNumber || rowData.docNumber}-${Date.now()}.jpg`,
                         rowData: rowData,
@@ -1719,6 +1760,7 @@
                     } catch (error) {
                         console.error('Submission error:', error);
                         row.style.backgroundColor = '#f8d7da';
+                        // Display the specific error from the server
                         updateStatus(`Error submitting row ${i + 1}: ${error.message}`, true);
                         submitBtn.disabled = false;
                         return;
@@ -1859,4 +1901,3 @@
     </script>
 </body>
 </html>
-
