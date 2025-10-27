@@ -243,7 +243,8 @@
                             <!-- Preview Area -->
                             <div id="image-view-area">
                                 <!-- ===== FIX 2: Added default centered text ===== -->
-                                <span id="placeholder">Select Camera or Upload to begin</span>
+                                <!-- ===== FIX 5: Added width: 100% to ensure text-align works ===== -->
+                                <span id="placeholder" style="width: 100%;">Select Camera or Upload to begin</span>
                                 <img id="image-preview" src="" alt="Image preview"/>
                                 <canvas id="preview-canvas"></canvas>
                                 <canvas id="selection-canvas"></canvas>
@@ -1858,3 +1859,4 @@
     </script>
 </body>
 </html>
+
