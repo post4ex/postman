@@ -92,13 +92,38 @@
         .slider-control { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 280px; justify-content: center; }
         .enhancement-sliders { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 15px; }
         input[type="range"] { flex-grow: 1; }
-        .main-content-wrapper { display: flex; flex-direction: column; width: 100%; gap: 15px; }
+        
+        /* --- MODIFIED: Original Layout Wrapper --- */
+        .main-content-wrapper { 
+            display: flex; 
+            flex-direction: column; /* Mobile-first: stacks preview on top of controls */
+            width: 100%; 
+            gap: 15px; 
+        }
         .preview-column, .controls-column { width: 100%; }
-        .controls-column { display: flex; flex-direction: column; gap: 15px; }
-        @media (min-width: 1024px) {
-            .main-content-wrapper { flex-direction: row; align-items: flex-start; }
-            .preview-column { flex: 1.5; min-width: 0; }
-            .controls-column { flex: 1; min-width: 0; }
+        .controls-column { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            /* This column will now contain the status bar, list, inputs, and table */
+        }
+        /* --- This is the key change for the layout --- */
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .main-content-wrapper { 
+                flex-direction: row; /* Side-by-side on desktop */
+                align-items: flex-start; 
+            }
+            .preview-column { 
+                flex: 1.5; /* Image preview takes more space */
+                min-width: 0; 
+                /* Sticky positioning for the preview area */
+                position: sticky;
+                top: 100px; /* Adjust based on your header height */
+            }
+            .controls-column { 
+                flex: 1; /* Controls take less space */
+                min-width: 0; 
+            }
             .data-table-container, #table-actions { margin-top: 0; }
         }
 
@@ -174,23 +199,14 @@
                         </div>
                     </div>
 
-                    <!-- Status Bar -->
-                    <div id="status-bar">Loading App Data...</div>
-                    
-                    <!-- === NEW: Mini Order List (Inserted here) === -->
-                    <div id="miniOrderListContainer" class="w-full" style="display: none;"> <!-- Hidden by default until data loads -->
-                        <input type="text" id="searchMiniOrder" placeholder="Filter orders..." class="w-full p-1 mb-2 border border-gray-300 rounded-md text-sm">
-                        <ul id="miniOrderList">
-                            <li class="text-center text-gray-500 text-sm">Loading orders...</li>
-                        </ul>
-                        <button id="loadMoreBtn" style="display: none;">Load More (Older)</button>
-                    </div>
-
                     <!-- Image Scroller (Original) -->
                     <div id="image-scroller-container"><div id="image-scroller"></div></div>
                     
                     <!-- Main Content Wrapper (Original) -->
+                    <!-- This div now controls the Left/Right split on desktop -->
                     <div class="main-content-wrapper">
+                        
+                        <!-- Left Column (Preview) -->
                         <div class="preview-column">
                             <!-- Inline Cropper -->
                             <div id="inline-cropper-wrapper">
@@ -233,7 +249,21 @@
                                 <video id="camera-feed" autoplay playsinline></video>
                             </div>
                         </div>
+
+                        <!-- Right Column (Controls) -->
                         <div class="controls-column">
+                            <!-- Status Bar -->
+                            <div id="status-bar">Loading App Data...</div>
+
+                            <!-- === NEW: Mini Order List (Inserted here) === -->
+                            <div id="miniOrderListContainer" class="w-full" style="display: none;"> <!-- Hidden by default until data loads -->
+                                <input type="text" id="searchMiniOrder" placeholder="Filter orders..." class="w-full p-1 mb-2 border border-gray-300 rounded-md text-sm">
+                                <ul id="miniOrderList">
+                                    <li class="text-center text-gray-500 text-sm">Loading orders...</li>
+                                </ul>
+                                <button id="loadMoreBtn" style="display: none;">Load More (Older)</button>
+                            </div>
+
                             <!-- Inputs (Original) -->
                             <div class="entry-input-group">
                                 <input type="text" id="awb-input" placeholder="AWB / Ref (Required)">
@@ -502,7 +532,6 @@
             cancelBtn.style.borderColor = '';
             cancelBtn.style.color = '';
             setInterfaceState('idle');
-            // This component is now inline, so no view switching is needed here.
         }
 
         function stopCamera() { 
@@ -1340,7 +1369,7 @@
                 } else {
                     // Clear only visual state
                     stopCamera();
-                    placeholder.style.display = 'none';
+                    placeholder.style.display = 'block';
                     previewCanvas.style.display = 'none';
                     imagePreview.src = '';
                     fileInput.value = ''; currentRotation = 0;
