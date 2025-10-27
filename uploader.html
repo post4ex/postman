@@ -12,29 +12,14 @@
     <!-- Cropper.js CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <style>
-        /* --- FIX STARTS HERE: Explicit Button Styling --- */
-        /* This ensures buttons look correct even with Tailwind's CSS reset */
+        /* --- Base Uploader Styles (Original) --- */
+        body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
         .uploader-container button {
-            padding: 8px 16px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            color: #333;
-            transition: background-color 0.2s, border-color 0.2s;
+            padding: 8px 16px; border: 1px solid #ccc; background-color: #fff; border-radius: 4px;
+            cursor: pointer; font-weight: 500; color: #333; transition: background-color 0.2s, border-color 0.2s;
         }
-        .uploader-container button:hover {
-            background-color: #f0f0f0;
-            border-color: #bbb;
-        }
-        .uploader-container button:disabled {
-            background-color: #e9ecef;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-         /* --- FIX ENDS HERE --- */
-
+        .uploader-container button:hover { background-color: #f0f0f0; border-color: #bbb; }
+        .uploader-container button:disabled { background-color: #e9ecef; cursor: not-allowed; opacity: 0.7; }
         .uploader-container {
             display: flex; flex-direction: column; align-items: center; gap: 15px;
             width: 100%; box-sizing: border-box;
@@ -43,7 +28,6 @@
             width: 100%; padding: 10px; background-color: #fffbe6; border-radius: 8px; border: 1px solid #ffeeba;
         }
         #gscript-container input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        
         #main-controls-strip {
             width: 100%; display: flex; justify-content: center; align-items: center;
             gap: 10px; flex-wrap: wrap; padding: 8px; background-color: #e9ecef;
@@ -53,34 +37,23 @@
             display: flex; flex-wrap: wrap; gap: 8px;
             align-items: center; justify-content: center;
         }
-        .separator {
-            width: 1px; height: 28px; background-color: #ced4da;
-        }
+        .separator { width: 1px; height: 28px; background-color: #ced4da; }
         @media (max-width: 680px) { .separator { display: none; } }
-
-        .type-btn {
-            padding: 6px 12px;
-        }
+        .type-btn { padding: 6px 12px; }
         .type-btn.active {
             background-color: #1E3A8A; color: #fff; border-color: #1E3A8A; font-weight: bold;
         }
-        .type-btn.active:hover {
-            background-color: #1c347a;
-        }
-        
+        .type-btn.active:hover { background-color: #1c347a; }
         #image-scroller-container {
             width: 100%; height: 80px; background-color: #eee; border: 1px solid #ddd;
             border-radius: 4px; padding: 5px; box-sizing: border-box; display: none;
         }
-        #image-scroller {
-            height: 100%; display: flex; gap: 5px; overflow-x: auto; white-space: nowrap;
-        }
+        #image-scroller { height: 100%; display: flex; gap: 5px; overflow-x: auto; white-space: nowrap; }
         .scroller-img {
             height: 100%; width: 70px; object-fit: cover; cursor: pointer;
             border: 2px solid transparent; border-radius: 2px; transition: border-color 0.2s;
         }
         .scroller-img.active { border-color: #1E3A8A; }
-        
         #image-view-area {
             border: 2px dashed #ccc; width: 100%; aspect-ratio: 4 / 3; display: flex;
             justify-content: center; align-items: center; text-align: center; color: #888;
@@ -89,16 +62,12 @@
         }
         #image-view-area.selectable { cursor: crosshair; }
         #image-preview { display: none; }
-        #camera-feed, #preview-canvas {
-            width: 100%; height: 100%; object-fit: contain;
-        }
+        #camera-feed, #preview-canvas { width: 100%; height: 100%; object-fit: contain; }
         #camera-feed.active-capture { cursor: pointer; }
         #preview-canvas { display: none; }
-
         #rotate-btn, #lock-btn, #cancel-btn, #cancel-all-btn, #file-input { display: none; }
         .entry-input-group { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; align-items: center; }
         .entry-input-group input, .entry-input-group select { padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; flex-grow: 1; }
-        
         .data-table-container { width: 100%; margin-top: 5px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 14px; }
@@ -106,52 +75,107 @@
         td .image-cell-content { width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; }
         td .image-cell-content img { max-width: 100%; max-height: 100%; object-fit: contain; }
         #table-actions { width: 100%; margin-top: 15px; }
-
         #inline-cropper-wrapper {
             display: none; width: 100%; padding: 10px; box-sizing: border-box;
             background-color: #f0f0f0; border: 2px dashed #1E3A8A; 
         }
         #cropper-container { width: 100%; height: 60vh; }
         #cropper-image { display: block; max-width: 100%; }
-        
         #selection-canvas {
             position: absolute; top: 0; left: 0; display: none; z-index: 10;
         }
-        
         #status-bar {
             width: 100%; padding: 8px; box-sizing: border-box; min-height: 2.5em;
             text-align: center; background-color: #e9ecef; border-radius: 4px; color: #495057;
         }
         #status-bar.error { color: #dc3545; font-weight: bold; }
-
         .slider-control { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 280px; justify-content: center; }
         .enhancement-sliders { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 15px; }
         input[type="range"] { flex-grow: 1; }
-
-        .main-content-wrapper { display: flex; flex-direction: column; width: 100%; gap: 15px; }
+        
+        /* --- MODIFIED: Original Layout Wrapper --- */
+        .main-content-wrapper { 
+            display: flex; 
+            flex-direction: column; /* Mobile-first: stacks preview on top of controls */
+            width: 100%; 
+            gap: 15px; 
+        }
         .preview-column, .controls-column { width: 100%; }
-        .controls-column { display: flex; flex-direction: column; gap: 15px; }
-
-        @media (min-width: 1024px) {
-            .main-content-wrapper { flex-direction: row; align-items: flex-start; }
-            .preview-column { flex: 1.5; min-width: 0; }
-            .controls-column { flex: 1; min-width: 0; }
+        .controls-column { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            /* This column will now contain the status bar, list, inputs, and table */
+        }
+        /* --- This is the key change for the layout --- */
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .main-content-wrapper { 
+                flex-direction: row; /* Side-by-side on desktop */
+                align-items: flex-start; 
+            }
+            .preview-column { 
+                flex: 1.5; /* Image preview takes more space */
+                min-width: 0; 
+                /* Sticky positioning for the preview area */
+                position: sticky;
+                top: 100px; /* Adjust based on your header height */
+            }
+            .controls-column { 
+                flex: 1; /* Controls take less space */
+                min-width: 0; 
+            }
             .data-table-container, #table-actions { margin-top: 0; }
         }
+
+        /* --- NEW: Mini Order List Styles --- */
+        #miniOrderListContainer {
+            width: 100%; max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb;
+            border-radius: 0.375rem; background-color: #f9fafb; padding: 0.5rem; margin-bottom: 0.5rem;
+        }
+        #miniOrderList li {
+            padding: 0.25rem 0.5rem; font-size: 0.875rem; cursor: pointer; border-radius: 0.25rem; margin-bottom: 0.25rem;
+            white-space: normal; line-height: 1.4; border-bottom: 1px solid #eee;
+        }
+         #miniOrderList li:last-child { border-bottom: none; }
+        #miniOrderList li:hover { background-color: #eef2ff; }
+        #miniOrderList li strong { color: #4338ca; display: block; margin-bottom: 2px; }
+        #miniOrderList .client-info { font-size: 0.8rem; color: #6b7280; }
+        #miniOrderList .details-info { font-size: 0.75rem; color: #4b5563; margin-top: 2px; }
+        #miniOrderList .dest-info { font-size: 0.8rem; color: #374151; margin-top: 2px;}
+        #loadMoreBtn {
+            display: block; width: 100%; text-align: center; padding: 6px; font-size: 0.8rem;
+            color: #4f46e5; background-color: #eef2ff; border: 1px solid #c7d2fe;
+            border-radius: 0.375rem; margin-top: 0.5rem; margin-bottom: 1rem; cursor: pointer;
+        }
+         #loadMoreBtn:hover { background-color: #e0e7ff; }
+         #loadMoreBtn:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
     <div id="header-placeholder"></div>
 
+    <!-- Main Content Wrapper -->
     <main class="w-full flex-grow p-4 sm:p-8">
         <div class="container mx-auto">
+            <!-- This is the single card layout from the original uploader.html -->
             <div class="card">
                 <div class="uploader-container">
+                    
                     <!-- Google Apps Script URL Input -->
                     <div id="gscript-container" style="display: none;">
                         <label for="gscript-url"><b>Paste your Google Apps Script Web App URL here:</b></label>
                         <input type="text" id="gscript-url" placeholder="https://script.google.com/macros/s/.../exec" value="https://script.google.com/macros/s/AKfycbwkC3OXNACPPH-LLPJyhkZKaDh6VtNgGbp8lMQbzz1XF327IN_OhFEEapOzNm3REbn5/exec">
+                    </div>
+
+                    <!-- Hidden fields for selected order data -->
+                    <div style="display: none;">
+                        <input type="hidden" id="selectedOrderRef">
+                        <input type="hidden" id="selectedOrderBranch">
+                        <input type="hidden" id="selectedOrderCode">
+                        <input type="hidden" id="selectedCustomerUid">
+                        <input type="hidden" id="selectedDocType">
                     </div>
 
                     <!-- Main Controls -->
@@ -175,10 +199,14 @@
                         </div>
                     </div>
 
-                    <!-- Scroller -->
+                    <!-- Image Scroller (Original) -->
                     <div id="image-scroller-container"><div id="image-scroller"></div></div>
                     
+                    <!-- Main Content Wrapper (Original) -->
+                    <!-- This div now controls the Left/Right split on desktop -->
                     <div class="main-content-wrapper">
+                        
+                        <!-- Left Column (Preview) -->
                         <div class="preview-column">
                             <!-- Inline Cropper -->
                             <div id="inline-cropper-wrapper">
@@ -214,21 +242,36 @@
 
                             <!-- Preview Area -->
                             <div id="image-view-area">
-                                <span id="placeholder">Image preview area</span>
+                                <!-- ===== FIX: Centralized placeholder ===== -->
+                                <span id="placeholder" style="width: 100%;"></span>
                                 <img id="image-preview" src="" alt="Image preview"/>
                                 <canvas id="preview-canvas"></canvas>
                                 <canvas id="selection-canvas"></canvas>
                                 <video id="camera-feed" autoplay playsinline></video>
                             </div>
                         </div>
+
+                        <!-- Right Column (Controls) -->
                         <div class="controls-column">
                             <!-- Status Bar -->
-                            <div id="status-bar"></div>
+                            <div id="status-bar">Loading App Data...</div>
 
-                            <!-- Inputs -->
+                            <!-- === NEW: Mini Order List (Inserted here) === -->
+                            <div id="miniOrderListContainer" class="w-full" style="display: none;"> <!-- Hidden by default until data loads -->
+                                <input type="text" id="searchMiniOrder" placeholder="Filter orders..." class="w-full p-1 mb-2 border border-gray-300 rounded-md text-sm">
+                                <ul id="miniOrderList">
+                                    <li class="text-center text-gray-500 text-sm">Loading orders...</li>
+                                </ul>
+                                <button id="loadMoreBtn" style="display: none;">Load More (Older)</button>
+                            </div>
+
+                            <!-- Inputs (Original) -->
                             <div class="entry-input-group">
-                                <input type="text" id="awb-input" placeholder="Enter AWB / Ref (Required)">
-                                <input type="text" id="customer-name-input" placeholder="Enter Customer Name" style="display: none;">
+                                <input type="text" id="awb-input" placeholder="AWB / Ref (Required)">
+                                
+                                <input type="text" id="customer-name-input" placeholder="Enter Customer Name" style="display: none;" list="customer-list">
+                                <datalist id="customer-list"></datalist>
+                                
                                 <select id="kyc-type-select" style="display: none;">
                                     <optgroup label="Individual">
                                         <option value="Aadhaar Card">Aadhaar Card</option>
@@ -251,17 +294,19 @@
                                     <option value="EWB">EWB</option>
                                     <option value="CLN">CLN</option>
                                     <option value="ADH">ADH</option>
-                                    <option value="DBT">DBT</option>
+                                    <option valueA="DBT">DBT</option>
                                     <option value="CDT">CDT</option>
                                     <option value="HRD">HRD</option>
                                     <option value="AGT">AGT</option>
                                     <option value="INT">INT</option>
                                 </select>
-                                <input type="text" id="doc-number-input" placeholder="Enter Doc Number" style="display: none;">
+                                <input type="text" id="doc-number-input" placeholder="Enter Doc Number" style="display: none;" list="doc-number-list">
+                                <datalist id="doc-number-list"></datalist>
+
                                 <input type="text" id="remark-input" placeholder="Status Remark (Default: Delivered)">
                                 <button id="pick-btn">Pick</button>
                             </div>
-                            <!-- Table -->
+                            <!-- Table (Original) -->
                             <div class="data-table-container">
                                 <table>
                                     <thead>
@@ -270,7 +315,7 @@
                                     <tbody id="data-table-body"></tbody>
                                 </table>
                             </div>
-                            <!-- Table Actions -->
+                            <!-- Table Actions (Original) -->
                             <div class="button-group" id="table-actions">
                                 <button id="delete-last-btn">Delete Last</button>
                                 <button id="clear-all-btn">Clear All</button>
@@ -297,61 +342,45 @@
         // Set up PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js`;
 
-        // DOM Elements are defined here...
-        // ... (The entire original inline script is preserved here) ...
-        // ... (I am omitting it for brevity, but it is fully included in the file) ...
-        const gscriptUrlInput = document.getElementById('gscript-url');
-        const cameraBtn = document.getElementById('camera-btn'), uploadBtn = document.getElementById('upload-btn'),
-              fileInput = document.getElementById('file-input'), placeholder = document.getElementById('placeholder'),
-              imagePreview = document.getElementById('image-preview'), cameraFeed = document.getElementById('camera-feed'),
-              previewCanvas = document.getElementById('preview-canvas'),
-              rotateBtn = document.getElementById('rotate-btn'), lockBtn = document.getElementById('lock-btn'),
-              cancelBtn = document.getElementById('cancel-btn'), cancelAllBtn = document.getElementById('cancel-all-btn'),
-              pickBtn = document.getElementById('pick-btn'), tableBody = document.getElementById('data-table-body'),
-              awbInput = document.getElementById('awb-input'), remarkInput = document.getElementById('remark-input'),
-              customerNameInput = document.getElementById('customer-name-input'),
-              kycTypeSelect = document.getElementById('kyc-type-select'),
-              docTypeSelect = document.getElementById('doc-type-select'),
-              docNumberInput = document.getElementById('doc-number-input'),
-              deleteLastBtn = document.getElementById('delete-last-btn'), clearAllBtn = document.getElementById('clear-all-btn'),
-              submitBtn = document.getElementById('submit-btn'), scrollerContainer = document.getElementById('image-scroller-container'),
-              scroller = document.getElementById('image-scroller'), 
-              inlineCropperWrapper = document.getElementById('inline-cropper-wrapper'),
-              imageViewArea = document.getElementById('image-view-area'),
-              cropperImage = document.getElementById('cropper-image'), cropConfirmBtn = document.getElementById('crop-confirm-btn'),
-              cropCancelBtn = document.getElementById('crop-cancel-btn'),
-              cropRotateBtn = document.getElementById('crop-rotate-btn'),
-              selectionCanvas = document.getElementById('selection-canvas'),
-              statusBar = document.getElementById('status-bar'),
-              uploadTypeStrip = document.querySelector('.upload-type-strip'),
-              tableHeaderRow = document.getElementById('table-header-row'),
-              // Enhancement DOM Elements
-              enhanceBtn = document.getElementById('enhance-btn'),
-              enhancementControls = document.getElementById('enhancement-controls'),
-              autoEnhanceBtn = document.getElementById('auto-enhance-btn'),
-              greyscaleBtn = document.getElementById('greyscale-btn'),
-              bwBtn = document.getElementById('bw-btn'),
-              sharpenBtn = document.getElementById('sharpen-btn'),
-              resetEnhanceBtn = document.getElementById('reset-enhance-btn'),
-              brightnessSlider = document.getElementById('brightness-slider'),
-              contrastSlider = document.getElementById('contrast-slider');
-
-
-        // State Variables
+        // --- State Variables ---
+        // (Original Uploader)
         let stream = null, currentRotation = 0, isImageLocked = false, cropper = null;
         let imageQueue = [], currentImageIndex = -1;
         let barcodeDetector;
-        let originalCropperSrc = null; // For image enhancement reset
-        let currentUploadType = 'POD'; // Default upload type
+        let originalCropperSrc = null;
         let isAwbLockedForProduct = false;
         let isCustomerNameLockedForKyc = false;
         const MAX_FILES = 50, MAX_ROWS = 20;
-
-        // OCR Selection State
         let isSelecting = false, selectionRect = {};
         let isProcessingOCR = false;
-        const selectionCtx = selectionCanvas.getContext('2d');
-        const previewCtx = previewCanvas.getContext('2d');
+        let selectionCtx, previewCtx;
+        let currentEnhancements = { brightness: 0, contrast: 0, sharpen: false, greyscale: false, bw: false };
+
+        // (New List)
+        let allOrders = [];
+        let displayedOrders = [];
+        let allClientsB2B = [];
+        let allClientsB2B2C = [];
+        let allProducts = [];
+        let currentUploadType = 'POD';
+        let displayDays = 90;
+
+        // --- UI Elements (declared) ---
+        let gscriptUrlInput, cameraBtn, uploadBtn, fileInput, placeholder, imagePreview, cameraFeed;
+        let previewCanvas, rotateBtn, lockBtn, cancelBtn, cancelAllBtn, pickBtn, tableBody;
+        let awbInput, remarkInput, customerNameInput, kycTypeSelect, docTypeSelect, docNumberInput;
+        let deleteLastBtn, clearAllBtn, submitBtn, scrollerContainer, scroller;
+        let inlineCropperWrapper, imageViewArea, cropperImage, cropConfirmBtn, cropCancelBtn;
+        let cropRotateBtn, selectionCanvas, statusBar, uploadTypeStrip, tableHeaderRow;
+        let enhanceBtn, enhancementControls, autoEnhanceBtn, greyscaleBtn, bwBtn, sharpenBtn, resetEnhanceBtn;
+        let brightnessSlider, contrastSlider;
+        // (New List UI)
+        let miniOrderListContainer, orderList, searchMiniOrderInput, loadMoreBtn;
+        let customerDataList, docNumberDataList;
+        let selectedOrderRefInput, selectedOrderBranchInput, selectedOrderCodeInput;
+        let selectedCustomerUidInput, selectedDocTypeInput;
+        // This is a flag to ensure we only try to load from cache once
+        let hasLoadedFromCache = false;
 
 
         // --- Barcode Detector Initialization ---
@@ -370,8 +399,10 @@
         
         // --- Status Update Logic ---
         function updateStatus(message, isError = false) {
-            statusBar.textContent = message;
-            statusBar.classList.toggle('error', isError);
+            if (statusBar) {
+                statusBar.textContent = message;
+                statusBar.classList.toggle('error', isError);
+            }
         }
 
         // --- Scanning Logic ---
@@ -407,17 +438,14 @@
         // --- Image Compression Logic ---
         async function compressImage(dataUrl, targetSizeKB, maxDimension) {
             const targetSizeBytes = targetSizeKB * 1024;
-
             const img = await new Promise(resolve => {
                 const image = new Image();
                 image.onload = () => resolve(image);
                 image.src = dataUrl;
             });
-
             let { width, height } = img;
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-
             if (width > maxDimension || height > maxDimension) {
                 if (width > height) {
                     height = Math.round(height * (maxDimension / width));
@@ -430,31 +458,26 @@
             canvas.width = width;
             canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
-
             let quality = 0.95;
             let compressedDataUrl;
             let sizeInBytes;
-
             do {
                 compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
                 sizeInBytes = atob(compressedDataUrl.split(',')[1]).length;
                 if (sizeInBytes > targetSizeBytes && quality > 0.1) {
-                    quality -= 0.05; // Decrease quality for the next iteration
+                    quality -= 0.05;
                 }
             } while (sizeInBytes > targetSizeBytes && quality > 0.1);
-            
-            const finalSize = (sizeInBytes / 1024).toFixed(2);
-            console.log(`Image compressed to ${finalSize} KB for target of ${targetSizeKB} KB.`);
+            console.log(`Image compressed to ${(sizeInBytes / 1024).toFixed(2)} KB.`);
             return compressedDataUrl;
         }
 
 
-        // --- Main App Logic ---
+        // --- Main App Logic (Original) ---
         function setInterfaceState(state) {
-            // Default visibility for idle state
             cameraBtn.style.display = 'inline-block';
             uploadBtn.style.display = 'inline-block';
-            uploadTypeStrip.style.display = 'flex'; // Show by default
+            uploadTypeStrip.style.display = 'flex';
             rotateBtn.style.display = 'none';
             lockBtn.style.display = 'none';
             cancelBtn.style.display = 'none';
@@ -469,15 +492,14 @@
                 previewCanvas.style.display = 'none';
                 cameraFeed.style.display = 'block';
                 cameraFeed.classList.add('active-capture');
-                uploadTypeStrip.style.display = 'none'; // Hide type strip
+                uploadTypeStrip.style.display = 'none';
             } else if (state === 'preview') {
                 cameraBtn.style.display = 'none';
                 uploadBtn.style.display = 'none';
                 rotateBtn.style.display = 'inline-block';
                 lockBtn.style.display = 'inline-block';
                 imageViewArea.classList.add('selectable');
-                uploadTypeStrip.style.display = 'none'; // Hide type strip
-
+                uploadTypeStrip.style.display = 'none';
                 if (imageQueue.length > 0) {
                     cancelBtn.style.display = 'inline-block';
                     cancelAllBtn.style.display = 'inline-block';
@@ -490,30 +512,28 @@
 
         function resetUploader() {
             stopCamera();
+            // ===== FIX: Set default centered text =====
+            placeholder.textContent = 'Select Camera or Upload to begin';
             placeholder.style.display = 'block';
             previewCanvas.style.display = 'none';
             cameraFeed.style.display = 'none'; 
-            imagePreview.src = ''; // Clear image source
+            imagePreview.src = '';
             fileInput.value = ''; currentRotation = 0;
             isImageLocked = false; lockBtn.textContent = 'Lock'; lockBtn.style.backgroundColor = '';
             imageQueue = []; currentImageIndex = -1;
             scroller.innerHTML = ''; scrollerContainer.style.display = 'none';
-            
             inlineCropperWrapper.style.display = 'none';
             imageViewArea.style.display = 'flex';
             selectionCanvas.style.display = 'none';
-            updateStatus('');
-
+            updateStatus('Select an order or start capture');
             isAwbLockedForProduct = false;
             awbInput.disabled = false;
             isCustomerNameLockedForKyc = false;
             customerNameInput.disabled = false;
-
             cancelBtn.textContent = 'Cancel';
             cancelBtn.style.backgroundColor = '';
             cancelBtn.style.borderColor = '';
             cancelBtn.style.color = '';
-
             setInterfaceState('idle');
         }
 
@@ -522,7 +542,9 @@
                 stream.getTracks().forEach(track => track.stop()); 
                 stream = null; 
             }
-            cameraFeed.removeEventListener('click', handleVideoStreamClick);
+            if (cameraFeed) {
+                cameraFeed.removeEventListener('click', handleVideoStreamClick);
+            }
         }
 
         function displayImage(index) {
@@ -552,11 +574,9 @@
             });
         }
         
-        // --- Cropper Logic ---
+        // --- Cropper Logic (Original) ---
         function initCropper(imageSrc, originalFileName) {
-            originalCropperSrc = imageSrc; // Save the original source for resetting enhancements
-            
-            // Manually reset state and UI for the new image
+            originalCropperSrc = imageSrc;
             currentEnhancements = { brightness: 0, contrast: 0, sharpen: false, greyscale: false, bw: false };
             if (brightnessSlider) brightnessSlider.value = 0;
             if (contrastSlider) contrastSlider.value = 0;
@@ -564,80 +584,329 @@
             if (greyscaleBtn) greyscaleBtn.style.backgroundColor = '';
             if (bwBtn) bwBtn.style.backgroundColor = '';
             if (enhancementControls) enhancementControls.style.display = 'none';
-
             inlineCropperWrapper.style.display = 'block';
             imageViewArea.style.display = 'none';
             scrollerContainer.style.display = 'none'; 
-
+            
+            // ===== FIX: Clear placeholder text =====
+            placeholder.style.display = 'none';
+            placeholder.textContent = ''; 
+            
             cropperImage.src = imageSrc;
             if (cropper) cropper.destroy();
             cropper = new Cropper(cropperImage, {
-                viewMode: 1, // Allow freeform cropping
+                viewMode: 1,
                 background: false,
             });
             
             const confirmCropHandler = async () => {
                 const croppedCanvas = cropper.getCroppedCanvas({
-                    minWidth: 256,
-                    minHeight: 256,
-                    maxWidth: 4096,
-                    maxHeight: 4096,
-                    fillColor: '#fff',
-                    imageSmoothingEnabled: true,
-                    imageSmoothingQuality: 'high',
+                    minWidth: 256, minHeight: 256, maxWidth: 4096, maxHeight: 4096,
+                    fillColor: '#fff', imageSmoothingEnabled: true, imageSmoothingQuality: 'high',
                 });
                 if (!croppedCanvas) { return; }
                 let croppedDataUrl = croppedCanvas.toDataURL('image/png');
-                
                 inlineCropperWrapper.style.display = 'none';
                 imageViewArea.style.display = 'flex';
                 if (imageQueue.length > 1) scrollerContainer.style.display = 'block';
-
                 imagePreview.onload = () => {
                     drawPreview();
                     scanBarcodeFromPreview();
                     imagePreview.onload = null;
                 };
                 imagePreview.src = croppedDataUrl; 
-
                 placeholder.style.display = 'none';
                 cameraFeed.style.display = 'none';
                 previewCanvas.style.display = 'block';
                 currentRotation = 0;
-
                 if (currentImageIndex !== -1) {
                     const newFile = await dataURLtoFile(croppedDataUrl, originalFileName.replace(/\.\w+$/, '.png'));
                     imageQueue[currentImageIndex] = newFile;
                     renderScroller();
                 }
-
                 setInterfaceState('preview');
                 cropConfirmBtn.removeEventListener('click', confirmCropHandler);
             };
             cropConfirmBtn.addEventListener('click', confirmCropHandler, { once: true });
         }
         
-        cropCancelBtn.addEventListener('click', () => {
-            inlineCropperWrapper.style.display = 'none';
-            imageViewArea.style.display = 'flex';
-            if (imageQueue.length > 1) scrollerContainer.style.display = 'block';
-            if (cropper) cropper.destroy();
-            if (!imagePreview.src) {
-                resetUploader();
+        // --- NEW: Data Loading from appData ---
+        // This is now called by the event listener OR the cache check
+        const initializeOrderData = (event) => {
+            console.log("DEBUG: initializeOrderData triggered");
+            
+            // Prevent multiple loads
+            if (hasLoadedFromCache && event.type === 'appDataLoaded') {
+                console.log("DEBUG: Data already loaded from cache, ignoring appDataLoaded event.");
+                return;
             }
-        });
-        
-        cropRotateBtn.addEventListener('click', () => {
-            if (cropper) {
-                cropper.rotate(90);
+            if (hasLoadedFromCache && event.type === 'appDataRefreshed') {
+                 console.log("DEBUG: Refreshing data from appDataRefreshed event.");
+                 // Allow refresh to proceed
             }
-        });
+            
+            if (!event || !event.detail || !event.detail.data) {
+                console.error("DEBUG: Invalid event passed to initializeOrderData:", event);
+                updateStatus('No app data loaded.', true);
+                return;
+            };
 
+            const data = event.detail.data;
+            console.log("DEBUG: Data received from appData:", data);
+
+            allOrders = Array.isArray(data.ORDERS) ? data.ORDERS : [];
+            allOrders = allOrders
+                .filter(order => order && order.ORDER_DATE)
+                .sort((a, b) => {
+                    try {
+                        const dateA = new Date(a.ORDER_DATE);
+                        const dateB = new Date(b.ORDER_DATE);
+                        if (isNaN(dateA.getTime())) return 1;
+                        if (isNaN(dateB.getTime())) return -1;
+                        return dateB - dateA;
+                    } catch (e) {
+                         return 0;
+                    }
+                });
+            console.log("DEBUG: Sorted allOrders count:", allOrders.length);
+
+            allClientsB2B = Array.isArray(data.B2B) ? data.B2B : [];
+            allClientsB2B2C = Array.isArray(data.B2B2C) ? data.B2B2C : [];
+            allProducts = Array.isArray(data.PRODUCT) ? data.PRODUCT : [];
+            console.log("DEBUG: B2B:", allClientsB2B.length, "B2B2C:", allClientsB2B2C.length, "Products:", allProducts.length);
+
+            displayDays = 90; // Default load
+            filterAndRenderOrders();
+            updateUIForUploadType(currentUploadType);
+            updateStatus("App data loaded. Select an order or start capture.");
+            miniOrderListContainer.style.display = 'block'; // Show the list
+            hasLoadedFromCache = true; // Mark as loaded
+        };
+
+        // --- NEW: Date Formatting Helper ---
+        function formatDate(dateString) {
+             if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) {
+                     return 'Invalid Date';
+                }
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            } catch (e) {
+                return 'Invalid Date';
+            }
+        }
+
+        // --- NEW: List Rendering ---
+        const renderMiniOrderList = (ordersToRender) => {
+            if (!miniOrderList) return;
+            miniOrderList.innerHTML = '';
+             displayedOrders = ordersToRender;
+
+            if (!ordersToRender || ordersToRender.length === 0) {
+                miniOrderList.innerHTML = '<li class="text-center text-gray-500 text-sm">No matching orders found.</li>';
+                if(loadMoreBtn) loadMoreBtn.style.display = 'none';
+                return;
+            }
+
+            ordersToRender.forEach((order) => {
+                const ref = order.REFERANCE;
+                 if (!ref) return;
+
+                const displayAwb = order.AWB_NUMBER || ref;
+                const consignorClient = allClientsB2B2C.find(c => c.UID === order.CONSIGNOR);
+                const consignorName = consignorClient ? (consignorClient.NAME || 'Unknown') : 'Unknown';
+                const consigneeClient = allClientsB2B2C.find(c => c.UID === order.CONSIGNEE);
+                const consigneeName = consigneeClient ? (consigneeClient.NAME || 'Unknown') : 'Unknown';
+                const destination = order.DEST_CITY || 'N/A';
+                const orderDate = formatDate(order.ORDER_DATE);
+                const value = order.VALUE || 0;
+                const pieces = order.PIECS || 0;
+
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${displayAwb}</strong>
+                                <div class="client-info">${consignorName} -> ${consigneeName}</div>
+                                <div class="details-info">Date: ${orderDate} | Value: ${value} | Pcs: ${pieces}</div>
+                                <div class="dest-info">Dest: ${destination}</div>`;
+                li.dataset.orderRef = ref;
+                li.addEventListener('click', () => selectOrderForInputs(ref));
+                miniOrderList.appendChild(li);
+            });
+
+            const searchTerm = searchMiniOrderInput ? searchMiniOrderInput.value.toLowerCase() : "";
+            const totalFilteredCount = filterOrdersBySearchTerm(searchTerm).length;
+            
+            if (ordersToRender.length < totalFilteredCount) {
+                 if(loadMoreBtn) {
+                    loadMoreBtn.style.display = 'block';
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.textContent = `Load More (${ordersToRender.length} / ${totalFilteredCount})`;
+                 }
+            } else {
+                 if(loadMoreBtn) loadMoreBtn.style.display = 'none';
+            }
+        };
+
+        // --- NEW: Selection Handling ---
+        const selectOrderForInputs = (orderRef) => {
+            const order = allOrders.find(o => o.REFERANCE === orderRef);
+            if (!order) return;
+
+            // Store hidden data
+            selectedOrderRefInput.value = order.REFERANCE || '';
+            selectedOrderBranchInput.value = order.BRANCH || '';
+            selectedOrderCodeInput.value = order.CODE || '';
+            console.log("Stored Hidden Order Data:", { ref: order.REFERANCE, branch: order.BRANCH, code: order.CODE });
+
+            const displayValue = order.AWB_NUMBER || order.REFERANCE || 'N/A';
+
+            if (currentUploadType === 'KYC') {
+                awbInput.value = '';
+                awbInput.placeholder = "Enter KYC Number (Required)";
+            } else {
+                awbInput.value = displayValue;
+                 updateUIForUploadType(currentUploadType);
+            }
+
+            customerNameInput.value = '';
+            docNumberInput.value = '';
+            remarkInput.value = '';
+            selectedCustomerUidInput.value = '';
+            selectedDocTypeInput.value = '';
+
+            populateKycData(order);
+            populateProductData(order);
+
+            updateStatus(`Selected Order: ${displayValue}. Datalists populated.`);
+            console.log("Selected Order Object:", order);
+            
+            if (currentUploadType === 'KYC') {
+                awbInput.focus();
+            } else if (currentUploadType === 'Product') {
+                docNumberInput.focus();
+            } else {
+                 awbInput.focus();
+            }
+        };
+
+        // --- NEW: Datalist Population Functions ---
+        const populateKycData = (order) => {
+            if(!customerDataList) return;
+            customerDataList.innerHTML = '';
+            const clientCode = order.CODE;
+            const consignorUID = order.CONSIGNOR;
+            const consigneeUID = order.CONSIGNEE;
+
+             if (consignorUID) {
+                 const consignorClient = allClientsB2B2C.find(c => c.UID === consignorUID);
+                 if (consignorClient && consignorClient.NAME) {
+                     const option = document.createElement('option');
+                     option.value = consignorClient.NAME;
+                     customerDataList.appendChild(option);
+                 }
+            }
+            if (consigneeUID) {
+                 const consigneeClient = allClientsB2B2C.find(c => c.UID === consigneeUID);
+                 if (consigneeClient && consigneeClient.NAME) {
+                     const exists = Array.from(customerDataList.options).some(opt => opt.value === consigneeClient.NAME);
+                     if (!exists) {
+                         const option = document.createElement('option');
+                         option.value = consigneeClient.NAME;
+                         customerDataList.appendChild(option);
+                     }
+                 }
+            }
+             if (clientCode) {
+                 const parentClient = allClientsB2B.find(c => c.CODE === clientCode);
+                 if (parentClient && parentClient.CLIENT_NAME) {
+                     const exists = Array.from(customerDataList.options).some(opt => opt.value === parentClient.CLIENT_NAME);
+                     if (!exists) {
+                         const option = document.createElement('option');
+                         option.value = parentClient.CLIENT_NAME;
+                         customerDataList.appendChild(option);
+                     }
+                 }
+            }
+        };
+        
+        const populateProductData = (order) => {
+            if(!docNumberDataList) return;
+            docNumberDataList.innerHTML = '';
+            const orderRef = order.REFERANCE;
+            if (!orderRef || !allProducts) return;
+
+            const productsForOrder = allProducts.filter(p => p.RERERANCE === orderRef);
+
+            productsForOrder.forEach(product => {
+                if (product.DOC_NUMBER) {
+                    const option = document.createElement('option');
+                    option.value = `Doc: ${product.DOC_NUMBER}, Type: ${product.TYPE}, Amount: ${product.AMOUNT}`;
+                    option.dataset.docNumber = product.DOC_NUMBER;
+                    option.dataset.docType = product.TYPE;
+                    docNumberDataList.appendChild(option);
+                }
+                if (product.EWAY_IF && String(product.EWAY_IF).trim() !== "") {
+                    const option = document.createElement('option');
+                    option.value = `Eway: ${product.EWAY_IF}, Type: EWB, Amount: ${product.AMOUNT}`;
+                    option.dataset.docNumber = product.EWAY_IF;
+                    option.dataset.docType = 'EWB';
+                    // ===== FIX: Added missing appendChild call =====
+                    docNumberDataList.appendChild(option); 
+                }
+            });
+        };
+
+        // --- NEW: Filtering Logic ---
+        function filterOrdersBySearchTerm(searchTerm) {
+             if (!Array.isArray(allOrders)) return [];
+             if (!searchTerm) return allOrders;
+             
+             return allOrders.filter(order => {
+                const consignorClient = allClientsB2B2C.find(c => c.UID === order.CONSIGNOR);
+                const consignorName = consignorClient ? (consignorClient.NAME || '') : '';
+                const consigneeClient = allClientsB2B2C.find(c => c.UID === order.CONSIGNEE);
+                const consigneeName = consigneeClient ? (consigneeClient.NAME || '') : '';
+                const destination = order.DEST_CITY || '';
+                const orderDateStr = formatDate(order.ORDER_DATE).toLowerCase();
+
+                 return (order.REFERANCE ? String(order.REFERANCE).toLowerCase().includes(searchTerm) : false) ||
+                        (order.AWB_NUMBER ? String(order.AWB_NUMBER).toLowerCase().includes(searchTerm) : false) ||
+                        (consignorName ? consignorName.toLowerCase().includes(searchTerm) : false) ||
+                        (consigneeName ? consigneeName.toLowerCase().includes(searchTerm) : false) ||
+                        (destination ? destination.toLowerCase().includes(searchTerm) : false) ||
+                        (orderDateStr ? orderDateStr.includes(searchTerm) : false);
+             });
+        }
+        
+        function filterOrdersByDate(orders) {
+             const cutoffDate = new Date();
+             cutoffDate.setDate(cutoffDate.getDate() - displayDays);
+             cutoffDate.setHours(0, 0, 0, 0);
+             if (!Array.isArray(orders)) return [];
+             return orders.filter(order => {
+                 const orderDate = order.ORDER_DATE ? new Date(order.ORDER_DATE) : null;
+                 return orderDate && orderDate >= cutoffDate;
+             });
+        }
+
+        function filterAndRenderOrders() {
+            const searchTerm = searchMiniOrderInput ? searchMiniOrderInput.value.toLowerCase() : "";
+            let searchFilteredOrders = filterOrdersBySearchTerm(searchTerm);
+            if (!Array.isArray(searchFilteredOrders)) searchFilteredOrders = [];
+            const dateFilteredOrders = filterOrdersByDate(searchFilteredOrders);
+            renderMiniOrderList(dateFilteredOrders);
+        }
+
+        // --- Original drawPreview and OCR logic ---
         function drawPreview() {
-            if (!imagePreview.src) return;
+            if (!imagePreview.src || !imageViewArea) return;
             const dpr = window.devicePixelRatio || 1;
             const containerW = imageViewArea.clientWidth;
             const containerH = imageViewArea.clientHeight;
+            if (!containerW || !containerH) return;
             
             previewCanvas.width = containerW * dpr;
             previewCanvas.height = containerH * dpr;
@@ -666,257 +935,6 @@
             previewCtx.restore();
         }
 
-        // --- Event Listeners ---
-        function updateTableHeader(uploadType) {
-            tableHeaderRow.innerHTML = ''; // Clear existing header
-            let headers = [];
-            if (uploadType === 'KYC') {
-                headers = ['Sl No', 'KYC Number', 'Customer Name', 'KYC Type', 'Type', 'Image'];
-            } else if (uploadType === 'Product') {
-                headers = ['Sl No', 'AWB / Ref', 'Doc Type', 'Doc Number', 'Type', 'Image'];
-            } else if (uploadType === 'MultiBox') {
-                headers = ['Sl No', 'AWB / Ref', 'Child Awb', 'Type', 'Image'];
-            } else {
-                headers = ['Sl No', 'AWB / Ref', 'Status Remark', 'Type', 'Image'];
-            }
-            headers.forEach(headerText => {
-                const th = document.createElement('th');
-                th.textContent = headerText;
-                tableHeaderRow.appendChild(th);
-            });
-        }
-
-        function updateUIForUploadType(uploadType) {
-            // Reset common fields
-            customerNameInput.style.display = 'none';
-            kycTypeSelect.style.display = 'none';
-            docTypeSelect.style.display = 'none';
-            docNumberInput.style.display = 'none';
-            remarkInput.style.display = 'inline-block';
-            isAwbLockedForProduct = false;
-            awbInput.disabled = false;
-            isCustomerNameLockedForKyc = false;
-            customerNameInput.disabled = false;
-
-            if (uploadType === 'KYC') {
-                awbInput.placeholder = "Enter KYC Number";
-                remarkInput.style.display = 'none';
-                kycTypeSelect.style.display = 'inline-block';
-                customerNameInput.style.display = 'inline-block';
-            } else if (uploadType === 'Reciept') {
-                awbInput.placeholder = "Enter AWB / Ref (Required)";
-                remarkInput.placeholder = "Status Remark (Default: Booked)";
-            } else if (uploadType === 'MultiBox') {
-                awbInput.placeholder = "Enter AWB / Ref (Required)";
-                remarkInput.placeholder = "Child Awb";
-            } else if (uploadType === 'Product') {
-                awbInput.placeholder = "Enter AWB / Ref (Required)";
-                docNumberInput.placeholder = "Scan/Enter Doc Number";
-                docTypeSelect.style.display = 'inline-block';
-                docNumberInput.style.display = 'inline-block';
-                remarkInput.style.display = 'none';
-            } else { // POD
-                awbInput.placeholder = "Enter AWB / Ref (Required)";
-                remarkInput.placeholder = "Status Remark (Default: Delivered)";
-            }
-            
-            updateTableHeader(uploadType);
-            if (tableBody.rows.length > 0) {
-                clearAllBtn.click();
-                updateStatus("Table cleared due to type change.", false);
-            }
-        }
-
-
-        uploadTypeStrip.addEventListener('click', (e) => {
-            if (e.target.classList.contains('type-btn')) {
-                const selectedType = e.target.dataset.type;
-                if (selectedType === currentUploadType) return;
-
-                const currentActive = uploadTypeStrip.querySelector('.active');
-                if (currentActive) currentActive.classList.remove('active');
-                e.target.classList.add('active');
-                
-                currentUploadType = selectedType;
-                updateUIForUploadType(currentUploadType);
-            }
-        });
-
-        cameraBtn.addEventListener('click', async () => {
-            if (stream) {
-                const canvas = document.createElement('canvas');
-                canvas.width = cameraFeed.videoWidth;
-                canvas.height = cameraFeed.videoHeight;
-                canvas.getContext('2d').drawImage(cameraFeed, 0, 0);
-                const dataUrl = canvas.toDataURL('image/png');
-                stopCamera();
-                imageQueue = []; currentImageIndex = -1; scrollerContainer.style.display = 'none';
-                initCropper(dataUrl, `capture-${Date.now()}.png`);
-            } else {
-                resetUploader();
-                const portraitConstraints = { 
-                    video: { 
-                        facingMode: { ideal: "environment" },
-                        width: { ideal: 1080 },
-                        height: { ideal: 1920 },
-                        aspectRatio: { ideal: 3/4 }
-                    } 
-                };
-                const fallbackConstraints = { video: { facingMode: { ideal: "environment" } } };
-                const finalFallback = { video: true };
-
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia(portraitConstraints);
-                    console.log("Using portrait 3:4 camera stream.");
-                } catch (err) {
-                    console.warn("Portrait 3:4 failed, trying default environment camera.", err);
-                    try {
-                        stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
-                    } catch (err2) {
-                        console.warn("Environment camera failed, trying any camera.", err2);
-                        try {
-                           stream = await navigator.mediaDevices.getUserMedia(finalFallback);
-                        } catch (e) {
-                           updateStatus("Could not access camera.", true);
-                           return;
-                        }
-                    }
-                }
-                
-                placeholder.style.display = 'none';
-                cameraFeed.style.display = 'block';
-                cameraFeed.srcObject = stream;
-                cameraFeed.play(); 
-                setInterfaceState('streaming');
-                cameraFeed.addEventListener('click', handleVideoStreamClick);
-            }
-        });
-
-        uploadBtn.addEventListener('click', () => { resetUploader(); fileInput.click(); });
-        
-        fileInput.addEventListener('change', async (event) => {
-            const files = Array.from(event.target.files);
-            if (files.length === 0) return;
-
-            updateStatus('Processing uploaded files...');
-            let processedFiles = [];
-
-            for (const file of files) {
-                if (file.type === 'application/pdf') {
-                    try {
-                        const pdfImages = await handlePdfFile(file);
-                        processedFiles.push(...pdfImages);
-                    } catch (error) {
-                        console.error("Error processing PDF:", error);
-                        updateStatus(`Failed to process PDF: ${file.name}`, true);
-                    }
-                } else if (file.type.startsWith('image/')) {
-                    processedFiles.push(file);
-                }
-            }
-
-            if (processedFiles.length > MAX_FILES) {
-                updateStatus(`Too many pages/images. Max is ${MAX_FILES}. Only the first ${MAX_FILES} will be loaded.`, true);
-                processedFiles = processedFiles.slice(0, MAX_FILES);
-            }
-            
-            if (processedFiles.length === 0) {
-                updateStatus('No valid images found or processed.', true);
-                return;
-            }
-
-            imageQueue = processedFiles;
-            scrollerContainer.style.display = imageQueue.length > 1 ? 'block' : 'none';
-            if (imageQueue.length > 1) renderScroller();
-            displayImage(0);
-            updateStatus(`${imageQueue.length} image(s) loaded.`);
-        });
-
-        async function handlePdfFile(file) {
-            const fileReader = new FileReader();
-            
-            return new Promise((resolve, reject) => {
-                fileReader.onload = async (e) => {
-                    try {
-                        const typedarray = new Uint8Array(e.target.result);
-                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                        const imageFiles = [];
-                        const scale = 2.0; // Render at a higher resolution
-
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            updateStatus(`Processing PDF page ${i} of ${pdf.numPages}...`);
-                            const page = await pdf.getPage(i);
-                            const viewport = page.getViewport({ scale });
-
-                            const canvas = document.createElement('canvas');
-                            const context = canvas.getContext('2d');
-                            canvas.height = viewport.height;
-                            canvas.width = viewport.width;
-
-                            const renderContext = {
-                                canvasContext: context,
-                                viewport: viewport
-                            };
-                            await page.render(renderContext).promise;
-                            
-                            const dataUrl = canvas.toDataURL('image/jpeg', 0.9); // Use jpeg for smaller size
-                            const pageFile = await dataURLtoFile(dataUrl, `${file.name}-page-${i}.jpg`);
-                            imageFiles.push(pageFile);
-                        }
-                        resolve(imageFiles);
-                    } catch (error) {
-                        reject(error);
-                    }
-                };
-                fileReader.onerror = reject;
-                fileReader.readAsArrayBuffer(file);
-            });
-        }
-
-        rotateBtn.addEventListener('click', () => {
-            if (previewCanvas.style.display === 'block') {
-                currentRotation = (currentRotation + 90) % 360;
-                drawPreview();
-                scanBarcodeFromPreview(); // Re-scan after rotation
-            }
-        });
-        
-        lockBtn.addEventListener('click', () => {
-            isImageLocked = !isImageLocked;
-            lockBtn.textContent = isImageLocked ? 'Unlock' : 'Lock';
-            lockBtn.style.backgroundColor = isImageLocked ? '#d4edda' : '';
-        });
-
-        cancelBtn.addEventListener('click', () => {
-            // Case 1: In streaming mode (camera is on)
-            if (stream) {
-                if (cancelBtn.textContent === 'Done') {
-                    // This is the "Done" button for multi-capture
-                    stopCamera();
-                    if (imageQueue.length > 0) {
-                        displayImage(0);
-                    } else {
-                        resetUploader();
-                    }
-                } else {
-                    // This is the "Cancel" button for starting the camera
-                    resetUploader();
-                }
-                return; // Exit after handling streaming case
-            }
-            
-            // Case 2: In preview mode (original logic for deleting one image)
-            if (isImageLocked) { resetUploader(); return; }
-            if (imageQueue.length > 0) {
-                 imageQueue.splice(currentImageIndex, 1);
-                 renderScroller();
-                 displayImage(currentImageIndex < imageQueue.length ? currentImageIndex : 0);
-            } else { resetUploader(); }
-        });
-        
-        cancelAllBtn.addEventListener('click', resetUploader);
-        
-        // --- OCR Area Selection Listeners ---
         function onSelectionStart(e) {
             if (previewCanvas.style.display !== 'block' || isSelecting || isProcessingOCR) return;
             e.preventDefault();
@@ -953,8 +971,9 @@
             selectionCtx.strokeRect(selectionRect.startX, selectionRect.startY, width, height);
         }
 
+        // ===== FIX: Replaced entire onSelectionUp function with rotation-aware logic =====
         async function onSelectionUp(e) {
-            if (!isSelecting) return; // Prevent re-triggering
+            if (!isSelecting) return;
             isSelecting = false;
             window.removeEventListener('mousemove', onSelectionMove);
             window.removeEventListener('touchmove', onSelectionMove);
@@ -967,43 +986,80 @@
             const selectionEndX = point.clientX - rect.left;
             const selectionEndY = point.clientY - rect.top;
 
-            const selX = Math.min(selectionRect.startX, selectionEndX);
-            const selY = Math.min(selectionRect.startY, selectionEndY);
-            const selW = Math.abs(selectionRect.startX - selectionEndX);
-            const selH = Math.abs(selectionRect.startY - selectionEndY);
+            // Original selection box
+            const selX1 = Math.min(selectionRect.startX, selectionEndX);
+            const selY1 = Math.min(selectionRect.startY, selectionEndY);
+            const selX2 = Math.max(selectionRect.startX, selectionEndX);
+            const selY2 = Math.max(selectionRect.startY, selectionEndY);
+            
+            const selW = selX2 - selX1;
+            const selH = selY2 - selY1;
 
-            if (selW < 10 || selH < 10) return;
+            if (selW < 10 || selH < 10) return; // Selection too small
 
-            // --- OCR FIX START ---
-            // Calculate scaling and offsets of the previewed image relative to its container
+            // Get image and container dimensions (needed for coordinate mapping)
             const naturalW = imagePreview.naturalWidth;
             const naturalH = imagePreview.naturalHeight;
             const containerW = imageViewArea.clientWidth;
             const containerH = imageViewArea.clientHeight;
+            
+            if (!naturalW || !naturalH || !containerW || !containerH) {
+                updateStatus("OCR failed: Image dimensions are zero.", true);
+                return;
+            }
+
             const imgAspect = naturalW / naturalH;
             const contAspect = containerW / containerH;
             let renderedW, renderedH;
 
             if (imgAspect > contAspect) {
-                renderedW = containerW;
-                renderedH = containerW / imgAspect;
+                renderedW = containerW; renderedH = containerW / imgAspect;
             } else {
-                renderedH = containerH;
-                renderedW = containerH * imgAspect;
+                renderedH = containerH; renderedW = containerH * imgAspect;
             }
 
             const offsetX = (containerW - renderedW) / 2;
             const offsetY = (containerH - renderedH) / 2;
             const scaleFactor = naturalW / renderedW;
-
-            // Translate selection coordinates from preview space to original image space
-            const sourceX = (selX - offsetX) * scaleFactor;
-            const sourceY = (selY - offsetY) * scaleFactor;
-            const sourceWidth = selW * scaleFactor;
-            const sourceHeight = selH * scaleFactor;
             
-            // Check if selection is within the actual image bounds
-            if (sourceX < 0 || sourceY < 0 || sourceX + sourceWidth > naturalW || sourceY + sourceHeight > naturalH) {
+            // New Rotation-Aware Coordinate Mapping
+            const centerX = containerW / 2;
+            const centerY = containerH / 2;
+            const angle = (-currentRotation * Math.PI / 180); // Inverse angle
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            // Function to un-rotate a point
+            const unrotatePoint = (x, y) => {
+                // 1. Translate to center
+                const tx = x - centerX;
+                const ty = y - centerY;
+                // 2. Rotate
+                const rx = (tx * cos) - (ty * sin);
+                const ry = (tx * sin) + (ty * cos);
+                // 3. Translate back
+                return { x: rx + centerX, y: ry + centerY };
+            };
+
+            // Un-rotate all 4 corners of the selection box
+            const p1 = unrotatePoint(selX1, selY1);
+            const p2 = unrotatePoint(selX2, selY1);
+            const p3 = unrotatePoint(selX1, selY2);
+            const p4 = unrotatePoint(selX2, selY2);
+
+            // Find the new bounding box of the un-rotated rectangle
+            const unrotatedSelX = Math.min(p1.x, p2.x, p3.x, p4.x);
+            const unrotatedSelY = Math.min(p1.y, p2.y, p3.y, p4.y);
+            const unrotatedSelW = Math.max(p1.x, p2.x, p3.x, p4.x) - unrotatedSelX;
+            const unrotatedSelH = Math.max(p1.y, p2.y, p3.y, p4.y) - unrotatedSelY;
+            
+            // Now scale these un-rotated coordinates to the original image
+            const sourceX = (unrotatedSelX - offsetX) * scaleFactor;
+            const sourceY = (unrotatedSelY - offsetY) * scaleFactor;
+            const sourceWidth = unrotatedSelW * scaleFactor;
+            const sourceHeight = unrotatedSelH * scaleFactor;
+
+            if (sourceX < 0 || sourceY < 0 || (sourceX + sourceWidth) > naturalW || (sourceY + sourceHeight) > naturalH) {
                 updateStatus("Selection was outside the image area.", true);
                 isProcessingOCR = false; 
                 return;
@@ -1013,10 +1069,7 @@
             const cropCtx = cropCanvas.getContext('2d');
             cropCanvas.width = sourceWidth;
             cropCanvas.height = sourceHeight;
-
-            // Draw the selected part from the FULL RESOLUTION image for OCR
             cropCtx.drawImage(imagePreview, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
-            // --- OCR FIX END ---
 
             isProcessingOCR = true;
             updateStatus("Running OCR on selected area...");
@@ -1038,35 +1091,26 @@
             } catch (err) {
                 updateStatus("OCR failed on selection.", true);
             } finally {
-                // Add a small delay before allowing another OCR operation
                 setTimeout(() => { isProcessingOCR = false; }, 300);
             }
         }
-
-        imageViewArea.addEventListener('mousedown', onSelectionStart);
-        imageViewArea.addEventListener('touchstart', onSelectionStart, { passive: false });
         
         async function handleVideoStreamClick() {
             if (!stream) return;
-
             if (imageQueue.length >= MAX_FILES) {
                 updateStatus(`Maximum of ${MAX_FILES} images reached.`, true);
                 return;
             }
-
             const canvas = document.createElement('canvas');
             canvas.width = cameraFeed.videoWidth;
             canvas.height = cameraFeed.videoHeight;
             canvas.getContext('2d').drawImage(cameraFeed, 0, 0);
             const dataUrl = canvas.toDataURL('image/png');
             const newFile = await dataURLtoFile(dataUrl, `capture-${Date.now()}.png`);
-
             imageQueue.push(newFile);
             scrollerContainer.style.display = 'block';
             renderScroller();
             updateStatus(`${imageQueue.length} image(s) captured.`);
-            
-            // Update cancel button to "Done"
             if (cancelBtn.textContent !== 'Done') {
                 cancelBtn.textContent = 'Done';
                 cancelBtn.style.backgroundColor = '#28a745';
@@ -1078,117 +1122,13 @@
         function getDefaultRemark(uploadType) {
             switch (uploadType) {
                 case 'Reciept': return 'Booked';
-                default: return 'Delivered'; // Covers POD
+                default: return 'Delivered';
             }
         }
-
-        pickBtn.addEventListener('click', async () => {
-            if (!imagePreview.src) {
-                updateStatus("No image to pick.", true);
-                return;
-            }
-            const awbValue = awbInput.value.trim();
-
-            if (awbValue === '') {
-                updateStatus("Please enter AWB / Ref / KYC Number.", true);
-                awbInput.focus();
-                return;
-            }
-            if (/\s/.test(awbValue)) {
-                updateStatus("AWB / Ref / KYC Number cannot contain spaces.", true);
-                awbInput.focus();
-                return;
-            }
-            if (isDuplicateEntry()) {
-                return; // Stop if a duplicate is found based on the new rules
-            }
-            if (tableBody.rows.length >= MAX_ROWS) {
-                updateStatus("Table is full.", true);
-                return;
-            }
-
-            const rotatedImageSrc = await getRotatedImage(imagePreview.src, currentRotation);
-            const finalImageSrc = await compressImage(rotatedImageSrc, 100, 1024);
-
-            let rowData = [];
-            if (currentUploadType === 'KYC') {
-                const customerName = customerNameInput.value.trim();
-                if (!customerName) {
-                    updateStatus("Customer name is required for KYC.", true);
-                    customerNameInput.focus();
-                    return;
-                }
-                const kycType = kycTypeSelect.value;
-                rowData = [ tableBody.rows.length + 1, awbValue, customerName, kycType, currentUploadType ];
-            } else if (currentUploadType === 'Product') {
-                 const docNumber = docNumberInput.value.trim();
-                 if (!docNumber) {
-                     updateStatus("Doc Number is required for Product.", true);
-                     docNumberInput.focus();
-                     return;
-                 }
-                rowData = [ tableBody.rows.length + 1, awbValue, docTypeSelect.value, docNumber, currentUploadType ];
-            } else {
-                 let remarkValue;
-                if (currentUploadType === 'MultiBox') {
-                    remarkValue = remarkInput.value.trim() || awbValue; // Default to awbValue if empty
-                } else {
-                    remarkValue = remarkInput.value.trim() || getDefaultRemark(currentUploadType);
-                }
-                rowData = [ tableBody.rows.length + 1, awbValue, remarkValue, currentUploadType ];
-            }
-
-            const newRow = tableBody.insertRow();
-            rowData.forEach(text => {
-                newRow.insertCell().textContent = text;
-            });
-
-            const imageCell = newRow.insertCell();
-            const thumb = document.createElement('img');
-            thumb.src = finalImageSrc;
-            const cellDiv = document.createElement('div');
-            cellDiv.className = 'image-cell-content';
-            cellDiv.appendChild(thumb);
-            imageCell.appendChild(cellDiv);
-            
-            // Lock AWB for product or multibox after first pick
-            if ((currentUploadType === 'Product' || currentUploadType === 'MultiBox') && !isAwbLockedForProduct) {
-                isAwbLockedForProduct = true;
-                awbInput.disabled = true;
-            }
-
-            // Lock Customer Name for KYC after first pick
-            if (currentUploadType === 'KYC' && !isCustomerNameLockedForKyc) {
-                isCustomerNameLockedForKyc = true;
-                customerNameInput.disabled = true;
-            }
-
-            awbInput.value = isAwbLockedForProduct ? awbInput.value : '';
-            remarkInput.value = '';
-            customerNameInput.value = isCustomerNameLockedForKyc ? customerNameInput.value : '';
-            docNumberInput.value = '';
-
-
-            if (!isImageLocked) {
-                if (imageQueue.length > 0) {
-                    imageQueue.splice(currentImageIndex, 1);
-                    renderScroller();
-                    displayImage(currentImageIndex < imageQueue.length ? currentImageIndex : 0);
-                } else {
-                    resetUploader();
-                }
-            } else {
-                if(currentUploadType === 'Product') docNumberInput.focus();
-                else if(currentUploadType === 'MultiBox') remarkInput.focus();
-                else awbInput.focus();
-            }
-        });
         
-        // --- Table & Utility Functions ---
         function isDuplicateEntry() {
             const rows = tableBody.rows;
             const awbValue = awbInput.value.trim();
-            
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 switch (currentUploadType) {
@@ -1201,7 +1141,7 @@
                         }
                         break;
                     case 'KYC':
-                         if (row.cells[1].textContent === awbValue) { // awbInput holds KYC number
+                         if (row.cells[1].textContent === awbValue) {
                             updateStatus(`Duplicate KYC Number found: ${awbValue}`, true);
                             awbInput.focus();
                             return true;
@@ -1217,7 +1157,6 @@
                         break;
                     case 'MultiBox':
                         const childAwb = remarkInput.value.trim();
-                        // Check only if childAwb is entered and is not the same as the parent AWB
                         if (childAwb && childAwb !== awbValue && row.cells[2].textContent === childAwb) {
                              updateStatus(`Duplicate Child Awb found: ${childAwb}`, true);
                              remarkInput.focus();
@@ -1228,105 +1167,6 @@
             }
             return false;
         }
-
-        deleteLastBtn.addEventListener('click', () => { if (tableBody.rows.length > 0) tableBody.deleteRow(-1); });
-        clearAllBtn.addEventListener('click', () => { 
-            tableBody.innerHTML = ''; 
-            if (currentUploadType === 'Product' || currentUploadType === 'MultiBox') {
-                isAwbLockedForProduct = false;
-                awbInput.disabled = false;
-                awbInput.value = '';
-            }
-            if (currentUploadType === 'KYC') {
-                isCustomerNameLockedForKyc = false;
-                customerNameInput.disabled = false;
-                customerNameInput.value = '';
-                awbInput.value = '';
-            }
-        });
-        
-        submitBtn.addEventListener('click', async () => {
-            const rows = tableBody.rows;
-            const gscriptUrl = gscriptUrlInput.value.trim();
-
-            if (rows.length === 0) {
-                updateStatus("No data in the table to submit.", true);
-                return;
-            }
-            if (!gscriptUrl || !gscriptUrl.startsWith('https://script.google.com/macros/s/')) {
-                updateStatus("Please provide a valid Google Apps Script Web App URL.", true);
-                gscriptUrlInput.focus();
-                return;
-            }
-
-            submitBtn.disabled = true;
-            let successCount = 0;
-            
-            for (let i = 0; i < rows.length; i++) {
-                const row = rows[i];
-                updateStatus(`Submitting row ${i + 1} of ${rows.length}...`);
-
-                const rowUploadType = row.cells[row.cells.length - 2].textContent;
-                const imgElement = row.cells[row.cells.length - 1].querySelector('img');
-                if (!imgElement) continue;
-
-                const rowData = {};
-                rowData.uploadType = rowUploadType;
-                
-                if (rowUploadType === 'KYC') {
-                    rowData.kycNumber = row.cells[1].textContent;
-                    rowData.customerName = row.cells[2].textContent;
-                    rowData.kycType = row.cells[3].textContent;
-                } else if (rowUploadType === 'Product') {
-                    rowData.awbNumber = row.cells[1].textContent;
-                    rowData.docType = row.cells[2].textContent;
-                    rowData.docNumber = row.cells[3].textContent;
-                } else if (rowUploadType === 'MultiBox') {
-                    rowData.awbNumber = row.cells[1].textContent;
-                    rowData.childAwb = row.cells[2].textContent; 
-                } else { // Covers POD, Reciept
-                    rowData.awbNumber = row.cells[1].textContent;
-                    rowData.statusRemark = row.cells[2].textContent;
-                }
-
-                const payload = {
-                    imageData: imgElement.src,
-                    fileName: `${rowData.awbNumber || rowData.kycNumber || rowData.docNumber}-${Date.now()}.jpg`,
-                    rowData: rowData,
-                };
-                
-                try {
-                    const response = await fetch(gscriptUrl, {
-                        method: 'POST',
-                        body: JSON.stringify(payload),
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Required for Apps Script
-                        mode: 'cors',
-                    });
-
-                    const result = await response.json();
-                    
-                    if (result.status === 'success') {
-                        successCount++;
-                         row.style.backgroundColor = '#d4edda'; // Mark as successful
-                    } else {
-                        throw new Error(result.message);
-                    }
-                } catch (error) {
-                    console.error('Submission error:', error);
-                    row.style.backgroundColor = '#f8d7da'; // Mark as failed
-                    updateStatus(`Error submitting row ${i + 1}: ${error.message}`, true);
-                    submitBtn.disabled = false;
-                    return; // Stop on first error
-                }
-            }
-
-            updateStatus(`Successfully submitted ${successCount} of ${rows.length} rows.`, false);
-            setTimeout(() => {
-                clearAllBtn.click();
-                 updateStatus('All data submitted and table cleared.');
-            }, 2000);
-            submitBtn.disabled = false;
-        });
 
         async function dataURLtoFile(dataUrl, fileName) {
             const res = await fetch(dataUrl); const blob = await res.blob();
@@ -1342,161 +1182,722 @@
                     else { canvas.width = img.width; canvas.height = img.height; }
                     ctx.translate(canvas.width / 2, canvas.height / 2); ctx.rotate(angle);
                     ctx.drawImage(img, -img.width / 2, -img.height / 2);
-                    resolve(canvas.toDataURL('image/png')); // Output high quality PNG for further compression
+                    resolve(canvas.toDataURL('image/png'));
                 };
                 img.src = src;
             });
         }
         
-        // --- Image Enhancement Logic ---
-        let currentEnhancements = {
-            brightness: 0,
-            contrast: 0,
-            sharpen: false,
-            greyscale: false,
-            bw: false,
-        };
-
-        enhanceBtn.addEventListener('click', () => {
-            enhancementControls.style.display = enhancementControls.style.display === 'block' ? 'none' : 'block';
-        });
-
-        function resetEnhancements() {
-            if (!cropper) return;
-            updateStatus("Resetting enhancements...");
-            
-            currentEnhancements = { brightness: 0, contrast: 0, sharpen: false, greyscale: false, bw: false };
-            
-            brightnessSlider.value = 0;
-            contrastSlider.value = 0;
-
-            sharpenBtn.style.backgroundColor = '';
-            greyscaleBtn.style.backgroundColor = '';
-            bwBtn.style.backgroundColor = '';
-
-            cropper.replace(originalCropperSrc);
-            updateStatus("Enhancements reset.");
-        }
-
-        function applyEnhancements() {
-            if (!cropper || !originalCropperSrc) return;
-            updateStatus("Applying enhancements...");
-
-            const tempCanvas = document.createElement('canvas');
-            const tempImg = new Image();
-            tempImg.crossOrigin = "Anonymous";
-            tempImg.onload = () => {
-                tempCanvas.width = tempImg.width;
-                tempCanvas.height = tempImg.height;
-                tempCanvas.getContext('2d').drawImage(tempImg, 0, 0);
-
-                Caman(tempCanvas, function () {
-                    this.revert(false);
-
-                    if (currentEnhancements.bw) {
-                        this.greyscale().contrast(70).brightness(5);
-                    } else if (currentEnhancements.greyscale) {
-                        this.greyscale();
-                    }
-                    if (currentEnhancements.sharpen) {
-                        this.sharpen(10);
-                    }
-                    this.brightness(parseInt(currentEnhancements.brightness, 10));
-                    this.contrast(parseInt(currentEnhancements.contrast, 10));
-
-                    this.render(() => {
-                        const newDataUrl = this.toBase64();
-                        cropper.replace(newDataUrl);
-                        updateStatus('Enhancements applied.');
-                    });
-                });
-            };
-            tempImg.src = originalCropperSrc;
-        }
-
-        resetEnhanceBtn.addEventListener('click', resetEnhancements);
-        brightnessSlider.addEventListener('input', () => { currentEnhancements.brightness = brightnessSlider.value; applyEnhancements(); });
-        contrastSlider.addEventListener('input', () => { currentEnhancements.contrast = contrastSlider.value; applyEnhancements(); });
-        sharpenBtn.addEventListener('click', () => { currentEnhancements.sharpen = !currentEnhancements.sharpen; sharpenBtn.style.backgroundColor = currentEnhancements.sharpen ? '#d4edda' : ''; applyEnhancements(); });
-        greyscaleBtn.addEventListener('click', () => {
-            currentEnhancements.greyscale = !currentEnhancements.greyscale;
-            if (currentEnhancements.greyscale) { currentEnhancements.bw = false; bwBtn.style.backgroundColor = ''; }
-            greyscaleBtn.style.backgroundColor = currentEnhancements.greyscale ? '#d4edda' : ''; applyEnhancements();
-        });
-        bwBtn.addEventListener('click', () => {
-            currentEnhancements.bw = !currentEnhancements.bw;
-            if (currentEnhancements.bw) { currentEnhancements.greyscale = false; greyscaleBtn.style.backgroundColor = ''; }
-            bwBtn.style.backgroundColor = currentEnhancements.bw ? '#d4edda' : ''; applyEnhancements();
-        });
-        autoEnhanceBtn.addEventListener('click', () => {
-            currentEnhancements.sharpen = true;
-            currentEnhancements.brightness = 10;
-            currentEnhancements.contrast = 10;
-            currentEnhancements.greyscale = false;
-            currentEnhancements.bw = false;
-            brightnessSlider.value = currentEnhancements.brightness;
-            contrastSlider.value = currentEnhancements.contrast;
-            sharpenBtn.style.backgroundColor = '#d4edda';
-            greyscaleBtn.style.backgroundColor = '';
-            bwBtn.style.backgroundColor = '';
-            applyEnhancements();
-        });
-
-        // --- Keyboard Navigation ---
-        const inputFields = [
-            awbInput,
-            customerNameInput,
-            kycTypeSelect,
-            docTypeSelect,
-            docNumberInput,
-            remarkInput
-        ];
-
-        function handleEnterKey(e) {
-            if (e.key !== 'Enter') return;
-            e.preventDefault();
-
-            const currentField = e.target;
-            const isRequiredAndEmpty = (field) => {
-                if (field.style.display === 'none' || field.disabled) return false;
-
-                const value = field.value.trim();
-                if (value === '') {
-                    if (field === awbInput) return true;
-                    if (field === customerNameInput && currentUploadType === 'KYC') return true;
-                    if (field === docNumberInput && currentUploadType === 'Product') return true;
-                }
-                return false;
-            };
-
-            if (isRequiredAndEmpty(currentField)) {
-                let fieldName = "This field";
-                if(currentField.placeholder) fieldName = currentField.placeholder.replace('(Required)','').trim();
-                updateStatus(`${fieldName} is a required field.`, true);
-                return; // Stop navigation
-            }
-
-
-            const visibleFields = inputFields.filter(field => field.style.display !== 'none' && !field.disabled);
-            const currentIndex = visibleFields.indexOf(e.target);
-
-            if (currentIndex > -1 && currentIndex < visibleFields.length - 1) {
-                // If it's not the last visible field, focus the next one
-                visibleFields[currentIndex + 1].focus();
+        // --- Image Enhancement Logic (Original) ---
+        function resetEnhancements() { /* ... */ }
+        let applyEnhancements = () => {}; // Declare here
+        
+        // --- UI Update Logic (Original) ---
+        function updateTableHeader(uploadType) {
+            if (!tableHeaderRow) return;
+            tableHeaderRow.innerHTML = '';
+            let headers = [];
+            if (uploadType === 'KYC') {
+                headers = ['Sl No', 'KYC Number', 'Customer Name', 'KYC Type', 'Type', 'Image'];
+            } else if (uploadType === 'Product') {
+                headers = ['Sl No', 'AWB / Ref', 'Doc Type', 'Doc Number', 'Type', 'Image'];
+            } else if (uploadType === 'MultiBox') {
+                headers = ['Sl No', 'AWB / Ref', 'Child Awb', 'Type', 'Image'];
             } else {
-                // If it's the last visible field or not in the list, click the pick button
-                pickBtn.click();
+                headers = ['Sl No', 'AWB / Ref', 'Status Remark', 'Type', 'Image'];
             }
+            headers.forEach(headerText => {
+                const th = document.createElement('th');
+                th.textContent = headerText;
+                tableHeaderRow.appendChild(th);
+            });
         }
 
-        inputFields.forEach(field => {
-            field.addEventListener('keydown', handleEnterKey);
-        });
+        function updateUIForUploadType(uploadType) {
+            if (!customerNameInput || !kycTypeSelect || !docTypeSelect || !docNumberInput || !remarkInput || !awbInput) {
+                return;
+            }
+            
+            customerNameInput.style.display = 'none';
+            kycTypeSelect.style.display = 'none';
+            docTypeSelect.style.display = 'none';
+            docNumberInput.style.display = 'none';
+            remarkInput.style.display = 'inline-block';
+            awbInput.placeholder = "AWB / Ref (Required)";
 
-        // Initialize UI for the default type
-        updateUIForUploadType(currentUploadType);
-        resetUploader();
+            if (uploadType === 'KYC') {
+                awbInput.placeholder = "Enter KYC Number (Required)";
+                remarkInput.style.display = 'none';
+                kycTypeSelect.style.display = 'inline-block';
+                customerNameInput.style.display = 'inline-block';
+            } else if (uploadType === 'Reciept') {
+                remarkInput.placeholder = "Status Remark (Default: Booked)";
+            } else if (uploadType === 'MultiBox') {
+                remarkInput.placeholder = "Child Awb";
+            } else if (uploadType === 'Product') {
+                docNumberInput.placeholder = "Scan/Enter Doc Number";
+                docTypeSelect.style.display = 'inline-block';
+                docNumberInput.style.display = 'inline-block';
+                remarkInput.style.display = 'none';
+            } else { // POD (Default)
+                remarkInput.placeholder = "Status Remark (Default: Delivered)";
+            }
+            
+            updateTableHeader(uploadType);
+        }
+
+        // --- Main DOMContentLoaded ---
+        document.addEventListener('DOMContentLoaded', () => {
+             console.log("DEBUG: DOMContentLoaded fired.");
+             
+             // --- Assign all UI elements ---
+             gscriptUrlInput = document.getElementById('gscript-url');
+             cameraBtn = document.getElementById('camera-btn');
+             uploadBtn = document.getElementById('upload-btn');
+             fileInput = document.getElementById('file-input');
+             placeholder = document.getElementById('placeholder');
+             imagePreview = document.getElementById('image-preview');
+             cameraFeed = document.getElementById('camera-feed');
+             previewCanvas = document.getElementById('preview-canvas');
+             rotateBtn = document.getElementById('rotate-btn');
+             lockBtn = document.getElementById('lock-btn');
+             cancelBtn = document.getElementById('cancel-btn');
+             cancelAllBtn = document.getElementById('cancel-all-btn');
+             pickBtn = document.getElementById('pick-btn');
+             tableBody = document.getElementById('data-table-body');
+             awbInput = document.getElementById('awb-input');
+             remarkInput = document.getElementById('remark-input');
+             customerNameInput = document.getElementById('customer-name-input');
+             kycTypeSelect = document.getElementById('kyc-type-select');
+             docTypeSelect = document.getElementById('doc-type-select');
+             docNumberInput = document.getElementById('doc-number-input');
+             deleteLastBtn = document.getElementById('delete-last-btn');
+             clearAllBtn = document.getElementById('clear-all-btn');
+             submitBtn = document.getElementById('submit-btn');
+             scrollerContainer = document.getElementById('image-scroller-container');
+             scroller = document.getElementById('image-scroller');
+             inlineCropperWrapper = document.getElementById('inline-cropper-wrapper');
+             imageViewArea = document.getElementById('image-view-area');
+             cropperImage = document.getElementById('cropper-image');
+             cropConfirmBtn = document.getElementById('crop-confirm-btn');
+             cropCancelBtn = document.getElementById('crop-cancel-btn');
+             cropRotateBtn = document.getElementById('crop-rotate-btn');
+             selectionCanvas = document.getElementById('selection-canvas');
+             statusBar = document.getElementById('status-bar');
+             uploadTypeStrip = document.querySelector('.upload-type-strip');
+             tableHeaderRow = document.getElementById('table-header-row');
+             enhanceBtn = document.getElementById('enhance-btn');
+             enhancementControls = document.getElementById('enhancement-controls');
+             autoEnhanceBtn = document.getElementById('auto-enhance-btn');
+             greyscaleBtn = document.getElementById('greyscale-btn');
+             bwBtn = document.getElementById('bw-btn');
+             sharpenBtn = document.getElementById('sharpen-btn');
+             resetEnhanceBtn = document.getElementById('reset-enhance-btn');
+             brightnessSlider = document.getElementById('brightness-slider');
+             contrastSlider = document.getElementById('contrast-slider');
+             
+             // (New List UI)
+             miniOrderListContainer = document.getElementById('miniOrderListContainer');
+             orderList = document.getElementById('miniOrderList');
+             searchMiniOrderInput = document.getElementById('searchMiniOrder');
+             loadMoreBtn = document.getElementById('loadMoreBtn');
+
+             // Datalists
+             customerDataList = document.getElementById('customer-list');
+             docNumberDataList = document.getElementById('doc-number-list');
+             
+             // Hidden Fields
+             selectedOrderRefInput = document.getElementById('selectedOrderRef');
+             selectedOrderBranchInput = document.getElementById('selectedOrderBranch');
+             selectedOrderCodeInput = document.getElementById('selectedOrderCode');
+             selectedCustomerUidInput = document.getElementById('selectedCustomerUid');
+             selectedDocTypeInput = document.getElementById('selectedDocType');
+
+             // Assign canvas contexts
+             selectionCtx = selectionCanvas.getContext('2d');
+             previewCtx = previewCanvas.getContext('2d');
+             
+             console.log("DEBUG: All UI Elements assigned.");
+
+             // --- Add all event listeners ---
+             
+             // NEW: List/Form Listeners
+             window.addEventListener('appDataLoaded', initializeOrderData);
+             window.addEventListener('appDataRefreshed', initializeOrderData);
+             
+             searchMiniOrderInput.addEventListener('input', filterAndRenderOrders);
+             
+             loadMoreBtn.addEventListener('click', () => {
+                console.log("DEBUG: Load More clicked. Current displayDays:", displayDays);
+                displayDays += 7;
+                console.log("DEBUG: New displayDays:", displayDays);
+                filterAndRenderOrders();
+             });
+
+             // MERGED: Upload Type Listener
+             uploadTypeStrip.addEventListener('click', (e) => {
+                if (e.target.classList.contains('type-btn')) {
+                    const selectedType = e.target.dataset.type;
+                    if (selectedType === currentUploadType) return;
+                    const currentActive = uploadTypeStrip.querySelector('.active');
+                    if (currentActive) currentActive.classList.remove('active');
+                    e.target.classList.add('active');
+                    currentUploadType = selectedType;
+                    updateUIForUploadType(currentUploadType);
+
+                    const currentOrderRefVal = selectedOrderRefInput.value;
+                    if (currentOrderRefVal) {
+                        const order = allOrders.find(o => String(o.REFERANCE) === currentOrderRefVal);
+                        if (order) {
+                            if (currentUploadType !== 'KYC') {
+                                awbInput.value = order.AWB_NUMBER || order.REFERANCE || '';
+                            } else {
+                                awbInput.value = '';
+                            }
+                        }
+                    } else {
+                         if (currentUploadType === 'KYC') {
+                             awbInput.value = '';
+                         }
+                    }
+                }
+             });
+
+             // NEW: Datalist Input Listeners
+             customerNameInput.addEventListener('input', (e) => {
+                const enteredName = e.target.value;
+                selectedCustomerUidInput.value = '';
+                const option = Array.from(customerDataList.options).find(opt => opt.value === enteredName);
+                if (option) {
+                    const clientB2B2C = allClientsB2B2C.find(c => c.NAME === enteredName);
+                    if (clientB2B2C) {
+                        selectedCustomerUidInput.value = clientB2B2C.UID;
+                         console.log("Selected Customer (B2B2C):", { name: enteredName, uid: clientB2B2C.UID });
+                    } else {
+                        const clientB2B = allClientsB2B.find(c => c.CLIENT_NAME === enteredName);
+                        if (clientB2B) {
+                            selectedCustomerUidInput.value = clientB2B.CODE;
+                            console.log("Selected Customer (B2B Fallback):", { name: enteredName, code: clientB2B.CODE });
+                        }
+                    }
+                }
+             });
+             
+             docNumberInput.addEventListener('input', (e) => {
+                const enteredValue = e.target.value;
+                selectedDocTypeInput.value = '';
+                const option = Array.from(docNumberDataList.options).find(opt => opt.value === enteredValue);
+                if (option) {
+                    const actualDocNumber = option.dataset.docNumber;
+                    const actualDocType = option.dataset.docType;
+                    selectedDocTypeInput.value = actualDocType;
+                    docTypeSelect.value = actualDocType;
+                    setTimeout(() => { docNumberInput.value = actualDocNumber; }, 0);
+                    console.log("Selected Doc from List:", { number: actualDocNumber, type: actualDocType });
+                } else {
+                    const currentOrderRef = selectedOrderRefInput.value ? parseInt(selectedOrderRefInput.value, 10) : null;
+                    if (!currentOrderRef) return;
+                    const product = allProducts.find(p => 
+                        p.RERERANCE === currentOrderRef && 
+                        (String(p.DOC_NUMBER) === enteredValue || String(p.EWAY_IF) === enteredValue)
+                    );
+                    if (product) {
+                        let docType = (String(product.DOC_NUMBER) === enteredValue) ? product.TYPE : "EWB";
+                        selectedDocTypeInput.value = docType;
+                        docTypeSelect.value = docType;
+                        console.log("Matched Doc by typing:", { number: enteredValue, type: docType });
+                    }
+                }
+             });
+
+            // --- Original Scanner Event Listeners ---
+            cameraBtn.addEventListener('click', async () => {
+                if (stream) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = cameraFeed.videoWidth;
+                    canvas.height = cameraFeed.videoHeight;
+                    canvas.getContext('2d').drawImage(cameraFeed, 0, 0);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    stopCamera();
+                    imageQueue = []; currentImageIndex = -1; scrollerContainer.style.display = 'none';
+                    initCropper(dataUrl, `capture-${Date.now()}.png`);
+                } else {
+                    // Clear only visual state
+                    stopCamera();
+                    // ===== FIX: Set default text on camera start =====
+                    placeholder.textContent = 'Starting camera...';
+                    placeholder.style.display = 'block';
+                    previewCanvas.style.display = 'none';
+                    imagePreview.src = '';
+                    fileInput.value = ''; currentRotation = 0;
+                    isImageLocked = false; lockBtn.textContent = 'Lock'; lockBtn.style.backgroundColor = '';
+                    imageQueue = []; currentImageIndex = -1;
+                    scroller.innerHTML = ''; scrollerContainer.style.display = 'none';
+                    inlineCropperWrapper.style.display = 'none';
+                    imageViewArea.style.display = 'flex';
+                    selectionCanvas.style.display = 'none';
+
+                    const portraitConstraints = { video: { facingMode: { ideal: "environment" }, width: { ideal: 1080 }, height: { ideal: 1920 }, aspectRatio: { ideal: 3/4 } } };
+                    const fallbackConstraints = { video: { facingMode: { ideal: "environment" } } };
+                    const finalFallback = { video: true };
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia(portraitConstraints);
+                    } catch (err) {
+                        try { stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints); } catch (err2) {
+                            try { stream = await navigator.mediaDevices.getUserMedia(finalFallback); } catch (e) {
+                               updateStatus("Could not access camera.", true); return;
+                            }
+                        }
+                    }
+                    cameraFeed.style.display = 'block';
+                    // ===== FIX: Hide placeholder once feed starts =====
+                    placeholder.style.display = 'none';
+                    cameraFeed.srcObject = stream;
+                    cameraFeed.play(); 
+                    setInterfaceState('streaming');
+                    cameraFeed.addEventListener('click', handleVideoStreamClick);
+                }
+            });
+            uploadBtn.addEventListener('click', () => { fileInput.click(); });
+            fileInput.addEventListener('change', async (event) => {
+                const files = Array.from(event.target.files);
+                if (files.length === 0) return;
+                updateStatus('Processing uploaded files...');
+                let processedFiles = [];
+                for (const file of files) {
+                    if (file.type === 'application/pdf') {
+                        try {
+                            const pdfImages = await handlePdfFile(file);
+                            processedFiles.push(...pdfImages);
+                        } catch (error) { updateStatus(`Failed to process PDF: ${file.name}`, true); }
+                    } else if (file.type.startsWith('image/')) {
+                        processedFiles.push(file);
+                    }
+                }
+                if (processedFiles.length > MAX_FILES) {
+                    updateStatus(`Max ${MAX_FILES} files allowed. Loading first ${MAX_FILES}.`, true);
+                    processedFiles = processedFiles.slice(0, MAX_FILES);
+                }
+                if (processedFiles.length === 0) {
+                    updateStatus('No valid images found or processed.', true); return;
+                }
+                imageQueue = processedFiles;
+                scrollerContainer.style.display = imageQueue.length > 1 ? 'block' : 'none';
+                if (imageQueue.length > 1) renderScroller();
+                displayImage(0);
+                updateStatus(`${imageQueue.length} image(s) loaded.`);
+            });
+            async function handlePdfFile(file) {
+                const fileReader = new FileReader();
+                return new Promise((resolve, reject) => {
+                    fileReader.onload = async (e) => {
+                        try {
+                            const typedarray = new Uint8Array(e.target.result);
+                            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                            const imageFiles = [];
+                            const scale = 2.0;
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                updateStatus(`Processing PDF page ${i} of ${pdf.numPages}...`);
+                                const page = await pdf.getPage(i);
+                                const viewport = page.getViewport({ scale });
+                                const canvas = document.createElement('canvas');
+                                const context = canvas.getContext('2d');
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+                                const renderContext = { canvasContext: context, viewport: viewport };
+                                await page.render(renderContext).promise;
+                                const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                                const pageFile = await dataURLtoFile(dataUrl, `${file.name}-page-${i}.jpg`);
+                                imageFiles.push(pageFile);
+                            }
+                            resolve(imageFiles);
+                        } catch (error) { reject(error); }
+                    };
+                    fileReader.onerror = reject;
+                    fileReader.readAsArrayBuffer(file);
+                });
+            }
+            rotateBtn.addEventListener('click', () => {
+                if (previewCanvas.style.display === 'block') {
+                    currentRotation = (currentRotation + 90) % 360;
+                    drawPreview();
+                    scanBarcodeFromPreview();
+                }
+            });
+            lockBtn.addEventListener('click', () => {
+                isImageLocked = !isImageLocked;
+                lockBtn.textContent = isImageLocked ? 'Unlock' : 'Lock';
+                lockBtn.style.backgroundColor = isImageLocked ? '#d4edda' : '';
+            });
+            cancelBtn.addEventListener('click', () => {
+                if (stream) {
+                    if (cancelBtn.textContent === 'Done') {
+                        stopCamera();
+                        if (imageQueue.length > 0) displayImage(0);
+                        else resetUploader();
+                    } else {
+                        resetUploader();
+                    }
+                    return;
+                }
+                if (isImageLocked) { resetUploader(); return; }
+                if (imageQueue.length > 0) {
+                     imageQueue.splice(currentImageIndex, 1);
+                     renderScroller();
+                     displayImage(currentImageIndex < imageQueue.length ? currentImageIndex : 0);
+                } else { resetUploader(); }
+            });
+            cancelAllBtn.addEventListener('click', resetUploader);
+            imageViewArea.addEventListener('mousedown', onSelectionStart);
+            imageViewArea.addEventListener('touchstart', onSelectionStart, { passive: false });
+            
+            // ===== FIX: Added event listener for cropper rotate button =====
+            cropRotateBtn.addEventListener('click', () => {
+                if (cropper) {
+                    cropper.rotate(90); // Use cropper's built-in rotate method
+                }
+            });
+            
+            // --- MODIFIED: pickBtn ---
+            pickBtn.addEventListener('click', async () => {
+                if (!imagePreview.src) {
+                    updateStatus("No image to pick.", true); return;
+                }
+                const awbValue = awbInput.value.trim();
+                if (awbValue === '') {
+                    updateStatus("Please enter AWB / Ref / KYC Number.", true); awbInput.focus(); return;
+                }
+                if (/\s/.test(awbValue)) {
+                    updateStatus("AWB / Ref / KYC Number cannot contain spaces.", true); awbInput.focus(); return;
+                }
+                if (isDuplicateEntry()) return;
+                if (tableBody.rows.length >= MAX_ROWS) {
+                    updateStatus("Table is full.", true); return;
+                }
+                const rotatedImageSrc = await getRotatedImage(imagePreview.src, currentRotation);
+                const finalImageSrc = await compressImage(rotatedImageSrc, 100, 1024);
+                
+                let rowData = [];
+                const newRow = tableBody.insertRow();
+                newRow.dataset.ref = selectedOrderRefInput.value || '';
+                newRow.dataset.branch = selectedOrderBranchInput.value || '';
+                newRow.dataset.code = selectedOrderCodeInput.value || '';
+                
+                if (currentUploadType === 'KYC') {
+                    const customerName = customerNameInput.value.trim();
+                    if (!customerName) {
+                        updateStatus("Customer name is required for KYC.", true); customerNameInput.focus(); tableBody.deleteRow(-1); return;
+                    }
+                    const kycType = kycTypeSelect.value;
+                    rowData = [ tableBody.rows.length, awbValue, customerName, kycType, currentUploadType ];
+                    newRow.dataset.customerUid = selectedCustomerUidInput.value || '';
+                } else if (currentUploadType === 'Product') {
+                     const docNumber = docNumberInput.value.trim();
+                     if (!docNumber) {
+                         updateStatus("Doc Number is required for Product.", true); docNumberInput.focus(); tableBody.deleteRow(-1); return;
+                     }
+                    rowData = [ tableBody.rows.length, awbValue, docTypeSelect.value, docNumber, currentUploadType ];
+                } else {
+                     let remarkValue;
+                    if (currentUploadType === 'MultiBox') {
+                        remarkValue = remarkInput.value.trim() || awbValue;
+                    } else {
+                        remarkValue = remarkInput.value.trim() || getDefaultRemark(currentUploadType);
+                    }
+                    rowData = [ tableBody.rows.length, awbValue, remarkValue, currentUploadType ];
+                }
+                
+                rowData.forEach(text => { newRow.insertCell().textContent = text; });
+                const imageCell = newRow.insertCell();
+                const thumb = document.createElement('img');
+                thumb.src = finalImageSrc;
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'image-cell-content';
+                cellDiv.appendChild(thumb);
+                imageCell.appendChild(cellDiv);
+                
+                if ((currentUploadType === 'Product' || currentUploadType === 'MultiBox') && !isAwbLockedForProduct) {
+                    isAwbLockedForProduct = true; awbInput.disabled = true;
+                }
+                if (currentUploadType === 'KYC' && !isCustomerNameLockedForKyc) {
+                    isCustomerNameLockedForKyc = true; customerNameInput.disabled = true;
+                }
+                awbInput.value = (isAwbLockedForProduct || currentUploadType === 'KYC') ? awbInput.value : '';
+                remarkInput.value = '';
+                customerNameInput.value = isCustomerNameLockedForKyc ? customerNameInput.value : '';
+                docNumberInput.value = '';
+                if (!isImageLocked) {
+                    if (imageQueue.length > 0) {
+                        imageQueue.splice(currentImageIndex, 1);
+                        renderScroller();
+                        displayImage(currentImageIndex < imageQueue.length ? currentImageIndex : 0);
+                    } else {
+                        resetUploader();
+                    }
+                } else {
+                    if(currentUploadType === 'Product') docNumberInput.focus();
+                    else if(currentUploadType === 'MultiBox') remarkInput.focus();
+                    else awbInput.focus();
+                }
+            });
+
+            deleteLastBtn.addEventListener('click', () => { if (tableBody.rows.length > 0) tableBody.deleteRow(-1); });
+            clearAllBtn.addEventListener('click', () => { 
+                tableBody.innerHTML = ''; 
+                if (currentUploadType === 'Product' || currentUploadType === 'MultiBox') {
+                    isAwbLockedForProduct = false; awbInput.disabled = false; awbInput.value = '';
+                }
+                if (currentUploadType === 'KYC') {
+                    isCustomerNameLockedForKyc = false; customerNameInput.disabled = false; customerNameInput.value = ''; awbInput.value = '';
+                }
+            });
+            
+            // --- ===== MODIFIED: submitBtn (Added Authentication) ===== ---
+            submitBtn.addEventListener('click', async () => {
+                const rows = tableBody.rows;
+                const gscriptUrl = gscriptUrlInput.value.trim();
+                if (rows.length === 0) {
+                    updateStatus("No data in the table to submit.", true); return;
+                }
+                if (!gscriptUrl || !gscriptUrl.startsWith('https://script.google.com/macros/s/')) {
+                    updateStatus("Please provide a valid Google Apps Script Web App URL.", true); gscriptUrlInput.focus(); return;
+                }
+
+                // --- ===== NEW: Get Auth Credentials ===== ---
+                let authCode = '';
+                let authToken = '';
+                let authUser = '';
+                let authRole = '';
+                const loginDataJSON = localStorage.getItem('loginData');
+
+                if (!loginDataJSON) {
+                    updateStatus("Authentication error: loginData not found. Please re-login.", true);
+                    return;
+                }
+                
+                try {
+                    const loginData = JSON.parse(loginDataJSON);
+                    // Find keys case-insensitively to be robust
+                    const codeKey = Object.keys(loginData).find(k => k.toLowerCase() === 'code');
+                    const tokenKey = Object.keys(loginData).find(k => k.toLowerCase() === 'token');
+                    const userKey = Object.keys(loginData).find(k => k.toLowerCase() === 'name'); // 'NAME' is used for USER in layout.js
+                    const roleKey = Object.keys(loginData).find(k => k.toLowerCase() === 'role');
+
+                    if (!codeKey || !tokenKey || !userKey || !roleKey) {
+                         throw new Error("Code, Token, Name, or Role not found in loginData.");
+                    }
+                    
+                    authCode = loginData[codeKey];
+                    authToken = loginData[tokenKey];
+                    authUser = loginData[userKey]; // This will be passed to GAS (obsolete but good for old script)
+                    authRole = loginData[roleKey]; // This will be passed to GAS
+                    
+                } catch (e) {
+                     updateStatus(`Authentication error: ${e.message}. Please re-login.`, true);
+                     return;
+                }
+                // --- ===== End of Auth Credentials ===== ---
+
+                submitBtn.disabled = true;
+                let successCount = 0;
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    updateStatus(`Submitting row ${i + 1} of ${rows.length}...`);
+                    const imgElement = row.cells[row.cells.length - 1].querySelector('img');
+                    if (!imgElement) continue;
+                    
+                    const rowUploadType = row.cells[row.cells.length - 2].textContent;
+                    const rowData = {};
+                    rowData.uploadType = rowUploadType;
+                    rowData.refNumber = row.dataset.ref || '';
+                    rowData.branch = row.dataset.branch || '';
+                    rowData.code = row.dataset.code || ''; // This is the Client Code (e.g., AGWL)
+
+                    if (rowUploadType === 'KYC') {
+                        rowData.kycNumber = row.cells[1].textContent;
+                        rowData.customerName = row.cells[2].textContent; // Keep sending name for sheet readability
+                        rowData.kycType = row.cells[3].textContent;
+                        rowData.customerUid = row.dataset.customerUid || ''; // Send UID
+                    } else if (rowUploadType === 'Product') {
+                        rowData.awbNumber = row.cells[1].textContent;
+                        rowData.docType = row.cells[2].textContent;
+                        rowData.docNumber = row.cells[3].textContent;
+                    } else if (rowUploadType === 'MultiBox') {
+                        rowData.awbNumber = row.cells[1].textContent;
+                        rowData.childAwb = row.cells[2].textContent; 
+                    } else { // POD, Reciept
+                        rowData.awbNumber = row.cells[1].textContent;
+                        rowData.statusRemark = row.cells[2].textContent;
+                    }
+
+                    const payload = {
+                        // --- ===== NEW: Auth fields added to payload ===== ---
+                        code: authCode,     // Auth Code (e.g., DDN)
+                        token: authToken,
+                        // --- End of Auth fields ---
+                        
+                        action: 'append', // Specify the action
+                        imageData: imgElement.src,
+                        fileName: `${rowData.awbNumber || rowData.kycNumber || rowData.docNumber}-${Date.now()}.jpg`,
+                        rowData: rowData,
+                    };
+                    
+                    try {
+                        const response = await fetch(gscriptUrl, {
+                            method: 'POST',
+                            body: JSON.stringify(payload),
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            mode: 'cors',
+                        });
+                        const result = await response.json();
+                        if (result.status === 'success') {
+                            successCount++;
+                             row.style.backgroundColor = '#d4edda';
+                        } else {
+                            throw new Error(result.message);
+                        }
+                    } catch (error) {
+                        console.error('Submission error:', error);
+                        row.style.backgroundColor = '#f8d7da';
+                        // Display the specific error from the server
+                        updateStatus(`Error submitting row ${i + 1}: ${error.message}`, true);
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                }
+                updateStatus(`Successfully submitted ${successCount} of ${rows.length} rows.`, false);
+                setTimeout(() => {
+                    clearAllBtn.click();
+                     updateStatus('All data submitted and table cleared.');
+                }, 2000);
+                submitBtn.disabled = false;
+            });
+
+            // Enhancement Listeners
+            enhanceBtn.addEventListener('click', () => { enhancementControls.style.display = enhancementControls.style.display === 'block' ? 'none' : 'block'; });
+            resetEnhanceBtn.addEventListener('click', () => {
+                if (!cropper) return;
+                updateStatus("Resetting enhancements...");
+                currentEnhancements = { brightness: 0, contrast: 0, sharpen: false, greyscale: false, bw: false };
+                brightnessSlider.value = 0;
+                contrastSlider.value = 0;
+                sharpenBtn.style.backgroundColor = '';
+                greyscaleBtn.style.backgroundColor = '';
+                bwBtn.style.backgroundColor = '';
+                cropper.replace(originalCropperSrc);
+                updateStatus("Enhancements reset.");
+            });
+            const applyEnhanceDebounce = () => { currentEnhancements.brightness = brightnessSlider.value; currentEnhancements.contrast = contrastSlider.value; applyEnhancements(); };
+            brightnessSlider.addEventListener('input', applyEnhanceDebounce);
+            contrastSlider.addEventListener('input', applyEnhanceDebounce);
+            sharpenBtn.addEventListener('click', () => { currentEnhancements.sharpen = !currentEnhancements.sharpen; sharpenBtn.style.backgroundColor = currentEnhancements.sharpen ? '#d4edda' : ''; applyEnhancements(); });
+            greyscaleBtn.addEventListener('click', () => {
+                currentEnhancements.greyscale = !currentEnhancements.greyscale;
+                if (currentEnhancements.greyscale) { currentEnhancements.bw = false; bwBtn.style.backgroundColor = ''; }
+                greyscaleBtn.style.backgroundColor = currentEnhancements.greyscale ? '#d4edda' : ''; applyEnhancements();
+            });
+            bwBtn.addEventListener('click', () => {
+                currentEnhancements.bw = !currentEnhancements.bw;
+                if (currentEnhancements.bw) { currentEnhancements.greyscale = false; greyscaleBtn.style.backgroundColor = ''; }
+                bwBtn.style.backgroundColor = currentEnhancements.bw ? '#d4edda' : ''; applyEnhancements();
+            });
+            autoEnhanceBtn.addEventListener('click', () => {
+                currentEnhancements.sharpen = true; currentEnhancements.brightness = 10; currentEnhancements.contrast = 10;
+                currentEnhancements.greyscale = false; currentEnhancements.bw = false;
+                brightnessSlider.value = currentEnhancements.brightness;
+                contrastSlider.value = currentEnhancements.contrast;
+                sharpenBtn.style.backgroundColor = '#d4edda';
+                greyscaleBtn.style.backgroundColor = '';
+                bwBtn.style.backgroundColor = '';
+                applyEnhancements();
+            });
+            // This function needs to be defined before it's used by the listeners above
+            applyEnhancements = () => {
+                if (!cropper || !originalCropperSrc) return;
+                updateStatus("Applying enhancements...");
+                const tempCanvas = document.createElement('canvas');
+                const tempImg = new Image();
+                tempImg.crossOrigin = "Anonymous";
+                tempImg.onload = () => {
+                    tempCanvas.width = tempImg.width;
+                    tempCanvas.height = tempImg.height;
+                    tempCanvas.getContext('2d').drawImage(tempImg, 0, 0);
+                    Caman(tempCanvas, function () {
+                        this.revert(false);
+                        if (currentEnhancements.bw) { this.greyscale().contrast(70).brightness(5); }
+                        else if (currentEnhancements.greyscale) { this.greyscale(); }
+                        if (currentEnhancements.sharpen) { this.sharpen(10); }
+                        this.brightness(parseInt(currentEnhancements.brightness, 10));
+                        this.contrast(parseInt(currentEnhancements.contrast, 10));
+                        this.render(() => {
+                            const newDataUrl = this.toBase64();
+                            cropper.replace(newDataUrl);
+                            updateStatus('Enhancements applied.');
+                        });
+                    });
+                };
+                tempImg.src = originalCropperSrc;
+            }
+
+            // Keyboard navigation
+            const inputFields = [ awbInput, customerNameInput, kycTypeSelect, docTypeSelect, docNumberInput, remarkInput ];
+            function handleEnterKey(e) {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                const currentField = e.target;
+                const isRequiredAndEmpty = (field) => {
+                    if (field.style.display === 'none' || field.disabled) return false;
+                    const value = field.value.trim();
+                    if (value === '') {
+                        if (field === awbInput) return true;
+                        if (field === customerNameInput && currentUploadType === 'KYC') return true;
+                        if (field === docNumberInput && currentUploadType === 'Product') return true;
+                    }
+                    return false;
+                };
+                if (isRequiredAndEmpty(currentField)) {
+                    let fieldName = "This field";
+                    if(currentField.placeholder) fieldName = currentField.placeholder.replace('(Required)','').trim();
+                    updateStatus(`${fieldName} is a required field.`, true);
+                    return;
+                }
+                const visibleFields = inputFields.filter(field => field.style.display !== 'none' && !field.disabled);
+                const currentIndex = visibleFields.indexOf(e.target);
+                if (currentIndex > -1 && currentIndex < visibleFields.length - 1) {
+                    visibleFields[currentIndex + 1].focus();
+                } else {
+                    pickBtn.click();
+                }
+            }
+            inputFields.forEach(field => {
+                field.addEventListener('keydown', handleEnterKey);
+            });
+
+            // --- Final Initialization ---
+            updateUIForUploadType(currentUploadType);
+            
+            // --- FIX: Check for cached appData ---
+            const appDataJSON = localStorage.getItem('appData');
+            if (appDataJSON) {
+                console.log("DEBUG: Found appData in cache on load.");
+                try {
+                    const appData = JSON.parse(appDataJSON);
+                    if (appData.data) {
+                        initializeOrderData({ detail: appData });
+                    } else {
+                         console.error("DEBUG: Cached appData is invalid.");
+                         updateStatus("Cached data is invalid. Waiting for network.", true);
+                    }
+                } catch (e) {
+                     console.error("DEBUG: Failed to parse cached appData.", e);
+                     updateStatus("Failed to parse cached data. Waiting for network.", true);
+                }
+            } else {
+                console.log("DEBUG: No appData in cache. Waiting for appDataLoaded event.");
+                // The 'appDataLoaded' listener will handle it
+            }
+        });
     </script>
 </body>
 </html>
-
