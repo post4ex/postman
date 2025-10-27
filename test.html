@@ -348,6 +348,8 @@
         let customerDataList, docNumberDataList;
         let selectedOrderRefInput, selectedOrderBranchInput, selectedOrderCodeInput;
         let selectedCustomerUidInput, selectedDocTypeInput;
+        // This is a flag to ensure we only try to load from cache once
+        let hasLoadedFromCache = false;
 
 
         // --- Barcode Detector Initialization ---
@@ -508,7 +510,6 @@
                 stream.getTracks().forEach(track => track.stop()); 
                 stream = null; 
             }
-            // Check if cameraFeed exists before removing listener
             if (cameraFeed) {
                 cameraFeed.removeEventListener('click', handleVideoStreamClick);
             }
@@ -593,8 +594,20 @@
         }
         
         // --- NEW: Data Loading from appData ---
+        // This is now called by the event listener OR the cache check
         const initializeOrderData = (event) => {
             console.log("DEBUG: initializeOrderData triggered");
+            
+            // Prevent multiple loads
+            if (hasLoadedFromCache && event.type === 'appDataLoaded') {
+                console.log("DEBUG: Data already loaded from cache, ignoring appDataLoaded event.");
+                return;
+            }
+            if (hasLoadedFromCache && event.type === 'appDataRefreshed') {
+                 console.log("DEBUG: Refreshing data from appDataRefreshed event.");
+                 // Allow refresh to proceed
+            }
+            
             if (!event || !event.detail || !event.detail.data) {
                 console.error("DEBUG: Invalid event passed to initializeOrderData:", event);
                 updateStatus('No app data loaded.', true);
@@ -630,6 +643,7 @@
             updateUIForUploadType(currentUploadType);
             updateStatus("App data loaded. Select an order or start capture.");
             miniOrderListContainer.style.display = 'block'; // Show the list
+            hasLoadedFromCache = true; // Mark as loaded
         };
 
         // --- NEW: Date Formatting Helper ---
@@ -1724,7 +1738,27 @@
 
             // --- Final Initialization ---
             updateUIForUploadType(currentUploadType);
-            // Don't call resetUploader() here, wait for data
+            
+            // --- FIX: Check for cached appData ---
+            const appDataJSON = localStorage.getItem('appData');
+            if (appDataJSON) {
+                console.log("DEBUG: Found appData in cache on load.");
+                try {
+                    const appData = JSON.parse(appDataJSON);
+                    if (appData.data) {
+                        initializeOrderData({ detail: appData });
+                    } else {
+                         console.error("DEBUG: Cached appData is invalid.");
+                         updateStatus("Cached data is invalid. Waiting for network.", true);
+                    }
+                } catch (e) {
+                     console.error("DEBUG: Failed to parse cached appData.", e);
+                     updateStatus("Failed to parse cached data. Waiting for network.", true);
+                }
+            } else {
+                console.log("DEBUG: No appData in cache. Waiting for appDataLoaded event.");
+                // The 'appDataLoaded' listener will handle it
+            }
         });
     </script>
 </body>
