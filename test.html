@@ -124,6 +124,28 @@
             .controls-column { flex: 1; min-width: 0; }
             .data-table-container, #table-actions { margin-top: 0; }
         }
+        
+        /* Sidebar styles */
+        #orderListContainer {
+            transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+            overflow: hidden; /* Hide content when collapsed */
+        }
+
+        #orderListContainer.collapsed {
+            width: 0 !important; /* Force width to 0 */
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            border-right-width: 0 !important; /* Hide border */
+        }
+        
+        #uploaderFormContainer.expanded {
+            width: 100% !important; /* On mobile/desktop when sidebar collapsed */
+        }
+
+        /* Adjust main content layout */
+        main.w-full { /* Ensure main tag takes full width */
+          display: flex; /* Make main a flex container */
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -133,7 +155,11 @@
     <main class="w-full flex-grow flex flex-col md:flex-row md:h-[calc(100vh-88px)]">
         
         <!-- === Order List Sidebar === -->
-        <aside id="orderListContainer" class="w-full md:w-1/3 lg:w-1/4 bg-white border-r flex flex-col">
+        <aside id="orderListContainer" class="w-full md:w-1/3 lg:w-1/4 bg-white border-r flex flex-col relative md:relative transition-all duration-300 ease-in-out">
+            <button id="toggleOrderListBtn" class="absolute top-3 right-3 z-20 p-1 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-600">
+                 <svg id="collapseIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                 <svg id="expandIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
             <div class="p-4 border-b sticky top-0 bg-white z-10">
                 <div class="flex justify-between items-center">
                     <h2 class="text-xl font-bold text-gray-800">Orders</h2>
@@ -149,7 +175,7 @@
         </aside>
 
         <!-- === Uploader Form (Main Content) === -->
-        <div id="uploaderFormContainer" class="w-full md:w-2/3 lg:w-3/4 p-4 sm:p-8 overflow-y-auto hidden md:block">
+        <div id="uploaderFormContainer" class="w-full md:w-2/3 lg:w-3/4 p-4 sm:p-8 overflow-y-auto hidden md:block transition-all duration-300 ease-in-out">
             <!-- Mobile: Back to List Button -->
              <div class="p-4 border-b md:hidden bg-white -mt-4 -mx-4 sm:-mt-8 sm:-mx-8 mb-8">
                  <button type="button" id="backToListBtn" class="text-sm bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded-lg hover:bg-gray-300 flex items-center">
@@ -226,7 +252,7 @@
                             </div>
 
                             <!-- Preview Area -->
-                            <div id="image-view-area">
+                            <div id="image-view-area" class="flex items-center justify-center"> {/* MODIFIED: Centering classes */}
                                 <span id="placeholder">Image preview area</span>
                                 <img id="image-preview" src="" alt="Image preview"/>
                                 <canvas id="preview-canvas"></canvas>
@@ -306,17 +332,17 @@
 
     <script src="layout.js"></script>
 
-    <!-- Third-party libraries -->
+    <!-- *** MOVED Third-party libraries HERE *** -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
 
     <script>
-        // Set up PDF.js worker
+        // Set up PDF.js worker - NOW this will run AFTER pdf.min.js is loaded
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js`;
 
-        // === ALL ORIGINAL SCRIPT LOGIC IS HERE ===
+        // === ALL ORIGINAL SCRIPT LOGIC IS HERE (UNCHANGED from previous version) ===
         const gscriptUrlInput = document.getElementById('gscript-url');
         const cameraBtn = document.getElementById('camera-btn'), uploadBtn = document.getElementById('upload-btn'),
               fileInput = document.getElementById('file-input'), placeholder = document.getElementById('placeholder'),
@@ -651,10 +677,13 @@
         });
 
         function drawPreview() {
-            if (!imagePreview.src) return;
+             if (!imagePreview.src || !imageViewArea || !previewCanvas) return; // Added checks
             const dpr = window.devicePixelRatio || 1;
             const containerW = imageViewArea.clientWidth;
             const containerH = imageViewArea.clientHeight;
+
+            // Check if container has valid dimensions
+            if (containerW <= 0 || containerH <= 0) return; 
             
             previewCanvas.width = containerW * dpr;
             previewCanvas.height = containerH * dpr;
@@ -665,6 +694,10 @@
             
             const naturalW = imagePreview.naturalWidth;
             const naturalH = imagePreview.naturalHeight;
+
+            // Check if image has valid dimensions
+            if (naturalW <= 0 || naturalH <= 0) return; 
+
             const imgAspect = naturalW / naturalH;
             const contAspect = containerW / containerH;
             let renderedW, renderedH;
@@ -679,7 +712,12 @@
             previewCtx.save();
             previewCtx.translate(containerW / 2, containerH / 2);
             previewCtx.rotate(currentRotation * Math.PI / 180);
-            previewCtx.drawImage(imagePreview, -renderedW / 2, -renderedH / 2, renderedW, renderedH);
+            try { // Add try-catch for drawImage
+                previewCtx.drawImage(imagePreview, -renderedW / 2, -renderedH / 2, renderedW, renderedH);
+            } catch (e) {
+                console.error("Error drawing image onto canvas:", e);
+                updateStatus("Error displaying preview.", true);
+            }
             previewCtx.restore();
         }
 
@@ -1475,7 +1513,7 @@
 
             const currentField = e.target;
             const isRequiredAndEmpty = (field) => {
-                if (field.style.display === 'none' || field.disabled) return false;
+                if (!field || field.style.display === 'none' || field.disabled) return false; // Added null check
 
                 const value = field.value.trim();
                 if (value === '') {
@@ -1494,7 +1532,7 @@
             }
 
 
-            const visibleFields = inputFields.filter(field => field.style.display !== 'none' && !field.disabled);
+            const visibleFields = inputFields.filter(field => field && field.style.display !== 'none' && !field.disabled); // Added null check
             const currentIndex = visibleFields.indexOf(e.target);
 
             if (currentIndex > -1 && currentIndex < visibleFields.length - 1) {
@@ -1507,23 +1545,24 @@
         }
 
         inputFields.forEach(field => {
-            field.addEventListener('keydown', handleEnterKey);
+             if (field) { // Added null check before adding listener
+                 field.addEventListener('keydown', handleEnterKey);
+            }
         });
 
         // Initialize UI for the default type
         updateUIForUploadType(currentUploadType);
-        // Original resetUploader() is replaced below to include showListView()
-        // resetUploader(); 
+        
+        // --- NEW/MODIFIED LOGIC FOR SIDEBAR & DATA INTEGRATION ---
 
-        // === NEW SCRIPT LOGIC STARTS HERE ===
-
-        // --- NEW: State Variables ---
+        // State Variables
         let allOrders = [];
         let allClientsB2B = [];
         let allClientsB2B2C = [];
         let allProducts = []; 
+        let isOrderListCollapsed = false; 
 
-        // --- NEW: UI Elements ---
+        // UI Elements (specific to sidebar/list)
         const ui = {
             orderListContainer: document.getElementById('orderListContainer'),
             uploaderFormContainer: document.getElementById('uploaderFormContainer'),
@@ -1531,88 +1570,128 @@
             searchOrderInput: document.getElementById('searchOrder'),
             newOrderBtn: document.getElementById('newOrderBtn'),
             backToListBtn: document.getElementById('backToListBtn'),
-            awbInput: document.getElementById('awb-input'),
-            customerNameInput: document.getElementById('customer-name-input'),
+            awbInput: document.getElementById('awb-input'), // Already defined above, reusing
+            customerNameInput: document.getElementById('customer-name-input'), // Already defined
             customerDataList: document.getElementById('customer-list'),
-            docNumberInput: document.getElementById('doc-number-input'),
-            docNumberDataList: document.getElementById('doc-number-list')
+            docNumberInput: document.getElementById('doc-number-input'), // Already defined
+            docNumberDataList: document.getElementById('doc-number-list'),
+            toggleOrderListBtn: document.getElementById('toggleOrderListBtn'), 
+            collapseIcon: document.getElementById('collapseIcon'), 
+            expandIcon: document.getElementById('expandIcon') 
         };
         
-        // --- NEW: View Logic (for mobile) ---
+        // View Logic (for mobile and sidebar collapse) 
         const isMobileView = () => window.innerWidth < 768;
 
-        const showFormView = () => {
-            if (isMobileView()) {
-                ui.orderListContainer.classList.add('hidden');
-                ui.uploaderFormContainer.classList.remove('hidden');
-                ui.uploaderFormContainer.classList.add('block'); // Ensure it's block, not md:block
-                ui.uploaderFormContainer.classList.remove('md:block');
-            }
-        };
+        const toggleSidebar = (collapse) => {
+             isOrderListCollapsed = collapse;
+             ui.orderListContainer.classList.toggle('collapsed', isOrderListCollapsed);
+             ui.uploaderFormContainer.classList.toggle('expanded', isOrderListCollapsed);
+             ui.collapseIcon.classList.toggle('hidden', isOrderListCollapsed);
+             ui.expandIcon.classList.toggle('hidden', !isOrderListCollapsed);
 
-        const showListView = () => {
-            if (isMobileView()) {
-                ui.orderListContainer.classList.remove('hidden');
-                ui.uploaderFormContainer.classList.add('hidden');
-                ui.uploaderFormContainer.classList.remove('block');
-                ui.uploaderFormContainer.classList.add('md:block'); // Re-add md:block for future desktop resizing
-            }
-        };
+             if (isMobileView()) {
+                 if (isOrderListCollapsed) {
+                     ui.orderListContainer.classList.add('hidden'); 
+                     ui.uploaderFormContainer.classList.remove('hidden');
+                     ui.uploaderFormContainer.classList.add('block'); 
+                     ui.uploaderFormContainer.classList.remove('md:block');
+                 } else {
+                     ui.orderListContainer.classList.remove('hidden'); 
+                     ui.uploaderFormContainer.classList.add('hidden');
+                     ui.uploaderFormContainer.classList.remove('block'); 
+                     ui.uploaderFormContainer.classList.add('md:block'); 
+                 }
+             } else {
+                  ui.orderListContainer.classList.remove('hidden');
+                  ui.uploaderFormContainer.classList.remove('hidden');
+                  ui.uploaderFormContainer.classList.remove('block');
+                  ui.uploaderFormContainer.classList.add('md:block');
+             }
 
-        // NEW: Handle window resizing to prevent "stuck" views
+            setTimeout(() => {
+                if (cropper) cropper.resize();
+                drawPreview(); 
+            }, 350); 
+        };
+        
+         const showFormView = () => {
+             if (isMobileView()) {
+                 toggleSidebar(true); 
+             }
+         };
+
+         const showListView = () => {
+             if (isMobileView()) {
+                 toggleSidebar(false); 
+             }
+             else if (isOrderListCollapsed) {
+                 toggleSidebar(false);
+             }
+         };
+
         const handleResize = () => {
             if (!isMobileView()) {
-                // Desktop view: always show both list and form
-                ui.orderListContainer.classList.remove('hidden');
-                ui.uploaderFormContainer.classList.remove('hidden');
-                ui.uploaderFormContainer.classList.add('md:block'); // Ensure md:block is present
+                ui.orderListContainer.classList.remove('hidden'); 
+                ui.uploaderFormContainer.classList.remove('hidden', 'block');
+                ui.uploaderFormContainer.classList.add('md:block');
+                ui.orderListContainer.classList.toggle('collapsed', isOrderListCollapsed);
+                ui.uploaderFormContainer.classList.toggle('expanded', isOrderListCollapsed);
             } else {
-                // Mobile view: check which one was active
-                // If form is visible, hide the list
-                if (!ui.uploaderFormContainer.classList.contains('hidden')) {
+                if (!ui.uploaderFormContainer.classList.contains('hidden')) { 
                     ui.orderListContainer.classList.add('hidden');
                     ui.uploaderFormContainer.classList.add('block');
                     ui.uploaderFormContainer.classList.remove('md:block');
-                } else {
-                    // List is visible, hide the form
+                    isOrderListCollapsed = true; 
+                } else { 
                     ui.orderListContainer.classList.remove('hidden');
                     ui.uploaderFormContainer.classList.add('hidden');
                     ui.uploaderFormContainer.classList.remove('block');
                     ui.uploaderFormContainer.classList.add('md:block');
+                     isOrderListCollapsed = false; 
                 }
+                ui.collapseIcon.classList.toggle('hidden', isOrderListCollapsed);
+                ui.expandIcon.classList.toggle('hidden', !isOrderListCollapsed);
             }
+             // Ensure redraw happens after potential layout shifts
+             setTimeout(() => {
+                 if (cropper) cropper.resize();
+                 drawPreview(); 
+             }, 50); // Small delay might be sufficient
         };
         window.addEventListener('resize', handleResize);
         
-        // --- NEW: Data Loading ---
+        // Data Loading 
         const handleDataLoaded = (event) => {
+             console.log("handleDataLoaded triggered in uploader.html", event.detail); // Debug log
             if (!event.detail || !event.detail.data) {
                 document.getElementById('orderLoader').textContent = 'No data found.';
+                 console.warn("No data in event detail.");
                 return;
             };
             
             const appData = event.detail.data;
             
-            // 1. Load Orders
             allOrders = appData.ORDERS || [];
+            console.log("Orders loaded:", allOrders.length); // Debug log
             if (allOrders.length > 0) {
                  renderOrderList(allOrders);
             } else {
                  document.getElementById('orderLoader').textContent = 'No orders found.';
             }
 
-            // 2. Load Client Lists
             allClientsB2B = appData.B2B || []; 
             allClientsB2B2C = appData.B2B2C || []; 
+            console.log("Clients loaded:", allClientsB2B.length, "B2B,", allClientsB2B2C.length, "B2B2C"); // Debug log
 
-            // 3. Load Products List (using correct key 'PRODUCT')
             allProducts = appData.PRODUCT || []; 
+            console.log("Products loaded:", allProducts.length); // Debug log
         };
         
         window.addEventListener('appDataLoaded', handleDataLoaded);
         window.addEventListener('appDataRefreshed', handleDataLoaded);
         
-        // --- NEW: List Rendering ---
+        // List Rendering 
         const renderOrderList = (orders) => {
             ui.orderList.innerHTML = '';
             if (!orders || orders.length === 0) {
@@ -1621,36 +1700,48 @@
             }
             orders.forEach(order => {
                 const ref = order.REFERANCE;
+                 if (!ref) { // Skip if REFERANCE is missing
+                    console.warn("Order missing REFERANCE:", order);
+                    return; 
+                }
                 const displayAwb = order.AWB_NUMBER || ref;
-                // Attempt to find the client name from B2B or B2B2C using the CODE on the order
+                
+                // Find client name based on CODE
+                let clientName = 'Unknown Client';
                 const parentClient = allClientsB2B.find(c => c.CODE === order.CODE);
-                const clientName = parentClient ? parentClient.CLIENT_NAME : 'Unknown Client'; 
+                if (parentClient) {
+                    clientName = parentClient.CLIENT_NAME || clientName;
+                } else {
+                    // Fallback to searching B2B2C if not found in B2B (less likely for order CODE)
+                    const childClient = allClientsB2B2C.find(c => c.CODE === order.CODE);
+                    if (childClient) {
+                         clientName = childClient.NAME || clientName; // Use NAME for B2B2C
+                    }
+                }
 
                 const li = document.createElement('li');
                 li.className = 'p-3 rounded-lg cursor-pointer hover:bg-indigo-50 transition-colors border border-gray-200';
-                li.innerHTML = `<strong class="text-indigo-700 block text-sm">${displayAwb}</strong><span class="text-xs text-gray-600">${clientName} (Ref: ${ref})</span>`;
+                 li.innerHTML = `<strong class="text-indigo-700 block text-sm">${displayAwb}</strong><span class="text-xs text-gray-600">${clientName} (Ref: ${ref})</span>`;
                 li.dataset.orderRef = ref;
                 li.addEventListener('click', () => selectOrder(ref));
                 ui.orderList.appendChild(li);
             });
+             document.getElementById('orderLoader').textContent = ''; // Clear loading message
         };
 
-        // --- NEW: Core Selection Logic ---
+        // Core Selection Logic 
         const selectOrder = (orderRef) => {
+            console.log("Selecting order:", orderRef); // Debug log
             const order = allOrders.find(o => o.REFERANCE === orderRef);
-            if (!order) return;
+             if (!order) {
+                console.warn("Order not found for ref:", orderRef);
+                return;
+            }
             
-            // 1. Fill AWB Input
             ui.awbInput.value = order.AWB_NUMBER || order.REFERANCE || '';
-            
-            // 2. Populate KYC Datalist
             populateKycData(order);
-            
-            // 3. Populate Product Datalist
             populateProductData(order);
-            
-            // 4. Switch view on mobile
-            showFormView();
+            toggleSidebar(true); 
         };
 
         const populateKycData = (order) => {
@@ -1658,7 +1749,6 @@
             const clientCode = order.CODE; 
             if (!clientCode) return;
 
-            // Find parent client
             const parentClient = allClientsB2B.find(c => c.CODE === clientCode);
             if (parentClient && parentClient.CLIENT_NAME) {
                 const option = document.createElement('option');
@@ -1666,40 +1756,41 @@
                 ui.customerDataList.appendChild(option);
             }
             
-            // Find all child clients
             const childClients = allClientsB2B2C.filter(c => c.CODE === clientCode);
             childClients.forEach(client => {
-                if (client.NAME) { // Check if NAME exists
+                if (client.NAME) { 
                     const option = document.createElement('option');
                     option.value = client.NAME; 
                     ui.customerDataList.appendChild(option);
                 }
             });
+             console.log("Populated KYC datalist with", ui.customerDataList.options.length, "options for CODE:", clientCode); // Debug log
         };
 
         const populateProductData = (order) => {
             ui.docNumberDataList.innerHTML = '';
             const orderRef = order.REFERANCE;
             
-            // Use the correct field 'RERERANCE' based on provided appData
+            // Use 'RERERANCE' based on provided appData structure
             const productsForOrder = allProducts.filter(p => p.RERERANCE === orderRef); 
             
             productsForOrder.forEach(product => {
-                if (product.DOC_NUMBER) { // Check if DOC_NUMBER exists
+                if (product.DOC_NUMBER) { 
                     const option = document.createElement('option');
                     option.value = product.DOC_NUMBER; 
                     ui.docNumberDataList.appendChild(option);
                 }
             });
+             console.log("Populated Product datalist with", ui.docNumberDataList.options.length, "options for REFERANCE:", orderRef); // Debug log
         };
 
-        // --- NEW: Event Listeners for List/Form ---
+        // Event Listeners for List/Form 
         ui.searchOrderInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             const filteredOrders = allOrders.filter(order => {
-                // Find client name for the order
+                let clientName = '';
                 const parentClient = allClientsB2B.find(c => c.CODE === order.CODE);
-                const clientName = parentClient ? parentClient.CLIENT_NAME : '';
+                 if (parentClient) clientName = parentClient.CLIENT_NAME || '';
                 
                 return (order.REFERANCE ? String(order.REFERANCE).toLowerCase().includes(searchTerm) : false) || 
                        (order.AWB_NUMBER ? String(order.AWB_NUMBER).toLowerCase().includes(searchTerm) : false) ||
@@ -1710,46 +1801,64 @@
         });
 
         ui.newOrderBtn.addEventListener('click', () => {
-            // Reset fields (but don't reset the entire uploader)
             ui.awbInput.value = '';
             ui.customerNameInput.value = '';
             ui.docNumberInput.value = '';
             ui.customerDataList.innerHTML = '';
             ui.docNumberDataList.innerHTML = '';
-            showFormView();
+            toggleSidebar(true); 
         });
         
         ui.backToListBtn.addEventListener('click', () => {
-            showListView();
+             toggleSidebar(false); 
+        });
+
+        ui.toggleOrderListBtn.addEventListener('click', () => {
+            toggleSidebar(!isOrderListCollapsed); 
         });
         
-        // --- MODIFIED: Original Functions ---
-        
-        // Modify resetUploader to also handle mobile view
-        const originalResetUploader = resetUploader; // Store reference to original
+        // MODIFIED: Original Functions 
+        const originalResetUploader = resetUploader; 
         resetUploader = () => {
-            originalResetUploader(); // Call the original function
-            showListView(); // Add new behavior to go back to list on full reset
+            originalResetUploader(); 
+            if (isOrderListCollapsed && !isMobileView()) { // Only expand on desktop if collapsed
+                 toggleSidebar(false); 
+            } else if (isMobileView()){
+                 showListView(); 
+            }
+             // Clear potentially filled fields if reset is called manually
+            ui.awbInput.value = '';
+            ui.customerNameInput.value = '';
+            ui.docNumberInput.value = '';
+            ui.customerDataList.innerHTML = '';
+            ui.docNumberDataList.innerHTML = '';
         };
 
-        // --- NEW: Initial Data Load from Cache ---
+        // Initial Data Load from Cache 
         const appDataJSON = localStorage.getItem('appData');
         if (appDataJSON) {
             try {
                 const appData = JSON.parse(appDataJSON);
+                 console.log("Loading initial data from cache."); // Debug log
                 if (appData.data) {
-                    handleDataLoaded({ detail: appData });
+                    handleDataLoaded({ detail: appData }); // Pass the whole object
                 } else {
-                     document.getElementById('orderLoader').textContent = 'Could not parse data.';
+                     document.getElementById('orderLoader').textContent = 'Could not parse data from cache.';
+                     console.warn("Cached appData missing 'data' property.");
                 }
             } catch (e) {
-                 document.getElementById('orderLoader').textContent = 'Could not load data from cache.';
+                 document.getElementById('orderLoader').textContent = 'Error loading data from cache.';
+                 console.error("Error parsing cached appData:", e);
             }
+        } else {
+             document.getElementById('orderLoader').textContent = 'Waiting for data...';
+             console.log("No appData found in cache."); // Debug log
         }
         
-        // Initialize the view state based on screen size
-        handleResize(); // Call once on load
+        // Initialize the view state
+        handleResize(); 
 
     </script>
 </body>
 </html>
+
