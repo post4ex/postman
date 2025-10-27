@@ -344,7 +344,7 @@
         let enhanceBtn, enhancementControls, autoEnhanceBtn, greyscaleBtn, bwBtn, sharpenBtn, resetEnhanceBtn;
         let brightnessSlider, contrastSlider;
         // (New List UI)
-        let miniOrderListContainer, orderList, searchMiniOrderInput, loadMoreBtn; // Removed items that are not in this file
+        let miniOrderListContainer, orderList, searchMiniOrderInput, loadMoreBtn;
         let customerDataList, docNumberDataList;
         let selectedOrderRefInput, selectedOrderBranchInput, selectedOrderCodeInput;
         let selectedCustomerUidInput, selectedDocTypeInput;
@@ -508,7 +508,10 @@
                 stream.getTracks().forEach(track => track.stop()); 
                 stream = null; 
             }
-            cameraFeed.removeEventListener('click', handleVideoStreamClick);
+            // Check if cameraFeed exists before removing listener
+            if (cameraFeed) {
+                cameraFeed.removeEventListener('click', handleVideoStreamClick);
+            }
         }
 
         function displayImage(index) {
@@ -729,9 +732,6 @@
             updateStatus(`Selected Order: ${displayValue}. Datalists populated.`);
             console.log("Selected Order Object:", order);
             
-            // Do not switch view, list is inline
-            // showFormView(); 
-
             if (currentUploadType === 'KYC') {
                 awbInput.focus();
             } else if (currentUploadType === 'Product') {
@@ -849,11 +849,11 @@
 
         // --- Original drawPreview and OCR logic ---
         function drawPreview() {
-            if (!imagePreview.src || !imageViewArea) return; // Added check for imageViewArea
+            if (!imagePreview.src || !imageViewArea) return;
             const dpr = window.devicePixelRatio || 1;
             const containerW = imageViewArea.clientWidth;
             const containerH = imageViewArea.clientHeight;
-            if (!containerW || !containerH) return; // Don't draw if not visible
+            if (!containerW || !containerH) return;
             
             previewCanvas.width = containerW * dpr;
             previewCanvas.height = containerH * dpr;
@@ -1092,8 +1092,8 @@
         
         // --- Image Enhancement Logic (Original) ---
         function resetEnhancements() { /* ... */ }
-        function applyEnhancements() { /* ... */ }
-
+        let applyEnhancements = () => {}; // Declare here
+        
         // --- UI Update Logic (Original) ---
         function updateTableHeader(uploadType) {
             if (!tableHeaderRow) return;
@@ -1149,7 +1149,6 @@
         }
 
         // --- Main DOMContentLoaded ---
-        // *** FIX: All code execution is wrapped in DOMContentLoaded ***
         document.addEventListener('DOMContentLoaded', () => {
              console.log("DEBUG: DOMContentLoaded fired.");
              
@@ -1200,14 +1199,6 @@
              contrastSlider = document.getElementById('contrast-slider');
              
              // (New List UI)
-             // These are no longer in this file
-             // orderListContainer = document.getElementById('orderListContainer');
-             // uploaderFormContainer = document.getElementById('uploaderFormContainer');
-             // newOrderBtn = document.getElementById('newOrderBtn');
-             // backToListBtn = document.getElementById('backToListBtn');
-             // toggleOrderListBtn = document.getElementById('toggleOrderListBtn');
-             
-             // These are the new inline list elements
              miniOrderListContainer = document.getElementById('miniOrderListContainer');
              orderList = document.getElementById('miniOrderList');
              searchMiniOrderInput = document.getElementById('searchMiniOrder');
@@ -1244,11 +1235,6 @@
                 console.log("DEBUG: New displayDays:", displayDays);
                 filterAndRenderOrders();
              });
-             
-             // This logic is now handled by the appDataLoaded event
-             // newOrderBtn.addEventListener('click', () => { ... }); 
-             // backToListBtn.addEventListener('click', showListView);
-             // if (toggleOrderListBtn) { ... }
 
              // MERGED: Upload Type Listener
              uploadTypeStrip.addEventListener('click', (e) => {
@@ -1738,15 +1724,7 @@
 
             // --- Final Initialization ---
             updateUIForUploadType(currentUploadType);
-            
             // Don't call resetUploader() here, wait for data
-            // We'll show the list by default on mobile IF it's not hidden by `layout.js` logic
-             if (isMobileView()) {
-                 // uploaderFormContainer.classList.add('hidden'); // Let layout.js handle this
-             } else {
-                 uploaderFormContainer.classList.remove('hidden');
-             }
-
         });
     </script>
 </body>
