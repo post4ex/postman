@@ -242,7 +242,8 @@
 
                             <!-- Preview Area -->
                             <div id="image-view-area">
-                                <span id="placeholder"></span>
+                                <!-- ===== FIX 2: Added default centered text ===== -->
+                                <span id="placeholder">Select Camera or Upload to begin</span>
                                 <img id="image-preview" src="" alt="Image preview"/>
                                 <canvas id="preview-canvas"></canvas>
                                 <canvas id="selection-canvas"></canvas>
@@ -511,6 +512,8 @@
 
         function resetUploader() {
             stopCamera();
+            // ===== FIX 2: Set default text on reset =====
+            placeholder.textContent = 'Select Camera or Upload to begin';
             placeholder.style.display = 'block';
             previewCanvas.style.display = 'none';
             cameraFeed.style.display = 'none'; 
@@ -584,6 +587,11 @@
             inlineCropperWrapper.style.display = 'block';
             imageViewArea.style.display = 'none';
             scrollerContainer.style.display = 'none'; 
+            
+            // ===== FIX 2: Clear placeholder text =====
+            placeholder.style.display = 'none';
+            placeholder.textContent = ''; 
+            
             cropperImage.src = imageSrc;
             if (cropper) cropper.destroy();
             cropper = new Cropper(cropperImage, {
@@ -845,6 +853,8 @@
                     option.value = `Eway: ${product.EWAY_IF}, Type: EWB, Amount: ${product.AMOUNT}`;
                     option.dataset.docNumber = product.EWAY_IF;
                     option.dataset.docType = 'EWB';
+                    // ===== FIX 1: Added missing appendChild call =====
+                    docNumberDataList.appendChild(option); 
                 }
             });
         };
@@ -961,6 +971,7 @@
             selectionCtx.strokeRect(selectionRect.startX, selectionRect.startY, width, height);
         }
 
+        // ===== FIX 4: Replaced entire onSelectionUp function with rotation-aware logic =====
         async function onSelectionUp(e) {
             if (!isSelecting) return;
             isSelecting = false;
@@ -975,17 +986,28 @@
             const selectionEndX = point.clientX - rect.left;
             const selectionEndY = point.clientY - rect.top;
 
-            const selX = Math.min(selectionRect.startX, selectionEndX);
-            const selY = Math.min(selectionRect.startY, selectionEndY);
-            const selW = Math.abs(selectionRect.startX - selectionEndX);
-            const selH = Math.abs(selectionRect.startY - selectionEndY);
+            // Original selection box
+            const selX1 = Math.min(selectionRect.startX, selectionEndX);
+            const selY1 = Math.min(selectionRect.startY, selectionEndY);
+            const selX2 = Math.max(selectionRect.startX, selectionEndX);
+            const selY2 = Math.max(selectionRect.startY, selectionEndY);
+            
+            const selW = selX2 - selX1;
+            const selH = selY2 - selY1;
 
-            if (selW < 10 || selH < 10) return;
+            if (selW < 10 || selH < 10) return; // Selection too small
 
+            // Get image and container dimensions (needed for coordinate mapping)
             const naturalW = imagePreview.naturalWidth;
             const naturalH = imagePreview.naturalHeight;
             const containerW = imageViewArea.clientWidth;
             const containerH = imageViewArea.clientHeight;
+            
+            if (!naturalW || !naturalH || !containerW || !containerH) {
+                updateStatus("OCR failed: Image dimensions are zero.", true);
+                return;
+            }
+
             const imgAspect = naturalW / naturalH;
             const contAspect = containerW / containerH;
             let renderedW, renderedH;
@@ -999,12 +1021,45 @@
             const offsetX = (containerW - renderedW) / 2;
             const offsetY = (containerH - renderedH) / 2;
             const scaleFactor = naturalW / renderedW;
-            const sourceX = (selX - offsetX) * scaleFactor;
-            const sourceY = (selY - offsetY) * scaleFactor;
-            const sourceWidth = selW * scaleFactor;
-            const sourceHeight = selH * scaleFactor;
             
-            if (sourceX < 0 || sourceY < 0 || sourceX + sourceWidth > naturalW || sourceY + sourceHeight > naturalH) {
+            // New Rotation-Aware Coordinate Mapping
+            const centerX = containerW / 2;
+            const centerY = containerH / 2;
+            const angle = (-currentRotation * Math.PI / 180); // Inverse angle
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            // Function to un-rotate a point
+            const unrotatePoint = (x, y) => {
+                // 1. Translate to center
+                const tx = x - centerX;
+                const ty = y - centerY;
+                // 2. Rotate
+                const rx = (tx * cos) - (ty * sin);
+                const ry = (tx * sin) + (ty * cos);
+                // 3. Translate back
+                return { x: rx + centerX, y: ry + centerY };
+            };
+
+            // Un-rotate all 4 corners of the selection box
+            const p1 = unrotatePoint(selX1, selY1);
+            const p2 = unrotatePoint(selX2, selY1);
+            const p3 = unrotatePoint(selX1, selY2);
+            const p4 = unrotatePoint(selX2, selY2);
+
+            // Find the new bounding box of the un-rotated rectangle
+            const unrotatedSelX = Math.min(p1.x, p2.x, p3.x, p4.x);
+            const unrotatedSelY = Math.min(p1.y, p2.y, p3.y, p4.y);
+            const unrotatedSelW = Math.max(p1.x, p2.x, p3.x, p4.x) - unrotatedSelX;
+            const unrotatedSelH = Math.max(p1.y, p2.y, p3.y, p4.y) - unrotatedSelY;
+            
+            // Now scale these un-rotated coordinates to the original image
+            const sourceX = (unrotatedSelX - offsetX) * scaleFactor;
+            const sourceY = (unrotatedSelY - offsetY) * scaleFactor;
+            const sourceWidth = unrotatedSelW * scaleFactor;
+            const sourceHeight = unrotatedSelH * scaleFactor;
+
+            if (sourceX < 0 || sourceY < 0 || (sourceX + sourceWidth) > naturalW || (sourceY + sourceHeight) > naturalH) {
                 updateStatus("Selection was outside the image area.", true);
                 isProcessingOCR = false; 
                 return;
@@ -1369,6 +1424,8 @@
                 } else {
                     // Clear only visual state
                     stopCamera();
+                    // ===== FIX 2: Set default text on camera start =====
+                    placeholder.textContent = 'Starting camera...';
                     placeholder.style.display = 'block';
                     previewCanvas.style.display = 'none';
                     imagePreview.src = '';
@@ -1393,6 +1450,8 @@
                         }
                     }
                     cameraFeed.style.display = 'block';
+                    // ===== FIX 2: Hide placeholder once feed starts =====
+                    placeholder.style.display = 'none';
                     cameraFeed.srcObject = stream;
                     cameraFeed.play(); 
                     setInterfaceState('streaming');
@@ -1491,6 +1550,13 @@
             cancelAllBtn.addEventListener('click', resetUploader);
             imageViewArea.addEventListener('mousedown', onSelectionStart);
             imageViewArea.addEventListener('touchstart', onSelectionStart, { passive: false });
+            
+            // ===== FIX 3: Added event listener for cropper rotate button =====
+            cropRotateBtn.addEventListener('click', () => {
+                if (cropper) {
+                    cropper.rotate(90); // Use cropper's built-in rotate method
+                }
+            });
             
             // --- MODIFIED: pickBtn ---
             pickBtn.addEventListener('click', async () => {
@@ -1792,4 +1858,3 @@
     </script>
 </body>
 </html>
-
