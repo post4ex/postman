@@ -216,24 +216,32 @@
       2. layout.js (handles header, footer, auth, and data fetching)
       3. Page-specific script (below)
     -->
-    <!-- <script src="docgen.js"></script> --> <!-- Assuming docgen.js is created and linked -->
+    <script src="docgen.js"></script> <!-- UNCOMMENTED THIS LINE -->
     <script src="layout.js"></script>
     
     <script>
         // --- Document Generation Stub ---
-        // This function is a placeholder. You will create docgen.js and link it.
-        // That file will contain the actual logic to generate PDFs.
+        // This function is the placeholder/wrapper that the HTML links call.
+        // It should be defined here in case docgen.js fails to load or for clarity.
         function generateDocument(docType, reference) {
             console.log(`User wants to generate: ${docType} for reference: ${reference}`);
             
-            // Example of how you might call your real function from docgen.js:
-            // if (typeof window.myDocGenLibrary !== 'undefined' && typeof window.myDocGenLibrary.generate === 'function') {
-            //     // You would pass the full order object, party details, etc.
-            //     // For now, we just log.
-            //     window.myDocGenLibrary.generate(docType, reference);
-            // } else {
-            //     console.warn('Document generation script (docgen.js) not loaded or function not found.');
-            // }
+            // The logic from docgen.js (renderDocumentWorkshop) is needed here if
+            // this file was the primary one, but since we are working on the table
+            // in THIS file (Shipments.html), we just ensure the function exists.
+            
+            // If docgen.js is loaded, it will redefine the function with the full workshop logic.
+            if (typeof window.renderDocumentWorkshop === 'function') {
+                const order = allOrders.find(o => o.REFERANCE === reference);
+                if (order) {
+                    // Call the function from docgen.js to render the full document view
+                    // This assumes the user switches to the 'workshop' view if they click a link.
+                    // For now, we will just rely on the link in renderDocumentCenter to work.
+                    console.log(`Calling external logic for ${docType}`);
+                }
+            } else {
+                 console.warn('Document generation script (docgen.js) not fully loaded or function not found.');
+            }
             
             // We return false to stop the <a> tag's default navigation
             return false; 
@@ -871,7 +879,7 @@
                     { sl: 1, date: transitDate, system: `<a href="#" onclick="return generateDocument('RECIEPT', '${r}')" class="text-blue-600 hover:underline">RECIEPT</a>`, manual: receiptUpload ? `<a href="${receiptUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">View Receipt</a>` : 'N/A' }, 
                     { sl: 2, date: orderDate, system: `<a href="#" onclick="return generateDocument('LABLE', '${r}')" class="text-blue-600 hover:underline">LABLE</a>`, manual: 'NA' }, 
                     { sl: 3, date: deliveryDate, system: `<a href="#" onclick="return generateDocument('POD', '${r}')" class="text-blue-600 hover:underline">POD</a>`, manual: podManual }, 
-                    { sl: 4, date: orderDate, system: `<a href="#" onclick="return generateDocument('CHALLAN', '${r}')" class="text-blue-600 hover:underline">CHALLAN</a>`, manual: 'NA', condition: !productUploadsExist }, // Only show if NO product uploads
+                    { sl: 4, date: orderDate, system: productUploadsExist ? `<a href="#" onclick="return generateDocument('CHALLAN', '${r}')" class="text-blue-600 hover:underline">CHALLAN</a>` : 'N/A', manual: 'NA', condition: productUploadsExist }, // Only show CHALLAN link if products exist
                     { sl: 5, date: orderDate, system: `<a href="#" onclick="return generateDocument('OFFICE_COPY', '${r}')" class="text-blue-600 hover:underline">OFFICE COPY</a>`, manual: 'NA' }, 
                 ];
                 
@@ -880,10 +888,18 @@
                 // Mobile List View (like timeline)
                 h += `<div class="space-y-3 text-sm sm:hidden">`;
                 rows.forEach(row => {
+                    // Filter based on condition: always show if no condition, or if condition is true
                     if (row.condition === undefined || row.condition === true) {
+                        // Check if system link is actually a link (not N/A) before rendering
+                        const isSystemLink = row.system.includes('<a ');
+                        
                         h += `<div class="p-3 bg-gray-50 rounded-md border">
-                                <div class="font-semibold text-gray-800">${row.system}</div>
+                                <div class="font-semibold text-gray-800">${isSystemLink ? 'System Document' : row.system}</div>
                                 <div class="flex justify-between mt-1 pt-1 border-t">
+                                    <span class="text-gray-500">Doc Type:</span>
+                                    <span class="font-medium text-gray-700 text-right">${row.system.replace(/<[^>]*>/g, '')}</span>
+                                </div>
+                                <div class="flex justify-between mt-1">
                                     <span class="text-gray-500">Date:</span>
                                     <span class="font-medium text-gray-700">${row.date}</span>
                                 </div>
@@ -900,7 +916,7 @@
                 h += `<div class="hidden sm:block overflow-x-auto border rounded-md"><table id="docCenterTable" class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Sl.No</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Date</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">System</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Manual</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
                 rows.forEach(row => { 
                     if (row.condition === undefined || row.condition === true) 
-                        h += `<tr><td class="px-2 py-1">${row.sl}</td><td class="px-2 py-1">${row.date}</td><td class="px-2 py-1">${row.system}</td><td class_A="px-2 py-1">${row.manual}</td></tr>`; 
+                        h += `<tr><td class="px-2 py-1">${row.sl}</td><td class="px-2 py-1">${row.date}</td><td class="px-2 py-1">${row.system}</td><td class="px-2 py-1">${row.manual}</td></tr>`; 
                 });
                 h += `</tbody></table></div>`;
                 
@@ -914,5 +930,3 @@
     </script>
 </body>
 </html>
-
-
