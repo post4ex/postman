@@ -284,49 +284,63 @@
 
         // --- List Rendering Functions ---
 
+        function excelSerialToDate(serial) {
+            // Google Sheets serial number is days since 1899-12-30.
+            // JS Date is ms since 1970-01-01.
+            // The difference between these two dates is 25569 days.
+            const serialNum = parseFloat(serial);
+            if (isNaN(serialNum)) return null;
+
+            // (serial - 25569) = days since 1970-01-01
+            // We need to get the total milliseconds
+            // (serialNum - 25569) * 86400 * 1000
+            const milliseconds = (serialNum - 25569) * 86400 * 1000;
+
+            // Create a date from this millisecond value.
+            // We will use UTC to avoid local timezone shifts from the epoch.
+            const baseDate = new Date(milliseconds);
+            
+            return baseDate;
+        }
+
+
         function formatDate(dateString) {
             if (!dateString) return 'N/A'; // handles null, undefined, ""
             
             let date;
-            
-            // 1. Check if it's an ISO string (which new Date() handles best)
-            if (typeof dateString === 'string' && dateString.includes('T') && dateString.includes('Z')) {
-                date = new Date(dateString);
-            } 
-            // 2. Check if it's a number (like a timestamp)
-            else if (typeof dateString === 'number') {
-                date = new Date(dateString);
-            } 
-            // 3. Check if it's a STRING containing just a number (like "45757")
-            else if (typeof dateString === 'string' && /^\d+$/.test(dateString.trim())) {
-                date = new Date(parseInt(dateString.trim(), 10));
-            }
-            // 4. Try parsing whatever is left
-            else {
-                 date = new Date(dateString);
-            }
 
             try {
+                // 1. Check if it's an ISO string (which new Date() handles best)
+                if (typeof dateString === 'string' && dateString.includes('T') && dateString.includes('Z')) {
+                    date = new Date(dateString);
+                } 
+                // 2. Check if it's a number or a string that is a number (Google Sheet Serial Date)
+                else if (typeof dateString === 'number' || (typeof dateString === 'string' && dateString.trim() !== '' && !isNaN(parseFloat(dateString)) && isFinite(dateString))) {
+                    date = excelSerialToDate(dateString);
+                    if (date === null) throw new Error('Serial date conversion failed');
+                }
+                // 3. Last resort: try direct parsing (handles "YYYY-MM-DD")
+                else {
+                    date = new Date(dateString);
+                    // Handle "YYYY-MM-DD" which is parsed as UTC midnight
+                    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString.trim())) {
+                        const parts = dateString.split('-');
+                        date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+                    }
+                }
+
+                // 4. Check for validity
                 if (isNaN(date.getTime())) {
-                    // Check for "YYYY-MM-DD" string as a last resort
-                     if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString.trim())) {
-                         const parts = dateString.split('-');
-                         // Use Date.UTC to prevent local timezone conversion of the string
-                         const utcDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
-                         const year = utcDate.getUTCFullYear();
-                         const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
-                         const day = String(utcDate.getUTCDate()).padStart(2, '0');
-                         return `${year}-${month}-${day}`;
-                     }
-                    console.warn("formatDate: Invalid date string received:", dateString);
+                    console.warn("formatDate: Invalid date value after all attempts:", dateString);
                     return 'Invalid Date';
                 }
-                
-                // --- Use UTC methods to display the date as-is ---
+
+                // 5. Format the valid date using UTC methods
                 const year = date.getUTCFullYear();
                 const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // getUTCMonth() is 0-indexed
                 const day = String(date.getUTCDate()).padStart(2, '0');
                 return `${year}-${month}-${day}`;
+                
             } catch (e) {
                 console.error("formatDate: Error parsing date:", dateString, e);
                 return 'Error Date';
@@ -788,4 +802,5 @@
 
 </body>
 </html>
+
 
