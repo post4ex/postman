@@ -216,10 +216,21 @@
       2. layout.js (handles header, footer, auth, and data fetching)
       3. Page-specific script (below)
     -->
-    <script src="docgen.js"></script> <!-- UNCOMMENTED THIS LINE -->
+    <script src="docgen.js"></script>
     <script src="layout.js"></script>
     
     <script>
+        // --- GLOBAL STATE DECLARATIONS MOVED HERE ---
+        let allOrders = [];
+        let currentSelectedRef = null;
+        let b2b2cDataMap = new Map();
+        let productDataMap = new Map();
+        let multiboxDataMap = new Map();
+        let trackDataMap = new Map();
+        let logsDataMap = new Map();
+        let uploadsDataMap = new Map();
+        // --- END GLOBAL STATE DECLARATIONS ---
+
         // --- Document Generation Stub ---
         // This function is the placeholder/wrapper that the HTML links call.
         // It should be defined here in case docgen.js fails to load or for clarity.
@@ -231,28 +242,39 @@
             // in THIS file (Shipments.html), we just ensure the function exists.
             
             // If docgen.js is loaded, it will redefine the function with the full workshop logic.
-            if (typeof window.renderDocumentWorkshop === 'function') {
-                const order = allOrders.find(o => o.REFERANCE === reference);
-                if (order) {
-                    // Call the function from docgen.js to render the full document view
-                    // This assumes the user switches to the 'workshop' view if they click a link.
-                    // For now, we will just rely on the link in renderDocumentCenter to work.
-                    console.log(`Calling external logic for ${docType}`);
-                }
-            } else {
-                 console.warn('Document generation script (docgen.js) not fully loaded or function not found.');
-            }
+            // NOTE: The previous version was checking for window.renderDocumentWorkshop
+            // If you intend to call renderDocumentWorkshop (the old function name) from docgen.js, 
+            // ensure it is exposed globally. If you use generateDocument from docgen.js, 
+            // the onclick calls will be overridden by the function in docgen.js when it loads.
             
+            // For now, let's ensure the necessary data exists before trying to access it.
+            if (allOrders.length === 0) {
+                 console.error("Data not yet loaded. Cannot generate document.");
+                 return false; 
+            }
+
+            const order = allOrders.find(o => o.REFERANCE === reference);
+            if (!order) {
+                 console.error(`Order reference ${reference} not found.`);
+                 return false;
+            }
+
+            if (typeof window.generateDocumentFull === 'function') {
+                // If docgen.js exposes a full implementation, call it.
+                // NOTE: This assumes docgen.js exports its main function as window.generateDocumentFull or similar.
+                // If docgen.js is designed to OVERRIDE this function, this block will never run.
+                console.log(`Calling full document generator for ${docType}`);
+                // Since we don't know the exact function name, we stick to the core purpose:
+                // Find the order and log, letting the actual file handle the generation.
+            }
+
             // We return false to stop the <a> tag's default navigation
             return false; 
         }
         // --- End Document Generation Stub ---
 
         document.addEventListener('DOMContentLoaded', () => {
-             // --- REMOVED: Login Check (handled by layout.js) ---
-             // --- REMOVED: Hardcoded Credentials (handled by layout.js) ---
-
-            // --- DOM Elements ---
+             // --- DOM Elements ---
             const ui = {
                 statusMessage: document.getElementById('status-message'),
                 shipmentList: document.getElementById('shipmentList'),
@@ -280,37 +302,6 @@
                 trackingHistoryContainer: document.getElementById('trackingHistoryContainer'),
                 documentCenterContainer: document.getElementById('documentCenterContainer')
             };
-
-            // --- Global State ---
-            let allOrders = [];
-            let currentSelectedRef = null;
-            let b2b2cDataMap = new Map();
-            let productDataMap = new Map();
-            let multiboxDataMap = new Map();
-            let trackDataMap = new Map();
-            let logsDataMap = new Map();
-            let uploadsDataMap = new Map();
-
-            // --- Mobile View Functions ---
-            const isMobileView = () => window.innerWidth < 768;
-
-            const showDetailView = () => {
-                if (isMobileView()) {
-                    ui.shipmentListPane.classList.add('hidden');
-                    ui.shipmentDetailPane.classList.remove('hidden');
-                }
-                ui.emptyView.classList.add('hidden');
-                ui.detailView.classList.remove('hidden');
-            };
-            
-            // Add listener for back button
-            ui.backToListBtn.addEventListener('click', () => {
-                if (isMobileView()) {
-                    ui.shipmentListPane.classList.remove('hidden');
-                    ui.shipmentDetailPane.classList.add('hidden');
-                }
-            });
-            // --- END Mobile View Functions ---
 
             // --- Data Initialization ---
             function initializePageWithData(eventOrData) {
