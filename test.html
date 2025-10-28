@@ -229,25 +229,36 @@
         let trackDataMap = new Map();
         let logsDataMap = new Map();
         let uploadsDataMap = new Map();
+        let ui = {}; // Declare UI object globally
         // --- END GLOBAL STATE DECLARATIONS ---
 
-        // --- Document Generation Stub ---
-        // This function is the placeholder/wrapper that the HTML links call.
-        // It should be defined here in case docgen.js fails to load or for clarity.
+        // --- GLOBAL UTILITY FUNCTIONS MOVED HERE ---
+        const isMobileView = () => window.innerWidth < 768;
+
+        const showDetailView = () => {
+            if (isMobileView()) {
+                ui.shipmentListPane.classList.add('hidden');
+                ui.shipmentDetailPane.classList.remove('hidden');
+            }
+            // Ensure visibility is correct for both mobile and desktop flow
+            if (ui.emptyView) ui.emptyView.classList.add('hidden');
+            if (ui.detailView) ui.detailView.classList.remove('hidden');
+        };
+
+        const showListView = () => {
+            if (isMobileView()) {
+                ui.shipmentListPane.classList.remove('hidden');
+                ui.shipmentDetailPane.classList.add('hidden');
+            }
+            if (ui.emptyView) ui.emptyView.classList.remove('hidden');
+            if (ui.detailView) ui.detailView.classList.add('hidden');
+        };
+        // --- END GLOBAL UTILITY FUNCTIONS ---
+
+        // --- Document Generation Stub (Still Global to be callable from onclick) ---
         function generateDocument(docType, reference) {
             console.log(`User wants to generate: ${docType} for reference: ${reference}`);
             
-            // The logic from docgen.js (renderDocumentWorkshop) is needed here if
-            // this file was the primary one, but since we are working on the table
-            // in THIS file (Shipments.html), we just ensure the function exists.
-            
-            // If docgen.js is loaded, it will redefine the function with the full workshop logic.
-            // NOTE: The previous version was checking for window.renderDocumentWorkshop
-            // If you intend to call renderDocumentWorkshop (the old function name) from docgen.js, 
-            // ensure it is exposed globally. If you use generateDocument from docgen.js, 
-            // the onclick calls will be overridden by the function in docgen.js when it loads.
-            
-            // For now, let's ensure the necessary data exists before trying to access it.
             if (allOrders.length === 0) {
                  console.error("Data not yet loaded. Cannot generate document.");
                  return false; 
@@ -259,23 +270,16 @@
                  return false;
             }
 
-            if (typeof window.generateDocumentFull === 'function') {
-                // If docgen.js exposes a full implementation, call it.
-                // NOTE: This assumes docgen.js exports its main function as window.generateDocumentFull or similar.
-                // If docgen.js is designed to OVERRIDE this function, this block will never run.
-                console.log(`Calling full document generator for ${docType}`);
-                // Since we don't know the exact function name, we stick to the core purpose:
-                // Find the order and log, letting the actual file handle the generation.
-            }
+            // This relies on docgen.js overriding/implementing the full logic.
+            // If the function is not overridden, it defaults to logging.
 
-            // We return false to stop the <a> tag's default navigation
             return false; 
         }
         // --- End Document Generation Stub ---
 
         document.addEventListener('DOMContentLoaded', () => {
-             // --- DOM Elements ---
-            const ui = {
+             // --- INITIALIZE UI OBJECT HERE (Using the globally declared 'ui') ---
+            ui = {
                 statusMessage: document.getElementById('status-message'),
                 shipmentList: document.getElementById('shipmentList'),
                 shipmentListPane: document.getElementById('shipmentListPane'), 
@@ -302,6 +306,11 @@
                 trackingHistoryContainer: document.getElementById('trackingHistoryContainer'),
                 documentCenterContainer: document.getElementById('documentCenterContainer')
             };
+
+            // Add listener for back button (needs ui object)
+            if(ui.backToListBtn) {
+                ui.backToListBtn.addEventListener('click', () => showListView());
+            }
 
             // --- Data Initialization ---
             function initializePageWithData(eventOrData) {
@@ -554,7 +563,7 @@
                 renderTrackingHistory(order); // 7th
                 // --- End correct order call ---
                 
-                showDetailView(); // MODIFIED: Call new function
+                showDetailView(); // Calls global function now
             }
 
             // --- Render Functions for Right Pane ---
