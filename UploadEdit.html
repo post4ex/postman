@@ -285,17 +285,44 @@
         // --- List Rendering Functions ---
 
         function formatDate(dateString) {
-            if (!dateString) return 'N/A';
+            if (!dateString) return 'N/A'; // handles null, undefined, ""
+            
+            let date;
+            
+            // 1. Check if it's an ISO string (which new Date() handles best)
+            if (typeof dateString === 'string' && dateString.includes('T') && dateString.includes('Z')) {
+                date = new Date(dateString);
+            } 
+            // 2. Check if it's a number (like a timestamp)
+            else if (typeof dateString === 'number') {
+                date = new Date(dateString);
+            } 
+            // 3. Check if it's a STRING containing just a number (like "45757")
+            else if (typeof dateString === 'string' && /^\d+$/.test(dateString.trim())) {
+                date = new Date(parseInt(dateString.trim(), 10));
+            }
+            // 4. Try parsing whatever is left
+            else {
+                 date = new Date(dateString);
+            }
+
             try {
-                const date = new Date(dateString);
                 if (isNaN(date.getTime())) {
-                     if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-                         return dateString; // Return as-is if it's already YYYY-MM-DD
+                    // Check for "YYYY-MM-DD" string as a last resort
+                     if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString.trim())) {
+                         const parts = dateString.split('-');
+                         // Use Date.UTC to prevent local timezone conversion of the string
+                         const utcDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+                         const year = utcDate.getUTCFullYear();
+                         const month = String(utcDate.getUTCMonth() + 1).padStart(2, '0');
+                         const day = String(utcDate.getUTCDate()).padStart(2, '0');
+                         return `${year}-${month}-${day}`;
                      }
                     console.warn("formatDate: Invalid date string received:", dateString);
                     return 'Invalid Date';
                 }
-                // --- MODIFICATION: Use UTC methods to avoid timezone shift ---
+                
+                // --- Use UTC methods to display the date as-is ---
                 const year = date.getUTCFullYear();
                 const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // getUTCMonth() is 0-indexed
                 const day = String(date.getUTCDate()).padStart(2, '0');
