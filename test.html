@@ -6,7 +6,6 @@
     <title>Edit/Delete Uploads - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Use existing style.css -->
     <link rel="stylesheet" href="style.css">
     <style>
         /* Reusing styles similar to Suppliers/Customer page */
@@ -20,33 +19,41 @@
         }
         .form-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 1px #4f46e5; }
         .form-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; font-weight: 500; color: #374151; }
-        .tab-button {
-            padding: 0.5rem 1rem; border: none; background: none; cursor: pointer;
-            font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent;
-            transition: color 0.2s, border-color 0.2s;
-        }
-        .tab-button.active { color: #4f46e5; border-bottom-color: #4f46e5; }
 
-        /* Styles for the order list (similar to uploader) */
-        /* --- FIX 2: Removed min-height --- */
-        #miniOrderListContainer {
-            width: 100%;
-            flex-grow: 1; /* Make list container grow */
-            overflow-y: auto; border: 1px solid #e5e7eb;
-            border-radius: 0.375rem; background-color: #f9fafb; padding: 0.5rem; margin-bottom: 0.5rem;
-            /* min-height: 200px; Removed */
-        }
+        /* --- NEW: Styles for Order List (like Clients.html) --- */
         #miniOrderList li {
-            padding: 0.25rem 0.5rem; font-size: 0.875rem; cursor: pointer; border-radius: 0.25rem; margin-bottom: 0.25rem;
-            white-space: normal; line-height: 1.4; border-bottom: 1px solid #eee;
+            padding: 0.75rem; /* p-3 */
+            border-radius: 0.5rem; /* rounded-lg */
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            line-height: 1.4;
         }
-         #miniOrderList li:last-child { border-bottom: none; }
-         #miniOrderList li.selected { background-color: #e0e7ff; font-weight: 500;}
-        #miniOrderList li:hover { background-color: #eef2ff; }
-        #miniOrderList li strong { color: #4338ca; display: block; margin-bottom: 2px; }
-        #miniOrderList .client-info { font-size: 0.8rem; color: #6b7280; }
-        #miniOrderList .details-info { font-size: 0.75rem; color: #4b5563; margin-top: 2px; }
-        #miniOrderList .dest-info { font-size: 0.8rem; color: #374151; margin-top: 2px;}
+        #miniOrderList li.selected { 
+            background-color: #e0e7ff; /* bg-indigo-100 */
+            font-weight: 500;
+            border-color: #c7d2fe; /* border-indigo-200 */
+        }
+        #miniOrderList li:hover { 
+            background-color: #eef2ff; /* bg-indigo-50 */
+        }
+        #miniOrderList li strong { 
+            color: #4338ca; /* text-indigo-700 */
+            display: block; 
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 600; /* semibold */
+        }
+        #miniOrderList .client-info { 
+            font-size: 0.75rem; /* text-xs */
+            color: #6b7280; /* text-gray-500 */
+        }
+        #miniOrderList .details-info { 
+            font-size: 0.75rem; /* text-xs */
+            color: #4b5563; /* text-gray-600 */
+            margin-top: 4px; /* mt-1 */
+            display: block;
+        }
+
         #loadMoreBtn {
             display: block; width: 100%; text-align: center; padding: 6px; font-size: 0.8rem;
             color: #4f46e5; background-color: #eef2ff; border: 1px solid #c7d2fe;
@@ -71,172 +78,159 @@
          @media (min-width: 1024px) {
             #editForm { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
-
-        /* --- FIX 2: Ensure left column takes full height in grid --- */
-        .grid > .flex.flex-col {
-           min-height: 0; /* Allow flex item to shrink if needed */
-        }
-
-
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
     <div id="header-placeholder"></div>
 
-    <main class="w-full flex-grow p-4 md:p-6 lg:p-8">
-        <div class="container mx-auto">
-            <h1 class="text-2xl font-semibold mb-4 text-gray-800">Edit/Delete Uploads</h1>
+    <div class="flex flex-col md:flex-row flex-grow w-full md:h-[calc(100vh-88px)]">
+        
+        <!-- Left Sidebar for Order List -->
+        <aside id="orderListContainer" class="w-full md:w-1/3 lg:w-1/4 bg-white border-r flex flex-col">
+            <div class="p-4 border-b sticky top-0 bg-white z-10">
+                <h2 class="text-xl font-bold text-gray-800 mb-3">Select Order</h2>
+                <input type="text" id="searchMiniOrder" placeholder="Filter by AWB, Ref, Client, Dest..." class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div class="overflow-y-auto flex-grow">
+                <ul id="miniOrderList" class="p-4 space-y-2">
+                    <li id="orderLoader" class="text-center text-gray-500 border-none hover:bg-transparent cursor-default">Loading orders...</li>
+                </ul>
+                <button id="loadMoreBtn" style="display: none;" class="mx-4">Load More (Older)</button>
+            </div>
+        </aside>
 
+        <!-- Main Content Area for Uploads & Form -->
+        <main id="editFormMainContainer" class="w-full md:w-2/3 lg:w-3/4 p-6 md:p-8 overflow-y-auto bg-gray-50">
+            
             <!-- Response Message Area -->
             <div id="response-message" class="hidden mb-4"></div>
 
-            <!-- Two-column layout -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <!-- Left Column: Order List -->
-                <!-- --- FIX 2: Added min-height 0 to allow shrinking, kept h-full --- -->
-                <div class="lg:col-span-1 bg-white p-4 rounded-lg shadow flex flex-col h-full" style="min-height: 0;">
-                    <h2 class="text-lg font-semibold mb-3 text-gray-700 flex-shrink-0">Select Order</h2>
-                     <input type="text" id="searchMiniOrder" placeholder="Filter orders by AWB, Ref, Client, Dest..." class="w-full p-2 mb-2 border border-gray-300 rounded-md text-sm form-input flex-shrink-0">
-                    <div id="miniOrderListContainer" class="flex-grow"> <!-- Container now grows -->
-                        <ul id="miniOrderList">
-                            <li class="text-center text-gray-500 text-sm">Loading orders...</li>
-                        </ul>
+            <div class="space-y-6">
+                <!-- Uploads Table -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h2 class="text-lg font-semibold mb-3 text-gray-700">Associated Uploads</h2>
+                    <div id="uploadsTableContainer" class="border rounded-md overflow-hidden">
+                        <table id="uploadsTable" class="w-full text-left">
+                            <thead class="bg-gray-50 border-b">
+                                <tr>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Identifier</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                    <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
+                                </tr>
+                            </thead>
+                            <tbody id="uploadsTableBody" class="bg-white divide-y divide-gray-200">
+                                <tr><td colspan="6" class="text-center text-gray-500 p-4">Select an order from the list on the left.</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <button id="loadMoreBtn" style="display: none;" class="flex-shrink-0">Load More (Older)</button>
                 </div>
 
-                <!-- Right Column: Uploads Table & Edit Form -->
-                <div class="lg:col-span-2 space-y-6">
+                <!-- Edit Form -->
+                <div id="editFormContainer" class="bg-white p-4 rounded-lg shadow hidden">
+                    <h2 class="text-lg font-semibold mb-3 text-gray-700">Edit Upload Details</h2>
+                    <form id="editForm"> <!-- Removed space-y-4, using grid gap -->
+                        <!-- Hidden input to store the primary identifier for update/delete -->
+                        <input type="hidden" id="edit-identifier">
+                        <input type="hidden" id="edit-upload-type">
+                            <input type="hidden" id="edit-file-url-hidden"> <!-- Store original URL -->
 
-                    <!-- Uploads Table -->
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <h2 class="text-lg font-semibold mb-3 text-gray-700">Associated Uploads</h2>
-                        <div id="uploadsTableContainer" class="border rounded-md overflow-hidden">
-                            <table id="uploadsTable" class="w-full text-left">
-                                <thead class="bg-gray-50 border-b">
-                                    <tr>
-                                        <!-- Headers will be dynamically set based on selected order/data -->
-                                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Identifier</th>
-                                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                        <th class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="uploadsTableBody" class="bg-white divide-y divide-gray-200">
-                                    <tr><td colspan="6" class="text-center text-gray-500 p-4">Select an order to view uploads.</td></tr>
-                                </tbody>
-                            </table>
+                        <!-- Read-only fields -->
+                        <div>
+                            <label for="edit-reference" class="form-label">Reference</label>
+                            <input type="text" id="edit-reference" class="form-input readonly-input" readonly>
                         </div>
-                    </div>
-
-                    <!-- Edit Form -->
-                    <div id="editFormContainer" class="bg-white p-4 rounded-lg shadow hidden">
-                        <h2 class="text-lg font-semibold mb-3 text-gray-700">Edit Upload Details</h2>
-                        <form id="editForm"> <!-- Removed space-y-4, using grid gap -->
-                            <!-- Hidden input to store the primary identifier for update/delete -->
-                            <input type="hidden" id="edit-identifier">
-                            <input type="hidden" id="edit-upload-type">
-                             <input type="hidden" id="edit-file-url-hidden"> <!-- Store original URL -->
-
-                            <!-- Read-only fields -->
-                            <div>
-                                <label for="edit-reference" class="form-label">Reference</label>
-                                <input type="text" id="edit-reference" class="form-input readonly-input" readonly>
-                            </div>
-                            <div>
-                                <label for="edit-file-url" class="form-label">File URL</label>
-                                <input type="text" id="edit-file-url" class="form-input readonly-input" readonly>
-                                <a id="view-file-link" href="#" target="_blank" class="text-sm text-blue-600 hover:underline mt-1 inline-block">View File</a>
-                            </div>
-
-                            <!-- Standard Fields (visibility controlled by JS) -->
-                            <div id="field-awb-number">
-                                <label for="edit-awb-number" class="form-label">AWB Number</label>
-                                <input type="text" id="edit-awb-number" class="form-input">
-                            </div>
-                             <div id="field-child-awb">
-                                <label for="edit-child-awb" class="form-label">Child AWB</label>
-                                <input type="text" id="edit-child-awb" class="form-input">
-                            </div>
-                            <div id="field-customer-uid">
-                                <label for="edit-customer-uid" class="form-label">Customer UID</label>
-                                <input type="text" id="edit-customer-uid" class="form-input">
-                            </div>
-                            <div id="field-status-remark">
-                                <label for="edit-status-remark" class="form-label">Status Remark</label>
-                                <input type="text" id="edit-status-remark" class="form-input">
-                            </div>
-
-                            <!-- KYC Fields -->
-                            <div id="field-kyc-number">
-                                <label for="edit-kyc-number" class="form-label">KYC Number</label>
-                                <input type="text" id="edit-kyc-number" class="form-input">
-                            </div>
-                            <div id="field-kyc-type">
-                                <label for="edit-kyc-type" class="form-label">KYC Type</label>
-                                <select id="edit-kyc-type" class="form-input">
-                                    <optgroup label="Individual">
-                                        <option value="Aadhaar Card">Aadhaar Card</option>
-                                        <option value="PAN Card">PAN Card</option>
-                                        <option value="Indian Passport">Indian Passport</option>
-                                        <option value="Voter ID Card">Voter ID Card</option>
-                                        <option value="Driving License">Driving License</option>
-                                        <option value="NREGA Job Card">NREGA Job Card</option>
-                                    </optgroup>
-                                    <optgroup label="Business">
-                                        <option value="Partnership Deed">Partnership Deed</option>
-                                        <option value="Certificate of Incorporation">Certificate of Incorporation</option>
-                                        <option value="GST Registration">GST Registration</option>
-                                        <option value="MoA & AoA">MoA & AoA</option>
-                                        <option value="Board Resolution">Board Resolution</option>
-                                    </optgroup>
-                                </select>
-                            </div>
-
-                            <!-- Product Fields -->
-                             <div id="field-doc-number">
-                                <label for="edit-doc-number" class="form-label">Doc Number</label>
-                                <input type="text" id="edit-doc-number" class="form-input">
-                            </div>
-                            <div id="field-doc-type">
-                                <label for="edit-doc-type" class="form-label">Doc Type</label>
-                                <select id="edit-doc-type" class="form-input">
-                                    <option value="INV">INV</option>
-                                    <option value="EWB">EWB</option>
-                                    <option value="CLN">CLN</option>
-                                    <option value="ADH">ADH</option>
-                                    <option value="DBT">DBT</option>
-                                    <option value="CDT">CDT</option>
-                                    <option value="HRD">HRD</option>
-                                    <option value="AGT">AGT</option>
-                                    <option value="INT">INT</option>
-                                </select>
-                            </div>
-                        </form>
-                        <!-- Action Buttons -->
-                        <div class="mt-6 flex items-center justify-end gap-4">
-                            <button id="delete-button" type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 ease-in-out text-sm font-medium flex items-center">
-                                Delete
-                                <span id="delete-spinner" class="spinner ml-2 hidden" style="width: 16px; height: 16px;"></span>
-                            </button>
-                            <button id="update-button" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out text-sm font-medium flex items-center">
-                                Update
-                                <span id="update-spinner" class="spinner ml-2 hidden" style="width: 16px; height: 16px;"></span>
-                            </button>
-                            <button id="cancel-edit-button" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-150 ease-in-out text-sm font-medium">
-                                Cancel
-                            </button>
+                        <div>
+                            <label for="edit-file-url" class="form-label">File URL</label>
+                            <input type="text" id="edit-file-url" class="form-input readonly-input" readonly>
+                            <a id="view-file-link" href="#" target="_blank" class="text-sm text-blue-600 hover:underline mt-1 inline-block">View File</a>
                         </div>
-                    </div>
 
+                        <!-- Standard Fields (visibility controlled by JS) -->
+                        <div id="field-awb-number">
+                            <label for="edit-awb-number" class="form-label">AWB Number</label>
+                            <input type="text" id="edit-awb-number" class="form-input">
+                        </div>
+                            <div id="field-child-awb">
+                            <label for="edit-child-awb" class="form-label">Child AWB</label>
+                            <input type="text" id="edit-child-awb" class="form-input">
+                        </div>
+                        <div id="field-customer-uid">
+                            <label for="edit-customer-uid" class="form-label">Customer UID</label>
+                            <input type="text" id="edit-customer-uid" class="form-input">
+                        </div>
+                        <div id="field-status-remark">
+                            <label for="edit-status-remark" class="form-label">Status Remark</label>
+                            <input type="text" id="edit-status-remark" class="form-input">
+                        </div>
+
+                        <!-- KYC Fields -->
+                        <div id="field-kyc-number">
+                            <label for="edit-kyc-number" class="form-label">KYC Number</label>
+                            <input type="text" id="edit-kyc-number" class="form-input">
+                        </div>
+                        <div id="field-kyc-type">
+                            <label for="edit-kyc-type" class="form-label">KYC Type</label>
+                            <select id="edit-kyc-type" class="form-input">
+                                <optgroup label="Individual">
+                                    <option value="Aadhaar Card">Aadhaar Card</option>
+                                    <option value="PAN Card">PAN Card</option>
+                                    <option value="Indian Passport">Indian Passport</option>
+                                    <option value="Voter ID Card">Voter ID Card</option>
+                                    <option value="Driving License">Driving License</option>
+                                    <option value="NREGA Job Card">NREGA Job Card</option>
+                                </optgroup>
+                                <optgroup label="Business">
+                                    <option value="Partnership Deed">Partnership Deed</option>
+                                    <option value="Certificate of Incorporation">Certificate of Incorporation</option>
+                                    <option value="GST Registration">GST Registration</option>
+                                    <option value="MoA & AoA">MoA & AoA</option>
+                                    <option value="Board Resolution">Board Resolution</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <!-- Product Fields -->
+                            <div id="field-doc-number">
+                            <label for="edit-doc-number" class="form-label">Doc Number</label>
+                            <input type="text" id="edit-doc-number" class="form-input">
+                        </div>
+                        <div id="field-doc-type">
+                            <label for="edit-doc-type" class="form-label">Doc Type</label>
+                            <select id="edit-doc-type" class="form-input">
+                                <option value="INV">INV</option>
+                                <option value="EWB">EWB</option>
+                                <option value="CLN">CLN</option>
+                                <option value="ADH">ADH</option>
+                                <option value="DBT">DBT</option>
+                                <option value="CDT">CDT</option>
+                                <option value="HRD">HRD</option>
+                                <option value="AGT">AGT</option>
+                                <option value="INT">INT</option>
+                            </select>
+                        </div>
+                    </form>
+                    <!-- Action Buttons -->
+                    <div class="mt-6 flex items-center justify-end gap-4">
+                        <button id="delete-button" type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150 ease-in-out text-sm font-medium flex items-center">
+                            Delete
+                            <span id="delete-spinner" class="spinner ml-2 hidden" style="width: 16px; height: 16px;"></span>
+                        </button>
+                        <button id="update-button" type="button" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 ease-in-out text-sm font-medium flex items-center">
+                            Update
+                            <span id="update-spinner" class="spinner ml-2 hidden" style="width: 16px; height: 16px;"></span>
+                        </button>
+                        <button id="cancel-edit-button" type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-150 ease-in-out text-sm font-medium">
+                            Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <div id="footer-placeholder"></div>
 
@@ -245,12 +239,11 @@
         // --- Global Variables & State ---
         let allOrders = [];
         let allUploads = [];
-        let allClientsB2B = [];
-        let allClientsB2B2C = [];
+        let allClientsB2B2C = []; // Still needed to get Consignor/Consignee names
         let currentOrderRef = null;
         let selectedUploadData = null; // Holds data of the row selected in uploadsTable
         let displayDays = 90; // For order list filtering
-        const GSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkC3OXNACPPH-LLPJyhkZKaDh6VtNgGbp8lMQbzz1XF327IN_OhFEEapOzNm3REbn5/exec'; // Use the same URL as uploader
+        const GSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkC3OXNACPPH-LLPJyhkZKaDh6VtNgGbp8lMQbzz1XF327IN_OhFEEapOzNm3REbn5/exec';
 
         // --- UI Elements ---
         let ui = {}; // Object to hold UI element references
@@ -268,86 +261,73 @@
 
             // Store data globally
             allOrders = Array.isArray(data.ORDERS) ? data.ORDERS : [];
-            // --- FIX 1: Ensure UPLOADS is an array ---
             allUploads = Array.isArray(data.UPLOADS) ? data.UPLOADS : [];
-            allClientsB2B = Array.isArray(data.B2B) ? data.B2B : [];
-            allClientsB2B2C = Array.isArray(data.B2B2C) ? data.B2B2C : [];
+            allClientsB2B2C = Array.isArray(data.B2B2C) ? data.B2B2C : []; // Keep this
 
             // Sort orders
             allOrders = allOrders
                 .filter(order => order && order.ORDER_DATE)
                 .sort((a, b) => new Date(b.ORDER_DATE) - new Date(a.ORDER_DATE));
-
+            
             // Initial render
-            filterAndRenderOrders();
-            // --- FIX 1: Render uploads if an order was previously selected (e.g., after refresh) ---
+            filterAndRenderOrders(); // Render the orders list
+            
+            // Re-select item if one was active before refresh
             if (currentOrderRef) {
-                // Find the currently selected LI element if it exists
-                const selectedLi = ui.orderList.querySelector(`li[data-order-ref="${currentOrderRef}"]`);
-                handleOrderSelection(currentOrderRef, selectedLi); // Re-render uploads for current order, passing the LI
+                let li = ui.orderList.querySelector(`li[data-order-ref="${currentOrderRef}"]`);
+                handleOrderSelection(currentOrderRef, li);
             } else {
                  resetEditForm(); // Ensure form is hidden initially if no order selected
             }
-            showResponseMessage('Data loaded. Select an order from the list.', 'info');
+            showResponseMessage('Data loaded. Select an order from the list on the left.', 'info');
         };
 
-        // --- Order List Functions (Adapted from uploader.html) ---
-        // --- FIX 3: More robust date formatting ---
+        // --- List Rendering Functions ---
+
         function formatDate(dateString) {
             if (!dateString) return 'N/A';
             try {
-                // Attempt to parse the date string (handles ISO 8601 like "2025-08-10T14:12:02.000Z")
                 const date = new Date(dateString);
-
-                // Check if the date is valid
                 if (isNaN(date.getTime())) {
-                     // Check if it's already in YYYY-MM-DD format perhaps?
                      if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-                         return dateString; // Assume it's already correct
+                         return dateString;
                      }
                     console.warn("formatDate: Invalid date string received:", dateString);
                     return 'Invalid Date';
                 }
-
-                // Format as YYYY-MM-DD
                 const year = date.getFullYear();
                 const month = String(date.getMonth() + 1).padStart(2, '0');
                 const day = String(date.getDate()).padStart(2, '0');
                 return `${year}-${month}-${day}`;
             } catch (e) {
                 console.error("formatDate: Error parsing date:", dateString, e);
-                return 'Error Date'; // Indicate an error occurred
+                return 'Error Date';
             }
         }
 
-
         const renderMiniOrderList = (ordersToRender) => {
-            ui.orderList.innerHTML = '';
+            ui.orderList.innerHTML = ''; // Clear list
             if (!ordersToRender || ordersToRender.length === 0) {
-                ui.orderList.innerHTML = '<li class="text-center text-gray-500 text-sm">No matching orders found.</li>';
+                ui.orderList.innerHTML = '<li class="text-center text-gray-500 border-none hover:bg-transparent cursor-default">No matching orders found.</li>';
                 ui.loadMoreBtn.style.display = 'none';
                 return;
             }
 
             ordersToRender.forEach((order) => {
                 const ref = order.REFERANCE; if (!ref) return;
-                const displayAwb = order.AWB_NUMBER || ref;
+                const displayAwb = order.AWB_NUMBER || 'No AWB';
                 const consignor = allClientsB2B2C.find(c => c.UID === order.CONSIGNOR)?.NAME || 'Unknown';
                 const consignee = allClientsB2B2C.find(c => c.UID === order.CONSIGNEE)?.NAME || 'Unknown';
-                const dest = order.DEST_CITY || 'N/A';
                 const date = formatDate(order.ORDER_DATE);
-                const value = order.VALUE || 0;
-                const pcs = order.PIECS || 0;
 
                 const li = document.createElement('li');
+                // NEW LI Structure (matches style)
                 li.innerHTML = `<strong>${displayAwb}</strong>
-                                <div class="client-info">${consignor} -> ${consignee}</div>
-                                <div class="details-info">Date: ${date} | Val: ${value} | Pcs: ${pcs}</div>
-                                <div class="dest-info">Dest: ${dest}</div>`;
+                                <span class="client-info">${consignor} -> ${consignee}</span>
+                                <span class="details-info">Ref: ${ref} | Date: ${date}</span>`;
                 li.dataset.orderRef = ref;
                 li.addEventListener('click', () => handleOrderSelection(ref, li));
-                // Highlight if it's the currently selected order
-                // --- FIX 1: Compare as strings for consistency ---
+                
                 if(String(ref) === String(currentOrderRef)) {
                     li.classList.add('selected');
                 }
@@ -356,19 +336,19 @@
 
             // Load More button logic
             const searchTerm = ui.searchMiniOrderInput.value.toLowerCase();
-            const totalFilteredCount = filterOrdersBySearchTerm(searchTerm).length;
-            ui.loadMoreBtn.style.display = ordersToRender.length < totalFilteredCount ? 'block' : 'none';
+            const totalFilteredCount = filterOrdersBySearchTerm(searchTerm, allOrders).length;
+            ui.loadMoreBtn.style.display = (ordersToRender.length < totalFilteredCount) ? 'block' : 'none';
             if(ui.loadMoreBtn.style.display === 'block'){
                 ui.loadMoreBtn.disabled = false;
                 ui.loadMoreBtn.textContent = `Load More (${ordersToRender.length}/${totalFilteredCount})`;
             }
         };
 
-        function filterOrdersBySearchTerm(searchTerm) {
-            // ... (keep the same filtering logic) ...
-            if (!Array.isArray(allOrders)) return [];
-             if (!searchTerm) return allOrders;
-             return allOrders.filter(order => {
+        // --- Filtering Functions ---
+
+        function filterOrdersBySearchTerm(searchTerm, orders) {
+             if (!searchTerm) return orders;
+             return orders.filter(order => {
                 const consignorName = allClientsB2B2C.find(c => c.UID === order.CONSIGNOR)?.NAME || '';
                 const consigneeName = allClientsB2B2C.find(c => c.UID === order.CONSIGNEE)?.NAME || '';
                 const dest = order.DEST_CITY || '';
@@ -381,9 +361,8 @@
                         (date ? date.includes(searchTerm) : false);
              });
         }
-
+        
         function filterOrdersByDate(orders) {
-            // ... (keep the same date filtering logic) ...
             const cutoffDate = new Date();
              cutoffDate.setDate(cutoffDate.getDate() - displayDays);
              cutoffDate.setHours(0, 0, 0, 0);
@@ -393,21 +372,21 @@
                  return orderDate && orderDate >= cutoffDate;
              });
         }
-
+        
         function filterAndRenderOrders() {
-            // ... (keep the same combined filtering logic) ...
             const searchTerm = ui.searchMiniOrderInput.value.toLowerCase();
-            let searchFiltered = filterOrdersBySearchTerm(searchTerm);
+            let searchFiltered = filterOrdersBySearchTerm(searchTerm, allOrders);
             let dateFiltered = filterOrdersByDate(searchFiltered);
             renderMiniOrderList(dateFiltered);
         }
+        
+        // --- Selection Handlers ---
 
         const handleOrderSelection = (orderRef, selectedLi) => {
-             console.log("Order selected:", orderRef); // Debug
+            console.log("Order selected:", orderRef);
             currentOrderRef = orderRef;
             selectedUploadData = null; // Clear selected upload when order changes
 
-            // Update highlighting in order list
             ui.orderList.querySelectorAll('li.selected').forEach(li => li.classList.remove('selected'));
             if(selectedLi) selectedLi.classList.add('selected');
 
@@ -420,21 +399,19 @@
 
         // --- Uploads Table Functions ---
         const renderUploadsTable = (uploads) => {
-             console.log("Rendering uploads table with:", uploads); // Debug
-            ui.uploadsTableBody.innerHTML = ''; // Clear existing rows
+             console.log("Rendering uploads table with:", uploads);
+            ui.uploadsTableBody.innerHTML = '';
             if (!uploads || uploads.length === 0) {
-                ui.uploadsTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 p-4">No uploads found for this order.</td></tr>';
+                ui.uploadsTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-500 p-4">No uploads found for this selection.</td></tr>';
                 return;
             }
 
             uploads.forEach(upload => {
                 const tr = document.createElement('tr');
-                 // Store the necessary identifiers directly on the row dataset
                  tr.dataset.identifier = (upload.UPLOAD_TYPE === 'KYC' ? upload.CUSTOMER_UID : upload.REFERANCE) || '';
-                 tr.dataset.fileUrl = upload.FILE_URL || ''; // Use File URL as the unique key
+                 tr.dataset.fileUrl = upload.FILE_URL || '';
                  tr.dataset.uploadType = upload.UPLOAD_TYPE || '';
 
-                // Determine identifier text and details based on type
                 let identifierText = upload.AWB_NUMBER || upload.KYC_NUMBER || upload.REFERANCE;
                 let details = '';
                 if(upload.UPLOAD_TYPE === 'MultiBox') details = `Child: ${upload.CHILD_AWB || 'N/A'}`;
@@ -451,22 +428,19 @@
                     <td><a href="${upload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline text-xs">View File</a></td>
                 `;
 
-                // Add click listener to select the row and populate the form
                 tr.addEventListener('click', () => handleUploadSelection(upload, tr));
                 ui.uploadsTableBody.appendChild(tr);
             });
         };
 
-        // Handles clicking a row in the uploads table
         const handleUploadSelection = (uploadData, selectedTr) => {
-            console.log("Upload selected:", uploadData); // Debug log
-            selectedUploadData = uploadData; // Store the full data object
+            console.log("Upload selected:", uploadData);
+            selectedUploadData = uploadData; 
 
-            // Update highlighting in uploads table
-             ui.uploadsTableBody.querySelectorAll('tr.selected').forEach(row => row.classList.remove('selected'));
+            ui.uploadsTableBody.querySelectorAll('tr.selected').forEach(row => row.classList.remove('selected'));
              if(selectedTr) selectedTr.classList.add('selected');
 
-            populateEditForm(uploadData); // Populate form with the data object
+            populateEditForm(uploadData);
             ui.editFormContainer.classList.remove('hidden');
              showResponseMessage(`Editing upload for ${uploadData.REFERANCE || uploadData.CUSTOMER_UID}. File: ${uploadData.FILE_URL}`, 'info');
         };
@@ -474,21 +448,29 @@
 
         // --- Edit Form Functions ---
         const populateEditForm = (uploadData) => {
-            resetEditForm(); // Clear and hide all fields first
-
+            // resetEditForm(); // <-- BUGGY LINE REMOVED
+            
+            // 1. Manually reset form and hide fields (what resetEditForm did)
+            ui.editForm.reset(); 
+            Object.keys(ui).forEach(key => {
+                if (key.startsWith('field')) {
+                    ui[key].style.display = 'none';
+                }
+            });
+             ui.editCustomerUidInput.classList.remove('readonly-input');
+             ui.editCustomerUidInput.readOnly = false;
+            
+            // 2. Continue with original logic
             const type = uploadData.UPLOAD_TYPE;
-            // Store identifiers needed for update/delete in hidden fields
             ui.editIdentifierInput.value = (type === 'KYC' ? uploadData.CUSTOMER_UID : uploadData.REFERANCE) || '';
             ui.editUploadTypeInput.value = type || '';
-             ui.editFileUrlHiddenInput.value = uploadData.FILE_URL || ''; // Store original URL
+             ui.editFileUrlHiddenInput.value = uploadData.FILE_URL || '';
 
 
-            // Set read-only fields
             ui.editReferenceInput.value = uploadData.REFERANCE || '';
             ui.editFileUrlInput.value = uploadData.FILE_URL || '';
             ui.viewFileLink.href = uploadData.FILE_URL || '#';
 
-            // Show/Hide and populate fields based on type
             if (type === 'POD' || type === 'Reciept') {
                 ui.fieldAwbNumber.style.display = 'block';
                 ui.editAwbNumberInput.value = uploadData.AWB_NUMBER || '';
@@ -504,9 +486,8 @@
                 ui.editKycNumberInput.value = uploadData.KYC_NUMBER || '';
                 ui.fieldCustomerUid.style.display = 'block';
                  ui.editCustomerUidInput.value = uploadData.CUSTOMER_UID || '';
-                 ui.editCustomerUidInput.classList.add('readonly-input'); // Make UID read-only for safety
+                 ui.editCustomerUidInput.classList.add('readonly-input'); 
                  ui.editCustomerUidInput.readOnly = true;
-
                 ui.fieldKycType.style.display = 'block';
                 ui.editKycTypeSelect.value = uploadData.KYC_TYPE || 'Aadhaar Card';
             } else if (type === 'Product') {
@@ -524,36 +505,31 @@
         };
 
         const resetEditForm = () => {
-             ui.editForm.reset(); // Clear all form fields
-             selectedUploadData = null; // Clear selection state
-             // Hide all optional fields
+             ui.editForm.reset(); 
+             selectedUploadData = null; 
             Object.keys(ui).forEach(key => {
                 if (key.startsWith('field')) {
                     ui[key].style.display = 'none';
                 }
             });
-             // Ensure UID field is editable again if reset
              ui.editCustomerUidInput.classList.remove('readonly-input');
              ui.editCustomerUidInput.readOnly = false;
-             // Hide the form container and disable buttons
             ui.editFormContainer.classList.add('hidden');
             ui.updateButton.disabled = true;
             ui.deleteButton.disabled = true;
-             ui.uploadsTableBody.querySelectorAll('tr.selected').forEach(row => row.classList.remove('selected')); // Remove table highlight
+             ui.uploadsTableBody.querySelectorAll('tr.selected').forEach(row => row.classList.remove('selected'));
         };
 
         // --- Action Handlers (Update/Delete) ---
         const handleUpdate = async () => {
-             // --- FIX 1: Check selectedUploadData directly ---
              if (!selectedUploadData) {
-                 console.error("Update clicked but selectedUploadData is null."); // Debug log
+                 console.error("Update clicked but selectedUploadData is null.");
                  showResponseMessage('No upload selected to update. Please click a row in the table.', 'error');
                  return;
              }
-             // Get identifiers from the stored object
             const identifier = (selectedUploadData.UPLOAD_TYPE === 'KYC' ? selectedUploadData.CUSTOMER_UID : selectedUploadData.REFERANCE) || '';
             const uploadType = selectedUploadData.UPLOAD_TYPE || '';
-            const originalFileUrl = selectedUploadData.FILE_URL || ''; // Get original URL for verification
+            const originalFileUrl = selectedUploadData.FILE_URL || ''; 
 
             if(!identifier || !uploadType || !originalFileUrl){
                  console.error("Update Error: Missing identifier, uploadType, or original file URL from selected data.", selectedUploadData);
@@ -561,12 +537,10 @@
                  return;
             }
 
-            // Collect updated data based on type
             const newData = {
                  UPLOAD_TYPE: uploadType,
-                 REFERANCE: ui.editReferenceInput.value, // Read-only, but send it back
-                 FILE_URL: originalFileUrl, // Send original URL back for matching
-                 // Add editable fields based on type:
+                 REFERANCE: ui.editReferenceInput.value,
+                 FILE_URL: originalFileUrl,
                  ...( (uploadType === 'POD' || uploadType === 'Reciept') && {
                      AWB_NUMBER: ui.editAwbNumberInput.value.trim(),
                      STATUS_REMARK: ui.editStatusRemarkInput.value.trim()
@@ -576,7 +550,7 @@
                      CHILD_AWB: ui.editChildAwbInput.value.trim()
                  }),
                  ...( uploadType === 'KYC' && {
-                     CUSTOMER_UID: selectedUploadData.CUSTOMER_UID, // Send original UID
+                     CUSTOMER_UID: selectedUploadData.CUSTOMER_UID,
                      KYC_NUMBER: ui.editKycNumberInput.value.trim(),
                      KYC_TYPE: ui.editKycTypeSelect.value
                  }),
@@ -585,16 +559,15 @@
                      DOC_NUMBER: ui.editDocNumberInput.value.trim(),
                      DOC_TYPE: ui.editDocTypeSelect.value
                  }),
-                 // --- FIX 1: Add Branch, Code, UserName from original data ---
                  BRANCH: selectedUploadData.BRANCH || '',
                  CODE: selectedUploadData.CODE || '',
-                 USER_NAME: selectedUploadData.USER_NAME || '' // Keep original user for now
+                 USER_NAME: selectedUploadData.USER_NAME || ''
             };
 
             const payload = {
                 action: 'edit',
-                identifier: identifier, // This is REFERANCE or CUSTOMER_UID
-                 fileUrl: originalFileUrl, // Add fileUrl for precise matching on GAS side
+                identifier: identifier, 
+                 fileUrl: originalFileUrl, 
                 newData: newData
             };
 
@@ -602,35 +575,29 @@
         };
 
         const handleDelete = async () => {
-              // --- FIX 1: Check selectedUploadData directly ---
              if (!selectedUploadData) {
-                 console.error("Delete clicked but selectedUploadData is null."); // Debug log
+                 console.error("Delete clicked but selectedUploadData is null.");
                  showResponseMessage('No upload selected to delete. Please click a row in the table.', 'error');
                  return;
              }
-              // Get identifiers from the stored object
              const identifier = (selectedUploadData.UPLOAD_TYPE === 'KYC' ? selectedUploadData.CUSTOMER_UID : selectedUploadData.REFERANCE) || '';
              const uploadType = selectedUploadData.UPLOAD_TYPE || '';
-             const originalFileUrl = selectedUploadData.FILE_URL || ''; // Get original URL
+             const originalFileUrl = selectedUploadData.FILE_URL || ''; 
 
              if(!identifier || !uploadType || !originalFileUrl){
                   console.error("Delete Error: Missing identifier, uploadType, or original file URL from selected data.", selectedUploadData);
                  showResponseMessage('Error: Critical data missing from selected upload. Cannot delete.', 'error');
                  return;
              }
-
-             // Confirmation dialog
              if (!confirm(`Are you sure you want to delete the upload associated with identifier ${identifier} (URL: ${originalFileUrl})? This action cannot be undone.`)) {
                  return;
              }
-
             const payload = {
                 action: 'delete',
                 identifier: identifier,
-                fileUrl: originalFileUrl, // Use File URL as the unique key for deletion
-                uploadType: uploadType // Still useful context for GAS
+                fileUrl: originalFileUrl,
+                uploadType: uploadType
             };
-
              await sendRequestToGAS(payload, ui.deleteButton, ui.deleteSpinner, 'Delete');
         };
 
@@ -640,7 +607,6 @@
              let authCode = '';
              let authToken = '';
 
-             // Get Auth Credentials
              const loginDataJSON = localStorage.getItem('loginData');
              if (!loginDataJSON) {
                  showResponseMessage("Authentication error: loginData not found. Please re-login.", 'error');
@@ -658,18 +624,16 @@
                  return;
              }
 
-             // Add auth to payload
              payload.code = authCode;
              payload.token = authToken;
 
-             // UI updates for loading state
              if (button) button.disabled = true;
              if (spinner) spinner.classList.remove('hidden');
-             if (button) button.childNodes[0].nodeValue = `${buttonText}ing... `; // Update button text
+             if (button) button.childNodes[0].nodeValue = `${buttonText}ing... `; 
 
 
             showResponseMessage(`Sending ${payload.action} request...`, 'info');
-             console.log("Sending payload to GAS:", payload); // Debug Log
+             console.log("Sending payload to GAS:", payload);
 
             try {
                 const response = await fetch(GSCRIPT_URL, {
@@ -680,17 +644,18 @@
                 });
 
                 const result = await response.json();
-                 console.log("Received response from GAS:", result); // Debug Log
+                 console.log("Received response from GAS:", result);
 
                 if (result.status === 'success') {
                     showResponseMessage(result.message || `${payload.action} successful! Refreshing data...`, 'success');
                     resetEditForm();
-                    // Trigger layout.js to refresh all app data via custom event
-                     window.dispatchEvent(new CustomEvent('forceAppDataRefresh'));
-                    // Give user time to see success message before refresh potentially hides it
-                    setTimeout(() => {
-                         showResponseMessage('Data refreshed.', 'info'); // Update message after delay
-                    }, 1500);
+                     if (window.verifyAndFetchAppData) {
+                        await window.verifyAndFetchAppData(true); // Force a refresh
+                     } else {
+                         window.dispatchEvent(new CustomEvent('forceAppDataRefresh'));
+                         alert("Data changed. Please refresh the page to see updates.");
+                     }
+                    showResponseMessage('Data refreshed.', 'info');
 
                 } else {
                     throw new Error(result.message || `Server returned status: ${result.status}`);
@@ -699,7 +664,6 @@
                  console.error(`Error during ${payload.action}:`, error);
                  showResponseMessage(`Error during ${payload.action}: ${error.message}`, 'error');
             } finally {
-                // Restore button state
                  if (button) button.disabled = false;
                  if (spinner) spinner.classList.add('hidden');
                  if (button) button.childNodes[0].nodeValue = buttonText;
@@ -713,11 +677,11 @@
             ui.responseMessage.className = `my-4 text-center p-3 rounded-lg text-sm ${
                 type === 'success' ? 'bg-green-100 text-green-800' :
                 type === 'error' ? 'bg-red-100 text-red-800' :
-                'bg-blue-100 text-blue-800' // Default to info
+                'bg-blue-100 text-blue-800'
             }`;
             ui.responseMessage.classList.remove('hidden');
         }
-
+        
         // --- Initialize ---
         document.addEventListener('DOMContentLoaded', () => {
             // Assign all UI elements
@@ -735,7 +699,6 @@
                 editReferenceInput: document.getElementById('edit-reference'),
                 editFileUrlInput: document.getElementById('edit-file-url'),
                 viewFileLink: document.getElementById('view-file-link'),
-                // Form field containers (for show/hide)
                 fieldAwbNumber: document.getElementById('field-awb-number'),
                 fieldChildAwb: document.getElementById('field-child-awb'),
                 fieldCustomerUid: document.getElementById('field-customer-uid'),
@@ -744,7 +707,6 @@
                 fieldKycType: document.getElementById('field-kyc-type'),
                 fieldDocNumber: document.getElementById('field-doc-number'),
                 fieldDocType: document.getElementById('field-doc-type'),
-                // Form input fields
                 editAwbNumberInput: document.getElementById('edit-awb-number'),
                 editChildAwbInput: document.getElementById('edit-child-awb'),
                 editCustomerUidInput: document.getElementById('edit-customer-uid'),
@@ -753,7 +715,6 @@
                 editKycTypeSelect: document.getElementById('edit-kyc-type'),
                 editDocNumberInput: document.getElementById('edit-doc-number'),
                 editDocTypeSelect: document.getElementById('edit-doc-type'),
-                // Buttons & Spinners
                 updateButton: document.getElementById('update-button'),
                 deleteButton: document.getElementById('delete-button'),
                 cancelEditButton: document.getElementById('cancel-edit-button'),
@@ -764,7 +725,7 @@
             // Add event listeners
             window.addEventListener('appDataLoaded', initializeData);
             window.addEventListener('appDataRefreshed', initializeData); // Re-render on refresh
-             ui.searchMiniOrderInput.addEventListener('input', filterAndRenderOrders);
+             ui.searchMiniOrderInput.addEventListener('input', filterAndRenderOrders); // MODIFIED
              ui.loadMoreBtn.addEventListener('click', () => { displayDays += 30; filterAndRenderOrders(); });
              ui.updateButton.addEventListener('click', handleUpdate);
              ui.deleteButton.addEventListener('click', handleDelete);
@@ -779,7 +740,6 @@
              if (appDataJSON) {
                  try {
                      const cachedData = JSON.parse(appDataJSON);
-                     // Check if data seems valid before initializing
                      if (cachedData && cachedData.data && Array.isArray(cachedData.data.ORDERS)) {
                          console.log('Initializing with cached data:', cachedData.data);
                          initializeData({ detail: { data: cachedData.data } });
@@ -800,4 +760,5 @@
 
 </body>
 </html>
+
 
