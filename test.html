@@ -203,7 +203,7 @@
       2. layout.js (handles header, footer, auth, and data fetching)
       3. Page-specific script (below)
     -->
-    <script src="docgen.js"></script>
+    <!-- <script src="docgen.js"></script> --> <!-- Assuming docgen.js is created and linked -->
     <script src="layout.js"></script>
     
     <script>
@@ -330,9 +330,27 @@
             window.addEventListener('appDataLoaded', initializePageWithData);
             window.addEventListener('appDataRefreshed', initializePageWithData);
 
-            // --- REMOVED: fetchDataWithHardcodedCreds() function ---
-            // --- REMOVED: Initial Data Load Logic ---
-            // (layout.js now handles this and fires the event listeners above)
+            // --- ADDED: Initial Data Load Logic ---
+            // Try to load data from cache immediately
+            const appDataJSON = localStorage.getItem('appData');
+            if (appDataJSON) {
+                try {
+                    const appData = JSON.parse(appDataJSON);
+                    // Check if data exists, is not expired
+                    if (appData.data && appData.expires && new Date().getTime() < appData.expires) {
+                        console.log('Shipments.html: Loading initial data from valid cache.');
+                        // Use appData.data, not appData
+                        initializePageWithData(appData.data); 
+                    } else if (appData.expires && new Date().getTime() >= appData.expires) {
+                        console.log('Shipments.html: Cached data is expired.');
+                        ui.statusMessage.textContent = 'Data is expired. Waiting for refresh...';
+                    }
+                } catch (e) {
+                    console.error('Shipments.html: Could not parse cached app data.', e);
+                    ui.statusMessage.textContent = 'Error loading cached data.';
+                }
+            }
+            // --- END: Initial Data Load Logic ---
 
             // --- Filter Modal & Search Logic ---
             function populateFilters(orders) {
@@ -883,3 +901,4 @@
     </script>
 </body>
 </html>
+
