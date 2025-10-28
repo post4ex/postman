@@ -284,43 +284,54 @@
 
         // --- List Rendering Functions ---
 
-        // Removed excelSerialToDate function as it was causing issues
-
         function formatDate(dateString) {
-            // NEW DEBUG LOG
-            console.log("formatDate received:", dateString, "(type:", typeof dateString, ")");
-
-            if (!dateString) return 'N/A'; // handles null, undefined, ""
+            if (!dateString) return 'N/A';
             
             let date;
 
             try {
-                // Let's ONLY trust the ISO string format, as shown in the screenshot.
-                // Or a direct Date object, if layout.js already parsed it.
+                // 1. Check if it's already a Date object
                 if (dateString instanceof Date) {
                     date = dateString;
                 }
+                // 2. Check for ISO 8601 string (e.g., "2025-04-10T05:03:47.000Z")
                 else if (typeof dateString === 'string' && dateString.includes('T') && dateString.includes('Z')) {
                     date = new Date(dateString);
                 } 
-                // Handle simple "YYYY-MM-DD"
+                // 3. Check for the DD/MM/YYYY HH:MM:SS format (from console log)
+                else if (typeof dateString === 'string' && dateString.includes('/') && dateString.includes(':')) {
+                    // It looks like '27/10/2025 17:42:22'
+                    const parts = dateString.split(' '); // ['27/10/2025', '17:42:22']
+                    const dateParts = parts[0].split('/'); // ['27', '10', '2025']
+                    const timeParts = parts.length > 1 ? parts[1].split(':') : ['0', '0', '0']; // ['17', '42', '22']
+                    
+                    // Use Date.UTC to construct the date reliably
+                    date = new Date(Date.UTC(
+                        parseInt(dateParts[2], 10), // Year
+                        parseInt(dateParts[1], 10) - 1, // Month (0-indexed)
+                        parseInt(dateParts[0], 10), // Day
+                        parseInt(timeParts[0], 10) || 0, // Hour
+                        parseInt(timeParts[1], 10) || 0, // Minute
+                        parseInt(timeParts[2], 10) || 0  // Second
+                    ));
+                }
+                // 4. Handle simple "YYYY-MM-DD"
                 else if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString.trim())) {
                     const parts = dateString.split('-');
                     date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
                 }
-                // All other formats (like serial numbers) are not trusted for now.
+                // 5. Last resort: Try direct parsing
                 else {
-                    // Try to parse it anyway
                     date = new Date(dateString);
                 }
 
-                // 4. Check for validity
+                // 6. Check for validity
                 if (isNaN(date.getTime())) {
                     console.warn("formatDate: Invalid date value after all attempts:", dateString);
                     return 'Invalid Date';
                 }
 
-                // 5. Format the valid date using UTC methods
+                // 7. Format the valid date using UTC methods
                 const year = date.getUTCFullYear();
                 const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // getUTCMonth() is 0-indexed
                 const day = String(date.getUTCDate()).padStart(2, '0');
@@ -331,6 +342,7 @@
                 return 'Error Date';
             }
         }
+
 
         const renderMiniOrderList = (ordersToRender) => {
             ui.orderList.innerHTML = ''; // Clear list
@@ -395,8 +407,16 @@
              cutoffDate.setHours(0, 0, 0, 0);
              if (!Array.isArray(orders)) return [];
              return orders.filter(order => {
-                 const orderDate = order.ORDER_DATE ? new Date(order.ORDER_DATE) : null;
-                 return orderDate && orderDate >= cutoffDate;
+                // We must use our custom formatter to correctly parse the date before comparing
+                const formattedDate = formatDate(order.ORDER_DATE);
+                if (formattedDate === 'Invalid Date' || formattedDate === 'N/A' || formattedDate === 'Error Date') return false;
+                
+                // new Date('YYYY-MM-DD') can have timezone issues.
+                // Safest to parse it as UTC
+                const parts = formattedDate.split('-');
+                const orderDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+                
+                return orderDate && orderDate >= cutoffDate;
              });
         }
         
@@ -578,7 +598,7 @@
                  }),
                  ...( uploadType === 'KYC' && {
                      CUSTOMER_UID: selectedUploadData.CUSTOMER_UID,
-                     KYC_NUMBER: ui.editKKycNumberInput.value.trim(),
+                     KYC_NUMBER: ui.editKycNumberInput.value.trim(),
                      KYC_TYPE: ui.editKycTypeSelect.value
                  }),
                   ...( uploadType === 'Product' && {
