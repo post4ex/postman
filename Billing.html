@@ -132,6 +132,10 @@
 
             <!-- Container for the actual detail content -->
             <div id="detailView" class="hidden space-y-6">
+                <!-- 0. Invoice Details Card (NEW) -->
+                <div id="invoiceDetailsCardContainer" class="detail-card">
+                    <!-- Customer/Invoice dates will be rendered here -->
+                </div>
                 <!-- 1. Shipments Table -->
                 <div id="shipmentDetailsTableContainer" class="detail-card">
                     <!-- Table/Cards will be rendered here -->
@@ -224,12 +228,15 @@
                 resetFiltersBtn: document.getElementById('reset-filters'),
                 applyFiltersBtn: document.getElementById('apply-filters'),
                 emptyView: document.getElementById('emptyView'),
+                // NEW Detail Containers
+                invoiceDetailsCardContainer: document.getElementById('invoiceDetailsCardContainer'),
                 shipmentDetailsTableContainer: document.getElementById('shipmentDetailsTableContainer'),
                 summaryTableContainer: document.getElementById('summaryTableContainer')
             };
 
             // --- Global State ---
-            let allShipments = []; // Raw data
+            let allShipments = []; // Raw shipment data
+            let b2bDataMap = new Map(); // NEW: Map for B2B customer data
             let consolidatedInvoices = []; // Consolidated list for display
             let currentSelectedRef = null;
             let isUnbilledMode = false; // NEW state for the toggle
@@ -312,12 +319,11 @@
                     if (!keyInfo) return;
 
                     const { key: consolidationKey, type: displayKeyType } = keyInfo;
-
-                    // Strictly use INVOICE_DATE for display, or null
-                    const invoiceDateForDisplay = order.INVOICE_DATE || null; 
                     
-                    // Determine the date to use for internal sorting (best available)
-                    let dateForSorting = invoiceDateForDisplay || order.ORDER_DATE || null;
+                    // Use start and end dates from the first order found in the group for non-INV groups
+                    const shipmentOrderDate = order.ORDER_DATE || null;
+                    const invoiceDateForDisplay = order.INVOICE_DATE || null; 
+                    let dateForSorting = invoiceDateForDisplay || shipmentOrderDate || null;
                     
                     if (!dateForSorting) return;
 
@@ -340,6 +346,14 @@
                             invoice.INVOICE_DATE = invoiceDateForDisplay;
                         }
                         
+                        // Track earliest and latest shipment dates for the group
+                        if (shipmentOrderDate && (!invoice.START_DATE || new Date(shipmentOrderDate) < new Date(invoice.START_DATE))) {
+                            invoice.START_DATE = shipmentOrderDate;
+                        }
+                        if (shipmentOrderDate && (!invoice.END_DATE || new Date(shipmentOrderDate) > new Date(invoice.END_DATE))) {
+                            invoice.END_DATE = shipmentOrderDate;
+                        }
+
                         // Keep the latest date for sorting (to ensure the group shows up high if it contains a recent order)
                          if (newSortingDate > new Date(invoice.DATE_FOR_SORTING)) {
                             invoice.DATE_FOR_SORTING = dateForSorting;
@@ -355,6 +369,8 @@
                             BRANCH: order.BRANCH,
                             INVOICE_DATE: invoiceDateForDisplay, // Only the actual Invoice Date (can be null)
                             DATE_FOR_SORTING: dateForSorting, // Best available date for sorting only
+                            START_DATE: shipmentOrderDate, // For UnBilled groups: earliest shipment date
+                            END_DATE: shipmentOrderDate,   // For UnBilled groups: latest shipment date
                             TOTAL: orderTotal,
                             CARRIER: order.CARRIER 
                         });
@@ -386,6 +402,15 @@
                 }
                 try {
                     allShipments = appData.ORDERS;
+                    
+                    // NEW: Populate B2B Map
+                    if (appData.B2B && Array.isArray(appData.B2B)) {
+                        appData.B2B.forEach(client => {
+                            if (client.CODE) {
+                                b2bDataMap.set(client.CODE, client);
+                            }
+                        });
+                    }
                     
                     // 1. Consolidate raw shipments into invoices
                     consolidatedInvoices = consolidateInvoiceData(allShipments);
@@ -601,6 +626,65 @@
                     ui.shipmentList.appendChild(li);
                 });
             }
+
+            // --- NEW: Render Invoice Details Card (Top Card) ---
+            function renderInvoiceDetailsCard(invoice) {
+                const b2b = b2bDataMap.get(invoice.CODE);
+                
+                // --- Left Side: Customer Details ---
+                const clientName = b2b?.CLIENT_NAME || invoice.CODE;
+                const mobile = b2b?.MOBILE_NUMBER || 'N/A';
+                const address = b2b?.BILLING_ADDRESS || 'N/A';
+                const landmark = b2b?.BILLING_LANDMARK || '';
+                const pincode = b2b?.BILLING_PINCODE || 'N/A';
+                const city = b2b?.BILLING_CITY || 'N/A';
+                const state = b2b?.BILLING_STATE || 'N/A';
+                const gst = b2b?.ID_GST_PAN_ADHAR || 'N/A';
+
+                const leftContent = `
+                    <div class="space-y-2 text-sm">
+                        <div class="font-bold text-lg text-indigo-700">${clientName}</div>
+                        <div class="text-gray-600">${mobile}</div>
+                        <div class="text-gray-700">
+                            ${address}${landmark ? ', ' + landmark : ''}<br>
+                            ${pincode}, ${city}, ${state}
+                        </div>
+                        <div class="pt-2 text-xs text-gray-500">GST/ID: ${gst}</div>
+                    </div>
+                `;
+
+                // --- Right Side: Invoice Dates ---
+                const invNum = invoice.INV_NUMBER || 'N/A';
+                const invDate = invoice.INVOICE_DATE ? formatDateForDisplay(invoice.INVOICE_DATE) : 'N/A';
+                
+                // Start/End dates are only relevant for UnBilled groups (Key Type is not 'INV')
+                const startDate = invoice.KEY_TYPE !== 'INV' ? (invoice.START_DATE ? formatDateForDisplay(invoice.START_DATE) : 'N/A') : 'N/A';
+                const endDate = invoice.KEY_TYPE !== 'INV' ? (invoice.END_DATE ? formatDateForDisplay(invoice.END_DATE) : 'N/A') : 'N/A';
+
+                const rightContent = `
+                    <div class="space-y-2 text-sm p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="flex justify-between"><span class="text-gray-500">Invoice No:</span><span class="font-semibold text-gray-800">${invNum}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Invoice Date:</span><span class="font-semibold text-gray-800">${invDate}</span></div>
+                        <hr class="border-gray-100">
+                        <div class="flex justify-between"><span class="text-gray-500">Shipment Period Start:</span><span class="font-medium text-gray-700">${startDate}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Shipment Period End:</span><span class="font-medium text-gray-700">${endDate}</span></div>
+                    </div>
+                `;
+
+                const header = `<div class="detail-card-header"><h3 class="font-semibold text-gray-700">Invoice Details</h3></div>`;
+                
+                // Card Body with responsive 4:1 layout (md:grid-cols-5)
+                const body = `
+                    <div class="detail-card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                            <div class="md:col-span-4">${leftContent}</div>
+                            <div class="md:col-span-1">${rightContent}</div>
+                        </div>
+                    </div>
+                `;
+
+                ui.invoiceDetailsCardContainer.innerHTML = header + body;
+            }
             
             // --- New Rendering Function for Shipments Table (Table 1) ---
             function renderShipmentDetailsTable(shipments, consolidationKey) {
@@ -787,16 +871,22 @@
                 ui.shipmentList.querySelectorAll('li.selected').forEach(li => li.classList.remove('selected'));
                 if (selectedLi) selectedLi.classList.add('selected');
                 
-                // 1. Get the list of shipments associated with this key
+                // 1. Get the consolidated invoice object for customer/date info
+                const invoice = consolidatedInvoices.find(i => i.CONSOLIDATION_KEY === consolidationKey);
+                
+                // 2. Get the list of shipments associated with this key
                 const associatedShipments = getShipmentsForInvoice(consolidationKey);
 
-                // 2. Render the Shipment Details table (This creates the Print button HTML)
+                // 3. RENDER NEW CARD
+                renderInvoiceDetailsCard(invoice);
+
+                // 4. Render the Shipment Details table (This creates the Print button HTML)
                 renderShipmentDetailsTable(associatedShipments, consolidationKey);
                 
-                // 3. Render the Charges Summary table
+                // 5. Render the Charges Summary table
                 renderSummaryTable(associatedShipments);
                 
-                // 4. Attach Print button handler (must be done after DOM is updated by step 2)
+                // 6. Attach Print button handler (must be done after DOM is updated by step 4)
                 const printBtn = document.getElementById('printInvoiceBtn');
                 if (printBtn) {
                     const key = printBtn.dataset.key;
@@ -806,7 +896,7 @@
                     };
                 }
 
-                // 5. Make sure the detail view is visible
+                // 7. Make sure the detail view is visible
                 showDetailView(true);
             }
 
