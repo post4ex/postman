@@ -6,26 +6,11 @@
     <title>Shipments - Postman</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Link to the main site stylesheet -->
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Page-specific styles (pruned to remove duplicates from style.css) -->
     <style>
-        /* MODIFIED: Removed redundant styles now covered by style.css */
-        /* Only keep styles specific to this page */
-        body { 
-            font-family: 'Inter', sans-serif; 
-            /* MODIFIED: Removed flex properties, letting the main div handle layout */
-            min-height: 100vh; 
-            background-color: #f3f4f6; /* bg-gray-100 */
-        }
-
-        /* Original shipment.html styles */
-        .spinner { border: 4px solid rgba(0, 0, 0, 0.1); border-radius: 50%; border-top: 4px solid #4338ca; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .form-input {
-            border-radius: 0.375rem; border: 1px solid #d1d5db; padding: 0.5rem 0.75rem;
-            font-size: 0.875rem; width: 100%; transition: border-color 0.2s;
-        }
-        .form-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 1px #4f46e5; }
-
         /* Shipment List (Left Pane) */
         #shipmentList li {
             padding: 0.75rem;
@@ -95,26 +80,18 @@
         }
         .timeline-item:last-child { margin-bottom: 0; }
 
-        /* Uploads & Document Center Table Style */
+        /* Table Styles */
         #uploadsTable th, #uploadsTable td,
         #docCenterTable th, #docCenterTable td { padding: 0.5rem; font-size: 0.8rem; }
-        /* Tracking History Table Style */
         #trackingHistoryTable th, #trackingHistoryTable td { padding: 0.5rem; font-size: 0.8rem; }
-        
-        /* Specific modal width for this page */
-        #filterModal .modal-content {
-             width: 600px; 
-             max-width: 90%;
-        }
-
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
-    <!-- Header placeholder (layout.js will populate this) -->
+    <!-- Header placeholder -->
     <div id="header-placeholder"></div>
 
-    <!-- MODIFIED: Main content structure now matches Branches.html and Clients.html -->
-    <div class="flex flex-col md:flex-row flex-grow w-full md:h-[calc(100vh-88px)]">
+    <!-- Main content container -->
+    <div class="flex flex-col md:flex-row flex-grow w-full h-[calc(100vh-88px)]">
 
         <!-- Left Sidebar for Shipment List -->
         <aside id="shipmentListPane" class="w-full md:w-1/3 lg:w-1/4 bg-white border-r flex flex-col">
@@ -146,6 +123,8 @@
             </div>
 
             <div id="detailView" class="hidden space-y-6">
+                 <!-- NEW ORDER OF SECTIONS -->
+
                 <!-- 1 & 2. Document Center & Shipment Details (Side by Side) -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div id="documentCenterContainer" class="detail-card"></div>
@@ -166,18 +145,19 @@
 
                 <!-- 7. Tracking History -->
                 <div id="trackingHistoryContainer" class="detail-card"></div>
+
+                <!-- END NEW ORDER -->
+
             </div>
             <div id="emptyView" class="h-full flex items-center justify-center">
                 <p class="text-gray-500 text-lg">Select a shipment from the list to view details.</p>
             </div>
         </main>
     </div>
-    <!-- END MODIFIED main content structure -->
 
-
-    <!-- Filter Modal -->
+    <!-- Filter Modal (uses modal styles from style.css) -->
     <div id="filterModal" class="modal-overlay hidden">
-        <div class="modal-content space-y-4"> {/* Relies on style.css for base modal */}
+        <div class="modal-content space-y-4">
             <h2 class="text-xl font-semibold text-gray-800">Filter Shipments</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -214,52 +194,50 @@
         </div>
     </div>
 
-    <!-- ADDED: Floating Action Button (FAB) HTML -->
-    <div id="fab-container" class="active">
-        <!-- Main FAB button -->
-        <button id="fab-main">
-            <svg class="fab-icon w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        </button>
-        <!-- FAB actions menu (hidden by default) -->
-        <div id="fab-actions">
-            <a href="httpsE://post4ex.github.io/postman/uploader.html" class="fab-action">
-                <span class="fab-action-label">Uploader</span>
-                <span class="fab-action-icon">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                </span>
-            </a>
-            <a href="https://post4ex.github.io/postman/CreateOrder.html" class="fab-action">
-                <span class="fab-action-label">Create Order</span>
-                <span class="fab-action-icon">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                </span>
-            </a>
-        </div>
-    </div>
-    <!-- END ADDED FAB -->
-
-
-    <!-- Footer placeholder (layout.js will populate this) -->
+    <!-- Footer placeholder -->
     <div id="footer-placeholder"></div>
 
-    <!-- Layout script handles login, header/footer, data -->
+    <!-- 
+      Scripts loaded in order:
+      1. docgen.js (for your custom printing logic)
+      2. layout.js (handles header, footer, auth, and data fetching)
+      3. Page-specific script (below)
+    -->
+    <script src="docgen.js"></script>
     <script src="layout.js"></script>
     
     <script>
         // --- Document Generation Stub ---
+        // This function is a placeholder. You will create docgen.js and link it.
+        // That file will contain the actual logic to generate PDFs.
         function generateDocument(docType, reference) {
             console.log(`User wants to generate: ${docType} for reference: ${reference}`);
-            return false;
+            
+            // Example of how you might call your real function from docgen.js:
+            // if (typeof window.myDocGenLibrary !== 'undefined' && typeof window.myDocGenLibrary.generate === 'function') {
+            //     // You would pass the full order object, party details, etc.
+            //     // For now, we just log.
+            //     window.myDocGenLibrary.generate(docType, reference);
+            // } else {
+            //     console.warn('Document generation script (docgen.js) not loaded or function not found.');
+            // }
+            
+            // We return false to stop the <a> tag's default navigation
+            return false; 
         }
         // --- End Document Generation Stub ---
 
         document.addEventListener('DOMContentLoaded', () => {
+             // --- REMOVED: Login Check (handled by layout.js) ---
+             // --- REMOVED: Hardcoded Credentials (handled by layout.js) ---
+
+            // --- DOM Elements ---
             const ui = {
                 statusMessage: document.getElementById('status-message'),
                 shipmentList: document.getElementById('shipmentList'),
-                shipmentListPane: document.getElementById('shipmentListPane'),
-                shipmentDetailPane: document.getElementById('shipmentDetailPane'),
-                backToListBtn: document.getElementById('backToListBtn'),
+                shipmentListPane: document.getElementById('shipmentListPane'), 
+                shipmentDetailPane: document.getElementById('shipmentDetailPane'), 
+                backToListBtn: document.getElementById('backToListBtn'), 
                 searchShipments: document.getElementById('searchShipments'),
                 filterToggleBtn: document.getElementById('filterToggleBtn'),
                 filterModal: document.getElementById('filterModal'),
@@ -272,21 +250,15 @@
                 applyFiltersBtn: document.getElementById('apply-filters'),
                 detailView: document.getElementById('detailView'),
                 emptyView: document.getElementById('emptyView'),
+                // Detail Pane Containers
                 shipmentDetailsContainer: document.getElementById('shipmentDetailsContainer'),
                 trackingStatusContainer: document.getElementById('trackingStatusContainer'),
                 consignorDetailsContainer: document.getElementById('consignorDetailsContainer'),
                 consigneeDetailsContainer: document.getElementById('consigneeDetailsContainer'),
                 productBoxDetailsContainer: document.getElementById('productBoxDetailsContainer'),
                 trackingHistoryContainer: document.getElementById('trackingHistoryContainer'),
-                documentCenterContainer: document.getElementById('documentCenterContainer'),
-                // ADDED: FAB elements
-                fabContainer: document.getElementById('fab-container'),
-                fabMain: document.getElementById('fab-main')
+                documentCenterContainer: document.getElementById('documentCenterContainer')
             };
-
-             // --- MODIFIED: REMOVED the early loginData check ---
-             // layout.js handles authentication and redirection.
-             // This script will now wait for data from the cache or events.
 
             // --- Global State ---
             let allOrders = [];
@@ -297,22 +269,6 @@
             let trackDataMap = new Map();
             let logsDataMap = new Map();
             let uploadsDataMap = new Map();
-            let dataInitialized = false; // Flag to prevent double initialization
-
-            // --- ADDED: FAB Toggle Logic ---
-            if (ui.fabMain && ui.fabContainer) {
-                ui.fabMain.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent document click listener from closing it
-                    ui.fabContainer.classList.toggle('active');
-                });
-            }
-            // Document click listener to close FAB (if open)
-            document.addEventListener('click', () => {
-                if (ui.fabContainer && ui.fabContainer.classList.contains('active')) {
-                    ui.fabContainer.classList.remove('active');
-                }
-            });
-
 
             // --- Mobile View Functions ---
             const isMobileView = () => window.innerWidth < 768;
@@ -326,6 +282,7 @@
                 ui.detailView.classList.remove('hidden');
             };
             
+            // Add listener for back button
             ui.backToListBtn.addEventListener('click', () => {
                 if (isMobileView()) {
                     ui.shipmentListPane.classList.remove('hidden');
@@ -335,26 +292,21 @@
             // --- END Mobile View Functions ---
 
             // --- Data Initialization ---
-            function initializePageWithData(appData) {
-                if (dataInitialized || !appData || !appData.ORDERS) {
-                    if (!appData || !appData.ORDERS) {
-                        if (!dataInitialized && ui.statusMessage) {
-                           ui.statusMessage.textContent = 'Could not find shipment data.';
-                           console.error("Invalid data provided to initializePageWithData:", appData);
-                        } else if (!dataInitialized) {
-                            console.error("Invalid data provided to initializePageWithData and statusMessage element not found:", appData);
-                        }
-                    }
-                    return; 
+            function initializePageWithData(eventOrData) {
+                // Check if data is nested under event.detail.data or is the data itself
+                const appData = eventOrData.detail ? eventOrData.detail.data : eventOrData;
+                if (!appData || !appData.ORDERS) {
+                    ui.statusMessage.textContent = 'Could not find shipment data.';
+                    console.error("Invalid data provided to initializePageWithData:", appData);
+                    return;
                 }
-                
-                console.log("Initializing shipment page with data...");
-                
                 try {
                     allOrders = appData.ORDERS;
                     if (!Array.isArray(allOrders)) throw new Error("Order data is not valid.");
+                    // Sort by date descending
                     allOrders.sort((a, b) => new Date(b.ORDER_DATE) - new Date(a.ORDER_DATE));
                     
+                    // Clear maps and repopulate
                     b2b2cDataMap.clear(); productDataMap.clear(); multiboxDataMap.clear();
                     trackDataMap.clear(); logsDataMap.clear(); uploadsDataMap.clear();
                     
@@ -363,56 +315,28 @@
                     if (appData.MULTIBOX) appData.MULTIBOX.forEach(b => { const r = b.REFERANCE; if(r){ if (!multiboxDataMap.has(r)) multiboxDataMap.set(r, []); multiboxDataMap.get(r).push(b); } });
                     if (appData.TRACK) appData.TRACK.forEach(t => { if(t.REFERANCE) trackDataMap.set(t.REFERANCE, t) });
                     if (appData.LOGS) appData.LOGS.forEach(l => { const r = l.REFERANCE; if(r){ if (!logsDataMap.has(r)) logsDataMap.set(r, []); logsDataMap.get(r).push(l); } });
+                    // Sort logs by date descending
                     for (const logs of logsDataMap.values()) logs.sort((a, b) => new Date(b.SCAN_DATE) - new Date(a.SCAN_DATE));
                     if (appData.UPLOADS) appData.UPLOADS.forEach(u => { const rk = `ref-${u.REFERANCE}`; if(u.REFERANCE){ if (!uploadsDataMap.has(rk)) uploadsDataMap.set(rk, []); uploadsDataMap.get(rk).push(u); } });
                     
                     populateFilters(allOrders);
                     setupFilterListeners();
-                    applyFilters(); 
-                    if(ui.statusMessage) ui.statusMessage.textContent = ''; 
-                    dataInitialized = true;
-                } catch (error) { 
-                    if(ui.statusMessage) ui.statusMessage.textContent = 'Failed to process data.'; 
-                    console.error("Data processing error:", error); 
-                }
+                    applyFilters(); // Initial render
+                    ui.statusMessage.textContent = ''; // Clear loading message
+                } catch (error) { ui.statusMessage.textContent = 'Failed to process data.'; console.error("Data processing error:", error); }
             }
-            
-            // --- Event Handlers for Data Loading ---
-            const handleAppData = (event) => {
-                 console.log(`Event ${event.type} received by shipment page.`);
-                 initializePageWithData(event.detail.data);
-            };
-            window.addEventListener('appDataLoaded', handleAppData);
-            window.addEventListener('appDataRefreshed', handleAppData);
 
-            // --- Initial Cache Check ---
-            const checkInitialCache = () => {
-                const storedAppDataJSON = localStorage.getItem('appData');
-                if (storedAppDataJSON) {
-                    try {
-                        const storedAppData = JSON.parse(storedAppDataJSON);
-                        const now = new Date().getTime();
-                        if (storedAppData.data && storedAppData.expires && now < storedAppData.expires) {
-                            console.log("Shipment page: Using valid cached appData on initial load.");
-                            initializePageWithData(storedAppData.data);
-                        } else {
-                            console.log("Shipment page: Cached appData expired or invalid. Waiting for layout.js event.");
-                        }
-                    } catch (e) {
-                        console.error("Shipment page: Could not parse stored app data", e);
-                        localStorage.removeItem('appData');
-                    }
-                } else {
-                     console.log("Shipment page: No cached appData found. Waiting for layout.js event.");
-                }
-            };
-            checkInitialCache();
+            // Listen for data loaded from layout.js
+            window.addEventListener('appDataLoaded', initializePageWithData);
+            window.addEventListener('appDataRefreshed', initializePageWithData);
 
-            // --- Filter Modal & Search Logic (Unchanged) ---
+            // --- REMOVED: fetchDataWithHardcodedCreds() function ---
+            // --- REMOVED: Initial Data Load Logic ---
+            // (layout.js now handles this and fires the event listeners above)
+
+            // --- Filter Modal & Search Logic ---
             function populateFilters(orders) {
-                // Ensure UI elements exist before populating
-                if (!ui.filterBranch || !ui.filterCode || !ui.filterCarrier) return;
-                
+                // Clear existing options except the first "All" option
                 ui.filterBranch.length = 1; ui.filterCode.length = 1; ui.filterCarrier.length = 1;
                 
                 const branches = [...new Set(orders.map(o => o.BRANCH).filter(Boolean))];
@@ -425,8 +349,6 @@
             }
 
             function setupFilterListeners() {
-                if (!ui.searchShipments || ui.searchShipments.dataset.listenerAttached) return; 
-
                 ui.searchShipments.addEventListener('input', applyFilters);
                 ui.filterToggleBtn.addEventListener('click', () => ui.filterModal.classList.remove('hidden'));
                 ui.applyFiltersBtn.addEventListener('click', () => { applyFilters(); ui.filterModal.classList.add('hidden'); });
@@ -435,17 +357,11 @@
                     ui.filterBranch.value = ''; ui.filterCode.value = ''; ui.filterCarrier.value = ''; 
                     applyFilters(); 
                 });
+                // Close modal on overlay click
                 ui.filterModal.addEventListener('click', (e) => { if (e.target === ui.filterModal) ui.filterModal.classList.add('hidden'); });
-                
-                ui.searchShipments.dataset.listenerAttached = 'true';
             }
 
             function applyFilters() {
-                if (!dataInitialized) {
-                    console.log("ApplyFilters called before data initialization, skipping.");
-                    return;
-                }
-                
                 let startDate = ui.filterStartDate.value; let endDate = ui.filterEndDate.value;
                 const branch = ui.filterBranch.value; const code = ui.filterCode.value; const carrier = ui.filterCarrier.value;
                 const searchTerm = ui.searchShipments.value.toLowerCase();
@@ -453,16 +369,17 @@
                 const isAnyFilterApplied = startDate || endDate || branch || code || carrier || searchTerm;
                 let statusText = `Displaying {count} of ${allOrders.length} records.`;
                 
+                // Default date filter logic
                 if (!isAnyFilterApplied && !startDate) {
                     const today = new Date(); const currentDay = today.getDate(); let firstDay;
-                    if (currentDay <= 10 && today.getMonth() > 0) { 
+                    if (currentDay <= 10 && today.getMonth() > 0) { // If before 10th and not Jan, go to 1st of last month
                         firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                    } else if (currentDay <= 10 && today.getMonth() === 0) {
+                    } else if (currentDay <= 10 && today.getMonth() === 0) { // If before 10th and in Jan, go to Dec 1st of last year
                         firstDay = new Date(today.getFullYear() - 1, 11, 1);
-                    } else {
+                    } else { // Otherwise, 1st of current month
                         firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
                     }
-                    startDate = firstDay.toISOString().split('T')[0];
+                    startDate = firstDay.toISOString().split('T')[0]; // Format as YYYY-MM-DD
                     statusText = `Displaying {count} of ${allOrders.length} records (default view from ${startDate}).`;
                 }
 
@@ -490,27 +407,35 @@
 
                 renderShipmentList(filteredOrders);
                 
-                const listStatusElement = ui.statusMessage;
-                if(listStatusElement) listStatusElement.textContent = statusText.replace('{count}', filteredOrders.length);
+                if(ui.statusMessage) ui.statusMessage.textContent = statusText.replace('{count}', filteredOrders.length);
+                else console.log(statusText.replace('{count}', filteredOrders.length));
                 
+                // --- NEW Mobile/Desktop View Logic ---
                 if (isMobileView()) {
+                    // On mobile, filtering *always* returns you to the list view
                     ui.shipmentListPane.classList.remove('hidden');
                     ui.shipmentDetailPane.classList.add('hidden');
+                    
+                    // If the selected item is no longer in view, clear the ref
                     if (currentSelectedRef && !filteredOrders.find(o => o.REFERANCE === currentSelectedRef)) {
                         currentSelectedRef = null;
                     }
+                    // The 'selected' class will be added (or not) by renderShipmentList
+                    
                 } else {
+                    // On desktop, check if selected item is still valid
                     if (currentSelectedRef) {
                         const currentOrder = filteredOrders.find(o => o.REFERANCE === currentSelectedRef);
-                        if (currentOrder && ui.shipmentList) {
-                           const listItem = ui.shipmentList.querySelector(`li[data-ref="${currentSelectedRef}"]`);
-                           handleShipmentSelection(currentSelectedRef, listItem);
+                        if (currentOrder) {
+                            // Reselect it and re-render details
+                            handleShipmentSelection(currentSelectedRef, ui.shipmentList.querySelector(`li[data-ref="${currentSelectedRef}"]`));
                         } else {
+                            // If not found, clear selection and show empty view
                             currentSelectedRef = null;
                             ui.emptyView.classList.remove('hidden');
                             ui.detailView.classList.add('hidden');
                         }
-                    } else {
+                    } else { // If no item was selected, make sure details pane is hidden
                         ui.emptyView.classList.remove('hidden');
                         ui.detailView.classList.add('hidden');
                     }
@@ -519,7 +444,6 @@
 
             // --- Render Shipment List (Left Pane) ---
             function renderShipmentList(orders) {
-                if (!ui.shipmentList) return;
                 ui.shipmentList.innerHTML = '';
                 if (orders.length === 0) { 
                     ui.shipmentList.innerHTML = `<li class="text-center text-gray-500 border-none hover:bg-transparent cursor-default">No orders match filters.</li>`; 
@@ -537,7 +461,7 @@
                     
                     const trk = trackDataMap.get(ref); 
                     let stat = 'IN TRANSIT'; 
-                    let scolor = 'bg-blue-100 text-blue-700';
+                    let scolor = 'bg-blue-100 text-blue-700'; // Default
                     if (trk && trk.STATUS) { 
                         stat = trk.STATUS; 
                         if (stat.toUpperCase() === 'DELIVERED') scolor = 'bg-green-100 text-green-700'; 
@@ -549,9 +473,7 @@
                     li.dataset.ref = ref; 
                     li.addEventListener('click', () => handleShipmentSelection(ref, li));
                     
-                    if(currentSelectedRef && String(ref) === String(currentSelectedRef)) {
-                        li.classList.add('selected'); 
-                    }
+                    if(String(ref) === String(currentSelectedRef)) li.classList.add('selected'); 
                     ui.shipmentList.appendChild(li);
                 });
             }
@@ -560,10 +482,9 @@
             function handleShipmentSelection(ref, selectedLi) {
                 currentSelectedRef = ref;
                 
-                if (ui.shipmentList) {
-                    ui.shipmentList.querySelectorAll('li.selected').forEach(li => li.classList.remove('selected'));
-                    if (selectedLi) selectedLi.classList.add('selected');
-                }
+                // Update selected styles in the list
+                ui.shipmentList.querySelectorAll('li.selected').forEach(li => li.classList.remove('selected'));
+                if (selectedLi) selectedLi.classList.add('selected');
                 
                 const order = allOrders.find(o => o.REFERANCE === ref);
                 if (!order) { 
@@ -572,71 +493,103 @@
                     return; 
                 }
                 
-                renderDocumentCenter(order);
-                renderShipmentDetails(order);
-                renderPartyDetails(order.CONSIGNOR, 'Consignor', ui.consignorDetailsContainer);
-                renderPartyDetails(order.CONSIGNEE, 'Consignee', ui.consigneeDetailsContainer);
-                renderProductAndBoxDetails(order);
+                // --- Call render functions in the CORRECT ORDER ---
+                renderDocumentCenter(order); // 1st
+                renderShipmentDetails(order); // 2nd
+                renderPartyDetails(order.CONSIGNOR, 'Consignor', ui.consignorDetailsContainer); // 3a
+                renderPartyDetails(order.CONSIGNEE, 'Consignee', ui.consigneeDetailsContainer); // 3b
+                renderProductAndBoxDetails(order); // 5th
 
+                // --- ADDED: Event listener for the new toggle button ---
                 const toggleBtn = document.getElementById('toggleUploadsBtn');
                 if (toggleBtn) {
-                    toggleBtn.replaceWith(toggleBtn.cloneNode(true)); 
-                    const newToggleBtn = document.getElementById('toggleUploadsBtn');
-                    if (newToggleBtn) {
-                         newToggleBtn.addEventListener('click', () => {
-                            const uploadsDiv = document.getElementById('uploadsContainer');
-                            const icon = newToggleBtn.querySelector('svg');
-                            
-                            if (uploadsDiv && uploadsDiv.classList.toggle('hidden')) {
-                                newToggleBtn.childNodes[0].nodeValue = "Show Uploads ";
-                                if (icon) icon.classList.remove('rotate-180');
-                            } else if (uploadsDiv) {
-                                newToggleBtn.childNodes[0].nodeValue = "Hide Uploads ";
-                                if (icon) icon.classList.add('rotate-180');
-                            }
-                        });
-                    }
+                    toggleBtn.addEventListener('click', () => {
+                        const uploadsDiv = document.getElementById('uploadsContainer');
+                        const icon = toggleBtn.querySelector('svg');
+                        
+                        if (uploadsDiv && uploadsDiv.classList.toggle('hidden')) {
+                            // It's now hidden
+                            toggleBtn.childNodes[0].nodeValue = "Show Uploads "; // Access the text node
+                            if (icon) icon.classList.remove('rotate-180');
+                        } else {
+                            // It's now visible
+                            toggleBtn.childNodes[0].nodeValue = "Hide Uploads "; // Access the text node
+                            if (icon) icon.classList.add('rotate-180');
+                        }
+                    });
                 }
+                // --- END ADDITION ---
 
-                renderTrackingStatus(order);
-                renderTrackingHistory(order);
-                showDetailView();
+                renderTrackingStatus(order); // 6th
+                renderTrackingHistory(order); // 7th
+                // --- End correct order call ---
+                
+                showDetailView(); // MODIFIED: Call new function
             }
 
-            // --- Render Functions for Right Pane (Mostly Unchanged) ---
-            function formatDateForDisplay(dateInput) {
+            // --- Render Functions for Right Pane ---
+
+             function formatDateForDisplay(dateInput) {
                  if (!dateInput) return 'N/A';
                  let date;
                  try {
+                     // 1. Try DD/MM/YYYY HH:MM:SS format first
                      if (typeof dateInput === 'string' && dateInput.includes('/') && dateInput.includes(':')) {
                          const parts = dateInput.split(' ');
                          const dateParts = parts[0].split('/');
                          const timeParts = parts.length > 1 ? parts[1].split(':') : ['0', '0', '0'];
                          date = new Date(Date.UTC(
-                             parseInt(dateParts[2], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[0], 10),
-                             parseInt(timeParts[0], 10) || 0, parseInt(timeParts[1], 10) || 0, parseInt(timeParts[2], 10) || 0
+                             parseInt(dateParts[2], 10), // year
+                             parseInt(dateParts[1], 10) - 1, // monthIndex
+                             parseInt(dateParts[0], 10), // day
+                             parseInt(timeParts[0], 10) || 0, 
+                             parseInt(timeParts[1], 10) || 0, 
+                             parseInt(timeParts[2], 10) || 0 
                          ));
                      }
-                     else if (typeof dateInput === 'string' && dateInput.includes('T') && dateInput.includes('Z')) { date = new Date(dateInput); }
-                     else if (typeof dateInput === 'number' || (typeof dateInput === 'string' && !isNaN(parseFloat(dateInput)) && isFinite(parseFloat(dateInput)))) {
-                         const serial = parseFloat(dateInput); const utc_days = Math.floor(serial - 25569);
-                         const utc_value = utc_days * 86400; date = new Date(utc_value * 1000);
+                     // 2. Try ISO format (e.g., "2023-10-27T10:00:00.000Z")
+                     else if (typeof dateInput === 'string' && dateInput.includes('T') && dateInput.includes('Z')) {
+                         date = new Date(dateInput);
                      }
-                     else { date = new Date(dateInput); }
-                     if (isNaN(date.getTime())) { console.warn("formatDateForDisplay: Invalid date value:", dateInput); return 'Invalid Date'; }
-                     const year = date.getUTCFullYear(); const month = String(date.getUTCMonth() + 1).padStart(2, '0'); const day = String(date.getUTCDate()).padStart(2, '0');
+                      // 3. Try number format (Excel Serial Date)
+                     else if (typeof dateInput === 'number' || (typeof dateInput === 'string' && !isNaN(parseFloat(dateInput)) && isFinite(parseFloat(dateInput)))) {
+                         const serial = parseFloat(dateInput);
+                          const utc_days = Math.floor(serial - 25569);
+                          const utc_value = utc_days * 86400; // seconds
+                          date = new Date(utc_value * 1000); // milliseconds
+                     }
+                     // 4. Try generic parsing as a fallback
+                     else {
+                         date = new Date(dateInput);
+                     }
+
+                     if (isNaN(date.getTime())) {
+                         console.warn("formatDateForDisplay: Invalid date value:", dateInput);
+                         return 'Invalid Date';
+                     }
+                     
+                     const year = date.getUTCFullYear();
+                     const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                     const day = String(date.getUTCDate()).padStart(2, '0');
                      return `${year}-${month}-${day}`;
-                 } catch (e) { console.error("formatDateForDisplay: Error parsing date:", dateInput, e); return 'Error Date'; }
+                 } catch (e) {
+                     console.error("formatDateForDisplay: Error parsing date:", dateInput, e);
+                     return 'Error Date';
+                 }
              }
 
             function renderShipmentDetails(order) {
                 const d = [ 
-                    {l:'Carrier',v:order.CARRIER}, {l:'TAT',v:order.TAT}, {l:'Zone',v:order.ZONE}, {l:'Mode',v:order.MODE}, 
-                    {l:'Wt(kg)',v:order.WEIGHT}, {l:'ChgWt(kg)',v:order.CHG_WT}, {l:'Pcs',v:order.PIECS}, {l:'Value',v:order.VALUE}, 
-                    {l:'COD',v:order.COD}, {l:'ToPay',v:order.TOPAY}, {l:'FOV',v:order.FOV}, {l:'Global',v:order.GLOBAL} 
+                    {l:'Carrier',v:order.CARRIER}, {l:'TAT',v:order.TAT}, {l:'Zone',v:order.ZONE}, 
+                    {l:'Mode',v:order.MODE}, {l:'Wt(kg)',v:order.WEIGHT}, {l:'ChgWt(kg)',v:order.CHG_WT}, 
+                    {l:'Pcs',v:order.PIECS}, {l:'Value',v:order.VALUE}, {l:'COD',v:order.COD}, 
+                    {l:'ToPay',v:order.TOPAY}, {l:'FOV',v:order.FOV}, {l:'Global',v:order.GLOBAL} 
                 ];
                 let h = `<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">`; 
-                d.forEach(i => { if (i.v !== undefined && i.v !== null && i.v !== '') h += `<div><div class="text-gray-500 text-xs">${i.l}</div><div class="font-semibold text-gray-800">${i.v}</div></div>`; }); 
+                d.forEach(i => { 
+                    if (i.v !== undefined && i.v !== null && i.v !== '') 
+                        h += `<div><div class="text-gray-500 text-xs">${i.l}</div><div class="font-semibold text-gray-800">${i.v}</div></div>`; 
+                }); 
                 h += `</div>`;
                 ui.shipmentDetailsContainer.innerHTML = `<div class="detail-card-header"><h3 class="font-semibold text-gray-700">Shipment Details</h3></div><div class="detail-card-body">${h}</div>`;
             }
@@ -644,97 +597,289 @@
             function renderTrackingStatus(order) {
                 const t = trackDataMap.get(order.REFERANCE); let h = '';
                 if (t) { 
-                    const m = formatDateForDisplay(t['Manifest Date']); const s = formatDateForDisplay(t.DATE); 
+                    const m = formatDateForDisplay(t['Manifest Date']); 
+                    const s = formatDateForDisplay(t.DATE); 
                     h = `<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm"><div><div class="text-gray-500 text-xs">Status</div><div class="font-semibold text-gray-800">${t.STATUS || 'N/A'}</div></div><div><div class="text-gray-500 text-xs">Date</div><div class="font-semibold text-gray-800">${s}</div></div><div><div class="text-gray-500 text-xs">Manifest</div><div class="font-semibold text-gray-800">${m}</div></div></div>`; 
-                } else h = `<p class="text-sm text-gray-500">No tracking summary.</p>`;
-                ui.trackingStatusContainer.innerHTML = `<div class="detail-card-header flex justify-between items-center"><h3 class="font-semibold text-gray-700">Tracking Status</h3><div class="flex gap-2"><button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">TICKET</button><button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">MARK</button></div></div><div class="detail-card-body">${h}</div>`;
+                }
+                else h = `<p class="text-sm text-gray-500">No tracking summary.</p>`;
+                
+                ui.trackingStatusContainer.innerHTML = `<div class="detail-card-header flex justify-between items-center">
+                                                            <h3 class="font-semibold text-gray-700">Tracking Status</h3>
+                                                            <div class="flex gap-2">
+                                                                <button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">TICKET</button>
+                                                                <button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">MARK</button>
+                                                            </div>
+                                                        </div><div class="detail-card-body">${h}</div>`;
             }
 
             function renderPartyDetails(uid, type, container) {
                 const c = b2b2cDataMap.get(uid); let h = '';
                 if (!c) h = `<p class="text-sm text-gray-500">${type} details not found for UID: ${uid}.</p>`;
                 else { 
-                    const d = [ {l:'Name',v:c.NAME}, {l:'Address',v:c.ADDRESS}, {l:'City',v:c.CITY}, {l:'Pincode',v:c.PINCODE}, {l:'State',v:c.STATE}, {l:'Mobile',v:c.MOBILE} ]; 
+                    const d = [ 
+                        {l:'Name',v:c.NAME}, {l:'Address',v:c.ADDRESS}, {l:'City',v:c.CITY}, 
+                        {l:'Pincode',v:c.PINCODE}, {l:'State',v:c.STATE}, {l:'Mobile',v:c.MOBILE} 
+                    ]; 
                     h = `<div class="space-y-2 text-sm">`; 
-                    d.forEach(i => { if(i.v) h += `<div class="flex justify-between"><span class="text-gray-500">${i.l}:</span><span class="font-medium text-right">${i.v}</span></div>`; }); h += `</div>`; 
+                    d.forEach(i => { 
+                        if(i.v) h += `<div class="flex justify-between"><span class="text-gray-500">${i.l}:</span><span class="font-medium text-right">${i.v}</span></div>`; 
+                    }); 
+                    h += `</div>`; 
                 }
                 container.innerHTML = `<div class="detail-card-header"><h3 class="font-semibold text-gray-700">${type} Details</h3></div><div class="detail-card-body">${h}</div>`;
             }
 
             function renderProductAndBoxDetails(order) {
-                const r = order.REFERANCE; const p = productDataMap.get(r) || []; const b = multiboxDataMap.get(r) || []; const u = uploadsDataMap.get(`ref-${r}`) || []; 
+                const r = order.REFERANCE; 
+                const p = productDataMap.get(r) || []; 
+                const b = multiboxDataMap.get(r) || []; 
+                const u = uploadsDataMap.get(`ref-${r}`) || []; 
                 let h_body = '';
-                if (p.length === 0 && b.length === 0 && u.length === 0) { h_body = `<p class="text-sm text-gray-500">No product, box, or upload details.</p>`; } 
-                else { 
+                
+                if (p.length === 0 && b.length === 0 && u.length === 0) {
+                    h_body = `<p class="text-sm text-gray-500">No product, box, or upload details.</p>`;
+                } else { 
                     h_body = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6">`;
+                    
+                    // --- Product Section ---
                     if (p.length > 0) { 
                         h_body += `<div><h4 class="font-medium text-sm mb-2 text-gray-600">Product</h4>`;
+                        
+                        // Product Mobile List
                         h_body += `<div class="space-y-2 text-sm sm:hidden">`;
                         p.forEach(i => {
-                            const docNumText = i.DOC_NUMBER || 'N/A'; const ewayNumText = i.EWAY_IF || 'N/A';
+                            const docNumText = i.DOC_NUMBER || 'N/A';
+                            const ewayNumText = i.EWAY_IF || 'N/A';
                             const docUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() !== 'EWAY');
                             const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWAY');
                             const docCell = docUpload ? `<a href="${docUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${docNumText}</a>` : docNumText;
                             const ewayCell = ewayUpload ? `<a href="${ewayUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${ewayNumText}</a>` : ewayNumText;
-                            h_body += `<div class="p-3 bg-gray-50 rounded-md border"><div class="font-semibold text-gray-800">${i.PRODUCT||'N/A'}</div><div class="flex justify-between mt-1 pt-1 border-t"><span class="text-gray-500">Doc#:</span><span class="font-medium text-gray-700">${docCell}</span></div><div class="flex justify-between mt-1"><span class="text-gray-500">EWay:</span><span class="font-medium text-gray-700">${ewayCell}</span></div><div class="flex justify-between mt-1"><span class="text-gray-500">Amt:</span><span class="font-medium text-gray-700">${i.AMOUNT?i.AMOUNT.toFixed(2):'0.00'}</span></div></div>`;
-                        }); h_body += `</div>`;
+
+                            h_body += `<div class="p-3 bg-gray-50 rounded-md border">
+                                        <div class="font-semibold text-gray-800">${i.PRODUCT||'N/A'}</div>
+                                        <div class="flex justify-between mt-1 pt-1 border-t"><span class="text-gray-500">Doc#:</span><span class="font-medium text-gray-700">${docCell}</span></div>
+                                        <div class="flex justify-between mt-1"><span class="text-gray-500">EWay:</span><span class="font-medium text-gray-700">${ewayCell}</span></div>
+                                        <div class="flex justify-between mt-1"><span class="text-gray-500">Amt:</span><span class="font-medium text-gray-700">${i.AMOUNT?i.AMOUNT.toFixed(2):'0.00'}</span></div>
+                                      </div>`;
+                        });
+                        h_body += `</div>`;
+
+                        // Product Desktop Table
                         h_body += `<div class="hidden sm:block border rounded-md overflow-hidden"><table class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Product</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Doc#</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">EWay</th><th class="px-2 py-1 text-right font-medium text-gray-500 uppercase">Amt</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`; 
                         p.forEach(i => { 
-                            const docNumText = i.DOC_NUMBER || 'N/A'; const ewayNumText = i.EWAY_IF || 'N/A';
+                            const docNumText = i.DOC_NUMBER || 'N/A';
+                            const ewayNumText = i.EWAY_IF || 'N/A';
                             const docUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() !== 'EWAY');
                             const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWAY');
                             const docCell = docUpload ? `<a href="${docUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${docNumText}</a>` : docNumText;
                             const ewayCell = ewayUpload ? `<a href="${ewayUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${ewayNumText}</a>` : ewayNumText;
-                            h_body += `<tr><td class="px-2 py-1">${i.PRODUCT||'N/A'}</td><td class="px-2 py-1">${docCell}</td><td class="px-2 py-1">${ewayCell}</td><td class="px-2 py-1 text-right">${i.AMOUNT?i.AMOUNT.toFixed(2):'0.00'}</td></tr>`; 
-                        }); h_body += `</tbody></table></div></div>`;
-                    } else h_body += `<div><h4 class="font-medium text-sm mb-2 text-gray-600">Product</h4><p class="text-xs text-gray-500">None</p></div>`;
+
+                            h_body += `<tr>
+                                        <td class="px-2 py-1">${i.PRODUCT||'N/A'}</td>
+                                        <td class="px-2 py-1">${docCell}</td>
+                                        <td class="px-2 py-1">${ewayCell}</td>
+                                        <td class="px-2 py-1 text-right">${i.AMOUNT?i.AMOUNT.toFixed(2):'0.00'}</td>
+                                      </tr>`; 
+                        }); 
+                        h_body += `</tbody></table></div>`; 
+                        h_body += `</div>`; 
+                    }
+                    else h_body += `<div><h4 class="font-medium text-sm mb-2 text-gray-600">Product</h4><p class="text-xs text-gray-500">None</p></div>`;
                     
+                    // --- Multibox Section ---
                     if (b.length > 0) {
                         h_body += `<div><h4 class="font-medium text-sm mb-2 text-gray-600">MultiBox</h4>`;
+
+                        // Multibox Mobile List
                         h_body += `<div class="space-y-2 text-sm sm:hidden">`;
-                        b.forEach(i => { const l=parseFloat(i.LENGTH)||0; const br=parseFloat(i.BREADTH)||0; const ht=parseFloat(i.HIGHT)||0; const lbhString=`${l}*${br}*${ht}`; h_body+=`<div class="p-3 bg-gray-50 rounded-md border"><div class="font-semibold text-gray-800">Box#: ${i.BOX_NUM || 'N/A'}</div><div class="flex justify-between mt-1 pt-1 border-t"><span class="text-gray-500">Weight:</span><span class="font-medium text-gray-700">${i.WEIGHT || 0}</span></div><div class="flex justify-between mt-1"><span class="text-gray-500">L*B*H:</span><span class="font-medium text-gray-700">${lbhString}</span></div><div class="flex justify-between mt-1"><span class="text-gray-500">Chg Wt:</span><span class="font-medium text-gray-700">${(i.CHG_WT || 0).toFixed(2)}</span></div></div>`; }); h_body+=`</div>`;
-                        h_body += `<div class="hidden sm:block border rounded-md overflow-hidden"><table class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Weight</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">L*B*H</th><th class="px-2 py-1 text-right font-medium text-gray-500 uppercase">Chg Wt</th><th class="px-2 py-1 text-right font-medium text-gray-500 uppercase">Box#</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-                        b.forEach(i => { const l=parseFloat(i.LENGTH)||0; const br=parseFloat(i.BREADTH)||0; const ht=parseFloat(i.HIGHT)||0; const lbhString=`${l}*${br}*${ht}`; h_body+=`<tr><td class="px-2 py-1">${i.WEIGHT || 0}</td><td class="px-2 py-1">${lbhString}</td><td class="px-2 py-1 text-right">${(i.CHG_WT || 0).toFixed(2)}</td><td class="px-2 py-1 text-right">${i.BOX_NUM || 'N/A'}</td></tr>`; }); h_body+=`</tbody></table></div></div>`;
-                    } else h_body += `<div><h4 class="font-medium text-sm mb-2 text-gray-600">MultiBox</h4><p class="text-xs text-gray-500">None</p></div>`; h_body += `</div>`;
+                        b.forEach(i => {
+                            const l = parseFloat(i.LENGTH) || 0;
+                            const br = parseFloat(i.BREADTH) || 0;
+                            const ht = parseFloat(i.HIGHT) || 0;
+                            const lbhString = `${l}*${br}*${ht}`;
+                            h_body += `<div class="p-3 bg-gray-50 rounded-md border">
+                                        <div class="font-semibold text-gray-800">Box#: ${i.BOX_NUM || 'N/A'}</div>
+                                        <div class="flex justify-between mt-1 pt-1 border-t"><span class="text-gray-500">Weight:</span><span class="font-medium text-gray-700">${i.WEIGHT || 0}</span></div>
+                                        <div class="flex justify-between mt-1"><span class="text-gray-500">L*B*H:</span><span class="font-medium text-gray-700">${lbhString}</span></div>
+                                        <div class="flex justify-between mt-1"><span class="text-gray-500">Chg Wt:</span><span class="font-medium text-gray-700">${(i.CHG_WT || 0).toFixed(2)}</span></div>
+                                      </div>`;
+                        });
+                        h_body += `</div>`;
+                        
+                        // Multibox Desktop Table
+                        h_body += `<div class="hidden sm:block border rounded-md overflow-hidden">
+                                <table class="min-w-full text-xs divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Weight</th>
+                                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">L*B*H</th>
+                                        <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase">Chg Wt</th>
+                                        <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase">Box#</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">`;
+                        b.forEach(i => {
+                            const l = parseFloat(i.LENGTH) || 0;
+                            const br = parseFloat(i.BREADTH) || 0;
+                            const ht = parseFloat(i.HIGHT) || 0;
+                            const lbhString = `${l}*${br}*${ht}`;
+                            h_body += `<tr>
+                                    <td class="px-2 py-1">${i.WEIGHT || 0}</td>
+                                    <td class="px-2 py-1">${lbhString}</td>
+                                    <td class="px-2 py-1 text-right">${(i.CHG_WT || 0).toFixed(2)}</td>
+                                    <td class="px-2 py-1 text-right">${i.BOX_NUM || 'N/A'}</td>
+                                  </tr>`;
+                        });
+                        h_body += `</tbody></table></div>`; 
+                        h_body += `</div>`; 
+                    }
+                    else h_body += `<div><h4 class="font-medium text-sm mb-2 text-gray-600">MultiBox</h4><p class="text-xs text-gray-500">None</p></div>`; 
+                    h_body += `</div>`; 
                     
+                    // --- Uploads Section ---
                     if (u.length > 0) {
-                        h_body += `<div id="uploadsContainer" class="hidden"><hr class="my-4"><h4 class="font-medium text-sm mb-2 text-gray-600">Uploads</h4>`;
+                        h_body += `<div id="uploadsContainer" class="hidden">`; 
+                        h_body += `<hr class="my-4"><h4 class="font-medium text-sm mb-2 text-gray-600">Uploads</h4>`;
+                        
+                        // Uploads Mobile List
                         h_body += `<div class="space-y-2 text-sm sm:hidden">`;
-                        u.forEach(up => { const ud = formatDateForDisplay(up.DATE_TIME); let idt = up.AWB_NUMBER || up.KYC_NUMBER || up.REFERANCE; let det=''; if(up.UPLOAD_TYPE==='MultiBox') det=`Child:${up.CHILD_AWB||'N/A'}`; else if(up.UPLOAD_TYPE==='KYC') det=`${up.CUSTOMER_UID||'N/A'}(${up.KYC_TYPE||'N/A'})`; else if(up.UPLOAD_TYPE==='Product') det=`${up.DOC_NUMBER||'N/A'}(${up.DOC_TYPE||'N/A'})`; else det=up.STATUS_REMARK||'N/A'; h_body+=`<div class="p-3 bg-gray-50 rounded-md border"><div class="flex justify-between items-center"><span class="font-semibold text-gray-800">${up.UPLOAD_TYPE||'N/A'}</span><a href="${up.FILE_URL}" target="_blank" title="Open" class="p-1.5 bg-gray-500 text-white rounded hover:bg-gray-600 inline-flex"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a></div><div class="flex justify-between mt-1 pt-1 border-t"><span class="text-gray-500">ID:</span><span class="font-medium text-gray-700">${idt||'N/A'}</span></div><div class="flex justify-between mt-1"><span class="text-gray-500">Details:</span><span class="font-medium text-gray-700 text-right">${det}</span></div><div class="flex justify-between mt-1"><span class="text-gray-500">Date:</span><span class="font-medium text-gray-700">${ud}</span></div></div>`; }); h_body+=`</div>`;
+                        u.forEach(up => { 
+                            const ud = formatDateForDisplay(up.DATE_TIME); 
+                            let idt = up.AWB_NUMBER || up.KYC_NUMBER || up.REFERANCE; 
+                            let det = ''; 
+                            if(up.UPLOAD_TYPE==='MultiBox') det=`Child:${up.CHILD_AWB||'N/A'}`; 
+                            else if(up.UPLOAD_TYPE==='KYC') det=`${up.CUSTOMER_UID||'N/A'}(${up.KYC_TYPE||'N/A'})`; 
+                            else if(up.UPLOAD_TYPE==='Product') det=`${up.DOC_NUMBER||'N/A'}(${up.DOC_TYPE||'N/A'})`; 
+                            else det=up.STATUS_REMARK||'N/A';
+                            h_body += `<div class="p-3 bg-gray-50 rounded-md border">
+                                        <div class="flex justify-between items-center">
+                                            <span class="font-semibold text-gray-800">${up.UPLOAD_TYPE||'N/A'}</span>
+                                            <a href="${up.FILE_URL}" target="_blank" title="Open" class="p-1.5 bg-gray-500 text-white rounded hover:bg-gray-600 inline-flex"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>
+                                        </div>
+                                        <div class="flex justify-between mt-1 pt-1 border-t"><span class="text-gray-500">ID:</span><span class="font-medium text-gray-700">${idt||'N/A'}</span></div>
+                                        <div class="flex justify-between mt-1"><span class="text-gray-500">Details:</span><span class="font-medium text-gray-700 text-right">${det}</span></div>
+                                        <div class="flex justify-between mt-1"><span class="text-gray-500">Date:</span><span class="font-medium text-gray-700">${ud}</span></div>
+                                      </div>`;
+                        });
+                        h_body += `</div>`;
+
+                        // Uploads Desktop Table
                         h_body += `<div class="hidden sm:block overflow-x-auto border rounded-md"><table id="uploadsTable" class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">Type</th><th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">ID</th><th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">Details</th><th class="px-4 py-2 text-left font-medium text-gray-500 uppercase">Date</th><th class="px-4 py-2 text-center font-medium text-gray-500 uppercase">File</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-                        u.forEach(up => { const ud = formatDateForDisplay(up.DATE_TIME); let idt = up.AWB_NUMBER || up.KYC_NUMBER || up.REFERANCE; let det=''; if(up.UPLOAD_TYPE==='MultiBox') det=`Child:${up.CHILD_AWB||'N/A'}`; else if(up.UPLOAD_TYPE==='KYC') det=`${up.CUSTOMER_UID||'N/A'}(${up.KYC_TYPE||'N/A'})`; else if(up.UPLOAD_TYPE==='Product') det=`${up.DOC_NUMBER||'N/A'}(${up.DOC_TYPE||'N/A'})`; else det=up.STATUS_REMARK||'N/A'; h_body+=`<tr><td class="px-4 py-2">${up.UPLOAD_TYPE||'N/A'}</td><td class="px-4 py-2">${idt||'N/A'}</td><td class="px-4 py-2">${det}</td><td class="px-4 py-2">${ud}</td><td class="px-4 py-2 text-center"><a href="${up.FILE_URL}" target="_blank" title="Open" class="p-1.5 bg-gray-500 text-white rounded hover:bg-gray-600 inline-flex"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a></td></tr>`; }); h_body+=`</tbody></table></div></div>`;
-                    } else h_body += `<hr class="my-4"><h4 class="font-medium text-sm mb-2 text-gray-600">Uploads</h4><p class="text-xs text-gray-500">None</p>`
+                        u.forEach(up => { 
+                            const ud = formatDateForDisplay(up.DATE_TIME); 
+                            let idt = up.AWB_NUMBER || up.KYC_NUMBER || up.REFERANCE; 
+                            let det = ''; 
+                            if(up.UPLOAD_TYPE==='MultiBox') det=`Child:${up.CHILD_AWB||'N/A'}`; 
+                            else if(up.UPLOAD_TYPE==='KYC') det=`${up.CUSTOMER_UID||'N/A'}(${up.KYC_TYPE||'N/A'})`; 
+                            else if(up.UPLOAD_TYPE==='Product') det=`${up.DOC_NUMBER||'N/A'}(${up.DOC_TYPE||'N/A'})`; 
+                            else det=up.STATUS_REMARK||'N/A'; 
+                            h_body+=`<tr><td class="px-4 py-2">${up.UPLOAD_TYPE||'N/A'}</td><td class="px-4 py-2">${idt||'N/A'}</td><td class="px-4 py-2">${det}</td><td class="px-4 py-2">${ud}</td><td class="px-4 py-2 text-center"><a href="${up.FILE_URL}" target="_blank" title="Open" class="p-1.5 bg-gray-500 text-white rounded hover:bg-gray-600 inline-flex"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a></td></tr>`; 
+                        });
+                        h_body += `</tbody></table></div>`; 
+                        h_body += `</div>`; 
+                    }
+                    else h_body += `<hr class="my-4"><h4 class="font-medium text-sm mb-2 text-gray-600">Uploads</h4><p class="text-xs text-gray-500">None</p>`
                 }
-                let h_header = `<div class="detail-card-header flex justify-between items-center"><h3 class="font-semibold text-gray-700">Product, Box & Upload Details</h3>`;
-                if (u.length > 0) { h_header += `<button id="toggleUploadsBtn" class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 flex items-center gap-1 transition-all">Show Uploads <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>`; }
-                h_header += `</div>`; ui.productBoxDetailsContainer.innerHTML = `${h_header}<div class="detail-card-body">${h_body}</div>`;
+                
+                let h_header = `<div class="detail-card-header flex justify-between items-center">
+                                    <h3 class="font-semibold text-gray-700">Product, Box & Upload Details</h3>`;
+                
+                if (u.length > 0) {
+                    h_header += `<button id="toggleUploadsBtn" class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 flex items-center gap-1 transition-all">
+                                    Show Uploads 
+                                    <svg class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                 </button>`;
+                }
+                
+                h_header += `</div>`; 
+                
+                ui.productBoxDetailsContainer.innerHTML = `${h_header}<div class="detail-card-body">${h_body}</div>`;
             }
 
             function renderTrackingHistory(order) {
-                const logs = logsDataMap.get(order.REFERANCE) || []; let h='';
-                if (logs.length === 0) h=`<p class="text-sm text-gray-500">No tracking history available.</p>`;
+                const logs = logsDataMap.get(order.REFERANCE) || []; let h = '';
+                if (logs.length === 0) h = `<p class="text-sm text-gray-500">No tracking history available.</p>`;
                 else { 
-                    h+=`<div class="timeline pr-2 sm:hidden">`; 
-                    logs.forEach(l=>{ const sd=formatDateForDisplay(l.SCAN_DATE); h+=`<div class="timeline-item"><div class="timeline-dot"></div><p class="font-semibold text-sm text-gray-800">${l.SCAN_STATUS||'N/A'}</p><p class="text-sm text-gray-600">${l.SCAN_LOCATION||'N/A'}</p><time class="text-xs text-gray-400">${sd}</time></div>`; }); h+=`</div>`;
-                    h+=`<div class="hidden sm:block border rounded-md overflow-hidden"><table id="trackingHistoryTable" class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50 sticky top-0"><tr><th class="px-3 py-2 text-left font-medium text-gray-500 uppercase">Date & Time</th><th class="px-3 py-2 text-left font-medium text-gray-500 uppercase">Status</th><th class="px-3 py-2 text-left font-medium text-gray-500 uppercase">Location</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`; 
-                    logs.forEach(l=>{ const sd=formatDateForDisplay(l.SCAN_DATE); h+=`<tr><td class="px-3 py-2 whitespace-nowrap">${sd}</td><td class="px-3 py-2">${l.SCAN_STATUS || 'N/A'}</td><td class="px-3 py-2">${l.SCAN_LOCATION || 'N/A'}</td></tr>`; }); h+=`</tbody></table></div>`; 
+                    // Mobile Timeline View
+                    h += `<div class="timeline pr-2 sm:hidden">`; 
+                    logs.forEach(l => { 
+                        const sd = formatDateForDisplay(l.SCAN_DATE); 
+                        h += `<div class="timeline-item"><div class="timeline-dot"></div><p class="font-semibold text-sm text-gray-800">${l.SCAN_STATUS||'N/A'}</p><p class="text-sm text-gray-600">${l.SCAN_LOCATION||'N/A'}</p><time class="text-xs text-gray-400">${sd}</time></div>`; 
+                    }); 
+                    h += `</div>`;
+                    
+                    // Desktop Table View
+                    h += `<div class="hidden sm:block border rounded-md overflow-hidden"><table id="trackingHistoryTable" class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50 sticky top-0"><tr><th class="px-3 py-2 text-left font-medium text-gray-500 uppercase">Date & Time</th><th class="px-3 py-2 text-left font-medium text-gray-500 uppercase">Status</th><th class="px-3 py-2 text-left font-medium text-gray-500 uppercase">Location</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`; 
+                    logs.forEach(l => { 
+                        const sd = formatDateForDisplay(l.SCAN_DATE); 
+                        h += `<tr><td class="px-3 py-2 whitespace-nowrap">${sd}</td><td class="px-3 py-2">${l.SCAN_STATUS || 'N/A'}</td><td class="px-3 py-2">${l.SCAN_LOCATION || 'N/A'}</td></tr>`; 
+                    }); 
+                    h += `</tbody></table></div>`; 
                 }
                 ui.trackingHistoryContainer.innerHTML = `<div class="detail-card-header"><h3 class="font-semibold text-gray-700">Tracking History</h3></div><div class="detail-card-body">${h}</div>`;
             }
 
             function renderDocumentCenter(order) {
-                const r=order.REFERANCE; const uploads=uploadsDataMap.get(`ref-${r}`)||[]; const trackInfo=trackDataMap.get(r);
-                const receiptUpload = uploads.find(u=>u.UPLOAD_TYPE==='Reciept'); const podUpload = uploads.find(u=>u.UPLOAD_TYPE==='POD'); const productUploadsExist = (productDataMap.get(r)||[]).length>0;
-                const transitDate = formatDateForDisplay(order.TRANSIT_DATE); const orderDate = formatDateForDisplay(order.ORDER_DATE); const deliveryDate = (trackInfo && trackInfo.STATUS && trackInfo.STATUS.toUpperCase()==='DELIVERED') ? formatDateForDisplay(trackInfo.DATE) : 'N/A';
-                let podManual='N/A'; if(podUpload) podManual=`<a href="${podUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">View POD</a>`; else if(deliveryDate==='N/A') podManual='PENDING';
-                const rows=[ { sl: 1, date: transitDate, system: `<a href="#" onclick="return generateDocument('RECIEPT', '${r}')" class="text-blue-600 hover:underline">RECIEPT</a>`, manual: receiptUpload ? `<a href="${receiptUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">View Receipt</a>` : 'N/A' }, { sl: 2, date: orderDate, system: `<a href="#" onclick="return generateDocument('LABLE', '${r}')" class="text-blue-600 hover:underline">LABLE</a>`, manual: 'NA' }, { sl: 3, date: deliveryDate, system: `<a href="#" onclick="return generateDocument('POD', '${r}')" class="text-blue-600 hover:underline">POD</a>`, manual: podManual }, { sl: 4, date: orderDate, system: `<a href="#" onclick="return generateDocument('CHALLAN', '${r}')" class="text-blue-600 hover:underline">CHALLAN</a>`, manual: 'NA', condition: !productUploadsExist }, { sl: 5, date: orderDate, system: `<a href="#" onclick="return generateDocument('OFFICE_COPY', '${r}')" class="text-blue-600 hover:underline">OFFICE COPY</a>`, manual: 'NA' }, ];
-                let h=''; h+=`<div class="space-y-3 text-sm sm:hidden">`; rows.forEach(row=>{ if(row.condition===undefined||row.condition===true){ h+=`<div class="p-3 bg-gray-50 rounded-md border"><div class="font-semibold text-gray-800">${row.system}</div><div class="flex justify-between mt-1 pt-1 border-t"><span class="text-gray-500">Date:</span><span class="font-medium text-gray-700">${row.date}</span></div><div class="flex justify-between mt-1"><span class="text-gray-500">Manual:</span><span class="font-medium text-gray-700 text-right">${row.manual}</span></div></div>`; } }); h+=`</div>`;
-                h+=`<div class="hidden sm:block overflow-x-auto border rounded-md"><table id="docCenterTable" class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Sl.No</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Date</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">System</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Manual</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`; rows.forEach(row=>{ if(row.condition===undefined||row.condition===true) h+=`<tr><td class="px-2 py-1">${row.sl}</td><td class="px-2 py-1">${row.date}</td><td class="px-2 py-1">${row.system}</td><td class="px-2 py-1">${row.manual}</td></tr>`; }); h+=`</tbody></table></div>`;
-                ui.documentCenterContainer.innerHTML = `<div class="detail-card-header flex justify-between items-center"><h3 class="font-semibold text-gray-700">Document Center</h3><button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">UPLOAD</button></div><div class="detail-card-body">${h}</div>`;
+                const r = order.REFERANCE;
+                const uploads = uploadsDataMap.get(`ref-${r}`) || [];
+                const trackInfo = trackDataMap.get(r);
+                
+                const receiptUpload = uploads.find(u => u.UPLOAD_TYPE === 'Reciept');
+                const podUpload = uploads.find(u => u.UPLOAD_TYPE === 'POD');
+                const productUploadsExist = (productDataMap.get(r) || []).length > 0;
+                
+                const transitDate = formatDateForDisplay(order.TRANSIT_DATE);
+                const orderDate = formatDateForDisplay(order.ORDER_DATE);
+                const deliveryDate = (trackInfo && trackInfo.STATUS && trackInfo.STATUS.toUpperCase() === 'DELIVERED') ? formatDateForDisplay(trackInfo.DATE) : 'N/A';
+                
+                let podManual = 'N/A'; 
+                if (podUpload) podManual = `<a href="${podUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">View POD</a>`; 
+                else if (deliveryDate === 'N/A') podManual = 'PENDING';
+                
+                const rows = [ 
+                    { sl: 1, date: transitDate, system: `<a href="#" onclick="return generateDocument('RECIEPT', '${r}')" class="text-blue-600 hover:underline">RECIEPT</a>`, manual: receiptUpload ? `<a href="${receiptUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">View Receipt</a>` : 'N/A' }, 
+                    { sl: 2, date: orderDate, system: `<a href="#" onclick="return generateDocument('LABLE', '${r}')" class="text-blue-600 hover:underline">LABLE</a>`, manual: 'NA' }, 
+                    { sl: 3, date: deliveryDate, system: `<a href="#" onclick="return generateDocument('POD', '${r}')" class="text-blue-600 hover:underline">POD</a>`, manual: podManual }, 
+                    { sl: 4, date: orderDate, system: `<a href="#" onclick="return generateDocument('CHALLAN', '${r}')" class="text-blue-600 hover:underline">CHALLAN</a>`, manual: 'NA', condition: !productUploadsExist }, // Only show if NO product uploads
+                    { sl: 5, date: orderDate, system: `<a href="#" onclick="return generateDocument('OFFICE_COPY', '${r}')" class="text-blue-600 hover:underline">OFFICE COPY</a>`, manual: 'NA' }, 
+                ];
+                
+                let h = '';
+                
+                // Mobile List View (like timeline)
+                h += `<div class="space-y-3 text-sm sm:hidden">`;
+                rows.forEach(row => {
+                    if (row.condition === undefined || row.condition === true) {
+                        h += `<div class="p-3 bg-gray-50 rounded-md border">
+                                <div class="font-semibold text-gray-800">${row.system}</div>
+                                <div class="flex justify-between mt-1 pt-1 border-t">
+                                    <span class="text-gray-500">Date:</span>
+                                    <span class="font-medium text-gray-700">${row.date}</span>
+                                </div>
+                                <div class="flex justify-between mt-1">
+                                    <span class="text-gray-500">Manual:</span>
+                                    <span class="font-medium text-gray-700 text-right">${row.manual}</span>
+                                </div>
+                              </div>`;
+                    }
+                });
+                h += `</div>`;
+
+                // Desktop Table View
+                h += `<div class="hidden sm:block overflow-x-auto border rounded-md"><table id="docCenterTable" class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Sl.No</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Date</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">System</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Manual</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+                rows.forEach(row => { 
+                    if (row.condition === undefined || row.condition === true) 
+                        h += `<tr><td class="px-2 py-1">${row.sl}</td><td class="px-2 py-1">${row.date}</td><td class="px-2 py-1">${row.system}</td><td class="px-2 py-1">${row.manual}</td></tr>`; 
+                });
+                h += `</tbody></table></div>`;
+                
+                ui.documentCenterContainer.innerHTML = `<div class="detail-card-header flex justify-between items-center">
+                                                            <h3 class="font-semibold text-gray-700">Document Center</h3>
+                                                            <button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">UPLOAD</button>
+                                                        </div><div class="detail-card-body">${h}</div>`;
              }
 
         });
     </script>
 </body>
 </html>
-
