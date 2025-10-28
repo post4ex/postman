@@ -666,18 +666,18 @@
                         <div class="flex justify-between"><span class="text-gray-500">Invoice No:</span><span class="font-semibold text-gray-800">${invNum}</span></div>
                         <div class="flex justify-between"><span class="text-gray-500">Invoice Date:</span><span class="font-semibold text-gray-800">${invDate}</span></div>
                         <hr class="border-gray-100">
-                        <div class="flex justify-between"><span class="text-gray-500">Shipment Period Start:</span><span class="font-medium text-gray-700">${startDate}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Shipment Period End:</span><span class="font-medium text-gray-700">${endDate}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Start Date:</span><span class="font-medium text-gray-700">${startDate}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">End Date:</span><span class="font-medium text-gray-700">${endDate}</span></div>
                     </div>
                 `;
 
                 const header = `<div class="detail-card-header"><h3 class="font-semibold text-gray-700">Invoice Details</h3></div>`;
                 
-                // Card Body with responsive 4:1 layout (md:grid-cols-5)
+                // Card Body with responsive 3:1 layout (md:grid-cols-4)
                 const body = `
                     <div class="detail-card-body">
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-                            <div class="md:col-span-4">${leftContent}</div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div class="md:col-span-3">${leftContent}</div>
                             <div class="md:col-span-1">${rightContent}</div>
                         </div>
                     </div>
