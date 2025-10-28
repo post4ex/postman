@@ -259,12 +259,15 @@
         function generateDocument(docType, reference) {
             console.log(`User wants to generate: ${docType} for reference: ${reference}`);
             
-            if (allOrders.length === 0) {
+            // Check if allOrders has been populated (a proxy for data loaded)
+            if (!allOrders || allOrders.length === 0) {
                  console.error("Data not yet loaded. Cannot generate document.");
                  return false; 
             }
 
-            const order = allOrders.find(o => o.REFERANCE === reference);
+            // --- FIXED: Ensure comparison is robust against string/number types ---
+            const order = allOrders.find(o => String(o.REFERANCE) === String(reference));
+            
             if (!order) {
                  console.error(`Order reference ${reference} not found.`);
                  return false;
