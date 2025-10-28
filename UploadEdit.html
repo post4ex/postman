@@ -310,28 +310,31 @@
             let date;
 
             try {
+                const trimmedString = (typeof dateString === 'string') ? dateString.trim() : dateString;
+
                 // 1. Check if it's an ISO string (which new Date() handles best)
-                if (typeof dateString === 'string' && dateString.includes('T') && dateString.includes('Z')) {
-                    date = new Date(dateString);
+                if (typeof trimmedString === 'string' && trimmedString.includes('T') && trimmedString.includes('Z')) {
+                    date = new Date(trimmedString);
                 } 
                 // 2. Check if it's a number or a string that is a number (Google Sheet Serial Date)
-                else if (typeof dateString === 'number' || (typeof dateString === 'string' && dateString.trim() !== '' && !isNaN(parseFloat(dateString)) && isFinite(dateString))) {
-                    date = excelSerialToDate(dateString);
+                //    This check is now more specific to avoid capturing date-like strings
+                else if (typeof trimmedString === 'number' || (typeof trimmedString === 'string' && trimmedString !== '' && !isNaN(parseFloat(trimmedString)) && isFinite(parseFloat(trimmedString)) && !trimmedString.includes("-") && !trimmedString.includes("/") && !trimmedString.includes(":"))) {
+                    date = excelSerialToDate(trimmedString);
                     if (date === null) throw new Error('Serial date conversion failed');
                 }
-                // 3. Last resort: try direct parsing (handles "YYYY-MM-DD")
+                // 3. Last resort: try direct parsing (handles "YYYY-MM-DD" and other formats)
                 else {
-                    date = new Date(dateString);
+                    date = new Date(trimmedString);
                     // Handle "YYYY-MM-DD" which is parsed as UTC midnight
-                    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString.trim())) {
-                        const parts = dateString.split('-');
+                    if (typeof trimmedString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(trimmedString)) {
+                        const parts = trimmedString.split('-');
                         date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
                     }
                 }
 
                 // 4. Check for validity
                 if (isNaN(date.getTime())) {
-                    console.warn("formatDate: Invalid date value after all attempts:", dateString);
+                    console.warn("formatDate: Invalid date value after all attempts:", trimmedString);
                     return 'Invalid Date';
                 }
 
@@ -802,5 +805,4 @@
 
 </body>
 </html>
-
 
