@@ -1,101 +1,62 @@
-/**
- * docgen.js
- * * Contains all functions responsible for generating, rendering, and printing
- * the various shipment documents (Label, Receipt, POD, Challan, Office Copy).
- * * IMPORTANT: These functions rely on the following global variables being
- * defined and populated in the main script (shipment_test.html or data.js):
- * - JsBarcode (from CDN)
- * - ui (The DOM element map)
- * - allOrders
- * - b2b2cDataMap, productDataMap, multiboxDataMap, trackDataMap, modeDataMap
- */
-
-// Placeholder function for external use (e.g., from the shipment list)
-function generateDocument(docType, reference) {
-    console.log(`Called generateDocument:`);
-    console.log(`  Document Type: ${docType}`);
-    console.log(`  Reference: ${reference}`);
-    
-    // Scroll to the specific document section
-    const sectionId = `doc-section-${docType.toLowerCase()}`;
-    const section = document.getElementById(sectionId);
-    if (section) {
-        // Open the details section if it's closed
-        if (!section.hasAttribute('open')) {
-            section.setAttribute('open', '');
-        }
-        // Scroll to it
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-        console.warn(`Section ${sectionId} not found. Falling back to re-render.`);
-        // Fallback: re-select the shipment to render everything
-        const order = allOrders.find(o => o.REFERANCE === reference);
-        if(order) {
-            renderDocumentWorkshop(order); 
-        }
-    }
-
-    // Return false to prevent the <a> tag from navigating
-    return false;
-}
-
-
+// --- MOVED TO GLOBAL SCOPE ---
 function formatDateForDisplay(dateInput) {
-    if (!dateInput) return 'N/A';
-    let date;
-    try {
-        // 1. Try DD/MM/YYYY HH:MM:SS format
-        if (typeof dateInput === 'string' && dateInput.includes('/') && dateInput.includes(':')) {
-            const parts = dateInput.split(' ');
-            const dateParts = parts[0].split('/');
-            const timeParts = parts.length > 1 ? parts[1].split(':') : ['0', '0', '0'];
-            date = new Date(Date.UTC(
-                parseInt(dateParts[2], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[0], 10),
-                parseInt(timeParts[0], 10) || 0, parseInt(timeParts[1], 10) || 0, parseInt(timeParts[2], 10) || 0
-            ));
-        }
-        // 2. Try ISO format (already UTC)
-        else if (typeof dateInput === 'string' && dateInput.includes('T') && dateInput.includes('Z')) {
-            date = new Date(dateInput);
-        }
-         // 3. Try number format (Excel Serial Date)
-        else if (typeof dateInput === 'number' || (typeof dateInput === 'string' && !isNaN(parseFloat(dateInput)) && isFinite(parseFloat(dateInput)))) {
-            const serial = parseFloat(dateInput);
-             const utc_days = Math.floor(serial - 25569);
-             const utc_value = utc_days * 86400; 
-             date = new Date(utc_value * 1000); 
-        }
-        // 4. Try generic parsing (might be local time, fallback)
-        else {
-            date = new Date(dateInput);
-        }
+     if (!dateInput) return 'N/A';
+     let date;
+     try {
+         // 1. Try DD/MM/YYYY HH:MM:SS format
+         if (typeof dateInput === 'string' && dateInput.includes('/') && dateInput.includes(':')) {
+             const parts = dateInput.split(' ');
+             const dateParts = parts[0].split('/');
+             const timeParts = parts.length > 1 ? parts[1].split(':') : ['0', '0', '0'];
+             date = new Date(Date.UTC(
+                 parseInt(dateParts[2], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[0], 10),
+                 parseInt(timeParts[0], 10) || 0, parseInt(timeParts[1], 10) || 0, parseInt(timeParts[2], 10) || 0
+             ));
+         }
+         // 2. Try ISO format (already UTC)
+         else if (typeof dateInput === 'string' && dateInput.includes('T') && dateInput.includes('Z')) {
+             date = new Date(dateInput);
+         }
+          // 3. Try number format (Excel Serial Date)
+         else if (typeof dateInput === 'number' || (typeof dateInput === 'string' && !isNaN(parseFloat(dateInput)) && isFinite(parseFloat(dateInput)))) {
+             const serial = parseFloat(dateInput);
+              const utc_days = Math.floor(serial - 25569);
+              const utc_value = utc_days * 86400; 
+              date = new Date(utc_value * 1000); 
+         }
+         // 4. Try generic parsing (might be local time, fallback)
+         else {
+             date = new Date(dateInput);
+         }
 
-        if (isNaN(date.getTime())) {
-            console.warn("formatDateForDisplay: Invalid date value:", dateInput);
-            return 'Invalid Date';
-        }
-        
-        // Format to DD-MM-YYYY
-        const year = date.getUTCFullYear();
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        return `${day}-${month}-${year}`;
-    } catch (e) {
-        console.error("formatDateForDisplay: Error parsing date:", dateInput, e);
-        return 'Error Date';
-    }
+         if (isNaN(date.getTime())) {
+             console.warn("formatDateForDisplay: Invalid date value:", dateInput);
+             return 'Invalid Date';
+         }
+         
+         // --- FIXED: Format to DD-MM-YYYY ---
+         const year = date.getUTCFullYear();
+         const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+         const day = String(date.getUTCDate()).padStart(2, '0');
+         return `${day}-${month}-${year}`; // Changed format
+     } catch (e) {
+         console.error("formatDateForDisplay: Error parsing date:", dateInput, e);
+         return 'Error Date';
+     }
 }
 
-
+// --- MOVED TO GLOBAL SCOPE ---
+// --- MODIFIED: Renders ALL documents ---
 function renderDocumentWorkshop(order) {
     // We still have access to all the data, e.g.:
+    // NOTE: This function relies on global variables defined in the main HTML:
+    // b2b2cDataMap, productDataMap, multiboxDataMap, trackDataMap, ui
     const ref = order.REFERANCE;
     const cnor = b2b2cDataMap.get(order.CONSIGNOR);
     const cnee = b2b2cDataMap.get(order.CONSIGNEE);
     const products = productDataMap.get(ref) || [];
-    const multiboxItems = multiboxDataMap.get(ref) || []; 
+    const multiboxItems = multiboxDataMap.get(ref) || []; // ADDED
     const tracking = trackDataMap.get(ref);
-    const pieces = order.PIECS || 1;
     
     let workshopContent = `
         <div class="space-y-4">
@@ -103,24 +64,32 @@ function renderDocumentWorkshop(order) {
             <details class="doc-section" id="doc-section-reciept">
                 <summary>RECIEPT</summary>
                 <div class="doc-section-content">
+                    <!-- ADDED: Print Button -->
+                    <div class="flex justify-end mb-4">
+                        <button onclick="printSelectedShipmentReceipt()" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm7-8a2 2 0 01-2-2v-2a2 2 0 012-2h0a2 2 0 012 2v2a2 2 0 01-2 2z"></path></svg>
+                            Print Receipt
+                        </button>
+                    </div>
+                    <!-- End Print Button -->
                     ${buildReceipt(order, cnor, cnee, products, tracking)}
                 </div>
             </details>
 
             <!-- Section 2: LABLE -->
-            <details class="doc-section" id="doc-section-lable" open>
+            <details class="doc-section" id="doc-section-lable" open> <!-- Open by default -->
                 <summary>LABLE</summary>
                 <div class="doc-section-content">
-                    <!-- Print Button -->
+                    <!-- ADDED: Print Button -->
                     <div class="flex justify-end mb-4">
-                        <button onclick="printLabel(${pieces})" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 text-sm flex items-center">
+                        <button onclick="printSelectedShipmentLabel()" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 text-sm flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm7-8a2 2 0 01-2-2v-2a2 2 0 012-2h0a2 2 0 012 2v2a2 2 0 01-2 2z"></path></svg>
                             Print Label
                         </button>
                     </div>
                     <!-- End Print Button -->
 
-                    ${buildLabel(order, cnor, cnee, products, multiboxItems)}
+                    ${buildLabel(order, cnor, cnee, products, multiboxItems, { type: 'preview' })} <!-- MODIFIED -->
                 </div>
             </details>
 
@@ -128,6 +97,14 @@ function renderDocumentWorkshop(order) {
             <details class="doc-section" id="doc-section-pod">
                 <summary>POD</summary>
                 <div class="doc-section-content">
+                    <!-- ADDED: Print Button -->
+                    <div class="flex justify-end mb-4">
+                        <button onclick="printSelectedShipmentPOD()" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm7-8a2 2 0 01-2-2v-2a2 2 0 012-2h0a2 2 0 012 2v2a2 2 0 01-2 2z"></path></svg>
+                            Print POD
+                        </button>
+                    </div>
+                    <!-- End Print Button -->
                     ${buildPOD(order, cnor, cnee, products, tracking)}
                 </div>
             </details>
@@ -144,6 +121,14 @@ function renderDocumentWorkshop(order) {
             <details class="doc-section" id="doc-section-office_copy">
                 <summary>OFFICE COPY</summary>
                 <div class="doc-section-content">
+                    <!-- ADDED: Print Button -->
+                    <div class="flex justify-end mb-4">
+                        <button onclick="printSelectedShipmentOfficeCopy()" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm7-8a2 2 0 01-2-2v-2a2 2 0 012-2h0a2 2 0 012 2v2a2 2 0 01-2 2z"></path></svg>
+                            Print Office Copy
+                        </button>
+                    </div>
+                    <!-- End Print Button -->
                     ${buildOfficeCopy(order, cnor, cnee, products, tracking)}
                 </div>
             </details>
@@ -153,33 +138,54 @@ function renderDocumentWorkshop(order) {
     ui.documentWorkshop.innerHTML = `
         <div class="flex justify-between items-center mb-4">
              <h2 class="text-xl font-bold text-gray-800">Document Workshop: ${ref}</h2>
+             <!-- Add print button? -->
         </div>
         ${workshopContent}
     `;
 
-    // Call JsBarcode AFTER setting innerHTML
+    // --- Call JsBarcode AFTER setting innerHTML ---
     const awbForBarcode = order.AWB_NUMBER || order.REFERANCE;
     if (awbForBarcode) {
+        // --- RENDER LABEL BARCODE ---
         try {
             JsBarcode("#shipping-barcode", awbForBarcode, {
                 format: "CODE128",
-                displayValue: false,
+                displayValue: false, // Hide default value, we'll add our own
                 text: awbForBarcode,
                 fontSize: 16,
                 margin: 10,
-                height: 70,
-                width: 3
+                height: 70, // Increased height
+                width: 3 // Made bars thicker
             });
         } catch (e) {
-            console.error("JsBarcode error:", e);
+            console.error("JsBarcode error (Label):", e);
             const barcodeEl = document.getElementById('shipping-barcode-container');
-            if(barcodeEl) barcodeEl.innerHTML = `<div class="text-red-500 text-xs">Error generating barcode.</div>`;
+            if(barcodeEl) barcodeEl.innerHTML = `<div class="text-red-500 text-xs">Error generating label barcode.</div>`;
+        }
+
+        // --- RE-ENABLED: RENDER RECEIPT BARCODE ---
+        try {
+            JsBarcode("#receipt-barcode", awbForBarcode, {
+                format: "CODE128",
+                displayValue: true,
+                text: awbForBarcode,
+                fontSize: 14, // Smaller font for receipt
+                margin: 5,
+                height: 40, // Smaller height for receipt
+                width: 2
+            });
+        } catch (e) {
+            console.error("JsBarcode error (Receipt):", e);
+            const barcodeEl = document.getElementById('receipt-barcode-container');
+            if(barcodeEl) barcodeEl.innerHTML = `<div class="text-red-500 text-xs">Error generating receipt barcode.</div>`;
         }
     }
 }
 
-
-function buildLabel(order, cnor, cnee, products, multiboxItems) {
+// --- MOVED TO GLOBAL SCOPE ---
+// --- MODIFIED: Adopting new label style ---
+function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type: 'preview' }) { // MODIFIED
+    // NOTE: This function relies on global variable: modeDataMap
     const orderDate = formatDateForDisplay(order.ORDER_DATE);
     const ref = order.REFERANCE || 'N/A';
     const awb = order.AWB_NUMBER || ref;
@@ -204,17 +210,42 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
     }
     
     const weight = order.WEIGHT || '0.50';
-    const pieces = order.PIECS || 1;
+    const pieces = multiboxItems.length > 0 ? multiboxItems.length : (order.PIECS || 1);
+    // Get first product description, or default - USED AS FALLBACK
     const productDesc = (products.length > 0 && products[0].PRODUCT) ? products[0].PRODUCT : 'N/A';
+    
+    // --- MODIFIED: Get carrier name ---
     const carrierName = order.CARRIER || 'CARRIER';
 
+    // --- ADDED: Get full mode name ---
     const modeShort = order.MODE || 'N/A';
     const modeName = modeDataMap.get(modeShort) || modeShort;
 
     // --- Build Multibox/Summary Table ---
     let summaryTableHtml = '';
-    
+    let piecesDisplay = pieces; // Default
+
+    // --- Calculate Totals ---
+    let totalWeight = 0;
+    let totalChgWt = 0;
     if (multiboxItems && multiboxItems.length > 0) {
+         multiboxItems.forEach(box => {
+            const wt = box.WEIGHT || box.WT || 0;
+            const chgWt = box.CHG_WT || 0;
+            totalWeight += parseFloat(wt);
+            totalChgWt += parseFloat(chgWt);
+         });
+    } else {
+        totalWeight = parseFloat(weight);
+        totalChgWt = totalWeight; // Fallback
+    }
+    
+    if (options.type === 'box') {
+        // --- BOX LABEL ---
+        const boxIndex = options.index; // 0-based
+        const boxData = multiboxItems[boxIndex] || {}; // Get specific box
+        piecesDisplay = `Box ${boxIndex + 1} / ${pieces}`; // e.g., Box 1 / 6
+
         summaryTableHtml = `
             <table class="label-table">
                 <thead>
@@ -227,55 +258,122 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
                 </thead>
                 <tbody>
         `;
-        multiboxItems.forEach((box, index) => {
-            const L = box.LENGTH || box.L || 'N/A';
-            const B = box.BREADTH || box.B || 'N/A';
-            const H = box.HEIGHT || box.H || box.HEG || box.HIGHT || 'N/A';
-            
-            let chgWtDisplay = 'N/A';
-            const chgWtVal = box.CHG_WT;
-            if (chgWtVal && !isNaN(parseFloat(chgWtVal))) {
-                chgWtDisplay = parseFloat(chgWtVal).toFixed(2);
-            }
-            
-            summaryTableHtml += `
-                <tr>
-                    <td>${box.BOX_NO || (index + 1)}</td>
-                    <td>${box.WEIGHT || box.WT || 'N/A'}</td>
-                    <td>${L}*${B}*${H}</td>
-                    <td>${chgWtDisplay}</td>
-                </tr>
-            `;
-        });
+        
+        const L = boxData.LENGTH || boxData.L || 'N/A';
+        const B = boxData.BREADTH || boxData.B || 'N/A';
+        const H = boxData.HEIGHT || boxData.H || boxData.HEG || boxData.HIGHT || 'N/A';
+        let chgWtDisplay = 'N/A';
+        const chgWtVal = boxData.CHG_WT;
+        if (chgWtVal && !isNaN(parseFloat(chgWtVal))) {
+            chgWtDisplay = parseFloat(chgWtVal).toFixed(2);
+        }
+        const wtDisplay = boxData.WEIGHT || boxData.WT || 'N/A';
+
         summaryTableHtml += `
-                </tbody>
-            </table>
-        `;
-    } else {
-        // Default summary row if not multibox
+            <tr>
+                <td>${boxData.BOX_NO || (boxIndex + 1)}</td>
+                <td>${wtDisplay}</td>
+                <td>${L}*${B}*${H}</td>
+                <td>${chgWtDisplay}</td>
+            </tr>
+        </tbody></table>`;
+
+    } else if (options.type === 'summary') {
+        // --- SUMMARY LABEL ---
+        piecesDisplay = `TOTAL PCS: ${pieces}`;
         summaryTableHtml = `
             <table class="label-table">
                 <thead>
                     <tr>
-                        <th>Order Value (INR)</th>
-                        <th>Weight (KGs)</th>
-                        <th>Dimension</th>
+                        <th class="text-center">Boxes</th>
+                        <th class="text-center">Total Weight</th>
+                        <th class="text-center">Total Chg Wt</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- MODIFIED: Single row as requested -->
                     <tr>
-                        <td>${orderValue}</td>
-                        <td>${weight}</td>
-                        <td>N/A</td>
+                        <td class="text-center">${pieces}</td>
+                        <td class="text-center">${totalWeight.toFixed(2)}</td>
+                        <td class="text-center">${totalChgWt.toFixed(2)}</td>
                     </tr>
                 </tbody>
             </table>
         `;
+
+    } else {
+        // --- PREVIEW LABEL (or fallback) ---
+        piecesDisplay = `PCS: ${pieces}`;
+        if (multiboxItems && multiboxItems.length > 0) {
+            summaryTableHtml = `
+                <table class="label-table">
+                    <thead>
+                        <tr>
+                            <th>BOX#</th>
+                            <th>WEIGHT</th>
+                            <th>L*B*H</th>
+                            <th>CHG WT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            multiboxItems.forEach((box, index) => {
+                const L = box.LENGTH || box.L || 'N/A';
+                const B = box.BREADTH || box.B || 'N/A';
+                const H = box.HEIGHT || box.H || box.HEG || box.HIGHT || 'N/A'; 
+                let chgWtDisplay = 'N/A';
+                const chgWtVal = box.CHG_WT; 
+                if (chgWtVal && !isNaN(parseFloat(chgWtVal))) {
+                    chgWtDisplay = parseFloat(chgWtVal).toFixed(2);
+                }
+                
+                summaryTableHtml += `
+                    <tr>
+                        <td>${box.BOX_NO || (index + 1)}</td>
+                        <td>${box.WEIGHT || box.WT || 'N/A'}</td>
+                        <td>${L}*${B}*${H}</td>
+                        <td>${chgWtDisplay}</td>
+                    </tr>
+                `;
+            });
+            // Add totals row for preview
+            summaryTableHtml += `
+                    <tr style="font-weight: bold; background-color: #f4f4f4;">
+                        <td>TOTALS</td>
+                        <td>${totalWeight.toFixed(2)}</td>
+                        <td>-</td>
+                        <td>${totalChgWt.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+                </table>
+            `;
+        } else {
+            // Default summary row if not multibox
+            summaryTableHtml = `
+                <table class="label-table">
+                    <thead>
+                        <tr>
+                            <th>Order Value (INR)</th>
+                            <th>Weight (KGs)</th>
+                            <th>Dimension</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>${orderValue}</td>
+                            <td>${weight}</td>
+                            <td>N/A</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+        }
     }
+
 
     // --- Build Product Table ---
     let productTableHtml = `
-        <table class="label-table" style="margin-top: -1px;">
+        <table class="label-table" style="margin-top: -1px;"> <!-- Use margin-top: -1px to connect borders -->
             <thead>
                 <tr>
                     <th>PRODUCT</th>
@@ -288,7 +386,7 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
     `;
     
     if (products && products.length > 0) {
-        products.forEach((p) => {
+        products.forEach((p, index) => {
             const docNo = p.DOC_NO || p.DOCNO || p.DOC || p.DOC_NUMBER || 'N/A';
             const eway = p.EWAY || p.EWAY_NO || p.EWAYBILLNO || p.EWAY_IF || 'N/A';
             const amt = p.AMT || p.AMOUNT || 'N/A';
@@ -319,14 +417,20 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
         </table>
     `;
 
+    // Don't show product table on summary label
+    if (options.type === 'summary') {
+        productTableHtml = '';
+    }
+
 
     // Self-contained styles for the new label.
+    // This <style> tag will be extracted for printing.
     const styles = `
         <style>
             .label-wrapper {
                 border: 1px solid #000;
                 width: 100%;
-                max-width: 42rem;
+                max-width: 42rem; /* Approx 7 inches */
                 margin: 0 auto;
                 font-family: 'Arial', sans-serif;
                 background: #fff;
@@ -344,7 +448,7 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
             .label-cell {
                 padding: 6px 8px;
                 border-right: 1px solid #000;
-                width: 100%;
+                width: 100%; /* Default to full width */
                 box-sizing: border-box;
             }
             .label-cell:last-child {
@@ -391,12 +495,13 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
                 letter-spacing: 2px;
                 margin-top: 4px;
             }
+            /* --- MODIFIED: Removed fixed font sizes, set 12px as base/min --- */
             .consignee-details {
-                font-size: 14px;
-                line-height: 1.5;
+                line-height: 1.4; /* Set a default line height */
+                font-size: 12px; /* Set the default/min font size */
             }
             .consignee-details strong {
-                font-size: 16px;
+                font-size: 13px; /* Set a default/min strong size */
             }
             .label-table {
                 width: 100%;
@@ -420,6 +525,9 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
     `;
     
     // HTML structure for the new label
+    // Use a unique ID for the barcode SVG based on the options
+    const barcodeId = `shipping-barcode-${options.type}-${options.index || 0}`;
+
     return `
         ${styles}
         <div class="label-wrapper">
@@ -433,14 +541,15 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
                     <span class="font-bold" style="font-size: 18px;">${paymentMode}</span>
                 </div>
                 <div class="label-cell w-1-3">
-                    <div class="label-logo">PCS: ${pieces}</div>
+                    <!-- MODIFIED: Use piecesDisplay -->
+                    <div class="label-logo" style="font-size: 20px; font-weight: bold;">${piecesDisplay}</div>
                 </div>
             </div>
 
             <!-- Row 2: Category, Order ID -->
             <div class="label-row">
                 <div class="label-cell w-1-2">
-                    Mode: <strong>${modeName}</strong>
+                    Mode: <strong style="font-size: 16px;">${modeName}</strong>
                 </div>
                 <div class="label-cell w-1-2">
                     Ref No: <strong>${ref}</strong>
@@ -451,7 +560,8 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
             <div class="label-row">
                 <div class="label-cell">
                     <div class="barcode-container" id="shipping-barcode-container">
-                        <svg id="shipping-barcode"></svg>
+                        <!-- MODIFIED: Use dynamic ID for preview, but static for print -->
+                        <svg id="${options.type === 'preview' ? 'shipping-barcode' : barcodeId}" class="barcode-svg" data-barcode-value="${awb}"></svg>
                     </div>
                     <div class="barcode-number">${awb}</div>
                 </div>
@@ -472,9 +582,9 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
             <!-- Row 5: Consignee -->
             <div class="label-row">
                 <div class="label-cell consignee-details">
-                    <strong>Ship To:</strong><br>
-                    <strong style="font-size: 16px;">${cneeName}</strong><br>
-                    ${cneeAddress}<br>
+                    <strong>Ship To:</strong>
+                    <strong style="font-size: 16px;"> ${cneeName}</strong>,
+                    ${cneeAddress},
                     Contact No: <strong>${cneeMobile}</strong>
                 </div>
             </div>
@@ -490,7 +600,7 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
             <!-- Row 7: Return Address -->
             <div class="label-row">
                 <div class="label-cell">
-                    Return Address:<br>
+                    Return Address:
                     <strong>${cnorName},</strong> ${cnorAddress}
                 </div>
             </div>
@@ -498,42 +608,808 @@ function buildLabel(order, cnor, cnee, products, multiboxItems) {
         </div>
     `;
 }
+// --- END FIX ---
 
-
+// --- ADDED: Placeholder build functions ---
+// --- MODIFIED: buildReceipt ---
 function buildReceipt(order, cnor, cnee, products, tracking) {
-    // This is a placeholder for a full receipt
-    return `<div class="p-4 border rounded-md bg-gray-50 text-gray-700">
-                <h3 class="font-bold text-lg mb-2">Shipment Receipt</h3>
-                <p><strong>AWB:</strong> ${order.AWB_NUMBER || 'N/A'}</p>
-                <p><strong>Reference:</strong> ${order.REFERANCE || 'N/A'}</p>
-                <p><strong>From:</strong> ${cnor?.NAME || 'N/A'}</p>
-                <p><strong>To:</strong> ${cnee?.NAME || 'N/A'}</p>
-                <p class="mt-4 text-sm text-gray-500">(Full receipt template to be built here)</p>
-           </div>`;
+    // NOTE: This function relies on global variables: multiboxDataMap, modeDataMap
+    // --- ADDED: Get multibox data ---
+    const multiboxItems = multiboxDataMap.get(order.REFERANCE) || [];
+
+    const orderDate = formatDateForDisplay(order.ORDER_DATE);
+    const ref = order.REFERANCE || 'N/A';
+    const awb = order.AWB_NUMBER || ref;
+    const carrierName = order.CARRIER || 'CARRIER'; // We still need this for the origin box
+    const modeShort = order.MODE || 'N/A';
+    const modeName = modeDataMap.get(modeShort) || modeShort;
+
+    const cnorName = cnor?.NAME || 'N/A';
+    const cnorAddress = `${cnor?.ADDRESS || ''}, ${cnor?.CITY || ''}, ${cnor?.STATE || ''} - ${cnor?.PINCODE || ''}`;
+    const cnorMobile = cnor?.MOBILE || 'N/A';
+    
+    const cneeName = cnee?.NAME || 'N/A';
+    const cneeAddress = `${cnee?.ADDRESS || ''}, ${cnee?.CITY || ''}, ${cnee?.STATE || ''}, ${cnee?.PINCODE || ''}`;
+    const cneeMobile = cnee?.MOBILE || 'N/A';
+
+    let paymentMode = "PREPAID";
+    let orderValue = 0;
+    if (order.COD && parseFloat(order.COD) > 0) {
+        paymentMode = "COD";
+        orderValue = parseFloat(order.COD);
+    } else if (order.TOPAY && parseFloat(order.TOPAY) > 0) {
+        paymentMode = "TO PAY";
+        orderValue = parseFloat(order.TOPAY);
+    }
+    
+    const weight = parseFloat(order.WEIGHT || '0.50').toFixed(2);
+    const pieces = order.PIECS || 1;
+
+    // --- Build Product Table & Calculate Totals ---
+    let productTableHtml = '';
+    let totalQty = 0;
+    let totalAmt = 0;
+
+    if (products && products.length > 0) {
+        products.forEach((p, index) => {
+            const product = p.PRODUCT || 'N/A';
+            const docNo = p.DOC_NO || p.DOCNO || p.DOC || p.DOC_NUMBER || 'N/A';
+            const eway = p.EWAY || p.EWAY_NO || p.EWAYBILLNO || p.EWAY_IF || 'N/A';
+            const qty = parseInt(p.QTY || 1);
+            const amt = parseFloat(p.AMT || p.AMOUNT || 0);
+            
+            totalQty += qty;
+            totalAmt += amt;
+
+            productTableHtml += `
+                <tr class="receipt-table-row">
+                    <td class="receipt-table-cell">${index + 1}</td>
+                    <td class="receipt-table-cell">${product}</td>
+                    <td class="receipt-table-cell">${docNo}</td>
+                    <td class="receipt-table-cell">${eway}</td>
+                    <td class="receipt-table-cell text-right">${qty}</td>
+                    <td class="receipt-table-cell text-right">${amt.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+    } else {
+        productTableHtml = `
+            <tr class="receipt-table-row">
+                <td class="receipt-table-cell" colspan="6">No product details available.</td>
+            </tr>
+        `;
+    }
+
+    // --- ADDED: Build Multibox Table ---
+    let multiboxTableHtml = '';
+    let totalWeight_mb = 0;
+    let totalChgWt_mb = 0;
+
+    if (multiboxItems && multiboxItems.length > 0) {
+        multiboxTableHtml = `
+            <table class="receipt-table" style="border-top: 2px solid #000; margin-top: -1px;">
+                <thead class="receipt-table-header">
+                    <tr>
+                        <th class="receipt-table-cell" style="width: 15%;">BOX#</th>
+                        <th class="receipt-table-cell">WEIGHT (Kg)</th>
+                        <th class="receipt-table-cell">L*B*H (Cm)</th>
+                        <th class="receipt-table-cell text-right">CHG WT (Kg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        multiboxItems.forEach((box, index) => {
+            const L = box.LENGTH || box.L || 'N/A';
+            const B = box.BREADTH || box.B || 'N/A';
+            const H = box.HEIGHT || box.H || box.HEG || box.HIGHT || 'N/A'; 
+            
+            const wt = parseFloat(box.WEIGHT || box.WT || 0);
+            const chgWt = parseFloat(box.CHG_WT || 0);
+            totalWeight_mb += wt;
+            totalChgWt_mb += chgWt;
+
+            multiboxTableHtml += `
+                <tr>
+                    <td class="receipt-table-cell">${box.BOX_NO || (index + 1)}</td>
+                    <td class="receipt-table-cell">${wt.toFixed(2)}</td>
+                    <td class="receipt-table-cell">${L}*${B}*${H}</td>
+                    <td class="receipt-table-cell text-right">${chgWt.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        multiboxTableHtml += `
+                </tbody>
+            </table>
+        `;
+    }
+    // --- END Multibox Table ---
+
+
+    const styles = `
+        <style>
+            .receipt-wrapper {
+                border: 1px solid #333;
+                width: 100%;
+                max-width: 48rem; /* A4-ish width */
+                margin: 0 auto;
+                font-family: 'Arial', sans-serif;
+                background: #fff;
+                color: #000;
+                font-size: 11px; /* Smaller base font */
+                line-height: 1.4;
+            }
+            .receipt-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 1rem;
+                border-bottom: 2px solid #000;
+            }
+            .receipt-logo {
+                font-size: 24px;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .receipt-copy-type {
+                font-size: 16px;
+                font-weight: bold;
+                text-align: right;
+            }
+            .receipt-meta {
+                display: grid; /* MODIFIED */
+                grid-template-columns: 1fr 1fr 1fr; /* MODIFIED */
+                border-bottom: 1px solid #333;
+            }
+            .receipt-meta-cell {
+                /* width: 33.33%; */ /* REMOVED */
+                padding: 0.5rem 1rem;
+                border-right: 1px solid #333;
+                border-top: 1px solid #333; /* ADDED for grid */
+            }
+            /* ADDED: Clean up grid borders */
+            .receipt-meta-cell:nth-child(3n) { border-right: none; } 
+            .receipt-meta-cell:nth-child(1),
+            .receipt-meta-cell:nth-child(2) { border-top: none; } 
+            /* END ADDED */
+
+            .receipt-meta-cell:last-child { border-right: none; }
+            .receipt-meta-cell strong { font-size: 13px; }
+
+            /* ADDED: Barcode container for receipt */
+            .receipt-barcode-container {
+                text-align: center;
+                padding: 5px;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .receipt-barcode-container svg {
+                width: 100%;
+                max-width: 200px; /* Adjust max-width as needed */
+                height: auto;
+            }
+            /* END ADDED */
+
+            .receipt-party {
+                display: flex;
+                border-bottom: 2px solid #000;
+            }
+            .receipt-party-cell {
+                width: 50%;
+                padding: 0.75rem 1rem;
+                border-right: 1px solid #333;
+            }
+            .receipt-party-cell:last-child { border-right: none; }
+            .receipt-party-cell .label {
+                font-size: 10px;
+                font-weight: bold;
+                text-transform: uppercase;
+                color: #555;
+            }
+            .receipt-party-cell .name {
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 0.25rem;
+            }
+            
+            .receipt-details {
+                display: flex;
+                border-bottom: 1px solid #333;
+            }
+            .receipt-details-cell {
+                padding: 0.5rem 1rem;
+                border-right: 1px solid #333;
+                text-align: center;
+            }
+            .receipt-details-cell:last-child { border-right: none; }
+            .receipt-details-cell .label {
+                font-size: 10px;
+                font-weight: bold;
+                text-transform: uppercase;
+                color: #555;
+                display: block;
+            }
+            .receipt-details-cell .value {
+                font-size: 13px;
+                font-weight: bold;
+            }
+
+            .receipt-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .receipt-table-header {
+                font-weight: bold;
+                background-color: #f0f0f0;
+                font-size: 10px;
+                text-transform: uppercase;
+            }
+            .receipt-table-cell {
+                border-bottom: 1px solid #ccc;
+                padding: 0.5rem 0.75rem;
+                border-right: 1px solid #ccc;
+                font-size: 10px; /* MODIFIED: Matched font size to header */
+            }
+            .receipt-table-cell:last-child { border-right: none; }
+            .text-right { text-align: right; }
+
+            /* --- NEW: Added styles for T&C and QR row --- */
+            .receipt-terms-row {
+                display: flex;
+                border-top: 2px solid #000;
+                border-bottom: 2px solid #000;
+            }
+            /* MODIFIED: This is now the QR cell */
+            .receipt-terms-cell {
+                width: 25%; /* MODIFIED: 1 part */
+                padding: 0.5rem 0.75rem;
+                border-right: 1px solid #333;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+            }
+            /* MODIFIED: This is now the T&C cell */
+            .receipt-qr-cell {
+                width: 75%; /* MODIFIED: 3 parts */
+                padding: 0.5rem 0.75rem;
+                font-size: 6px; /* As requested */
+                line-height: 1.5;
+                color: #333;
+                overflow-y: hidden; /* Prevent long text from breaking layout */
+                max-height: 120px; /* Set a max height */
+                border-left: 1px solid #ccc;
+            }
+            /* REMOVED: .qr-placeholder styles */
+            
+            /* ADDED: Style for label inside the terms cell */
+            .receipt-terms-cell .label {
+                font-size: 10px;
+                color: #555;
+            }
+            /* --- End new styles --- */
+
+            /* REMOVED: .receipt-footer, .receipt-footer-cell, .receipt-barcode-container */
+
+            .sign-box {
+                height: 50px; /* MODIFIED: Space for signature (was 80px) */
+            }
+
+        </style>
+    `;
+
+    const html = `
+        <div class="receipt-wrapper">
+            <!-- Header -->
+            <div class="receipt-header">
+                <!-- MODIFIED: Use "POSTMAN" -->
+                <div class="receipt-logo">POSTMAN</div>
+                <div class="receipt-copy-type">CLIENT COPY</div>
+            </div>
+            
+            <!-- Meta -->
+            <div class="receipt-meta">
+                <div class="receipt-meta-cell">
+                    <strong>AWB No: ${awb}</strong>
+                </div>
+                <div class="receipt-meta-cell">
+                    <strong>Date:</strong> ${orderDate}
+                </div>
+                <!-- MODIFIED: Added explicit grid-column to force it to the 3rd column -->
+                <div class="receipt-meta-cell" style="grid-row: 1 / 3; grid-column: 3 / 4; border-left: 1px solid #333; border-top: none; border-right: none; padding: 0.5rem;">
+                    <!-- MODIFIED: Added Barcode -->
+                    <div class="receipt-barcode-container" id="receipt-barcode-container">
+                        <svg id="receipt-barcode"></svg>
+                    </div>
+                </div>
+                <div class="receipt-meta-cell">
+                    <strong>Ref No:</strong> ${ref}
+                </div>
+                <!-- MODIFIED: Removed Origin, kept Carrier -->
+                <div class="receipt-meta-cell">
+                    <strong>Carrier:</strong> ${carrierName}
+                </div>
+                <!-- REMOVED Blank Cell -->
+            </div>
+
+            <!-- Party -->
+            <div class="receipt-party">
+                <div class="receipt-party-cell">
+                    <span class="label">Shipper</span>
+                    <div class="name">${cnorName}</div>
+                    <div>${cnorAddress}</div>
+                    <div><strong>Contact:</strong> ${cnorMobile}</div>
+                </div>
+                <div class="receipt-party-cell">
+                    <span class="label">Consignee</span>
+                    <div class="name">${cneeName}</div>
+                    <div>${cneeAddress}</div>
+                    <div><strong>Contact:</strong> ${cneeMobile}</div>
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="receipt-details">
+                <div class="receipt-details-cell" style="flex-grow: 2;">
+                    <span class="label">Payment Mode</span>
+                    <span class="value">${paymentMode}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 1;">
+                    <span class="label">Pieces</span>
+                    <span class="value">${pieces}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 1;">
+                    <span class="label">Weight (Kg)</span>
+                    <span class="value">${weight}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 2;">
+                    <span class="label">Service</span>
+                    <span class="value">${modeName}</span>
+                </div>
+                <!-- ADDED: New box for total product amount -->
+                <div class="receipt-details-cell" style="flex-grow: 2;">
+                    <span class="label">Value</span>
+                    <span class="value">INR ${totalAmt.toFixed(2)}</span>
+                </div>
+            </div>
+
+            <!-- MODIFIED: Added Multibox Table -->
+            ${multiboxTableHtml}
+
+            <!-- Products -->
+            <table class="receipt-table" style="${multiboxTableHtml ? '' : 'border-top: 2px solid #000; margin-top: -1px;'}">
+                <thead class="receipt-table-header">
+                    <tr>
+                        <th class="receipt-table-cell" style="width: 5%;">#</th>
+                        <th class="receipt-table-cell" style="width: 30%;">Product</th>
+                        <th class="receipt-table-cell">Doc #</th>
+                        <th class="receipt-table-cell">E-Way</th>
+                        <th class="receipt-table-cell text-right" style="width: 10%;">Qty</th>
+                        <th class="receipt-table-cell text-right" style="width: 15%;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productTableHtml}
+                </tbody>
+            </table>
+
+            <!-- NEW: Terms and QR Row (SWAPPED) -->
+            <div class="receipt-terms-row">
+                <!-- MODIFIED: This cell now holds the signature block -->
+                <div class="receipt-terms-cell">
+                    <span class="label">Admits to T&C</span>
+                    <div class="sign-box"></div>
+                    <span class="label">Consignor's Sign & Stamp</span>
+                </div>
+                <!-- MODIFIED: This cell now holds the T&Cs -->
+                <div class="receipt-qr-cell">
+                    <p style="text-align: left; margin: 0; padding: 0;">
+                        1. Here Consignor is fully responsible if IATA/ICAO/IMDG,ADR restricted/Prohabitted items is being ship or mismatch with declared contain. 2. This is a Customer Copy of Declared shipment and Payment recipt of Charges, not a Tax Invoice. 3. This recipt means said shipment has been handovered for shipping. 4. Shipment TAT may differ as declared, depends transport, air traffic and natural clamity. 5. Custom, Clearance and Penalty are not paid here will be taken if charged by GOV. 6. Higher Value shipments are mandatory to be insured by the shipper/sender as “Owner’s Risk” with a valid insurance Documents. In-case of “Carrier’s Risk”, the sender pay the risk surcharge as per defined. 7. Fright refund will not be entertained in any claims if service failure is resulted from any condition Eg. Strikes, Bandh, Elections, Rains, Floods, Fire, Accident or other natural calamities. 8. NO FRAGILE and Perishable Item can be booked under Carrier's Risk. 9. This recipt has 30 days life from booking date. 10. We are a service provider and in case of any unforeseen delay, damage, loss of consignment, our liabilities are specifically limited. 11. Carrrier has the right at its option or at the request of competent authorities to open consignment at any time to inspect the contents of the shipment.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <!-- REMOVED: Entire receipt-footer div -->
+
+        </div>
+    `;
+    
+    // FIX: Return ONLY styles and HTML. Do not run script here.
+    return styles + html;
 }
 
+// --- MODIFIED: buildPOD ---
 function buildPOD(order, cnor, cnee, products, tracking) {
-     // Check if tracking status is delivered
-     const deliveryDate = (tracking && tracking.STATUS && tracking.STATUS.toUpperCase() === 'DELIVERED') 
-                        ? formatDateForDisplay(tracking.DATE) 
-                        : 'N/A (Not Delivered)';
+    // NOTE: This function relies on global variables: multiboxDataMap, modeDataMap
+    // --- This function is now a copy of buildReceipt, with modifications ---
+    const multiboxItems = multiboxDataMap.get(order.REFERANCE) || [];
+    const orderDate = formatDateForDisplay(order.ORDER_DATE);
+    const ref = order.REFERANCE || 'N/A';
+    const awb = order.AWB_NUMBER || ref;
+    const carrierName = order.CARRIER || 'CARRIER';
+    const modeShort = order.MODE || 'N/A';
+    const modeName = modeDataMap.get(modeShort) || modeShort;
+    const cnorName = cnor?.NAME || 'N/A';
+    const cnorAddress = `${cnor?.ADDRESS || ''}, ${cnor?.CITY || ''}, ${cnor?.STATE || ''} - ${cnor?.PINCODE || ''}`;
+    const cnorMobile = cnor?.MOBILE || 'N/A';
+    const cneeName = cnee?.NAME || 'N/A';
+    const cneeAddress = `${cnee?.ADDRESS || ''}, ${cnee?.CITY || ''}, ${cnee?.STATE || ''}, ${cnee?.PINCODE || ''}`;
+    const cneeMobile = cnee?.MOBILE || 'N/A';
 
-    // This is a placeholder for Proof of Delivery
-    return `<div class="p-4 border rounded-md bg-gray-50 text-gray-700">
-                <h3 class="font-bold text-lg mb-2">Proof of Delivery (POD)</h3>
-                <p><strong>AWB:</strong> ${order.AWB_NUMBER || 'N/A'}</p>
-                <p><strong>Reference:</strong> ${order.REFERANCE || 'N/A'}</p>
-                <p><strong>Receiver:</strong> ${cnee?.NAME || 'N/A'}</p>
-                <p><strong>Delivery Date:</strong> ${deliveryDate}</p>
-                <p class="mt-4 text-sm text-gray-500">(Full POD template to be built here)</p>
-           </div>`;
+    let paymentMode = "PREPAID";
+    let orderValue = 0;
+    if (order.COD && parseFloat(order.COD) > 0) {
+        paymentMode = "COD";
+        orderValue = parseFloat(order.COD);
+    } else if (order.TOPAY && parseFloat(order.TOPAY) > 0) {
+        paymentMode = "TO PAY";
+        orderValue = parseFloat(order.TOPAY);
+    }
+    const weight = parseFloat(order.WEIGHT || '0.50').toFixed(2);
+    const pieces = order.PIECS || 1;
+
+    let productTableHtml = '';
+    let totalQty = 0;
+    let totalAmt = 0;
+    if (products && products.length > 0) {
+        products.forEach((p, index) => {
+            const product = p.PRODUCT || 'N/A';
+            const docNo = p.DOC_NO || p.DOCNO || p.DOC || p.DOC_NUMBER || 'N/A';
+            const eway = p.EWAY || p.EWAY_NO || p.EWAYBILLNO || p.EWAY_IF || 'N/A';
+            const qty = parseInt(p.QTY || 1);
+            const amt = parseFloat(p.AMT || p.AMOUNT || 0);
+            totalQty += qty;
+            totalAmt += amt;
+            productTableHtml += `
+                <tr class="receipt-table-row">
+                    <td class="receipt-table-cell">${index + 1}</td>
+                    <td class="receipt-table-cell">${product}</td>
+                    <td class="receipt-table-cell">${docNo}</td>
+                    <td class="receipt-table-cell">${eway}</td>
+                    <td class="receipt-table-cell text-right">${qty}</td>
+                    <td class="receipt-table-cell text-right">${amt.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+    } else {
+        productTableHtml = `
+            <tr class="receipt-table-row">
+                <td class="receipt-table-cell" colspan="6">No product details available.</td>
+            </tr>
+        `;
+    }
+
+    let multiboxTableHtml = '';
+    let totalWeight_mb = 0;
+    let totalChgWt_mb = 0;
+    if (multiboxItems && multiboxItems.length > 0) {
+        multiboxTableHtml = `
+            <table class="receipt-table" style="border-top: 2px solid #000; margin-top: -1px;">
+                <thead class="receipt-table-header">
+                    <tr>
+                        <th class="receipt-table-cell" style="width: 15%;">BOX#</th>
+                        <th class="receipt-table-cell">WEIGHT (Kg)</th>
+                        <th class="receipt-table-cell">L*B*H (Cm)</th>
+                        <th class="receipt-table-cell text-right">CHG WT (Kg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        multiboxItems.forEach((box, index) => {
+            const L = box.LENGTH || box.L || 'N/A';
+            const B = box.BREADTH || box.B || 'N/A';
+            const H = box.HEIGHT || box.H || box.HEG || box.HIGHT || 'N/A'; 
+            const wt = parseFloat(box.WEIGHT || box.WT || 0);
+            const chgWt = parseFloat(box.CHG_WT || 0);
+            totalWeight_mb += wt;
+            totalChgWt_mb += chgWt;
+            multiboxTableHtml += `
+                <tr>
+                    <td class="receipt-table-cell">${box.BOX_NO || (index + 1)}</td>
+                    <td class="receipt-table-cell">${wt.toFixed(2)}</td>
+                    <td class="receipt-table-cell">${L}*${B}*${H}</td>
+                    <td class="receipt-table-cell text-right">${chgWt.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        multiboxTableHtml += `
+                </tbody>
+            </table>
+        `;
+    }
+
+    // --- NOTE: Styles are identical to buildReceipt ---
+    const styles = `
+        <style>
+            .receipt-wrapper {
+                border: 1px solid #333;
+                width: 100%;
+                max-width: 48rem; /* A4-ish width */
+                margin: 0 auto;
+                font-family: 'Arial', sans-serif;
+                background: #fff;
+                color: #000;
+                font-size: 11px; /* Smaller base font */
+                line-height: 1.4;
+            }
+            .receipt-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 1rem;
+                border-bottom: 2px solid #000;
+            }
+            .receipt-logo {
+                font-size: 24px;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .receipt-copy-type {
+                font-size: 16px;
+                font-weight: bold;
+                text-align: right;
+            }
+            .receipt-meta {
+                display: grid; /* MODIFIED */
+                grid-template-columns: 1fr 1fr 1fr; /* MODIFIED */
+                border-bottom: 1px solid #333;
+            }
+            .receipt-meta-cell {
+                /* width: 33.33%; */ /* REMOVED */
+                padding: 0.5rem 1rem;
+                border-right: 1px solid #333;
+                border-top: 1px solid #333; /* ADDED for grid */
+            }
+            /* ADDED: Clean up grid borders */
+            .receipt-meta-cell:nth-child(3n) { border-right: none; } 
+            .receipt-meta-cell:nth-child(1),
+            .receipt-meta-cell:nth-child(2) { border-top: none; } 
+            /* END ADDED */
+
+            .receipt-meta-cell:last-child { border-right: none; }
+            .receipt-meta-cell strong { font-size: 13px; }
+
+            /* ADDED: Barcode container for receipt */
+            .receipt-barcode-container {
+                text-align: center;
+                padding: 5px;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .receipt-barcode-container svg {
+                width: 100%;
+                max-width: 200px; /* Adjust max-width as needed */
+                height: auto;
+            }
+            /* END ADDED */
+
+            .receipt-party {
+                display: flex;
+                border-bottom: 2px solid #000;
+            }
+            .receipt-party-cell {
+                width: 50%;
+                padding: 0.75rem 1rem;
+                border-right: 1px solid #333;
+            }
+            .receipt-party-cell:last-child { border-right: none; }
+            .receipt-party-cell .label {
+                font-size: 10px;
+                font-weight: bold;
+                text-transform: uppercase;
+                color: #555;
+            }
+            .receipt-party-cell .name {
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 0.25rem;
+            }
+            
+            .receipt-details {
+                display: flex;
+                border-bottom: 1px solid #333;
+            }
+            .receipt-details-cell {
+                padding: 0.5rem 1rem;
+                border-right: 1px solid #333;
+                text-align: center;
+            }
+            .receipt-details-cell:last-child { border-right: none; }
+            .receipt-details-cell .label {
+                font-size: 10px;
+                font-weight: bold;
+                text-transform: uppercase;
+                color: #555;
+                display: block;
+            }
+            .receipt-details-cell .value {
+                font-size: 13px;
+                font-weight: bold;
+            }
+
+            .receipt-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .receipt-table-header {
+                font-weight: bold;
+                background-color: #f0f0f0;
+                font-size: 10px;
+                text-transform: uppercase;
+            }
+            .receipt-table-cell {
+                border-bottom: 1px solid #ccc;
+                padding: 0.5rem 0.75rem;
+                border-right: 1px solid #ccc;
+                font-size: 10px; /* MODIFIED: Matched font size to header */
+            }
+            .receipt-table-cell:last-child { border-right: none; }
+            .text-right { text-align: right; }
+
+            /* --- NEW: Added styles for T&C and QR row --- */
+            .receipt-terms-row {
+                display: flex;
+                border-top: 2px solid #000;
+                border-bottom: 2px solid #000;
+            }
+            /* MODIFIED: This is now the QR cell */
+            .receipt-terms-cell {
+                width: 25%; /* MODIFIED: 1 part */
+                padding: 0.5rem 0.75rem;
+                border-right: 1px solid #333;
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+            }
+            /* MODIFIED: This is now the T&C cell */
+            .receipt-qr-cell {
+                width: 75%; /* MODIFIED: 3 parts */
+                padding: 0.5rem 0.75rem;
+                font-size: 6px; /* As requested */
+                line-height: 1.5;
+                color: #333;
+                overflow-y: hidden; /* Prevent long text from breaking layout */
+                max-height: 120px; /* Set a max height */
+                border-left: 1px solid #ccc;
+            }
+            /* REMOVED: .qr-placeholder styles */
+            
+            /* ADDED: Style for label inside the terms cell */
+            .receipt-terms-cell .label {
+                font-size: 10px;
+                color: #555;
+            }
+            /* --- End new styles --- */
+
+            /* REMOVED: .receipt-footer, .receipt-footer-cell, .receipt-barcode-container */
+
+            .sign-box {
+                height: 50px; /* MODIFIED: Space for signature (was 80px) */
+            }
+
+        </style>
+    `;
+
+    const html = `
+        <div class="receipt-wrapper">
+            <!-- Header -->
+            <div class="receipt-header">
+                <div class="receipt-logo">POSTMAN</div>
+                <!-- MODIFICATION: Changed to POD COPY -->
+                <div class="receipt-copy-type">POD COPY</div>
+            </div>
+            
+            <!-- Meta -->
+            <div class="receipt-meta">
+                <div class="receipt-meta-cell">
+                    <strong>AWB No: ${awb}</strong>
+                </div>
+                <div class="receipt-meta-cell">
+                    <strong>Date:</strong> ${orderDate}
+                </div>
+                <div class="receipt-meta-cell" style="grid-row: 1 / 3; grid-column: 3 / 4; border-left: 1px solid #333; border-top: none; border-right: none; padding: 0.5rem;">
+                    <div class="receipt-barcode-container" id="receipt-barcode-container">
+                        <svg id="receipt-barcode"></svg>
+                    </div>
+                </div>
+                <div class="receipt-meta-cell">
+                    <strong>Ref No:</strong> ${ref}
+                </div>
+                <div class="receipt-meta-cell">
+                    <strong>Carrier:</strong> ${carrierName}
+                </div>
+            </div>
+
+            <!-- Party -->
+            <div class="receipt-party">
+                <div class="receipt-party-cell">
+                    <span class="label">Shipper</span>
+                    <div class="name">${cnorName}</div>
+                    <div>${cnorAddress}</div>
+                    <div><strong>Contact:</strong> ${cnorMobile}</div>
+                </div>
+                <div class="receipt-party-cell">
+                    <span class="label">Consignee</span>
+                    <div class="name">${cneeName}</div>
+                    <div>${cneeAddress}</div>
+                    <div><strong>Contact:</strong> ${cneeMobile}</div>
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="receipt-details">
+                <div class="receipt-details-cell" style="flex-grow: 2;">
+                    <span class="label">Payment Mode</span>
+                    <span class="value">${paymentMode}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 1;">
+                    <span class="label">Pieces</span>
+                    <span class="value">${pieces}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 1;">
+                    <span class="label">Weight (Kg)</span>
+                    <span class="value">${weight}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 2;">
+                    <span class="label">Service</span>
+                    <span class="value">${modeName}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 2;">
+                    <span class="label">Value</span>
+                    <span class="value">INR ${totalAmt.toFixed(2)}</span>
+                </div>
+            </div>
+
+            ${multiboxTableHtml}
+
+            <!-- Products -->
+            <table class="receipt-table" style="${multiboxTableHtml ? '' : 'border-top: 2px solid #000; margin-top: -1px;'}">
+                <thead class="receipt-table-header">
+                    <tr>
+                        <th class="receipt-table-cell" style="width: 5%;">#</th>
+                        <th class="receipt-table-cell" style="width: 30%;">Product</th>
+                        <th class="receipt-table-cell">Doc #</th>
+                        <th class="receipt-table-cell">E-Way</th>
+                        <th class="receipt-table-cell text-right" style="width: 10%;">Qty</th>
+                        <th class="receipt-table-cell text-right" style="width: 15%;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productTableHtml}
+                </tbody>
+            </table>
+
+            <div class="receipt-terms-row">
+                <!-- MODIFICATION: Changed signature block text -->
+                <div class="receipt-terms-cell">
+                    <span class="label">Recieved in Good Condition,</span>
+                    <div class="sign-box"></div>
+                    <span class="label">Recievers Sign & Stamp</span>
+                </div>
+                <div class="receipt-qr-cell">
+                    <p style="text-align: left; margin: 0; padding: 0;">
+                        1. Here Consignor is fully responsible if IATA/ICAO/IMDG,ADR restricted/Prohabitted items is being ship or mismatch with declared contain. 2. This is a Customer Copy of Declared shipment and Payment recipt of Charges, not a Tax Invoice. 3. This recipt means said shipment has been handovered for shipping. 4. Shipment TAT may differ as declared, depends transport, air traffic and natural clamity. 5. Custom, Clearance and Penalty are not paid here will be taken if charged by GOV. 6. Higher Value shipments are mandatory to be insured by the shipper/sender as “Owner’s Risk” with a valid insurance Documents. In-case of “Carrier’s Risk”, the sender pay the risk surcharge as per defined. 7. Fright refund will not be entertained in any claims if service failure is resulted from any condition Eg. Strikes, Bandh, Elections, Rains, Floods, Fire, Accident or other natural calamities. 8. NO FRAGILE and Perishable Item can be booked under Carrier's Risk. 9. This recipt has 30 days life from booking date. 10. We are a service provider and in case of any unforeseen delay, damage, loss of consignment, our liabilities are specifically limited. 11. Carrrier has the right at its option or at the request of competent authorities to open consignment at any time to inspect the contents of the shipment.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    `;
+    
+    return styles + html;
 }
 
 function buildChallan(order, cnor, cnee, products, tracking) {
     let productList = products.map(p => `<li>${p.PRODUCT || 'N/A'} (Qty: ${p.QTY || 1})</li>`).join('');
     if (!productList) productList = '<li>No product details available.</li>';
 
-    // This is a placeholder for the Delivery Challan
     return `<div class="p-4 border rounded-md bg-gray-50 text-gray-700">
                 <h3 class="font-bold text-lg mb-2">Delivery Challan</h3>
                 <p><strong>From:</strong> ${cnor?.NAME || 'N/A'}</p>
@@ -544,63 +1420,392 @@ function buildChallan(order, cnor, cnee, products, tracking) {
            </div>`;
 }
 
+// --- MODIFIED: buildOfficeCopy ---
 function buildOfficeCopy(order, cnor, cnee, products, tracking) {
-    // This is a placeholder for the Office Copy
-    return `<div class="p-4 border rounded-md bg-gray-50 text-gray-700">
-                <h3 class="font-bold text-lg mb-2">Office Copy</h3>
-                <p><strong>AWB:</strong> ${order.AWB_NUMBER || 'N/A'}</p>
-                <p><strong>Reference:</strong> ${order.REFERANCE || 'N/A'}</p>
-                <p><strong>Carrier:</strong> ${order.CARRIER || 'N/A'}</p>
-                <p><strong>Date:</strong> ${formatDateForDisplay(order.ORDER_DATE)}</p>
-                <p class="mt-4 text-sm text-gray-500">(Full office copy template to be built here)</p>
-           </div>`;
+    // NOTE: This function relies on global variables: multiboxDataMap, modeDataMap
+    // --- This function is a copy of buildPOD, with modifications ---
+    const multiboxItems = multiboxDataMap.get(order.REFERANCE) || [];
+    const orderDate = formatDateForDisplay(order.ORDER_DATE);
+    const ref = order.REFERANCE || 'N/A';
+    const awb = order.AWB_NUMBER || ref;
+    const carrierName = order.CARRIER || 'CARRIER';
+    const modeShort = order.MODE || 'N/A';
+    const modeName = modeDataMap.get(modeShort) || modeShort;
+    const cnorName = cnor?.NAME || 'N/A';
+    const cnorAddress = `${cnor?.ADDRESS || ''}, ${cnor?.CITY || ''}, ${cnor?.STATE || ''} - ${cnor?.PINCODE || ''}`;
+    const cnorMobile = cnor?.MOBILE || 'N/A';
+    const cneeName = cnee?.NAME || 'N/A';
+    const cneeAddress = `${cnee?.ADDRESS || ''}, ${cnee?.CITY || ''}, ${cnee?.STATE || ''}, ${cnee?.PINCODE || ''}`;
+    const cneeMobile = cnee?.MOBILE || 'N/A';
+
+    let paymentMode = "PREPAID";
+    let orderValue = 0;
+    if (order.COD && parseFloat(order.COD) > 0) {
+        paymentMode = "COD";
+        orderValue = parseFloat(order.COD);
+    } else if (order.TOPAY && parseFloat(order.TOPAY) > 0) {
+        paymentMode = "TO PAY";
+        orderValue = parseFloat(order.TOPAY);
+    }
+    const weight = parseFloat(order.WEIGHT || '0.50').toFixed(2);
+    const pieces = order.PIECS || 1;
+
+    let productTableHtml = '';
+    let totalQty = 0;
+    let totalAmt = 0;
+    if (products && products.length > 0) {
+        products.forEach((p, index) => {
+            const product = p.PRODUCT || 'N/A';
+            const docNo = p.DOC_NO || p.DOCNO || p.DOC || p.DOC_NUMBER || 'N/A';
+            const eway = p.EWAY || p.EWAY_NO || p.EWAYBILLNO || p.EWAY_IF || 'N/A';
+            const qty = parseInt(p.QTY || 1);
+            const amt = parseFloat(p.AMT || p.AMOUNT || 0);
+            totalQty += qty;
+            totalAmt += amt;
+            productTableHtml += `
+                <tr class="receipt-table-row">
+                    <td class="receipt-table-cell">${index + 1}</td>
+                    <td class="receipt-table-cell">${product}</td>
+                    <td class="receipt-table-cell">${docNo}</td>
+                    <td class="receipt-table-cell">${eway}</td>
+                    <td class="receipt-table-cell text-right">${qty}</td>
+                    <td class="receipt-table-cell text-right">${amt.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+    } else {
+        productTableHtml = `
+            <tr class="receipt-table-row">
+                <td class="receipt-table-cell" colspan="6">No product details available.</td>
+            </tr>
+        `;
+    }
+
+    let multiboxTableHtml = '';
+    let totalWeight_mb = 0;
+    let totalChgWt_mb = 0;
+    if (multiboxItems && multiboxItems.length > 0) {
+        multiboxTableHtml = `
+            <table class="receipt-table" style="border-top: 2px solid #000; margin-top: -1px;">
+                <thead class="receipt-table-header">
+                    <tr>
+                        <th class="receipt-table-cell" style="width: 15%;">BOX#</th>
+                        <th class="receipt-table-cell">WEIGHT (Kg)</th>
+                        <th class="receipt-table-cell">L*B*H (Cm)</th>
+                        <th class="receipt-table-cell text-right">CHG WT (Kg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        multiboxItems.forEach((box, index) => {
+            const L = box.LENGTH || box.L || 'N/A';
+            const B = box.BREADTH || box.B || 'N/A';
+            const H = box.HEIGHT || box.H || box.HEG || box.HIGHT || 'N/A'; 
+            const wt = parseFloat(box.WEIGHT || box.WT || 0);
+            const chgWt = parseFloat(box.CHG_WT || 0);
+            totalWeight_mb += wt;
+            totalChgWt_mb += chgWt;
+            multiboxTableHtml += `
+                <tr>
+                    <td class="receipt-table-cell">${box.BOX_NO || (index + 1)}</td>
+                    <td class="receipt-table-cell">${wt.toFixed(2)}</td>
+                    <td class="receipt-table-cell">${L}*${B}*${H}</td>
+                    <td class="receipt-table-cell text-right">${chgWt.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        multiboxTableHtml += `
+                </tbody>
+            </table>
+        `;
+    }
+
+    // --- NOTE: Styles are identical to buildReceipt ---
+    const styles = `
+        <style>
+            .receipt-wrapper {
+                border: 1px solid #333;
+                width: 100%;
+                max-width: 48rem; /* A4-ish width */
+                margin: 0 auto;
+                font-family: 'Arial', sans-serif;
+                background: #fff;
+                color: #000;
+                font-size: 11px; /* Smaller base font */
+                line-height: 1.4;
+            }
+            .receipt-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 1rem;
+                border-bottom: 2px solid #000;
+            }
+            .receipt-logo {
+                font-size: 24px;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            .receipt-copy-type {
+                font-size: 16px;
+                font-weight: bold;
+                text-align: right;
+            }
+            .receipt-meta {
+                display: grid; /* MODIFIED */
+                grid-template-columns: 1fr 1fr 1fr; /* MODIFIED */
+                border-bottom: 1px solid #333;
+            }
+            .receipt-meta-cell {
+                /* width: 33.33%; */ /* REMOVED */
+                padding: 0.5rem 1rem;
+                border-right: 1px solid #333;
+                border-top: 1px solid #333; /* ADDED for grid */
+            }
+            /* ADDED: Clean up grid borders */
+            .receipt-meta-cell:nth-child(3n) { border-right: none; } 
+            .receipt-meta-cell:nth-child(1),
+            .receipt-meta-cell:nth-child(2) { border-top: none; } 
+            /* END ADDED */
+
+            .receipt-meta-cell:last-child { border-right: none; }
+            .receipt-meta-cell strong { font-size: 13px; }
+
+            /* ADDED: Barcode container for receipt */
+            .receipt-barcode-container {
+                text-align: center;
+                padding: 5px;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .receipt-barcode-container svg {
+                width: 100%;
+                max-width: 200px; /* Adjust max-width as needed */
+                height: auto;
+            }
+            /* END ADDED */
+
+            .receipt-party {
+                display: flex;
+                border-bottom: 2px solid #000;
+            }
+            .receipt-party-cell {
+                width: 50%;
+                padding: 0.75rem 1rem;
+                border-right: 1px solid #333;
+            }
+            .receipt-party-cell:last-child { border-right: none; }
+            .receipt-party-cell .label {
+                font-size: 10px;
+                font-weight: bold;
+                text-transform: uppercase;
+                color: #555;
+            }
+            .receipt-party-cell .name {
+                font-size: 14px;
+                font-weight: bold;
+                margin-bottom: 0.25rem;
+            }
+            
+            .receipt-details {
+                display: flex;
+                border-bottom: 1px solid #333;
+            }
+            .receipt-details-cell {
+                padding: 0.5rem 1rem;
+                border-right: 1px solid #333;
+                text-align: center;
+            }
+            .receipt-details-cell:last-child { border-right: none; }
+            .receipt-details-cell .label {
+                font-size: 10px;
+                font-weight: bold;
+                text-transform: uppercase;
+                color: #555;
+                display: block;
+            }
+            .receipt-details-cell .value {
+                font-size: 13px;
+                font-weight: bold;
+            }
+
+            .receipt-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .receipt-table-header {
+                font-weight: bold;
+                background-color: #f0f0f0;
+                font-size: 10px;
+                text-transform: uppercase;
+            }
+            .receipt-table-cell {
+                border-bottom: 1px solid #ccc;
+                padding: 0.5rem 0.75rem;
+                border-right: 1px solid #ccc;
+                font-size: 10px; /* MODIFIED: Matched font size to header */
+            }
+            .receipt-table-cell:last-child { border-right: none; }
+            .text-right { text-align: right; }
+
+            /* --- REMOVED: T&C and QR row styles --- */
+
+            .sign-box {
+                height: 50px; /* MODIFIED: Space for signature (was 80px) */
+            }
+
+        </style>
+    `;
+
+    const html = `
+        <div class="receipt-wrapper">
+            <!-- Header -->
+            <div class="receipt-header">
+                <div class="receipt-logo">POSTMAN</div>
+                <!-- MODIFICATION: Changed to OFFICE COPY -->
+                <div class="receipt-copy-type">OFFICE COPY</div>
+            </div>
+            
+            <!-- Meta -->
+            <div class="receipt-meta">
+                <div class="receipt-meta-cell">
+                    <strong>AWB No: ${awb}</strong>
+                </div>
+                <div class="receipt-meta-cell">
+                    <strong>Date:</strong> ${orderDate}
+                </div>
+                <div class="receipt-meta-cell" style="grid-row: 1 / 3; grid-column: 3 / 4; border-left: 1px solid #333; border-top: none; border-right: none; padding: 0.5rem;">
+                    <div class="receipt-barcode-container" id="receipt-barcode-container">
+                        <svg id="receipt-barcode"></svg>
+                    </div>
+                </div>
+                <div class="receipt-meta-cell">
+                    <strong>Ref No:</strong> ${ref}
+                </div>
+                <div class="receipt-meta-cell">
+                    <strong>Carrier:</strong> ${carrierName}
+                </div>
+            </div>
+
+            <!-- Party -->
+            <div class="receipt-party">
+                <div class="receipt-party-cell">
+                    <span class="label">Shipper</span>
+                    <div class="name">${cnorName}</div>
+                    <div>${cnorAddress}</div>
+                    <div><strong>Contact:</strong> ${cnorMobile}</div>
+                </div>
+                <div class="receipt-party-cell">
+                    <span class="label">Consignee</span>
+                    <div class="name">${cneeName}</div>
+                    <div>${cneeAddress}</div>
+                    <div><strong>Contact:</strong> ${cneeMobile}</div>
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="receipt-details">
+                <div class="receipt-details-cell" style="flex-grow: 2;">
+                    <span class="label">Payment Mode</span>
+                    <span class="value">${paymentMode}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 1;">
+                    <span class="label">Pieces</span>
+                    <span class="value">${pieces}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 1;">
+                    <span class="label">Weight (Kg)</span>
+                    <span class="value">${weight}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 2;">
+                    <span class="label">Service</span>
+                    <span class="value">${modeName}</span>
+                </div>
+                <div class="receipt-details-cell" style="flex-grow: 2;">
+                    <span class="label">Value</span>
+                    <span class="value">INR ${totalAmt.toFixed(2)}</span>
+                </div>
+            </div>
+
+            ${multiboxTableHtml}
+
+            <!-- Products -->
+            <table class="receipt-table" style="${multiboxTableHtml ? '' : 'border-top: 2px solid #000; margin-top: -1px;'}">
+                <thead class="receipt-table-header">
+                    <tr>
+                        <th class="receipt-table-cell" style="width: 5%;">#</th>
+                        <th class="receipt-table-cell" style="width: 30%;">Product</th>
+                        <th class="receipt-table-cell">Doc #</th>
+                        <th class="receipt-table-cell">E-Way</th>
+                        <th class="receipt-table-cell text-right" style="width: 10%;">Qty</th>
+                        <th class="receipt-table-cell text-right" style="width: 15%;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${productTableHtml}
+                </tbody>
+            </table>
+
+            <!-- REMOVED: T&C / Signature row -->
+
+        </div>
+    `;
+    
+    return styles + html;
 }
 
-
-function printLabel(pieces) {
-    const labelSection = document.getElementById('doc-section-lable').querySelector('.doc-section-content');
-    if (!labelSection) {
-        console.error('Could not find label content to print.');
+// --- NEW: Print Label Function ---
+function printSelectedShipmentLabel() {
+    // NOTE: This function relies on global variables:
+    // currentSelectedRef, allOrders, b2b2cDataMap, cnee, productDataMap, multiboxDataMap
+    if (!currentSelectedRef) {
+        console.error('No shipment selected to print.');
         return;
     }
-
-    const labelStyles = labelSection.querySelector('style');
-    const labelHtml = labelSection.querySelector('.label-wrapper');
-
-    if (!labelStyles || !labelHtml) {
-        console.error('Label content is missing styles or wrapper.');
+    const order = allOrders.find(o => o.REFERANCE === currentSelectedRef);
+    if (!order) {
+        console.error('Could not find order data for printing.');
         return;
     }
+    
+    // Get all data needed for labels
+    const cnor = b2b2cDataMap.get(order.CONSIGNOR);
+    const cnee = b2b2cDataMap.get(order.CONSIGNEE);
+    const products = productDataMap.get(order.REFERANCE) || [];
+    const multiboxItems = multiboxDataMap.get(order.REFERANCE) || [];
+    const awb = order.AWB_NUMBER || order.REFERANCE;
+    const pieces = multiboxItems.length > 0 ? multiboxItems.length : (order.PIECS || 1);
 
     const printWindow = window.open('', '', 'height=600,width=800');
     printWindow.document.write('<html><head><title>Print Label</title>');
     
-    // Write the self-contained styles from buildLabel
-    printWindow.document.write(labelStyles.outerHTML);
+    // Add JsBarcode script
+    printWindow.document.write('<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>');
     
-    // Add print-specific overrides for landscape A4, 2-up printing
+    // Write print-specific overrides for landscape A4, 2-up printing
     printWindow.document.write(`
         <style>
             @page {
                 size: A4 landscape;
-                margin: 5mm;
+                margin: 10mm; /* Increased margin */
             }
             body, html {
                 margin: 0;
                 padding: 0;
                 width: 100%;
+                font-family: 'Arial', sans-serif;
             }
-            /* Flex container for side-by-side labels */
             body {
                 display: flex;
                 flex-wrap: wrap;
                 justify-content: space-around;
                 align-items: flex-start;
                 align-content: flex-start;
-                gap: 10px;
+                gap: 10px; 
             }
             .label-wrapper { 
-                /* Set to ~A5 width in landscape, and add border back */
                 width: 49%;
                 max-width: 49% !important; 
                 border: 1px solid #000 !important;
@@ -609,51 +1814,383 @@ function printLabel(pieces) {
                 padding: 0;
                 box-sizing: border-box; 
                 page-break-inside: avoid;
-
-                /* CRITICAL FIX: Set exact height to 200mm as requested */
-                height: 200mm !important; 
-                
-                /* Added to ensure content sticks to top and bottom */
+                height: 190mm !important; /* 210mm page height - 10mm top - 10mm bottom */
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
-
                 overflow: hidden;
             }
-
-            /* Make the last row stick to the bottom (Return Address) */
             .label-wrapper .label-row:last-child {
                 margin-top: auto;
                 border-bottom: none !important;
             }
-            /* Make the Consignee section (Row 5) fill middle space, if possible */
-            .label-wrapper .label-row:nth-of-type(5) { 
+            .label-wrapper .label-row:nth-of-type(5) { /* Consignee */
                 flex-grow: 1;
+                overflow-y: hidden;
+                min-height: 0;
             }
-            /* Ensure tables section (Row 6) does not get shrunk */
-            .label-wrapper .label-row:nth-of-type(6) {
-                flex-shrink: 0;
+            .label-wrapper .label-row:nth-of-type(6) { /* Tables */
+                flex-shrink: 1;
+                overflow-y: hidden;
+                min-height: 0;
             }
         </style>
     `);
     printWindow.document.write('</head><body>');
     
-    // Write the label content (pieces + 1) times
-    const totalLabels = (pieces || 1) + 1;
-    for (let i = 0; i < totalLabels; i++) {
-        printWindow.document.write(labelHtml.outerHTML);
+    // 1. Generate all individual box labels
+    if (multiboxItems.length > 0) {
+        for (let i = 0; i < pieces; i++) {
+            const labelHtml = buildLabel(order, cnor, cnee, products, multiboxItems, { type: 'box', index: i });
+            printWindow.document.write(labelHtml);
+        }
+    } else {
+        // If not multibox, print one "box 1/1" label
+        const labelHtml = buildLabel(order, cnor, cnee, products, [], { type: 'box', index: 0 });
+        printWindow.document.write(labelHtml);
     }
+
+    // 2. Generate the final summary label
+    const summaryLabelHtml = buildLabel(order, cnor, cnee, products, multiboxItems, { type: 'summary' });
+    printWindow.document.write(summaryLabelHtml);
+
+
+    printWindow.document.write(`
+        <script>
+            window.onload = function() {
+                try {
+                    // --- CRITICAL: Generate barcodes *inside* the print window ---
+                    const allSvgs = document.querySelectorAll('.barcode-svg');
+                    allSvgs.forEach((svgElement, index) => {
+                        const barcodeValue = svgElement.getAttribute('data-barcode-value');
+                        if (barcodeValue) {
+                            JsBarcode(svgElement, barcodeValue, {
+                                format: "CODE128",
+                                displayValue: false,
+                                margin: 10,
+                                height: 70,
+                                width: 3
+                            });
+                        }
+                    });
+
+                    // --- Flexible font size logic ---
+                    const allConsigneeCells = document.querySelectorAll('.label-wrapper .label-row:nth-of-type(5)');
+                    allConsigneeCells.forEach(cell => {
+                        const details = cell.querySelector('.consignee-details');
+                        if (!details) return;
+
+                        const maxFontSize = 48;
+                        const minFontSize = 12;
+                        let currentFontSize = maxFontSize; // Start at the max size
+
+                        while (currentFontSize > minFontSize) {
+                            details.style.fontSize = \`\${currentFontSize}px\`;
+                            const strongs = details.querySelectorAll('strong');
+                            strongs.forEach(s => { s.style.fontSize = \`\${currentFontSize + 1}px\`; });
+
+                            if (details.scrollHeight <= (cell.offsetHeight + 1)) {
+                                break; 
+                            }
+                            currentFontSize--;
+                        }
+                        const finalSize = Math.max(currentFontSize, minFontSize);
+                        details.style.fontSize = \`\${finalSize}px\`;
+                        const strongs = details.querySelectorAll('strong');
+                        strongs.forEach(s => { s.style.fontSize = \`\${finalSize + 1}px\`; });
+                    });
+                    // --- END of new logic ---
+
+                    // All barcodes and fonts are generated, now print.
+                    setTimeout(function() {
+                        window.print();
+                        // window.close();
+                    }, 250); // Small delay for rendering
+                } catch (e) {
+                    console.error("Print window script failed:", e);
+                }
+            };
+        <\/script>
+    `);
 
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     printWindow.focus();
-
-    // Use a small delay to ensure content is loaded before printing
-    setTimeout(() => {
-        try {
-            printWindow.print();
-        } catch (e) {
-            console.error("Print failed:", e);
-        }
-    }, 250);
 }
+// --- END OF NEW FUNCTION ---
+
+// --- NEW: Print Receipt Function ---
+function printSelectedShipmentReceipt() {
+    // NOTE: This function relies on global variables:
+    // currentSelectedRef, allOrders, b2b2cDataMap, productDataMap, trackDataMap
+    if (!currentSelectedRef) {
+        console.error('No shipment selected to print.');
+        return;
+    }
+    const order = allOrders.find(o => o.REFERANCE === currentSelectedRef);
+    if (!order) {
+        console.error('Could not find order data for printing.');
+        return;
+    }
+    
+    // Re-build the receipt content for printing
+    const cnor = b2b2cDataMap.get(order.CONSIGNOR);
+    const cnee = b2b2cDataMap.get(order.CONSIGNEE);
+    const products = productDataMap.get(order.REFERANCE) || [];
+    const tracking = trackDataMap.get(order.REFERANCE);
+    
+    const receiptContent = buildReceipt(order, cnor, cnee, products, tracking);
+    const awb = order.AWB_NUMBER || order.REFERANCE;
+
+    const printWindow = window.open('', '', 'height=800,width=800');
+    printWindow.document.write('<html><head><title>Print Receipt</title>');
+    
+    // --- CRITICAL: Add JsBarcode script to print window ---
+    printWindow.document.write('<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>');
+    
+    // Add print-specific overrides for A4 portrait
+    printWindow.document.write(`
+        <style>
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            body, html {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                font-family: 'Arial', sans-serif;
+            }
+            .receipt-wrapper { 
+                width: 100% !important;
+                max-width: 100% !important; 
+                /* MODIFIED: Added border back for printing */
+                border: 1px solid #333 !important; 
+                box-shadow: none !important;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box; 
+                page-break-inside: avoid;
+            }
+        </style>
+    `);
+    printWindow.document.write('</head><body>');
+    
+    // Write the receipt HTML
+    printWindow.document.write(receiptContent);
+
+    // --- ADDED: Script to run *inside* print window ---
+    printWindow.document.write(`
+        <script>
+            // Wait for window to load to ensure barcode script is ready
+            window.onload = function() {
+                // --- RE-ENABLED: Barcode generation for receipt ---
+                try {
+                    // Generate the barcode
+                    JsBarcode("#receipt-barcode", "${awb}", {
+                        format: "CODE128",
+                        displayValue: true,
+                        text: "${awb}",
+                        fontSize: 14,
+                        margin: 5,
+                        height: 40,
+                        width: 2
+                    });
+                } catch (e) {
+                    console.error("Print window JsBarcode error (Receipt):", e);
+                }
+                
+                // Give barcode time to render, then print
+                setTimeout(function() {
+                    window.print();
+                    // window.close();
+                }, 250);
+            };
+        <\/script>
+    `);
+    // --- END of new script ---
+
+
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+}
+// --- END OF MODIFIED FUNCTION ---
+
+// --- NEW: Print POD Function ---
+function printSelectedShipmentPOD() {
+    // NOTE: This function relies on global variables:
+    // currentSelectedRef, allOrders, b2b2cDataMap, productDataMap, trackDataMap
+    if (!currentSelectedRef) {
+        console.error('No shipment selected to print.');
+        return;
+    }
+    const order = allOrders.find(o => o.REFERANCE === currentSelectedRef);
+    if (!order) {
+        console.error('Could not find order data for printing.');
+        return;
+    }
+    
+    // Re-build the POD content for printing
+    const cnor = b2b2cDataMap.get(order.CONSIGNOR);
+    const cnee = b2b2cDataMap.get(order.CONSIGNEE);
+    const products = productDataMap.get(order.REFERANCE) || [];
+    const tracking = trackDataMap.get(order.REFERANCE);
+    
+    // --- MODIFIED: Call buildPOD ---
+    const podContent = buildPOD(order, cnor, cnee, products, tracking);
+    const awb = order.AWB_NUMBER || order.REFERANCE;
+
+    const printWindow = window.open('', '', 'height=800,width=800');
+    printWindow.document.write('<html><head><title>Print POD</title>'); // MODIFIED title
+    
+    printWindow.document.write('<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>');
+    
+    printWindow.document.write(`
+        <style>
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            body, html {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                font-family: 'Arial', sans-serif;
+            }
+            .receipt-wrapper { 
+                width: 100% !important;
+                max-width: 100% !important; 
+                border: 1px solid #333 !important; 
+                box-shadow: none !important;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box; 
+                page-break-inside: avoid;
+            }
+        </style>
+    `);
+    printWindow.document.write('</head><body>');
+    
+    // Write the POD HTML
+    printWindow.document.write(podContent);
+
+    printWindow.document.write(`
+        <script>
+            window.onload = function() {
+                try {
+                    JsBarcode("#receipt-barcode", "${awb}", { // ID is still receipt-barcode
+                        format: "CODE128",
+                        displayValue: true,
+                        text: "${awb}",
+                        fontSize: 14,
+                        margin: 5,
+                        height: 40,
+                        width: 2
+                    });
+                } catch (e) {
+                    console.error("Print window JsBarcode error (POD):", e);
+                }
+                
+                setTimeout(function() {
+                    window.print();
+                    // window.close();
+                }, 250);
+            };
+        <\/script>
+    `);
+
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+}
+// --- END OF NEW FUNCTION ---
+
+// --- NEW: Print Office Copy Function ---
+function printSelectedShipmentOfficeCopy() {
+    // NOTE: This function relies on global variables:
+    // currentSelectedRef, allOrders, b2b2cDataMap, productDataMap, trackDataMap
+    if (!currentSelectedRef) {
+        console.error('No shipment selected to print.');
+        return;
+    }
+    const order = allOrders.find(o => o.REFERANCE === currentSelectedRef);
+    if (!order) {
+        console.error('Could not find order data for printing.');
+        return;
+    }
+    
+    // Re-build the Office Copy content for printing
+    const cnor = b2b2cDataMap.get(order.CONSIGNOR);
+    const cnee = b2b2cDataMap.get(order.CONSIGNEE);
+    const products = productDataMap.get(order.REFERANCE) || [];
+    const tracking = trackDataMap.get(order.REFERANCE);
+    
+    // --- MODIFIED: Call buildOfficeCopy ---
+    const officeCopyContent = buildOfficeCopy(order, cnor, cnee, products, tracking);
+    const awb = order.AWB_NUMBER || order.REFERANCE;
+
+    const printWindow = window.open('', '', 'height=800,width=800');
+    printWindow.document.write('<html><head><title>Print Office Copy</title>'); // MODIFIED title
+    
+    printWindow.document.write('<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>');
+    
+    printWindow.document.write(`
+        <style>
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            body, html {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                font-family: 'Arial', sans-serif;
+            }
+            .receipt-wrapper { 
+                width: 100% !important;
+                max-width: 100% !important; 
+                border: 1px solid #333 !important; 
+                box-shadow: none !important;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box; 
+                page-break-inside: avoid;
+            }
+        </style>
+    `);
+    printWindow.document.write('</head><body>');
+    
+    // Write the Office Copy HTML
+    printWindow.document.write(officeCopyContent);
+
+    printWindow.document.write(`
+        <script>
+            window.onload = function() {
+                try {
+                    JsBarcode("#receipt-barcode", "${awb}", { // ID is still receipt-barcode
+                        format: "CODE128",
+                        displayValue: true,
+                        text: "${awb}",
+                        fontSize: 14,
+                        margin: 5,
+                        height: 40,
+                        width: 2
+                    });
+                } catch (e) {
+                    console.error("Print window JsBarcode error (Office Copy):", e);
+                }
+                
+                setTimeout(function() {
+                    window.print();
+                    // window.close();
+                }, 250);
+            };
+        <\/script>
+    `);
+
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+}
+// --- END OF NEW FUNCTION ---
