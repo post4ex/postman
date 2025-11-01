@@ -523,6 +523,14 @@ function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type
                 font-weight: bold;
                 background-color: #f4f4f4;
             }
+
+            /* ADDED: Print override to fix centering when right-click printing */
+            @media print {
+                .label-wrapper {
+                    margin: 0 !important;
+                    box-shadow: none !important;
+                }
+            }
         </style>
     `;
     
@@ -2200,6 +2208,4 @@ function printSelectedShipmentOfficeCopy() {
     printWindow.focus();
 }
 // --- END OF NEW FUNCTION ---
-
-
 
