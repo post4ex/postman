@@ -549,10 +549,10 @@ function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type
             </div>
 
             <!-- Row 2: Category, Order ID -->
-            <!-- MODIFIED: Set font to 18px bold and use modeShort -->
+            <!-- MODIFIED: Set font to 18px bold and use modeName (full name) -->
             <div class="label-row">
                 <div class="label-cell w-1-2" style="font-size: 18px; font-weight: bold;">
-                    Mode: ${modeShort}
+                    Mode: ${modeName}
                 </div>
                 <div class="label-cell w-1-2" style="font-size: 18px; font-weight: bold;">
                     Ref No: ${ref}
@@ -1803,9 +1803,9 @@ function printSelectedShipmentLabel() {
             body {
                 display: flex;
                 flex-wrap: wrap;
-                justify-content: space-around;
-                align-items: flex-start;
-                align-content: flex-start;
+                justify-content: flex-start; /* MODIFIED: Aligns to left */
+                align-items: flex-start; /* MODIFIED: Aligns to top */
+                align-content: flex-start; /* MODIFIED: Aligns content to top */
                 gap: 10px; 
             }
             .label-wrapper { 
@@ -2197,3 +2197,5 @@ function printSelectedShipmentOfficeCopy() {
     printWindow.focus();
 }
 // --- END OF NEW FUNCTION ---
+
+
