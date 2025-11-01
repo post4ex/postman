@@ -207,7 +207,6 @@
 
     <!-- 
       *** CRITICAL FIX: Ensure external scripts are loaded before the main inline script. ***
-      The functions printSelectedShipment... must be defined when the onclick handlers are triggered.
     -->
     <script src="docgen.js"></script>
     <script src="layout.js"></script>
@@ -222,6 +221,8 @@
         let trackDataMap = new Map();
         let logsDataMap = new Map();
         let uploadsDataMap = new Map();
+        // *** FIX: Added modeDataMap to the global scope. ***
+        let modeDataMap = new Map(); 
         // -------------------------------------------------------------------
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -293,6 +294,9 @@
                     // Clear maps and repopulate
                     b2b2cDataMap.clear(); productDataMap.clear(); multiboxDataMap.clear();
                     trackDataMap.clear(); logsDataMap.clear(); uploadsDataMap.clear();
+                    // *** FIX: Clear and populate modeDataMap (assuming data structure is in appData.MODE_DATA) ***
+                    modeDataMap.clear();
+                    if (appData.MODE_DATA) appData.MODE_DATA.forEach(m => modeDataMap.set(m.CODE, m.NAME));
                     
                     if (appData.B2B2C) appData.B2B2C.forEach(c => b2b2cDataMap.set(c.UID, c));
                     if (appData.PRODUCT) appData.PRODUCT.forEach(p => { const r = p.RERERANCE || p.REFERANCE; if(r){ if (!productDataMap.has(r)) productDataMap.set(r, []); productDataMap.get(r).push(p); } });
