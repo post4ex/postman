@@ -154,7 +154,7 @@ function renderDocumentWorkshop(order) {
                 text: awbForBarcode,
                 fontSize: 16,
                 margin: 10,
-                height: 70, // Increased height
+                height: 50, // MODIFIED: Changed height from 70 to 50
                 width: 3 // Made bars thicker
             });
         } catch (e) {
@@ -219,7 +219,7 @@ function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type
 
     // --- ADDED: Get full mode name ---
     const modeShort = order.MODE || 'N/A';
-    const modeName = modeDataMap.get(modeShort) || modeShort;
+    const modeName = modeDataMap.get(modeShort) || modeShort; // This is the full name e.g., "SURFACE"
 
     // --- Build Multibox/Summary Table ---
     let summaryTableHtml = '';
@@ -417,10 +417,12 @@ function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type
         </table>
     `;
 
-    // Don't show product table on summary label
-    if (options.type === 'summary') {
-        productTableHtml = '';
-    }
+    // MODIFIED: Removed the block that cleared productTableHtml for 'summary'
+    // ---
+    // if (options.type === 'summary') {
+    //    productTableHtml = '';
+    // }
+    // ---
 
 
     // Self-contained styles for the new label.
@@ -547,12 +549,13 @@ function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type
             </div>
 
             <!-- Row 2: Category, Order ID -->
+            <!-- MODIFIED: Set font to 18px bold and use modeShort -->
             <div class="label-row">
-                <div class="label-cell w-1-2">
-                    Mode: <strong style="font-size: 16px;">${modeName}</strong>
+                <div class="label-cell w-1-2" style="font-size: 18px; font-weight: bold;">
+                    Mode: ${modeShort}
                 </div>
-                <div class="label-cell w-1-2">
-                    Ref No: <strong>${ref}</strong>
+                <div class="label-cell w-1-2" style="font-size: 18px; font-weight: bold;">
+                    Ref No: ${ref}
                 </div>
             </div>
             
@@ -1868,7 +1871,7 @@ function printSelectedShipmentLabel() {
                                 format: "CODE128",
                                 displayValue: false,
                                 margin: 10,
-                                height: 70,
+                                height: 50, // MODIFIED: Changed height from 70 to 50
                                 width: 3
                             });
                         }
