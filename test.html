@@ -213,6 +213,17 @@
     <script src="layout.js"></script>
     
     <script>
+        // --- PROMOTED GLOBAL STATE: Accessible to docgen.js print functions ---
+        let allOrders = [];
+        let currentSelectedRef = null;
+        let b2b2cDataMap = new Map();
+        let productDataMap = new Map();
+        let multiboxDataMap = new Map();
+        let trackDataMap = new Map();
+        let logsDataMap = new Map();
+        let uploadsDataMap = new Map();
+        // -------------------------------------------------------------------
+
         document.addEventListener('DOMContentLoaded', () => {
              // --- DOM Elements ---
             const ui = {
@@ -242,16 +253,6 @@
                 trackingHistoryContainer: document.getElementById('trackingHistoryContainer'),
                 documentCenterContainer: document.getElementById('documentCenterContainer')
             };
-
-            // --- Global State ---
-            let allOrders = [];
-            let currentSelectedRef = null;
-            let b2b2cDataMap = new Map();
-            let productDataMap = new Map();
-            let multiboxDataMap = new Map();
-            let trackDataMap = new Map();
-            let logsDataMap = new Map();
-            let uploadsDataMap = new Map();
 
             // --- Mobile View Functions ---
             const isMobileView = () => window.innerWidth < 768;
