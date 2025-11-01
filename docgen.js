@@ -1792,21 +1792,24 @@ function printSelectedShipmentLabel() {
         <style>
             @page {
                 size: A4 landscape;
-                margin: 10mm; /* Increased margin */
+                margin: 0; /* MODIFIED: Removed page margins */
             }
             body, html {
                 margin: 0;
                 padding: 0;
                 width: 100%;
                 font-family: 'Arial', sans-serif;
+                box-sizing: border-box; /* ADDED */
             }
             body {
                 display: flex;
                 flex-wrap: wrap;
-                justify-content: flex-start; /* MODIFIED: Aligns to left */
-                align-items: flex-start; /* MODIFIED: Aligns to top */
-                align-content: flex-start; /* MODIFIED: Aligns content to top */
+                justify-content: flex-start; /* Aligns to left */
+                align-items: flex-start; /* Aligns to top */
+                align-content: flex-start; /* Aligns content to top */
                 gap: 10px; 
+                padding: 10mm; /* MODIFIED: Added padding to body instead of page margin */
+                box-sizing: border-box; /* ADDED */
             }
             .label-wrapper { 
                 width: 49%;
@@ -2197,5 +2200,6 @@ function printSelectedShipmentOfficeCopy() {
     printWindow.focus();
 }
 // --- END OF NEW FUNCTION ---
+
 
 
