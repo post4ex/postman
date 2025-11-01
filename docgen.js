@@ -523,6 +523,14 @@ function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type
                 font-weight: bold;
                 background-color: #f4f4f4;
             }
+
+            /* ADDED: Print override to fix centering when right-click printing */
+            @media print {
+                .label-wrapper {
+                    margin: 0 !important;
+                    box-shadow: none !important;
+                }
+            }
         </style>
     `;
     
@@ -1792,7 +1800,7 @@ function printSelectedShipmentLabel() {
         <style>
             @page {
                 size: A4 landscape;
-                margin: 0; /* MODIFIED: Removed page margins */
+                margin: 10mm; /* MODIFIED: Restored page margins */
             }
             body, html {
                 margin: 0;
@@ -1808,7 +1816,7 @@ function printSelectedShipmentLabel() {
                 align-items: flex-start; /* Aligns to top */
                 align-content: flex-start; /* Aligns content to top */
                 gap: 10px; 
-                padding: 10mm; /* MODIFIED: Added padding to body instead of page margin */
+                /* MODIFIED: Removed padding, now handled by @page margin */
                 box-sizing: border-box; /* ADDED */
             }
             .label-wrapper { 
@@ -2200,3 +2208,4 @@ function printSelectedShipmentOfficeCopy() {
     printWindow.focus();
 }
 // --- END OF NEW FUNCTION ---
+
