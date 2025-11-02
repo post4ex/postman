@@ -1842,6 +1842,18 @@ function printSelectedShipmentLabel() {
                     justify-content: space-between;
                     overflow: hidden;
                 }
+                /* ADDED: CSS overrides for 4-up scaling */
+                .print-layout-4up-portrait .label-logo { font-size: 14px !important; }
+                .print-layout-4up-portrait span[style*="font-size: 18px"] { font-size: 12px !important; } /* Payment */
+                .print-layout-4up-portrait div[style*="font-size: 20px"] { font-size: 14px !important; } /* Pieces */
+                .print-layout-4up-portrait div[style*="font-size: 18px"] { font-size: 12px !important; } /* Mode/Ref */
+                .print-layout-4up-portrait .font-xxl { font-size: 18px !important; } /* Destination */
+                .print-layout-4up-portrait .barcode-number { font-size: 14px !important; }
+                .print-layout-4up-portrait .label-table { font-size: 9px !important; }
+                .print-layout-4up-portrait .label-cell { padding: 3px 4px !important; }
+                /* consignee font is handled by JS logic */
+                .print-layout-4up-portrait .label-header-sm { font-size: 8px !important; }
+                /* END ADDED */
                 .label-wrapper .label-row:last-child {
                     margin-top: auto;
                     border-bottom: none !important;
@@ -1916,7 +1928,8 @@ function printSelectedShipmentLabel() {
     }
     // --- END MODIFICATION ---
 
-    printWindow.document.write('</head><body>');
+    // MODIFIED: Added class to body for CSS targeting
+    printWindow.document.write('</head><body class="print-layout-' + printLayout + '">');
     
     // 1. Generate all individual box labels
     if (multiboxItems.length > 0) {
@@ -1939,18 +1952,43 @@ function printSelectedShipmentLabel() {
         <script>
             window.onload = function() {
                 try {
+                    // --- MODIFICATION: Set options based on layout ---
+                    const layout = "${printLayout}";
+                    let barcodeOptions, fontOptions;
+
+                    if (layout === '4up-portrait') {
+                        barcodeOptions = {
+                            format: "CODE128",
+                            displayValue: false,
+                            margin: 5,
+                            height: 25, // 50% height
+                            width: 2    // 66% width (1.5 is too small)
+                        };
+                        fontOptions = {
+                            max: 24, // 50% max
+                            min: 6   // 75% min
+                        };
+                    } else { // Default to 2up-landscape
+                        barcodeOptions = {
+                            format: "CODE128",
+                            displayValue: false,
+                            margin: 10,
+                            height: 50,
+                            width: 3
+                        };
+                        fontOptions = {
+                            max: 48,
+                            min: 8
+                        };
+                    }
+                    // --- END MODIFICATION ---
+
                     // --- CRITICAL: Generate barcodes *inside* the print window ---
                     const allSvgs = document.querySelectorAll('.barcode-svg');
                     allSvgs.forEach((svgElement, index) => {
                         const barcodeValue = svgElement.getAttribute('data-barcode-value');
                         if (barcodeValue) {
-                            JsBarcode(svgElement, barcodeValue, {
-                                format: "CODE128",
-                                displayValue: false,
-                                margin: 10,
-                                height: 50, // MODIFIED: Changed height from 70 to 50
-                                width: 3
-                            });
+                            JsBarcode(svgElement, barcodeValue, barcodeOptions); // Use options
                         }
                     });
 
@@ -1960,8 +1998,9 @@ function printSelectedShipmentLabel() {
                         const details = cell.querySelector('.consignee-details');
                         if (!details) return;
 
-                        const maxFontSize = 48;
-                        const minFontSize = 8; // MODIFIED: Lowered from 12 to 8
+                        // Use options
+                        const maxFontSize = fontOptions.max;
+                        const minFontSize = fontOptions.min;
                         let currentFontSize = maxFontSize; // Start at the max size
 
                         while (currentFontSize > minFontSize) {
