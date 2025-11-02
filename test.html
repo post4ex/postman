@@ -660,9 +660,9 @@
                         p.forEach(i => {
                             const docNumText = i.DOC_NUMBER || 'N/A';
                             const ewayNumText = i.EWAY_IF || 'N/A';
-                            const docUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() !== 'EWAY');
-                            // *** MODIFICATION START: Find EWay Bill by EWAY_IF number ***
-                            const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.EWAY_IF && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWAY');
+                            const docUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() !== 'EWB');
+                            // *** MODIFICATION START: Find EWay Bill by EWAY_IF number and check for 'EWB' ***
+                            const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.EWAY_IF && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWB');
                             // *** MODIFICATION END ***
                             const docCell = docUpload ? `<a href="${docUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${docNumText}</a>` : docNumText;
                             const ewayCell = ewayUpload ? `<a href="${ewayUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${ewayNumText}</a>` : ewayNumText;
@@ -681,9 +681,9 @@
                         p.forEach(i => { 
                             const docNumText = i.DOC_NUMBER || 'N/A';
                             const ewayNumText = i.EWAY_IF || 'N/A';
-                            const docUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() !== 'EWAY');
-                            // *** MODIFICATION START: Find EWay Bill by EWAY_IF number ***
-                            const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.EWAY_IF && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWAY');
+                            const docUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() !== 'EWB');
+                            // *** MODIFICATION START: Find EWay Bill by EWAY_IF number and check for 'EWB' ***
+                            const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.EWAY_IF && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWB');
                             // *** MODIFICATION END ***
                             const docCell = docUpload ? `<a href="${docUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${docNumText}</a>` : docNumText;
                             const ewayCell = ewayUpload ? `<a href="${ewayUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${ewayNumText}</a>` : ewayNumText;
