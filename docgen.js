@@ -1827,8 +1827,9 @@ function printSelectedShipmentLabel() {
                     box-sizing: border-box;
                 }
                 .label-wrapper { 
-                    width: 49%;
-                    max-width: 49% !important; 
+                    /* MODIFIED: Replaced 49% with calc() for precision */
+                    width: calc(50% - 5px);
+                    max-width: calc(50% - 5px) !important; 
                     border: 1px solid #000 !important;
                     box-shadow: none !important;
                     margin: 0;
@@ -1882,8 +1883,9 @@ function printSelectedShipmentLabel() {
                     box-sizing: border-box;
                 }
                 .label-wrapper { 
-                    width: 49%;
-                    max-width: 49% !important; 
+                    /* MODIFIED: Replaced 49% with calc() for precision */
+                    width: calc(50% - 5px);
+                    max-width: calc(50% - 5px) !important; 
                     border: 1px solid #000 !important;
                     box-shadow: none !important;
                     margin: 0;
@@ -2273,5 +2275,4 @@ function printSelectedShipmentOfficeCopy() {
     printWindow.focus();
 }
 // --- END OF NEW FUNCTION ---
-
 
