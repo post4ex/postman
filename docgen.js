@@ -1821,16 +1821,15 @@ function printSelectedShipmentLabel() {
                 body {
                     display: flex;
                     flex-wrap: wrap;
-                    justify-content: flex-start;
-                    align-items: flex-start;
+                    /* MODIFIED: Replaced gap/calc with space-between */
+                    justify-content: space-between;
                     align-content: flex-start;
-                    gap: 10px; 
                     box-sizing: border-box;
                 }
                 .label-wrapper { 
-                    /* MODIFIED: Replaced 49% with calc() for precision */
-                    width: calc(50% - 5px);
-                    max-width: calc(50% - 5px) !important; 
+                    /* MODIFIED: Using 49% width */
+                    width: 49%;
+                    max-width: 49% !important; 
                     border: 1px solid #000 !important;
                     box-shadow: none !important;
                     margin: 0;
@@ -1877,16 +1876,15 @@ function printSelectedShipmentLabel() {
                 body {
                     display: flex;
                     flex-wrap: wrap;
-                    justify-content: flex-start;
-                    align-items: flex-start;
+                    /* MODIFIED: Replaced gap/calc with space-between */
+                    justify-content: space-between;
                     align-content: flex-start;
-                    gap: 10px; 
                     box-sizing: border-box;
                 }
                 .label-wrapper { 
-                    /* MODIFIED: Replaced 49% with calc() for precision */
-                    width: calc(50% - 5px);
-                    max-width: calc(50% - 5px) !important; 
+                    /* MODIFIED: Using 49% width */
+                    width: 49%;
+                    max-width: 49% !important; 
                     border: 1px solid #000 !important;
                     box-shadow: none !important;
                     margin: 0;
