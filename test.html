@@ -294,9 +294,10 @@
                     // Clear maps and repopulate
                     b2b2cDataMap.clear(); productDataMap.clear(); multiboxDataMap.clear();
                     trackDataMap.clear(); logsDataMap.clear(); uploadsDataMap.clear();
-                    // *** FIX: Clear and populate modeDataMap (assuming data structure is in appData.MODE_DATA) ***
+                    // *** FIX: Clear and populate modeDataMap ***
                     modeDataMap.clear();
-                    if (appData.MODE_DATA) appData.MODE_DATA.forEach(m => modeDataMap.set(m.CODE, m.NAME));
+                    // --- MODIFIED: Changed to use appData.MODE, m.SHORT, and m.MODE ---
+                    if (appData.MODE) appData.MODE.forEach(m => modeDataMap.set(m.SHORT, m.MODE));
                     
                     if (appData.B2B2C) appData.B2B2C.forEach(c => b2b2cDataMap.set(c.UID, c));
                     if (appData.PRODUCT) appData.PRODUCT.forEach(p => { const r = p.RERERANCE || p.REFERANCE; if(r){ if (!productDataMap.has(r)) productDataMap.set(r, []); productDataMap.get(r).push(p); } });
@@ -881,9 +882,16 @@
                 });
                 h += `</tbody></table></div>`;
                 
+                // --- MODIFIED: Added Label Layout Selector Dropdown ---
                 ui.documentCenterContainer.innerHTML = `<div class="detail-card-header flex justify-between items-center">
                                                             <h3 class="font-semibold text-gray-700">Document Center</h3>
-                                                            <button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">UPLOAD</button>
+                                                            <div class="flex items-center gap-2">
+                                                                <select id="label-print-layout" class="rounded-md border border-gray-300 text-xs py-1 px-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" style="padding-right: 1.75rem;">
+                                                                    <option value="2up-landscape">2-up Landscape</option>
+                                                                    <option value="4up-portrait">4-up Portrait</option>
+                                                                </select>
+                                                                <button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">UPLOAD</button>
+                                                            </div>
                                                         </div><div class="detail-card-body">${h}</div>`;
              }
 
@@ -891,3 +899,4 @@
     </script>
 </body>
 </html>
+
