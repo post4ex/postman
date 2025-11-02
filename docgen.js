@@ -1789,67 +1789,132 @@ function printSelectedShipmentLabel() {
     const awb = order.AWB_NUMBER || order.REFERANCE;
     const pieces = multiboxItems.length > 0 ? multiboxItems.length : (order.PIECS || 1);
 
+    // --- MODIFIED: Read layout from HTML element ---
+    // User must add a <select id="label-print-layout"> with <option value="2up-landscape"> and <option value="4up-portrait">
+    const layoutSelect = document.getElementById('label-print-layout');
+    const printLayout = layoutSelect ? layoutSelect.value : '2up-landscape';
+    // --- END MODIFICATION ---
+
     const printWindow = window.open('', '', 'height=600,width=800');
     printWindow.document.write('<html><head><title>Print Label</title>');
     
     // Add JsBarcode script
     printWindow.document.write('<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>');
     
-    // Write print-specific overrides for landscape A4, 2-up printing
-    printWindow.document.write(`
-        <style>
-            @page {
-                size: A4 landscape;
-                margin: 10mm; /* MODIFIED: Restored page margins */
-            }
-            body, html {
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                font-family: 'Arial', sans-serif;
-                box-sizing: border-box; /* ADDED */
-            }
-            body {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: flex-start; /* Aligns to left */
-                align-items: flex-start; /* Aligns to top */
-                align-content: flex-start; /* Aligns content to top */
-                gap: 10px; 
-                /* MODIFIED: Removed padding, now handled by @page margin */
-                box-sizing: border-box; /* ADDED */
-            }
-            .label-wrapper { 
-                width: 49%;
-                max-width: 49% !important; 
-                border: 1px solid #000 !important;
-                box-shadow: none !important;
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box; 
-                page-break-inside: avoid;
-                height: 190mm !important; /* 210mm page height - 10mm top - 10mm bottom */
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                overflow: hidden;
-            }
-            .label-wrapper .label-row:last-child {
-                margin-top: auto;
-                border-bottom: none !important;
-            }
-            .label-wrapper .label-row:nth-of-type(5) { /* Consignee */
-                flex-grow: 1;
-                overflow-y: hidden;
-                min-height: 0;
-            }
-            .label-wrapper .label-row:nth-of-type(6) { /* Tables */
-                flex-shrink: 1;
-                overflow-y: hidden;
-                min-height: 0;
-            }
-        </style>
-    `);
+    // --- MODIFIED: Write styles based on layout choice ---
+    if (printLayout === '4up-portrait') {
+        // --- 4-UP PORTRAIT STYLES ---
+        printWindow.document.write(`
+            <style>
+                @page {
+                    size: A4 portrait;
+                    margin: 10mm; 
+                }
+                body, html {
+                    margin: 0;
+                    padding: 0;
+                    width: 100%;
+                    font-family: 'Arial', sans-serif;
+                    box-sizing: border-box;
+                }
+                body {
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: flex-start;
+                    align-items: flex-start;
+                    align-content: flex-start;
+                    gap: 10px; 
+                    box-sizing: border-box;
+                }
+                .label-wrapper { 
+                    width: 49%;
+                    max-width: 49% !important; 
+                    border: 1px solid #000 !important;
+                    box-shadow: none !important;
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box; 
+                    page-break-inside: avoid;
+                    height: 135mm !important; /* Approx half of A4 portrait height minus margins */
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    overflow: hidden;
+                }
+                .label-wrapper .label-row:last-child {
+                    margin-top: auto;
+                    border-bottom: none !important;
+                }
+                .label-wrapper .label-row:nth-of-type(5) { /* Consignee */
+                    flex-grow: 1;
+                    overflow-y: hidden;
+                    min-height: 0;
+                }
+                .label-wrapper .label-row:nth-of-type(6) { /* Tables */
+                    flex-shrink: 1;
+                    overflow-y: hidden;
+                    min-height: 0;
+                }
+            </style>
+        `);
+    } else {
+        // --- 2-UP LANDSCAPE STYLES (Default) ---
+        printWindow.document.write(`
+            <style>
+                @page {
+                    size: A4 landscape;
+                    margin: 10mm;
+                }
+                body, html {
+                    margin: 0;
+                    padding: 0;
+                    width: 100%;
+                    font-family: 'Arial', sans-serif;
+                    box-sizing: border-box;
+                }
+                body {
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: flex-start;
+                    align-items: flex-start;
+                    align-content: flex-start;
+                    gap: 10px; 
+                    box-sizing: border-box;
+                }
+                .label-wrapper { 
+                    width: 49%;
+                    max-width: 49% !important; 
+                    border: 1px solid #000 !important;
+                    box-shadow: none !important;
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box; 
+                    page-break-inside: avoid;
+                    height: 190mm !important; /* Full A4 landscape height minus margins */
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    overflow: hidden;
+                }
+                .label-wrapper .label-row:last-child {
+                    margin-top: auto;
+                    border-bottom: none !important;
+                }
+                .label-wrapper .label-row:nth-of-type(5) { /* Consignee */
+                    flex-grow: 1;
+                    overflow-y: hidden;
+                    min-height: 0;
+                }
+                .label-wrapper .label-row:nth-of-type(6) { /* Tables */
+                    flex-shrink: 1;
+                    overflow-y: hidden;
+                    min-height: 0;
+                }
+            </style>
+        `);
+    }
+    // --- END MODIFICATION ---
+
     printWindow.document.write('</head><body>');
     
     // 1. Generate all individual box labels
@@ -2208,4 +2273,5 @@ function printSelectedShipmentOfficeCopy() {
     printWindow.focus();
 }
 // --- END OF NEW FUNCTION ---
+
 
