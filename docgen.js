@@ -484,7 +484,7 @@ function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type
             }
             .barcode-container {
                 text-align: center;
-                padding: 10px 20px;
+                padding: 4px 20px; /* MODIFIED: Reduced top/bottom padding from 10px */
             }
             .barcode-container svg {
                 width: 100%;
@@ -495,7 +495,7 @@ function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type
                 font-weight: bold;
                 text-align: center;
                 letter-spacing: 2px;
-                margin-top: 4px;
+                margin-top: 2px; /* MODIFIED: Reduced margin-top from 4px */
             }
             /* --- MODIFIED: Removed fixed font sizes, set 12px as base/min --- */
             .consignee-details {
@@ -1960,7 +1960,7 @@ function printSelectedShipmentLabel() {
                         barcodeOptions = {
                             format: "CODE128",
                             displayValue: false,
-                            margin: 5,
+                            margin: 2, // MODIFIED: Reduced from 5
                             height: 25, // 50% height
                             width: 2    // 66% width (1.5 is too small)
                         };
@@ -1972,7 +1972,7 @@ function printSelectedShipmentLabel() {
                         barcodeOptions = {
                             format: "CODE128",
                             displayValue: false,
-                            margin: 10,
+                            margin: 4, // MODIFIED: Reduced from 10
                             height: 50,
                             width: 3
                         };
