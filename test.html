@@ -108,7 +108,7 @@
                 <div class="flex gap-2">
                     <input type="text" id="searchShipments" placeholder="Search AWB, Ref, Client..." class="form-input w-full text-sm">
                     <button id="filterToggleBtn" class="p-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                     </button>
                 </div>
             </div>
@@ -294,10 +294,13 @@
                     // Clear maps and repopulate
                     b2b2cDataMap.clear(); productDataMap.clear(); multiboxDataMap.clear();
                     trackDataMap.clear(); logsDataMap.clear(); uploadsDataMap.clear();
-                    // *** FIX: Clear and populate modeDataMap ***
+                    // *** FIX: Clear and populate modeDataMap (assuming data structure is in appData.MODE_DATA) ***
                     modeDataMap.clear();
-                    // --- MODIFIED: Changed to use appData.MODE, m.SHORT, and m.MODE ---
-                    if (appData.MODE) appData.MODE.forEach(m => modeDataMap.set(m.SHORT, m.MODE));
+                    // *** MODIFICATION START: Use appData.MODE and correct properties ***
+                    if (appData.MODE) {
+                        appData.MODE.forEach(m => modeDataMap.set(m.SHORT, m.MODE));
+                    }
+                    // *** MODIFICATION END ***
                     
                     if (appData.B2B2C) appData.B2B2C.forEach(c => b2b2cDataMap.set(c.UID, c));
                     if (appData.PRODUCT) appData.PRODUCT.forEach(p => { const r = p.RERERANCE || p.REFERANCE; if(r){ if (!productDataMap.has(r)) productDataMap.set(r, []); productDataMap.get(r).push(p); } });
@@ -658,7 +661,9 @@
                             const docNumText = i.DOC_NUMBER || 'N/A';
                             const ewayNumText = i.EWAY_IF || 'N/A';
                             const docUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() !== 'EWAY');
-                            const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWAY');
+                            // *** MODIFICATION START: Find EWay Bill by EWAY_IF number ***
+                            const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.EWAY_IF && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWAY');
+                            // *** MODIFICATION END ***
                             const docCell = docUpload ? `<a href="${docUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${docNumText}</a>` : docNumText;
                             const ewayCell = ewayUpload ? `<a href="${ewayUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${ewayNumText}</a>` : ewayNumText;
 
@@ -677,7 +682,9 @@
                             const docNumText = i.DOC_NUMBER || 'N/A';
                             const ewayNumText = i.EWAY_IF || 'N/A';
                             const docUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() !== 'EWAY');
-                            const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.DOC_NUMBER && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWAY');
+                            // *** MODIFICATION START: Find EWay Bill by EWAY_IF number ***
+                            const ewayUpload = u.find(up => up.UPLOAD_TYPE === 'Product' && up.DOC_NUMBER === i.EWAY_IF && up.DOC_TYPE && up.DOC_TYPE.toUpperCase() === 'EWAY');
+                            // *** MODIFICATION END ***
                             const docCell = docUpload ? `<a href="${docUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${docNumText}</a>` : docNumText;
                             const ewayCell = ewayUpload ? `<a href="${ewayUpload.FILE_URL}" target="_blank" class="text-blue-600 hover:underline">${ewayNumText}</a>` : ewayNumText;
 
@@ -780,7 +787,8 @@
                             else if(up.UPLOAD_TYPE==='KYC') det=`${up.CUSTOMER_UID||'N/A'}(${up.KYC_TYPE||'N/A'})`; 
                             else if(up.UPLOAD_TYPE==='Product') det=`${up.DOC_NUMBER||'N/A'}(${up.DOC_TYPE||'N/A'})`; 
                             else det=up.STATUS_REMARK||'N/A'; 
-                            h_body+=`<tr><td class="px-4 py-2">${up.UPLOAD_TYPE||'N/A'}</td><td class="px-4 py-2">${idt||'N/A'}</td><td class="px-4 py-2">${det}</td><td class_A="px-4 py-2">${ud}</td><td class="px-4 py-2 text-center"><a href="${up.FILE_URL}" target="_blank" title="Open" class="p-1.5 bg-gray-500 text-white rounded hover:bg-gray-600 inline-flex"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a></td></tr>`; 
+                            // *** FIX: Corrected class_A typo ***
+                            h_body+=`<tr><td class="px-4 py-2">${up.UPLOAD_TYPE||'N/A'}</td><td class="px-4 py-2">${idt||'N/A'}</td><td class="px-4 py-2">${det}</td><td class="px-4 py-2">${ud}</td><td class="px-4 py-2 text-center"><a href="${up.FILE_URL}" target="_blank" title="Open" class="p-1.5 bg-gray-500 text-white rounded hover:bg-gray-600 inline-flex"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a></td></tr>`; 
                         });
                         h_body += `</tbody></table></div>`; 
                         h_body += `</div>`; 
@@ -878,20 +886,24 @@
                 h += `<div class="hidden sm:block overflow-x-auto border rounded-md"><table id="docCenterTable" class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Sl.No</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Date</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">System</th><th class="px-2 py-1 text-left font-medium text-gray-500 uppercase">Manual</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
                 rows.forEach(row => { 
                     if (row.condition === undefined || row.condition === true) 
-                        h += `<tr><td class="px-2 py-1">${row.sl}</td><td class="px-2 py-1">${row.date}</td><td class="px-2 py-1">${row.system}</td><td class_A="px-2 py-1">${row.manual}</td></tr>`; 
+                        // *** FIX: Corrected class_A typo ***
+                        h += `<tr><td class="px-2 py-1">${row.sl}</td><td class="px-2 py-1">${row.date}</td><td class="px-2 py-1">${row.system}</td><td class="px-2 py-1">${row.manual}</td></tr>`; 
                 });
                 h += `</tbody></table></div>`;
                 
-                // --- MODIFIED: Added Label Layout Selector Dropdown ---
+                // *** MODIFICATION START: Added layout selector ***
+                h += `<div class="flex justify-end items-center gap-2 pt-3">
+                        <label for="label-print-layout" class="text-xs text-gray-600">Label Layout:</label>
+                        <select id="label-print-layout" class="form-input text-xs" style="width: auto; padding: 2px 6px;">
+                            <option value="2up-landscape">2-up Landscape (1x2)</option>
+                            <option value="4up-portrait">4-up Portrait (2x2)</option>
+                        </select>
+                      </div>`;
+                // *** MODIFICATION END ***
+
                 ui.documentCenterContainer.innerHTML = `<div class="detail-card-header flex justify-between items-center">
                                                             <h3 class="font-semibold text-gray-700">Document Center</h3>
-                                                            <div class="flex items-center gap-2">
-                                                                <select id="label-print-layout" class="rounded-md border border-gray-300 text-xs py-1 px-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" style="padding-right: 1.75rem;">
-                                                                    <option value="2up-landscape">2-up Landscape</option>
-                                                                    <option value="4up-portrait">4-up Portrait</option>
-                                                                </select>
-                                                                <button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">UPLOAD</button>
-                                                            </div>
+                                                            <button class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200">UPLOAD</button>
                                                         </div><div class="detail-card-body">${h}</div>`;
              }
 
