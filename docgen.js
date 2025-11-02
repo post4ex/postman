@@ -501,6 +501,7 @@ function buildLabel(order, cnor, cnee, products, multiboxItems, options = { type
             .consignee-details {
                 line-height: 1.4; /* Set a default line height */
                 font-size: 12px; /* Set the default/min font size */
+                overflow-wrap: break-word; /* ADDED: break long words */
             }
             .consignee-details strong {
                 font-size: 13px; /* Set a default/min strong size */
@@ -1962,7 +1963,7 @@ function printSelectedShipmentLabel() {
                         if (!details) return;
 
                         const maxFontSize = 48;
-                        const minFontSize = 12;
+                        const minFontSize = 8; // MODIFIED: Lowered from 12 to 8
                         let currentFontSize = maxFontSize; // Start at the max size
 
                         while (currentFontSize > minFontSize) {
