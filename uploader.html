@@ -467,15 +467,15 @@
         }
     </style>
 </head>
-<!-- *** MODIFIED: Added classes for flex layout *** -->
-<body class="bg-gray-100 flex flex-col h-screen">
+<!-- *** MODIFIED: Reverted to min-h-screen to allow page scrolling *** -->
+<body class="bg-gray-100 flex flex-col min-h-screen">
  
     <!-- *** NEW: Header Placeholder *** -->
     <div id="header-placeholder"></div>
  
     <!-- *** NEW: Main wrapper to fill space between header/footer *** -->
-    <!-- *** MODIFIED: Added overflow-hidden to constrain the height *** -->
-    <main class="flex-grow flex overflow-hidden">
+    <!-- *** MODIFIED: Removed overflow-hidden to allow page scrolling *** -->
+    <main class="flex-grow flex">
         
         <!-- *** MODIFIED: Removed inline style, 100% height is set in <style> *** -->
         <div class="main-container">
@@ -2080,8 +2080,58 @@
                 console.error("Failed to parse cached appData on load:", e);
                 updateStatus("Error loading cached data. Waiting for network...", true);
              }
+ 
+ 
+             // --- *** NEW: Dynamic Height for Side Panel *** ---
+             function setPanelHeight() {
+                const listContainer = document.getElementById('miniOrderListContainer');
+                const rightPanel = document.querySelector('.right-panel');
+                if (!listContainer || !rightPanel) return;
+ 
+                // Find the elements that take up vertical space
+                const header = document.querySelector('header');
+                const footer = document.querySelector('footer');
+                const listHeader = document.querySelector('.right-panel-header');
+                const loadMoreButton = document.getElementById('loadMoreBtn');
+ 
+                const headerHeight = header ? header.offsetHeight : 0;
+                const footerHeight = footer ? footer.offsetHeight : 0;
+                const listHeaderHeight = listHeader ? listHeader.offsetHeight : 0;
+                
+                // Check if loadMoreBtn is visible
+                const loadMoreHeight = (loadMoreButton && window.getComputedStyle(loadMoreButton).display !== 'none') 
+                                     ? loadMoreButton.offsetHeight + 16 // 1rem margin
+                                     : 16; // 1rem padding-bottom
+ 
+                const viewportHeight = window.innerHeight;
+                
+                // Calculate available height
+                const availableHeight = viewportHeight - headerHeight - footerHeight - listHeaderHeight - loadMoreHeight - 40; // 40px for padding/margins
+ 
+                const minHeight = 300; // Minimum 300px height
+                
+                let finalHeight = availableHeight > minHeight ? availableHeight : minHeight;
+                
+                // In case the page content is taller than the viewport, we don't want to overflow
+                const mainContainerTop = rightPanel.getBoundingClientRect().top;
+                const maxPossibleHeight = viewportHeight - mainContainerTop - footerHeight - listHeaderHeight - loadMoreHeight;
 
-
+                if (finalHeight > maxPossibleHeight) {
+                    finalHeight = maxPossibleHeight > minHeight ? maxPossibleHeight : minHeight;
+                }
+ 
+                listContainer.style.height = `${finalHeight}px`;
+                listContainer.style.maxHeight = `${finalHeight}px`;
+             }
+             
+             // Set height after layout.js loads the footer
+             window.addEventListener('footerLoaded', setPanelHeight);
+             
+             // Recalculate on window resize
+             window.addEventListener('resize', setPanelHeight);
+             // --- *** END: Dynamic Height *** ---
+ 
+ 
              // 5. NEW: Add Left Panel UI Listeners
              uploadTypeStrip.addEventListener('click', (e) => {
                 if (e.target.classList.contains('type-btn')) {
