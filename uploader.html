@@ -497,7 +497,7 @@
             /* *** NEW: Style for the mobile order list *** */
             #mobile-order-list-placeholder .right-panel {
                 height: auto;
-                max-height: 60vh; /* 60% of viewport height */
+                max-height: 50vh; /* 50% of viewport height */
                 border-left: none;
                 border-bottom: 1px solid #e2e8f0;
                 margin-top: 1rem; /* Space from status bar */
@@ -1359,6 +1359,17 @@
                         if (selectedLi) {
                             selectedLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
+
+                        // --- *** NEW: Auto-hide list on mobile after selection *** ---
+                        if (window.innerWidth < 1024) {
+                            const panel = mobilePlaceholder.querySelector('.right-panel');
+                            if (panel && !panel.classList.contains('collapsed')) {
+                                panel.classList.add('collapsed');
+                                if(toggleOrderListBtn) toggleOrderListBtn.classList.add('collapsed');
+                            }
+                            // Scroll to the tasks, not the list
+                            dynamicInputArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
                     } else {
                         // No match found
                         updateStatus(`Barcode detected: ${barcodeValue} (No matching order found).`);
@@ -1509,6 +1520,17 @@
                         const selectedLi = orderList.querySelector(`li[data-order-ref="${selectedOrder.REFERANCE}"]`);
                         if (selectedLi) {
                             selectedLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+
+                        // --- *** NEW: Auto-hide list on mobile after selection *** ---
+                        if (window.innerWidth < 1024) {
+                            const panel = mobilePlaceholder.querySelector('.right-panel');
+                            if (panel && !panel.classList.contains('collapsed')) {
+                                panel.classList.add('collapsed');
+                                if(toggleOrderListBtn) toggleOrderListBtn.classList.add('collapsed');
+                            }
+                            // Scroll to the tasks, not the list
+                            dynamicInputArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }
                     } else {
                         // No match found - put in filter box
@@ -2376,7 +2398,7 @@
                         mobilePlaceholder.appendChild(rightPanelEl);
                     }
                     rightPanelEl.style.height = 'auto';
-                    rightPanelEl.style.maxHeight = '60vh'; // Set mobile height
+                    rightPanelEl.style.maxHeight = '50vh'; // Set mobile height
                     rightPanelEl.style.overflow = 'hidden'; // Keep internal flex scroll
                     rightPanelEl.style.borderLeft = 'none';
                     rightPanelEl.style.borderBottom = '1px solid #e2e8f0';
