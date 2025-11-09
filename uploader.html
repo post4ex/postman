@@ -49,11 +49,11 @@
             max-width: 20%;
             background-color: #f7fafc; /* Was e0e0e0 */
             border-left: 1px solid #e2e8f0; /* Optional divider */
-            overflow-y: auto;
+            /* overflow-y: auto;  <-- REMOVED */
             display: flex;
             flex-direction: column; /* To make list scrollable */
         }
-
+ 
         /* --- STYLES FROM V1 (Controls Banner) --- */
         #main-controls-strip {
             width: 100%; 
@@ -468,8 +468,8 @@
     </style>
 </head>
 <!-- *** MODIFIED: Added classes for flex layout *** -->
-<body class="bg-gray-100 flex flex-col min-h-screen">
-
+<body class="bg-gray-100 flex flex-col h-screen">
+ 
     <!-- *** NEW: Header Placeholder *** -->
     <div id="header-placeholder"></div>
 
