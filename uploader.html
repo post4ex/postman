@@ -5,33 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uploader - Postman</title>
     
-    <!-- Global stylesheet from your environment -->
-    <link href="style.css" rel="stylesheet">
+    <!-- Google Fonts & Tailwind CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Cropper.js CSS (Specific to this page) -->
+    <!-- Cropper.js CSS (from V1) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     
+    <!-- *** NEW: Added Font Awesome for footer icons *** -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- *** NEW: Added main stylesheet for site-wide styles (FAB, modals) *** -->
+    <link rel="stylesheet" href="style.css">
+
     <style>
         /* Basic Reset */
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+            /* REMOVED margin: 0; padding: 0; (Handled by Tailwind) */
         }
 
-        /* * MODIFICATION: Removed html, body height/width/overflow. 
-         * Kept font-family. Body overflow is handled by the class.
-        */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        /* * MODIFICATION: Changed height from 100vh to calc(100vh - 5.5rem)
-         * This accounts for the 5.5rem (88px) height of the sticky header.
-        */
+        /* *** MODIFIED: Removed html, body styles. Now handled by body class. *** */
+        
+        /* Main Container */
         .main-container {
             display: flex;
-            height: calc(100vh - 5.5rem); /* 100vh - header height (h-14 logo + py-4 padding) */
+            /* *** MODIFIED: Changed 100vh to 100% to fill the <main> tag *** */
+            height: 100%; 
             width: 100%;
         }
 
@@ -39,7 +39,7 @@
         .left-panel {
             flex: 0 0 80%;
             max-width: 80%;
-            background-color: #ffffff;
+            background-color: #ffffff; /* Was f0f0f0 */
             overflow-y: auto; /* Adds scrollbar if content is too long */
         }
 
@@ -47,7 +47,7 @@
         .right-panel {
             flex: 0 0 20%;
             max-width: 20%;
-            background-color: #f7fafc;
+            background-color: #f7fafc; /* Was e0e0e0 */
             border-left: 1px solid #e2e8f0; /* Optional divider */
             overflow-y: auto;
             display: flex;
@@ -65,10 +65,6 @@
             padding: 8px; 
             background-color: #e9ecef;
             box-sizing: border-box;
-            /* NEW: Make controls banner sticky */
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }
         .upload-type-strip, .button-group {
             display: flex; 
@@ -169,7 +165,7 @@
         }
         
         /* Preview elements inside the view area */
-        #image-preview { display: none; }
+        #image-preview { display: none; } /* <<< THIS IS THE FIX. It should always be hidden. */
         #camera-feed, #preview-canvas { 
             width: 100%; 
             height: 100%; 
@@ -407,11 +403,6 @@
             padding: 1rem;
             border-bottom: 1px solid #e2e8f0;
             flex-shrink: 0; 
-            /* NEW: Make header sticky */
-            position: sticky;
-            top: 0;
-            background-color: #f7fafc; /* Match panel bg */
-            z-index: 1;
         }
         .right-panel-header input {
             width: 100%;
@@ -465,10 +456,6 @@
             border-radius: 0.375rem;
             cursor: pointer;
             flex-shrink: 0; 
-            /* NEW: Make sticky at the bottom */
-            position: sticky;
-            bottom: 1rem;
-            z-index: 1;
         }
         #loadMoreBtn:hover { background-color: #e0e7ff; }
         #loadMoreBtn:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
@@ -480,129 +467,108 @@
         }
     </style>
 </head>
-<!-- MODIFICATION: Added body classes -->
-<body class="bg-gray-100 overflow-hidden">
+<!-- *** MODIFIED: Added classes for flex layout *** -->
+<body class="bg-gray-100 flex flex-col min-h-screen">
 
-    <!-- NEW: Standard Header Placeholder -->
+    <!-- *** NEW: Header Placeholder *** -->
     <div id="header-placeholder"></div>
 
-    <!-- This is the entire body content from the original uploader.html -->
-    <div class="main-container">
-        <!-- 80% Left Panel -->
-        <div class="left-panel">
-            <!-- Main Controls Banner (from V1) -->
-            <div id="main-controls-strip">
-                <div class="upload-type-strip">
-                    <button class="type-btn v1-btn" data-type="POD">POD</button>
-                    <button class="type-btn v1-btn" data-type="Reciept">Reciept</button>
-                    <button class="type-btn v1-btn" data-type="KYC">KYC</button>
-                    <button class="type-btn v1-btn" data-type="Product">Product</button>
-                    <button class="type-btn v1-btn" data-type="MultiBox">MultiBox</button>
-                </div>
-                <div class="separator"></div>
-                <div class="button-group">
-                    <button id="camera-btn" class="v1-btn">Camera</button>
-                    <button id="upload-btn" class="v1-btn">Upload</button>
-                    <button id="rotate-btn" class="v1-btn">Rotate</button>
-                    <button id="lock-btn" class="v1-btn">Lock</button>
-                    <button id="cancel-btn" class="v1-btn">Cancel</button>
-                    <button id="cancel-all-btn" class="v1-btn">Cancel All</button>
-                    <input type="file" id="file-input" accept="image/*,application/pdf" multiple style="display: none;">
-                </div>
-            </div>
-
-            <!-- Wrapper for content, to restore padding -->
-            <div class="p-5"> 
-
-                <!-- Hidden input for GScript URL (from V1) -->
-                <input type="hidden" id="gscript-url" value="https://script.google.com/macros/s/AKfycbwkC3OXNACPPH-LLPJyhkZKaDh6VtNgGbp8lMQbzz1XF327IN_OhFEEapOzNm3REbn5/exec">
-
-                <!-- Image Scroller (from V1) -->
-                <div id="image-scroller-container"><div id="image-scroller"></div></div>
-
-                <!-- Inline Cropper (from V1) -->
-                <div id="inline-cropper-wrapper">
-                    <div id="cropper-container">
-                        <img id="cropper-image" src="">
+    <!-- *** NEW: Main wrapper to fill space between header/footer *** -->
+    <main class="flex-grow flex">
+        
+        <!-- *** MODIFIED: Removed inline style, 100% height is set in <style> *** -->
+        <div class="main-container">
+            <!-- 80% Left Panel -->
+            <div class="left-panel">
+                <!-- Main Controls Banner (from V1) -->
+                <div id="main-controls-strip">
+                    <div class="upload-type-strip">
+                        <!-- REMOVED 'active' class from POD button -->
+                        <button class="type-btn v1-btn" data-type="POD">POD</button>
+                        <button class="type-btn v1-btn" data-type="Reciept">Reciept</button>
+                        <button class="type-btn v1-btn" data-type="KYC">KYC</button>
+                        <button class="type-btn v1-btn" data-type="Product">Product</button>
+                        <button class="type-btn v1-btn" data-type="MultiBox">MultiBox</button>
                     </div>
-                    <div class="button-group" style="margin-top: 10px; display:flex; gap: 8px; justify-content: center;">
-                        <button id="crop-rotate-btn" class="v1-btn">Rotate</button>
-                        <button id="enhance-btn" class="v1-btn">Enhance</button>
-                        <button id="crop-confirm-btn" class="v1-btn" style="background-color: #d4edda;">Crop</button>
-                        <button id="crop-cancel-btn" class="v1-btn" style="background-color: #f8d7da;">Cancel</button>
+                    <div class="separator"></div>
+                    <div class="button-group">
+                        <button id="camera-btn" class="v1-btn">Camera</button>
+                        <button id="upload-btn" class="v1-btn">Upload</button>
+                        <button id="rotate-btn" class="v1-btn">Rotate</button>
+                        <button id="lock-btn" class="v1-btn">Lock</button>
+                        <button id="cancel-btn" class="v1-btn">Cancel</button>
+                        <button id="cancel-all-btn" class="v1-btn">Cancel All</button>
+                        <input type="file" id="file-input" accept="image/*,application/pdf" multiple style="display: none;">
                     </div>
-                    <div id="enhancement-controls" style="display:none; margin-top:10px; padding-top:10px; border-top: 1px solid #ccc;">
-                        <div class="button-group" style="display:flex; gap: 8px; justify-content: center;">
-                             <button id="auto-enhance-btn" class="v1-btn">Auto</button>
-                            <button id="greyscale-btn" class="v1-btn">Greyscale</button>
-                            <button id="bw-btn" class="v1-btn">B&W Doc</button>
-                            <button id="sharpen-btn" class="v1-btn">Sharpen</button>
-                            <button id="reset-enhance-btn" class="v1-btn" style="background-color: #f8d7da;">Reset</button>
+                </div>
+
+                <!-- Wrapper for future content, to restore padding -->
+                <div class="p-5"> 
+
+                    <!-- *** NEW: Hidden input for GScript URL (from V1) *** -->
+                    <input type="hidden" id="gscript-url" value="https://script.google.com/macros/s/AKfycbwkC3OXNACPPH-LLPJyhkZKaDh6VtNgGbp8lMQbzz1XF327IN_OhFEEapOzNm3REbn5/exec">
+
+                    <!-- Image Scroller (from V1) -->
+                    <div id="image-scroller-container"><div id="image-scroller"></div></div>
+
+                    <!-- Inline Cropper (from V1) -->
+                    <div id="inline-cropper-wrapper">
+                        <div id="cropper-container">
+                            <img id="cropper-image" src="">
                         </div>
-                        <div class="enhancement-sliders">
-                            <div class="slider-control">
-                                <label for="brightness-slider">Brightness</label>
-                                <input type="range" id="brightness-slider" min="-50" max="50" value="0">
+                        <div class="button-group" style="margin-top: 10px; display:flex; gap: 8px; justify-content: center;">
+                            <button id="crop-rotate-btn" class="v1-btn">Rotate</button>
+                            <button id="enhance-btn" class="v1-btn">Enhance</button>
+                            <button id="crop-confirm-btn" class="v1-btn" style="background-color: #d4edda;">Crop</button>
+                            <button id="crop-cancel-btn" class="v1-btn" style="background-color: #f8d7da;">Cancel</button>
+                        </div>
+                        <div id="enhancement-controls" style="display:none; margin-top:10px; padding-top:10px; border-top: 1px solid #ccc;">
+                            <div class="button-group" style="display:flex; gap: 8px; justify-content: center;">
+                                 <button id="auto-enhance-btn" class="v1-btn">Auto</button>
+                                <button id="greyscale-btn" class="v1-btn">Greyscale</button>
+                                <button id="bw-btn" class="v1-btn">B&W Doc</button>
+                                <button id="sharpen-btn" class="v1-btn">Sharpen</button>
+                                <button id="reset-enhance-btn" class="v1-btn" style="background-color: #f8d7da;">Reset</button>
                             </div>
-                            <div class="slider-control">
-                                <label for="contrast-slider">Contrast</label>
-                                <input type="range" id="contrast-slider" min="-50" max="50" value="0">
+                            <div class="enhancement-sliders">
+                                <div class="slider-control">
+                                    <label for="brightness-slider">Brightness</label>
+                                    <input type="range" id="brightness-slider" min="-50" max="50" value="0">
+                                </div>
+                                <div class="slider-control">
+                                    <label for="contrast-slider">Contrast</label>
+                                    <input type="range" id="contrast-slider" min="-50" max="50" value="0">
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Preview Area (from V1) -->
-                <div id="image-view-area">
-                    <span id="placeholder">Select Camera or Upload to begin</span>
-                    <img id="image-preview" src="" alt="Image preview"/>
-                    <canvas id="preview-canvas"></canvas>
-                    <canvas id="selection-canvas"></canvas>
-                    <video id="camera-feed" autoplay playsinline></video>
-                </div>
+                    <!-- Preview Area (from V1) -->
+                    <div id="image-view-area">
+                        <span id="placeholder">Select Camera or Upload to begin</span>
+                        <img id="image-preview" src="" alt="Image preview"/>
+                        <canvas id="preview-canvas"></canvas>
+                        <canvas id="selection-canvas"></canvas>
+                        <video id="camera-feed" autoplay playsinline></video>
+                    </div>
 
-                <!-- Status Bar (from V1) -->
-                <div id="status-bar">Initializing...</div>
+                    <!-- Status Bar (from V1) -->
+                    <div id="status-bar">Initializing...</div>
 
-                <!-- Dynamic Input Area (Rebuilt as a Table) -->
-                <div id="dynamic-input-area">
-                    <div class="placeholder">Select an order from the list...</div>
-                    <!-- Table will be generated here by JS -->
-                </div>
+                    <!-- === NEW: Dynamic Input Area (Rebuilt as a Table) === -->
+                    <div id="dynamic-input-area">
+                        <div class="placeholder">Select an order from the list...</div>
+                        <!-- Table will be generated here by JS -->
+                    </div>
+                    <!-- === END: Dynamic Input Area === -->
 
-                <!-- Data Table (from V1) -->
-                <div class="data-table-container">
-                    <table>
-                        <thead>
-                            <tr id="table-header-row">
-                                <th>STATUS</th>
-                                <th>REFERENCE / AWB</th>
-                                <th>CUSTOMER / KYC INFO</th>
-                                <th>DOCUMENT INFO</th>
-                                <th>IMAGE</th>
-                                <th style="display: none;">BRANCH / CODE</th> <!-- HIDDEN HEADER -->
-                            </tr>
-                        </thead>
-                        <tbody id="data-table-body">
-                            <!-- Rows will be added here by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
 
-                <!-- Table Actions (from V1) -->
-                <div id="table-actions">
-                    <button id="delete-last-btn" class="v1-btn" style="background-color: #f8d7da;">Delete Last</button>
-                    <button id="clear-all-btn" class="v1-btn" style="background-color: #f8d7da;">Clear All</button>
-                    <button id="submit-btn" class="v1-btn" style="background-color: #d4edda; font-weight: bold;">Submit</button>
-                </div>
-
-                <!-- Existing Uploads Section -->
-                <div id="existing-uploads-container">
-                    <h3>Existing Uploads for this Order</h3>
-                    <div id="existing-uploads-table" class="data-table-container">
+                    <!-- Data Table (from V1) -->
+                    <div class="data-table-container">
                         <table>
                             <thead>
-                                <tr id="existing-table-header-row">
+                                <!-- MODIFIED: Headers RESTORED to bundled version -->
+                                <tr id="table-header-row">
                                     <th>STATUS</th>
                                     <th>REFERENCE / AWB</th>
                                     <th>CUSTOMER / KYC INFO</th>
@@ -611,34 +577,64 @@
                                     <th style="display: none;">BRANCH / CODE</th> <!-- HIDDEN HEADER -->
                                 </tr>
                             </thead>
-                            <tbody id="existing-data-table-body">
+                            <tbody id="data-table-body">
                                 <!-- Rows will be added here by JavaScript -->
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Table Actions (from V1) -->
+                    <div id="table-actions">
+                        <button id="delete-last-btn" class="v1-btn" style="background-color: #f8d7da;">Delete Last</button>
+                        <button id="clear-all-btn" class="v1-btn" style="background-color: #f8d7da;">Clear All</button>
+                        <button id="submit-btn" class="v1-btn" style="background-color: #d4edda; font-weight: bold;">Submit</button>
+                    </div>
+
+                    <!-- === *** NEW: Existing Uploads Section *** === -->
+                    <div id="existing-uploads-container">
+                        <h3>Existing Uploads for this Order</h3>
+                        <div id="existing-uploads-table" class="data-table-container">
+                            <table>
+                                <thead>
+                                    <tr id="existing-table-header-row">
+                                        <th>STATUS</th>
+                                        <th>REFERENCE / AWB</th>
+                                        <th>CUSTOMER / KYC INFO</th>
+                                        <th>DOCUMENT INFO</th>
+                                        <th>IMAGE</th>
+                                        <th style="display: none;">BRANCH / CODE</th> <!-- HIDDEN HEADER -->
+                                    </tr>
+                                </thead>
+                                <tbody id="existing-data-table-body">
+                                    <!-- Rows will be added here by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- === *** END: Existing Uploads Section *** === -->
+
+
                 </div>
-
-            </div> <!-- End .p-5 wrapper -->
-        </div>
-
-        <!-- 20% Right Panel (Shipment List) -->
-        <div class="right-panel">
-            <div class="right-panel-header">
-                <input type="text" id="searchMiniOrder" placeholder="Filter orders..." class="w-full p-1 border border-gray-300 rounded-md text-sm">
             </div>
-            
-            <div id="miniOrderListContainer">
-                <ul id="miniOrderList">
-                    <li class="status-message">Loading orders...</li>
-                </ul>
-            </div>
-            
-            <button id="loadMoreBtn" style="display: none;">Load More (Older)</button>
-        </div>
-    </div>
-    <!-- End of original body content -->
 
-    <!-- NEW: Standard Footer Placeholder -->
+            <!-- 20% Right Panel (Shipment List) -->
+            <div class="right-panel">
+                <div class="right-panel-header">
+                    <input type="text" id="searchMiniOrder" placeholder="Filter orders..." class="w-full p-1 border border-gray-300 rounded-md text-sm">
+                </div>
+                
+                <div id="miniOrderListContainer">
+                    <ul id="miniOrderList">
+                        <li class="status-message">Loading orders...</li>
+                    </ul>
+                </div>
+                
+                <button id="loadMoreBtn" style="display: none;">Load More (Older)</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- *** NEW: Footer Placeholder *** -->
     <div id="footer-placeholder"></div>
 
     <!-- Third-party libraries (from V1) -->
@@ -646,12 +642,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
+    <!-- *** NEW: jsPDF Library for creating PDFs *** -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- 
-      MODIFICATION: This is the entire original script block from uploader (3).html,
-      with one addition: FAB listeners. 
-    -->
     <script>
         // Set up PDF.js worker (from V1)
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js`;
@@ -662,10 +655,10 @@
         let allClientsB2B = [];
         let allClientsB2B2C = [];
         let allProducts = [];
-        let allUploads = [];
+        let allUploads = []; // *** NEW: To store existing uploads ***
         let displayDays = 90;
-        let selectedOrder = null;
-        let currentUploadType = null;
+        let selectedOrder = null; // NEW: To track selected order
+        let currentUploadType = null; // NEW: Default to null (no selection)
 
         // --- V1 State Variables (Uploader) ---
         let stream = null, currentRotation = 0, isImageLocked = false, cropper = null;
@@ -675,8 +668,8 @@
         const MAX_FILES = 50;
         let isSelecting = false, selectionRect = {};
         let isProcessingOCR = false;
-        let isProcessingImage = false;
-        let selectedPickupRow = null;
+        let isProcessingImage = false; // *** NEW: Race condition lock ***
+        let selectedPickupRow = null; // *** NEW: To track selected pickup row ***
         let selectionCtx, previewCtx;
         let currentEnhancements = { brightness: 0, contrast: 0, sharpen: false, greyscale: false, bw: false };
 
@@ -692,13 +685,20 @@
         let enhanceBtn, enhancementControls, autoEnhanceBtn, greyscaleBtn, bwBtn, sharpenBtn, resetEnhanceBtn;
         let brightnessSlider, contrastSlider;
         let tableBody, deleteLastBtn, clearAllBtn, submitBtn; 
-        let dynamicInputArea;
-        let existingUploadsContainer, existingTableBody;
-        let gscriptUrlInput;
+        let dynamicInputArea; // <-- NEW Dynamic Input Area UI
+        let existingUploadsContainer, existingTableBody; // *** NEW: Existing Uploads UI ***
+        let gscriptUrlInput; // *** NEW: GScript URL Input ***
 
 
         // --- === IMAGE FUNCTIONS (MOVED TO TOP) === ---
         
+        /**
+         * Compresses an image data URL to a target size.
+         * @param {string} dataUrl - The original image data URL.
+         * @param {number} targetSizeKB - The target size in kilobytes.
+         * @param {number} maxDimension - The maximum width or height.
+         * @returns {Promise<string>} - The compressed image data URL (jpeg).
+         */
         async function compressImage(dataUrl, targetSizeKB = 100, maxDimension = 1024) {
             const targetSizeBytes = targetSizeKB * 1024;
             const img = await new Promise(resolve => {
@@ -711,6 +711,7 @@
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
+            // Resize based on maxDimension
             if (width > maxDimension || height > maxDimension) {
                 if (width > height) {
                     height = Math.round(height * (maxDimension / width));
@@ -725,7 +726,7 @@
             canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
 
-            let quality = 0.9;
+            let quality = 0.9; // Start with 90% JPEG quality
             let compressedDataUrl;
             let sizeInBytes;
 
@@ -734,7 +735,7 @@
                 sizeInBytes = atob(compressedDataUrl.split(',')[1]).length;
                 
                 if (sizeInBytes > targetSizeBytes && quality > 0.1) {
-                    quality -= 0.1;
+                    quality -= 0.1; // Reduce quality by 10%
                 }
                 
             } while (sizeInBytes > targetSizeBytes && quality > 0.1);
@@ -743,6 +744,12 @@
             return compressedDataUrl;
         }
 
+        /**
+         * Applies rotation to an image source.
+         * @param {string} src - The image data URL.
+         * @param {number} rotation - The rotation angle (0, 90, 180, 270).
+         * @returns {Promise<string>} - The rotated image data URL (png).
+         */
         function getRotatedImage(src, rotation) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -763,7 +770,7 @@
                     ctx.rotate(angle);
                     ctx.drawImage(img, -img.width / 2, -img.height / 2);
                     
-                    resolve(canvas.toDataURL('image/png'));
+                    resolve(canvas.toDataURL('image/png')); // Return PNG to avoid quality loss before compression
                 };
                 img.src = src;
             });
@@ -772,8 +779,8 @@
         // --- === END OF IMAGE FUNCTIONS === ---
 
 
-        // Store KYC Options
-        const kyoOptionsHTML = `
+        // NEW: Store KYC Options from V1
+        const kycOptionsHTML = `
             <optgroup label="Individual">
                 <option value="Aadhaar Card">Aadhaar Card</option>
                 <option value="PAN Card">PAN Card</option>
@@ -810,6 +817,8 @@
             cancelAllBtn.style.display = 'none';
             imageViewArea.classList.remove('selectable');
             cameraFeed.classList.remove('active-capture');
+
+            // Hide buttons that are not relevant in the new UI
             lockBtn.style.display = 'none';
             cancelAllBtn.style.display = 'none';
 
@@ -826,17 +835,17 @@
                 cameraBtn.style.display = 'none';
                 uploadBtn.style.display = 'none';
                 rotateBtn.style.display = 'inline-block';
-                lockBtn.style.display = 'inline-block';
+                lockBtn.style.display = 'inline-block'; // Re-show lock btn
                 imageViewArea.classList.add('selectable');
                 uploadTypeStrip.style.display = 'none';
                 
-                if (imageQueue.length > 1) {
+                if (imageQueue.length > 1) { // Show scroller if more than 1 image
                      scrollerContainer.style.display = 'block';
                 }
 
                 if (imageQueue.length > 0) {
                     cancelBtn.style.display = 'inline-block';
-                    cancelAllBtn.style.display = 'inline-block';
+                    cancelAllBtn.style.display = 'inline-block'; // Re-show cancel all
                 } else {
                     cancelBtn.style.display = 'inline-block';
                 }
@@ -847,12 +856,14 @@
             }
         }
         
+        // --- NEW: Helper function from V1 ---
         async function dataURLtoFile(dataUrl, fileName) {
             const res = await fetch(dataUrl); 
             const blob = await res.blob();
             return new File([blob], fileName, { type: 'image/jpeg' });
         }
         
+        // --- NEW: Camera Logic from V1 ---
         function stopCamera() { 
             if (stream) { 
                 stream.getTracks().forEach(track => track.stop()); 
@@ -890,6 +901,7 @@
             }
         }
         
+        // --- NEW: PDF Processing Logic from V1 ---
         async function handlePdfFile(file) {
             const fileReader = new FileReader();
             return new Promise((resolve, reject) => {
@@ -898,7 +910,7 @@
                         const typedarray = new Uint8Array(e.target.result);
                         const pdf = await pdfjsLib.getDocument(typedarray).promise;
                         const imageFiles = [];
-                        const scale = 2.0;
+                        const scale = 2.0; // Render at 2x scale
                         
                         for (let i = 1; i <= pdf.numPages; i++) {
                             if (imageFiles.length >= MAX_FILES) {
@@ -915,7 +927,7 @@
                             const renderContext = { canvasContext: context, viewport: viewport };
                             await page.render(renderContext).promise;
                             
-                            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.9); // 90% quality JPEG
                             const pageFile = await dataURLtoFile(dataUrl, `${file.name}-page-${i}.jpg`);
                             imageFiles.push(pageFile);
                         }
@@ -930,13 +942,14 @@
             });
         }
         
+        // --- NEW: Scroller Logic from V1 ---
         function renderScroller() {
             scroller.innerHTML = '';
             imageQueue.forEach((file, index) => {
                 const thumb = document.createElement('img');
                 try { 
                     thumb.src = URL.createObjectURL(file); 
-                    thumb.onload = () => URL.revokeObjectURL(thumb.src);
+                    thumb.onload = () => URL.revokeObjectURL(thumb.src); // Revoke to save memory
                 } catch(e) { 
                     console.error("Could not create object URL for", file); 
                 }
@@ -955,20 +968,21 @@
         }
         
         function displayImage(index) {
-            if (isProcessingImage) return;
+            if (isProcessingImage) return; // Don't switch image while processing
             if (index < 0 || index >= imageQueue.length) { 
                 resetUploader(); 
                 return; 
             }
             currentImageIndex = index;
-            const file = imageQueue[index];
+            const file = imageQueue[currentImageIndex];
             const reader = new FileReader();
-            reader.onload = (e) => initCropper(e.target.result, file.name);
+            reader.onload = (e) => initCropper(e.target.result, file.name); // Always go to cropper
             reader.readAsDataURL(file);
         }
 
+        // --- NEW: Cropper Logic from V1 ---
         function initCropper(imageSrc, originalFileName) {
-            originalCropperSrc = imageSrc;
+            originalCropperSrc = imageSrc; // Save original for enhancement reset
             currentEnhancements = { brightness: 0, contrast: 0, sharpen: false, greyscale: false, bw: false };
             if (brightnessSlider) brightnessSlider.value = 0;
             if (contrastSlider) contrastSlider.value = 0;
@@ -977,9 +991,9 @@
             if (bwBtn) bwBtn.style.backgroundColor = '';
             if (enhancementControls) enhancementControls.style.display = 'none';
 
-            inlineCropperWrapper.style.display = 'block';
-            imageViewArea.style.display = 'none';
-            scrollerContainer.style.display = 'none';
+            inlineCropperWrapper.style.display = 'block'; // Show cropper
+            imageViewArea.style.display = 'none';      // Hide preview area
+            scrollerContainer.style.display = 'none';  // Hide scroller
             placeholder.style.display = 'none';
             
             cropperImage.src = imageSrc;
@@ -989,18 +1003,20 @@
                 viewMode: 1,
                 background: false,
                 autoCrop: true,
-                autoCropArea: 0.95,
+                autoCropArea: 0.95, // Start with 95% crop area
                 zoomable: true,
                 movable: true,
                 scalable: true,
             });
             
+            // This handler is defined inside initCropper to capture the correct file name
             const confirmCropHandler = async () => {
+                // *** BUG FIX: Check if cropper still exists AND check lock ***
                 if (!cropper || isProcessingImage) {
                     console.warn("Cropper instance destroyed or busy. Cancelling crop.");
                     return;
                 }
-                isProcessingImage = true;
+                isProcessingImage = true; // Set lock
                 updateStatus("Cropping...");
                 
                 const croppedCanvas = cropper.getCroppedCanvas({
@@ -1009,18 +1025,21 @@
                 });
                 if (!croppedCanvas) { 
                     updateStatus("Crop failed.", true);
-                    isProcessingImage = false;
+                    isProcessingImage = false; // Release lock
                     return; 
                 }
                 
-                let croppedDataUrl = croppedCanvas.toDataURL('image/png');
+                let croppedDataUrl = croppedCanvas.toDataURL('image/png'); // Get high-quality PNG
                 
-                inlineCropperWrapper.style.display = 'none';
-                imageViewArea.style.display = 'flex';
+                inlineCropperWrapper.style.display = 'none'; // Hide cropper
+                imageViewArea.style.display = 'flex';      // Show preview
                 
+                // *** BUG FIX (THE REAL ONE): Use requestAnimationFrame to prevent draw race condition ***
                 imagePreview.onload = () => {
+                    // Give the browser one frame to "settle" the image buffer
+                    // before we try to draw it to the canvas.
                     requestAnimationFrame(() => {
-                        if (previewCanvas.style.display === 'block') {
+                        if (previewCanvas.style.display === 'block') { // Check if we weren't cancelled
                             drawPreview();
                             scanBarcodeFromPreview(); 
                         }
@@ -1029,15 +1048,19 @@
                 };
                 
                 imagePreview.src = croppedDataUrl; 
+                // *** BUG FIX (THE REAL ONE): DO NOT make the <img> visible. It's just a data source.
+                // imagePreview.style.display = 'block'; // <-- THIS WAS THE BUG
+                
                 placeholder.style.display = 'none';
                 cameraFeed.style.display = 'none';
-                previewCanvas.style.display = 'block';
+                previewCanvas.style.display = 'block'; // The canvas is the only thing we see
                 currentRotation = 0;
                 
+                // Update the file in the queue with the cropped version
                 if (currentImageIndex !== -1) {
                     const newFile = await dataURLtoFile(croppedDataUrl, originalFileName.replace(/\.\w+$/, '.png'));
                     imageQueue[currentImageIndex] = newFile;
-                    renderScroller();
+                    renderScroller(); // Re-render scroller with new thumbnail
                 }
                 
                 setInterfaceState('preview');
@@ -1045,12 +1068,13 @@
                 
                 if(cropper) cropper.destroy();
                 cropper = null;
-                isProcessingImage = false;
+                isProcessingImage = false; // Release lock
             };
             
             cropConfirmBtn.onclick = confirmCropHandler;
         }
         
+        // --- NEW: Preview Area Logic from V1 ---
         function drawPreview() {
             if (!imagePreview.src || !imageViewArea || !previewCtx) return;
             const dpr = window.devicePixelRatio || 1;
@@ -1063,7 +1087,7 @@
             previewCanvas.style.width = `${containerW}px`;
             previewCanvas.style.height = `${containerH}px`;
             
-            previewCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            previewCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // Reset and scale
             
             const naturalW = imagePreview.naturalWidth;
             const naturalH = imagePreview.naturalHeight;
@@ -1085,6 +1109,7 @@
             previewCtx.restore();
         }
         
+        // --- NEW: Barcode/OCR Logic from V1 ---
         async function scanBarcodeFromPreview() {
             if (!barcodeDetector) {
                 updateStatus("Barcode detection not supported. Select area for OCR.", true);
@@ -1096,36 +1121,41 @@
                 updateStatus("Attempting barcode scan...");
                 const barcodes = await barcodeDetector.detect(imagePreview);
                 if (barcodes.length > 0) {
-                    const barcodeValue = barcodes[0].rawValue.trim();
+                    const barcodeValue = barcodes[0].rawValue.trim(); // Trim the value
                     console.log("Scanned barcode:", barcodeValue);
                     
+                    // --- *** NEW LOGIC: Check for selected row first *** ---
                     if (selectedPickupRow) {
                         const input = selectedPickupRow.querySelector('input[type="text"]');
                         if (input) {
                             input.value = barcodeValue;
                             updateStatus(`Filled selected row with: ${barcodeValue}`);
-                            return;
+                            return; // Stop here
                         }
                     }
 
+                    // --- *** Fallback: Find matching order *** ---
                     const matchedOrder = allOrders.find(order => 
                         String(order.AWB_NUMBER) === String(barcodeValue) || 
                         String(order.REFERANCE) === String(barcodeValue)
                     );
 
                     if (matchedOrder) {
+                        // Found it!
                         selectedOrder = matchedOrder;
                         updateStatus(`Barcode matched: ${barcodeValue}. Loading tasks...`);
-                        filterAndRenderOrders();
-                        renderDynamicInputs();
+                        filterAndRenderOrders(); // Update right panel list
+                        renderDynamicInputs();  // Update left panel pickup table
                         
+                        // Scroll the order list to the selected item
                         const selectedLi = orderList.querySelector(`li[data-order-ref="${selectedOrder.REFERANCE}"]`);
                         if (selectedLi) {
                             selectedLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     } else {
+                        // No match found
                         updateStatus(`Barcode detected: ${barcodeValue} (No matching order found).`);
-                        searchMiniOrderInput.value = barcodeValue;
+                        searchMiniOrderInput.value = barcodeValue; // Put in filter
                         filterAndRenderOrders();
                     }
                     
@@ -1194,7 +1224,7 @@
             const selW = selX2 - selX1;
             const selH = selY2 - selY1;
 
-            if (selW < 10 || selH < 10) return;
+            if (selW < 10 || selH < 10) return; // Selection too small
             const naturalW = imagePreview.naturalWidth, naturalH = imagePreview.naturalHeight;
             const containerW = imageViewArea.clientWidth, containerH = imageViewArea.clientHeight;
             if (!naturalW || !naturalH || !containerW || !containerH) {
@@ -1241,25 +1271,29 @@
             updateStatus("Running OCR on selected area...");
             try {
                 const { data: { text } } = await Tesseract.recognize(cropCanvas, 'eng');
-                const ocrText = text.trim().replace(/\s+/g, '');
+                const ocrText = text.trim().replace(/\s+/g, ''); // Clean OCR text
                 
                 if (ocrText) {
+                    
+                    // --- *** NEW LOGIC: Check for selected row first *** ---
                     if (selectedPickupRow) {
                         const input = selectedPickupRow.querySelector('input[type="text"]');
                         if (input) {
                             input.value = ocrText;
                             updateStatus(`Filled selected row with: ${ocrText}`);
                             isProcessingOCR = false;
-                            return;
+                            return; // Stop here
                         }
                     }
                     
+                    // --- *** Fallback: Find matching order *** ---
                     const matchedOrder = allOrders.find(order => 
                         String(order.AWB_NUMBER) === String(ocrText) || 
                         String(order.REFERANCE) === String(ocrText)
                     );
 
                     if (matchedOrder) {
+                        // Found it!
                         selectedOrder = matchedOrder;
                         updateStatus(`OCR matched: ${ocrText}. Loading tasks...`);
                         filterAndRenderOrders();
@@ -1269,10 +1303,13 @@
                             selectedLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
                     } else {
+                        // No match found - put in filter box
                         updateStatus(`OCR: ${ocrText} (No exact match. Filtering list...).`);
                         searchMiniOrderInput.value = ocrText;
-                        filterAndRenderOrders();
+                        filterAndRenderOrders(); // Trigger the filter
                     }
+                    // --- *** END NEW LOGIC *** ---
+                    
                 } else {
                     updateStatus("OCR could not find any text in the selected area.");
                 }
@@ -1283,6 +1320,7 @@
             }
         }
         
+        // --- *** CAMANJS BUG FIX: Re-implemented V1 logic *** ---
         let applyEnhancements = () => {
             if (isProcessingImage || !cropper || !originalCropperSrc) return;
             isProcessingImage = true;
@@ -1296,9 +1334,11 @@
                 tempCanvas.height = tempImg.height;
                 tempCanvas.getContext('2d').drawImage(tempImg, 0, 0);
                 
+                // This is the CamanJS constructor, which re-initializes.
                 Caman(tempCanvas, function () {
-                    this.revert(false);
+                    this.revert(false); // Do not revert to the *very* original, just the last state
                     
+                    // Apply filters based on current state
                     if (currentEnhancements.bw) { this.greyscale().contrast(70).brightness(5); }
                     else if (currentEnhancements.greyscale) { this.greyscale(); }
                     if (currentEnhancements.sharpen) { this.sharpen(10); }
@@ -1311,14 +1351,15 @@
                             cropper.replace(newDataUrl);
                         }
                         updateStatus('Enhancements applied.');
-                        isProcessingImage = false;
+                        isProcessingImage = false; // Release lock
                     });
                 });
             };
             tempImg.onerror = () => {
                 updateStatus("Failed to load image for enhancement.", true);
-                isProcessingImage = false;
+                isProcessingImage = false; // Release lock
             };
+            // CRITICAL: Always apply enhancements to the *original* source
             tempImg.src = originalCropperSrc; 
         }
         
@@ -1332,19 +1373,20 @@
             sharpenBtn.style.backgroundColor = '';
             greyscaleBtn.style.backgroundColor = '';
             bwBtn.style.backgroundColor = '';
-            cropper.replace(originalCropperSrc);
+            cropper.replace(originalCropperSrc); // Revert to original
             updateStatus("Enhancements reset.");
             isProcessingImage = false;
         }
+        // --- *** END CAMANJS BUG FIX *** ---
 
         function resetUploader() {
-            stopCamera();
+            stopCamera(); // <-- Call stopCamera
             placeholder.textContent = 'Select Camera or Upload to begin';
             placeholder.style.display = 'block';
             previewCanvas.style.display = 'none';
             cameraFeed.style.display = 'none'; 
             imagePreview.src = '';
-            imagePreview.style.display = 'none';
+            imagePreview.style.display = 'none'; // <-- HIDE image element
             fileInput.value = ''; 
             currentRotation = 0;
             isImageLocked = false; 
@@ -1358,14 +1400,15 @@
             imageViewArea.style.display = 'flex';
             selectionCanvas.style.display = 'none';
             cancelBtn.textContent = 'Cancel';
-            cancelBtn.style.backgroundColor = '';
-            if(cropper) cropper.destroy();
+            cancelBtn.style.backgroundColor = ''; // Reset "Done" button style
+            if(cropper) cropper.destroy(); // Destroy cropper instance
             cropper = null;
-            isProcessingImage = false;
+            isProcessingImage = false; // *** BUG FIX: Release lock on reset ***
             setInterfaceState('idle');
             updateStatus("Select an order or start capture");
         }
 
+        // --- *** NEW: V3 Data Processing (Adopted from V1) *** ---
         function processAppData(appData) {
             if (!appData || !appData.data) {
                 console.error("Invalid appData received.");
@@ -1393,14 +1436,17 @@
                 }
             });
             
-            filterAndRenderOrders();
+            filterAndRenderOrders(); // Render the order list
             
+            // Check if an order was already selected and re-render tables
             if (selectedOrder) {
+                // Find the selectedOrder object in the *new* allOrders list
                 const updatedSelectedOrder = allOrders.find(o => String(o.REFERANCE) === String(selectedOrder.REFERANCE));
                 if (updatedSelectedOrder) {
-                    selectedOrder = updatedSelectedOrder;
-                    renderDynamicInputs();
+                    selectedOrder = updatedSelectedOrder; // Update the object
+                    renderDynamicInputs(); // Re-render pickup and existing tables
                 } else {
+                    // The old selected order is gone, reset.
                     selectedOrder = null;
                     renderDynamicInputs();
                 }
@@ -1409,7 +1455,9 @@
             updateStatus("App data loaded. Ready."); 
         }
 
+        // --- *** NEW: V3 Data Listeners (Adopted from V1) *** ---
         function initializeV1DataListeners() {
+            // Listen for data loaded/refreshed from the main site (e.g., layout.js)
             window.addEventListener('appDataLoaded', (e) => {
                 console.log("Event 'appDataLoaded' received.");
                 processAppData(e.detail);
@@ -1467,6 +1515,7 @@
                                 <div class="details-info">Date: ${orderDate} | Value: ${value} | Pcs: ${pieces}</div>
                                 <div class="dest-info">Dest: ${destination}</div>`;
                 li.dataset.orderRef = ref;
+                // NEW: Check if this order is the selected one
                 if (selectedOrder && selectedOrder.REFERANCE === ref) {
                     li.classList.add('selected');
                 }
@@ -1523,14 +1572,16 @@
             renderMiniOrderList(dateFilteredOrders);
         }
 
+        // --- === NEW: Function to render existing uploads FOR A SPECIFIC ORDER === ---
         function renderExistingUploadsForOrder(order) {
             if (!existingTableBody || !order) {
                 existingUploadsContainer.style.display = 'none';
                 return;
             }
             
-            existingTableBody.innerHTML = '';
+            existingTableBody.innerHTML = ''; // Clear previous
             
+            // Find all uploads matching the selected order's REF or AWB
             const matchingUploads = allUploads.filter(upload => 
                 (upload.REFERANCE && String(upload.REFERANCE) === String(order.REFERANCE)) ||
                 (upload.AWB_NUMBER && String(upload.AWB_NUMBER) === String(order.AWB_NUMBER))
@@ -1542,44 +1593,51 @@
             }
 
             matchingUploads.forEach(upload => {
+                // Get consignor/consignee names from the *selected order* object
                 const consignorName = selectedOrder.CONSIGNOR_NAME || 'N/A';
                 const consigneeName = selectedOrder.CONSIGNEE_NAME || 'N/A';
 
                 const newRow = existingTableBody.insertRow();
                 
+                // Add data attributes for filtering
                 newRow.dataset.keyRef = upload.REFERANCE || upload.AWB_NUMBER;
                 newRow.dataset.keyType = upload.UPLOAD_TYPE;
                 newRow.dataset.branch = upload.BRANCH || '';
                 newRow.dataset.code = upload.CODE || '';
 
+                // Build row data based on upload type
                 const rowData = {
                     type: upload.UPLOAD_TYPE || 'N/A',
-                    status: upload.STATUS_REMARK || '',
+                    status: upload.STATUS_REMARK || '', // *** FIX: No 'N/A' ***
                     refAwb: (upload.UPLOAD_TYPE === 'MultiBox')
                         ? `Ref: ${upload.REFERANCE || upload.AWB_NUMBER} <br> Child: ${upload.CHILD_AWB}`
                         : `Ref: ${upload.REFERANCE || ''} <br> AWB: ${upload.AWB_NUMBER || ''}`,
                     customerKyc: upload.UPLOAD_TYPE === 'KYC' 
                         ? `Cust: ${consignorName} <br> UID: ${upload.CUSTOMER_UID || ''} <br> KYC: ${upload.KYC_NUMBER} (${upload.KYC_TYPE})`
-                        : '',
+                        : '', // *** FIX: No 'N/A' ***
                     docInfo: upload.UPLOAD_TYPE === 'Product'
                         ? `Doc: ${upload.DOC_NUMBER || ''} <br> Type: ${upload.DOC_TYPE || ''} <br> Remark: ${upload.STATUS_REMARK || ''}`
-                        : '',
+                        : '', // *** FIX: No 'N/A' ***
                     image: upload.FILE_URL
                 };
                 
+                // Manually set status for POD/Reciept if remark is empty
                 if (upload.UPLOAD_TYPE === 'POD' && !upload.STATUS_REMARK) rowData.status = 'Delivered';
                 if (upload.UPLOAD_TYPE === 'Reciept' && !upload.STATUS_REMARK) rowData.status = 'Booked';
 
+                // Create cells
                 newRow.insertCell().textContent = `${rowData.type} - ${rowData.status}`;
                 newRow.insertCell().innerHTML = rowData.refAwb;
                 newRow.insertCell().innerHTML = rowData.customerKyc || 'N/A';
                 newRow.insertCell().innerHTML = rowData.docInfo || 'N/A';
                 
+                // Image Cell
                 const imageCell = newRow.insertCell();
                 const thumb = document.createElement('img');
-                thumb.src = rowData.image;
+                thumb.src = rowData.image; // Use FILE_URL directly as src
                 const cellDiv = document.createElement('div');
                 cellDiv.className = 'image-cell-content';
+                // Make the image a link
                 const link = document.createElement('a');
                 link.href = rowData.image;
                 link.target = '_blank';
@@ -1587,19 +1645,25 @@
                 cellDiv.appendChild(link);
                 imageCell.appendChild(cellDiv);
                 
+                // Hidden Branch/Code Cell
                 const hiddenCell = newRow.insertCell();
                 hiddenCell.textContent = `Branch: ${upload.BRANCH}, Code: ${upload.CODE}`;
                 hiddenCell.style.display = 'none';
             });
             
-            existingUploadsContainer.style.display = 'block';
+            existingUploadsContainer.style.display = 'block'; // Show the container
         }
         
         // --- === DYNAMIC INPUT LOGIC (Refactored) === ---
         
+        /**
+         * *** MODIFIED ***
+         * Checks if a POD or Reciept task is already in the main upload table OR existing uploads
+         */
         function checkUploadStatus(ref, awb) {
             const status = { pod: false, reciept: false };
             
+            // 1. Check NEWLY staged items in the main upload table
             const rows = tableBody.rows;
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
@@ -1615,6 +1679,7 @@
                 }
             }
             
+            // 2. Check EXISTING uploads
             allUploads.forEach(upload => {
                  const refMatch = (upload.REFERANCE && String(upload.REFERANCE) === String(ref)) ||
                                 (upload.AWB_NUMBER && String(upload.AWB_NUMBER) === String(awb));
@@ -1631,6 +1696,9 @@
             return status;
         }
 
+        /**
+         * Creates a single pick button for the table
+         */
         function createPickButton(pickData) {
             const button = document.createElement('button');
             button.className = 'v1-btn pick-btn-dynamic';
@@ -1641,7 +1709,11 @@
             return button;
         }
 
+        /**
+         * Renders the POD row in the pickup table
+         */
         function renderPodRow(tableBody, { ref, awb }) {
+            // Check is now done in renderDynamicInputs
             const pickData = { 'type': 'POD', 'ref': ref, 'awb': awb };
             const row = tableBody.insertRow();
             row.innerHTML = `
@@ -1653,7 +1725,11 @@
             row.insertCell().appendChild(createPickButton(pickData));
         }
 
+        /**
+         * Renders the Receipt row in the pickup table
+         */
         function renderReceiptRow(tableBody, { ref, awb }) {
+            // Check is now done in renderDynamicInputs
             const pickData = { 'type': 'Reciept', 'ref': ref, 'awb': awb };
             const row = tableBody.insertRow();
             row.innerHTML = `
@@ -1665,7 +1741,11 @@
             row.insertCell().appendChild(createPickButton(pickData));
         }
 
+        /**
+         * Renders the KYC rows in the pickup table
+         */
         function renderKycRows(tableBody, { ref, consignorName, consignorUid, consigneeName, consigneeUid }) {
+            // Row 1: Consignor
             let pickData = { 'type': 'KYC', 'ref': ref, 'customerName': consignorName, 'customerUid': consignorUid };
             const kycRow1 = tableBody.insertRow();
             kycRow1.innerHTML = `
@@ -1675,12 +1755,13 @@
                 <td>
                     <div class="kyc-inputs">
                         <input type="text" class="kyc-number-input" placeholder="KYC Number">
-                        <select class="kyc-type-select">${kyoOptionsHTML}</select>
+                        <select class="kyc-type-select">${kycOptionsHTML}</select>
                     </div>
                 </td>
             `;
             kycRow1.insertCell().appendChild(createPickButton(pickData));
             
+            // Row 2: Consignee
             pickData = { 'type': 'KYC', 'ref': ref, 'customerName': consigneeName, 'customerUid': consigneeUid };
             const kycRow2 = tableBody.insertRow();
             kycRow2.innerHTML = `
@@ -1690,19 +1771,22 @@
                 <td>
                     <div class="kyc-inputs">
                         <input type="text" class="kyc-number-input" placeholder="KYC Number">
-                        <select class="kyc-type-select">${kyoOptionsHTML}</select>
+                        <select class="kyc-type-select">${kycOptionsHTML}</select>
                     </div>
                 </td>
             `;
             kycRow2.insertCell().appendChild(createPickButton(pickData));
         }
 
+        /**
+         * Renders the Product rows in the pickup table
+         */
         function renderProductRows(tableBody, { ref }) {
             const products = allProducts.filter(p => String(p.RERERANCE) === String(ref));
             if (products.length > 0) {
                 products.forEach(product => {
-                    const docNum = product.DOC_NUMBER || '';
-                    const docType = product.TYPE || '';
+                    const docNum = product.DOC_NUMBER || ''; // *** FIX: Use '' not 'N/A' ***
+                    const docType = product.TYPE || ''; // *** FIX: Use '' not 'N/A' ***
                     const pickData = { 'type': 'Product', 'ref': ref, 'docNumber': docNum, 'docType': docType };
                     
                     const productRow = tableBody.insertRow();
@@ -1714,11 +1798,14 @@
                     `;
                     productRow.insertCell().appendChild(createPickButton(pickData));
                 });
-            } else if (currentUploadType === 'Product') {
+            } else if (currentUploadType === 'Product') { // Only show "no products" if in filter mode
                 tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px; color: #888;">No products found for this order.</td></tr>';
             }
         }
 
+        /**
+         * Renders the MultiBox row in the pickup table
+         */
         function renderMultiBoxRow(tableBody, { ref, awb }) {
             const pickData = { 'type': 'MultiBox', 'ref': ref, 'awb': awb };
             const multiBoxRow = tableBody.insertRow();
@@ -1731,11 +1818,15 @@
             multiBoxRow.insertCell().appendChild(createPickButton(pickData));
         }
 
+        /**
+         * Renders the dynamic input rows based on selected order and upload type
+         */
         function renderDynamicInputs() {
             if (!dynamicInputArea) return;
-            dynamicInputArea.innerHTML = '';
-            selectedPickupRow = null;
+            dynamicInputArea.innerHTML = ''; // Clear previous inputs
+            selectedPickupRow = null; // Clear row selection
             
+            // *** NEW: Also hide/clear existing uploads when re-rendering ***
             if (existingUploadsContainer) existingUploadsContainer.style.display = 'none';
             if (existingTableBody) existingTableBody.innerHTML = '';
 
@@ -1744,8 +1835,9 @@
                 return;
             }
 
+            // --- 1. Get all order details ---
             const ref = selectedOrder.REFERANCE;
-            const awb = selectedOrder.AWB_NUMBER || '';
+            const awb = selectedOrder.AWB_NUMBER || ''; // *** FIX: Use '' not 'N/A' ***
             const consignorUid = selectedOrder.CONSIGNOR;
             const consigneeUid = selectedOrder.CONSIGNEE;
             
@@ -1760,14 +1852,18 @@
 
             const orderDetails = { ref, awb, consignorUid, consignorName, consigneeUid, consigneeName };
 
+            // --- *** NEW RULE CHECK *** ---
             const uploadStatus = checkUploadStatus(ref, awb);
 
             if (uploadStatus.pod) {
                 dynamicInputArea.innerHTML = '<div class="placeholder" style="color: green; font-weight: bold;">POD already uploaded for this order. No further tasks available.</div>';
-                renderExistingUploadsForOrder(selectedOrder);
-                return;
+                renderExistingUploadsForOrder(selectedOrder); // Still show existing uploads
+                return; // Stop here
             }
+            // --- *** END NEW RULE CHECK *** ---
 
+
+            // --- 2. Create table structure ---
             const table = document.createElement('table');
             table.className = 'pickup-table';
             
@@ -1784,21 +1880,24 @@
             `;
             const tableBody = document.createElement('tbody');
 
+            // --- 3. Populate table based on mode ---
             if (currentUploadType === null) {
-                renderPodRow(tableBody, orderDetails);
-                if (!uploadStatus.reciept) {
+                // "All" mode - render every type
+                renderPodRow(tableBody, orderDetails); // POD check is already done
+                if (!uploadStatus.reciept) { // Check for Reciept
                     renderReceiptRow(tableBody, orderDetails);
                 }
                 renderKycRows(tableBody, orderDetails);
                 renderProductRows(tableBody, orderDetails);
                 renderMultiBoxRow(tableBody, orderDetails);
             } else {
+                // "Filter" mode - render only the selected type
                 switch (currentUploadType) {
                     case 'POD':
-                        renderPodRow(tableBody, orderDetails);
+                        renderPodRow(tableBody, orderDetails); // POD check is already done
                         break;
                     case 'Reciept':
-                        if (!uploadStatus.reciept) {
+                        if (!uploadStatus.reciept) { // Check for Reciept
                             renderReceiptRow(tableBody, orderDetails);
                         }
                         break;
@@ -1820,11 +1919,13 @@
             table.appendChild(tableBody);
             dynamicInputArea.appendChild(table);
             
+            // --- 4. *** NEW: Render existing uploads for this order ***
             renderExistingUploadsForOrder(selectedOrder);
         }
 
         // --- === END: DYNAMIC INPUT LOGIC === ---
         
+        // --- *** NEW: PDF Creation Function *** ---
         async function createPdfFromImages(images) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF("p", "mm", "a4");
@@ -1839,6 +1940,7 @@
                     doc.addPage();
                 }
                 
+                // Get image dimensions to calculate aspect ratio
                 const img = await new Promise(resolve => {
                     const image = new Image();
                     image.onload = () => resolve(image);
@@ -1848,6 +1950,7 @@
                 const aspectRatio = img.height / img.width;
                 const imgHeight = imgWidth * aspectRatio;
 
+                // Check if it fits, if not, scale to fit height
                 let finalWidth = imgWidth;
                 let finalHeight = imgHeight;
                 if (finalHeight > (a4Height - (margin * 2))) {
@@ -1858,23 +1961,27 @@
                 doc.addImage(imgData, 'JPEG', margin, margin, finalWidth, finalHeight);
             }
             
+            // Return base64 string
             return doc.output('datauristring');
         }
 
 
         // --- App Initialization ---
         function initializeData() {
+            // Assign Right Panel UI
             miniOrderListContainer = document.getElementById('miniOrderListContainer');
             orderList = document.getElementById('miniOrderList');
             searchMiniOrderInput = document.getElementById('searchMiniOrder');
             loadMoreBtn = document.getElementById('loadMoreBtn');
             
+            // Add Right Panel Listeners
             searchMiniOrderInput.addEventListener('input', filterAndRenderOrders);
             loadMoreBtn.addEventListener('click', () => {
-                displayDays += 90;
+                displayDays += 90; // Load 90 more days
                 filterAndRenderOrders();
             });
 
+            // NEW: Add click listener for order selection
             orderList.addEventListener('click', (e) => {
                 const li = e.target.closest('li');
                 if (!li || !li.dataset.orderRef) return;
@@ -1884,17 +1991,22 @@
                 
                 if (selectedOrder) {
                     console.log("Selected Order:", selectedOrder);
+                    // Re-render list to show selection
                     filterAndRenderOrders();
+                    // Render the dynamic inputs on the left
                     renderDynamicInputs();
                 }
             });
+
+            // *** REMOVED: loadData() call ***
         }
         
         // --- Main DOMContentLoaded ---
         document.addEventListener('DOMContentLoaded', () => {
              // 1. Initialize Right Panel (Data Listeners)
-             initializeData();
+             initializeData(); // This still sets up search/click listeners
              
+             // *** NEW: Call the V1 data listener setup ***
              initializeV1DataListeners();
 
              // 2. Assign Left Panel (Uploader UI)
@@ -1934,9 +2046,10 @@
              clearAllBtn = document.getElementById('clear-all-btn');
              submitBtn = document.getElementById('submit-btn');
              dynamicInputArea = document.getElementById('dynamic-input-area');
+             // *** NEW: Assign Existing Uploads UI ***
              existingUploadsContainer = document.getElementById('existing-uploads-container');
              existingTableBody = document.getElementById('existing-data-table-body');
-             gscriptUrlInput = document.getElementById('gscript-url');
+             gscriptUrlInput = document.getElementById('gscript-url'); // *** NEW: Assign GScript URL ***
 
 
              // Assign canvas contexts
@@ -1946,7 +2059,7 @@
              // 3. Set initial state of the uploader
              resetUploader();
              
-             // 4. Check for cached data on load
+             // 4. *** NEW: V1 logic to check for cached data on load ***
              try {
                 const appDataJSON = localStorage.getItem('appData');
                 if (appDataJSON) {
@@ -1968,15 +2081,18 @@
              }
 
 
-             // 5. Add Left Panel UI Listeners
+             // 5. NEW: Add Left Panel UI Listeners
              uploadTypeStrip.addEventListener('click', (e) => {
                 if (e.target.classList.contains('type-btn')) {
                     const selectedType = e.target.dataset.type;
                     
+                    // NEW Toggle Logic
                     if (e.target.classList.contains('active')) {
+                        // Clicked an active button - deselect it
                         e.target.classList.remove('active');
                         currentUploadType = null;
                     } else {
+                        // Clicked an inactive button - select it
                         uploadTypeStrip.querySelector('.active')?.classList.remove('active');
                         e.target.classList.add('active');
                         currentUploadType = selectedType;
@@ -1984,29 +2100,34 @@
                     
                     console.log("Upload type changed to:", currentUploadType);
                     
+                    // Re-render inputs if an order is already selected
                     if (selectedOrder) {
                         renderDynamicInputs();
                     }
                 }
              });
 
+             // --- === ALL NEW CLICK HANDLERS (from V1) === ---
+             
              // --- Camera/Upload Button Handlers ---
              cameraBtn.addEventListener('click', async () => {
-                if (isProcessingImage) return;
+                if (isProcessingImage) return; // *** BUG FIX: Check lock ***
                 if (stream) {
+                    // This is the "Capture" click
                     const canvas = document.createElement('canvas');
                     canvas.width = cameraFeed.videoWidth;
                     canvas.height = cameraFeed.videoHeight;
                     canvas.getContext('2d').drawImage(cameraFeed, 0, 0);
                     const dataUrl = canvas.toDataURL('image/png');
                     stopCamera();
-                    imageQueue = [];
-                    currentImageIndex = 0;
-                    imageQueue.push(await dataURLtoFile(dataUrl, `capture-${Date.now()}.png`));
+                    imageQueue = []; // Reset queue for single capture mode
+                    currentImageIndex = 0; // Set index to 0
+                    imageQueue.push(await dataURLtoFile(dataUrl, `capture-${Date.now()}.png`)); // Add file to queue
                     initCropper(dataUrl, `capture-${Date.now()}.png`);
                     
                 } else {
-                    resetUploader();
+                    // This is the "Camera" click
+                    resetUploader(); // Clear previous state
                     placeholder.textContent = 'Starting camera...';
                     placeholder.style.display = 'block';
 
@@ -2030,13 +2151,13 @@
             });
             
             uploadBtn.addEventListener('click', () => { 
-                if (isProcessingImage) return;
+                if (isProcessingImage) return; // *** BUG FIX: Check lock ***
                 fileInput.click(); 
             });
             
             fileInput.addEventListener('change', async (event) => {
-                if (isProcessingImage) return;
-                isProcessingImage = true;
+                if (isProcessingImage) return; // *** BUG FIX: Check lock ***
+                isProcessingImage = true; // Set lock
                 
                 const files = Array.from(event.target.files);
                 if (files.length === 0) {
@@ -2073,19 +2194,19 @@
                 scrollerContainer.style.display = imageQueue.length > 1 ? 'block' : 'none';
                 if (imageQueue.length > 1) renderScroller();
                 
-                isProcessingImage = false;
-                displayImage(0);
+                isProcessingImage = false; // Release lock *before* displaying image
+                displayImage(0); // Display the first image in the cropper
                 updateStatus(`${imageQueue.length} image(s) loaded.`);
             });
              
              // --- Cropper Button Handlers ---
              cropRotateBtn.addEventListener('click', () => {
-                if (isProcessingImage || !cropper) return;
-                cropper.rotate(90);
+                if (isProcessingImage || !cropper) return; // *** BUG FIX: Check lock ***
+                cropper.rotate(90); // Use cropper's built-in rotate method
             });
             
             cropCancelBtn.addEventListener('click', () => {
-                if (isProcessingImage) return;
+                if (isProcessingImage) return; // *** BUG FIX: Check lock ***
                 
                 inlineCropperWrapper.style.display = 'none';
                 imageViewArea.style.display = 'flex';
@@ -2093,16 +2214,19 @@
                 cropper = null;
                 
                 if (imageQueue.length > 0) {
+                    // We were in a queue, show the preview screen
                     setInterfaceState('preview');
+                    // We need to re-display the *uncropped* image from the file
                     displayImage(currentImageIndex); 
                 } else {
+                    // We were not in a queue (e.g., single camera shot), reset
                     resetUploader();
                 }
             });
              
              // --- Preview Button Handlers ---
              rotateBtn.addEventListener('click', () => {
-                if (isProcessingImage) return;
+                if (isProcessingImage) return; // *** BUG FIX: Check lock ***
                 if (previewCanvas.style.display === 'block') {
                     currentRotation = (currentRotation + 90) % 360;
                     drawPreview();
@@ -2111,7 +2235,7 @@
             });
 
             lockBtn.addEventListener('click', () => {
-                if (isProcessingImage) return;
+                if (isProcessingImage) return; // *** BUG FIX: Check lock ***
                 isImageLocked = !isImageLocked;
                 lockBtn.textContent = isImageLocked ? 'Unlock' : 'Lock';
                 lockBtn.style.backgroundColor = isImageLocked ? '#d4edda' : '';
@@ -2119,25 +2243,27 @@
             });
 
             cancelBtn.addEventListener('click', () => {
-                if (isProcessingImage) return;
-                if (stream) {
+                if (isProcessingImage) return; // *** BUG FIX: Check lock ***
+                if (stream) { // "Done" or "Cancel" in streaming mode
                     if (cancelBtn.textContent === 'Done' && imageQueue.length > 0) {
                         stopCamera();
-                        displayImage(0);
+                        displayImage(0); // Go to cropper with first image
                     } else {
-                        resetUploader();
+                        resetUploader(); // Just cancel
                     }
                     return;
                 }
 
+                // "Cancel" in preview mode
                 if (isImageLocked) { 
-                    resetUploader();
+                    resetUploader(); // If locked, cancel all
                     return; 
                 }
                 
                 if (imageQueue.length > 0) {
-                     imageQueue.splice(currentImageIndex, 1);
+                     imageQueue.splice(currentImageIndex, 1); // Remove current image
                      renderScroller();
+                     // Display next image or reset
                      displayImage(currentImageIndex < imageQueue.length ? currentImageIndex : 0);
                 } else {
                     resetUploader();
@@ -2145,7 +2271,7 @@
             });
 
             cancelAllBtn.addEventListener('click', () => {
-                 if (isProcessingImage) return;
+                 if (isProcessingImage) return; // *** BUG FIX: Check lock ***
                  resetUploader();
             });
             
@@ -2155,7 +2281,7 @@
 
              // --- Enhancement Button Handlers ---
             enhanceBtn.addEventListener('click', () => { 
-                if (isProcessingImage) return;
+                if (isProcessingImage) return; // *** BUG FIX: Check lock ***
                 enhancementControls.style.display = enhancementControls.style.display === 'block' ? 'none' : 'block'; 
             });
             
@@ -2211,15 +2337,18 @@
                 applyEnhancements();
             });
 
-             // --- Delegated "Pickup Table" click listener ---
+             // --- === END of V1 CLICK HANDLERS === ---
+
+
+             // --- *** NEW: Delegated "Pickup Table" click listener *** ---
              dynamicInputArea.addEventListener('click', async (e) => {
                 
                 const clickedRow = e.target.closest('tr');
-                if (!clickedRow) return;
+                if (!clickedRow) return; // Click was not on a row
 
                 // --- Handle "Pick" button clicks ---
                 if (e.target.classList.contains('pick-btn-dynamic')) {
-                    if (isProcessingImage) return;
+                    if (isProcessingImage) return; // Check lock
                     
                     const pickButton = e.target;
                     const pickData = { ...pickButton.dataset }; 
@@ -2229,6 +2358,7 @@
                     pickButton.textContent = 'Picking...';
                     isProcessingImage = true; 
 
+                    // 1. CHECK FOR IMAGE
                     if (!imagePreview.src || !imagePreview.src.startsWith('data:')) {
                         updateStatus("No image in preview. Capture or upload an image first.", true);
                         pickButton.disabled = false;
@@ -2237,8 +2367,9 @@
                         return;
                     }
 
-                    let submitRowData = {
-                        uploadType: pickData.type || '',
+                    // 2. GATHER DATA (V1 LOGIC)
+                    let submitRowData = { // *** NEW: Build submit object here ***
+                        uploadType: pickData.type || '', // *** FIX: No 'N/A' ***
                         refNumber: pickData.ref || '',
                         awbNumber: pickData.awb || '',
                         childAwb: '',
@@ -2293,10 +2424,14 @@
                     console.log("Dynamic Pick clicked:", pickData);
 
                     try {
+                        // 3. PROCESS IMAGE
                         updateStatus("Processing image... Please wait.");
                         const rotatedImageSrc = await getRotatedImage(imagePreview.src, currentRotation);
                         const finalImageSrc = await compressImage(rotatedImageSrc, 100, 1024);
                         
+                        // 4. POPULATE TABLE
+                        
+                        // --- *** NEW BUNDLING LOGIC *** ---
                         let groupKey = null;
                         if (pickData.type === 'KYC') {
                             groupKey = `KYC_${submitRowData.refNumber}_${submitRowData.customerUid}`;
@@ -2309,20 +2444,23 @@
                         let existingRow = groupKey ? Array.from(tableBody.rows).find(row => row.dataset.groupKey === groupKey) : null;
 
                         if (existingRow) {
+                            // Add to existing bundle
                             let images = JSON.parse(existingRow.dataset.images);
                             images.push(finalImageSrc);
                             existingRow.dataset.images = JSON.stringify(images);
                             
+                            // Update UI
                             existingRow.cells[0].textContent = `${pickData.type} (${images.length} images)`;
-                            existingRow.cells[4].querySelector('img').src = finalImageSrc;
+                            existingRow.cells[4].querySelector('img').src = finalImageSrc; // Show latest image
                             updateStatus(`Added image to ${pickData.type} bundle.`);
                             
                         } else {
+                            // Create new row
                             const newRow = tableBody.insertRow();
                             newRow.dataset.keyRef = pickData.ref || pickData.awb || '';
                             newRow.dataset.keyType = pickData.type || '';
-                            newRow.dataset.imageData = finalImageSrc;
-                            newRow.dataset.images = JSON.stringify([finalImageSrc]);
+                            newRow.dataset.imageData = finalImageSrc; // Store for POD/Reciept
+                            newRow.dataset.images = JSON.stringify([finalImageSrc]); // Store for bundling
                             newRow.dataset.submitData = JSON.stringify(submitRowData);
                             if (groupKey) {
                                 newRow.dataset.groupKey = groupKey;
@@ -2330,19 +2468,20 @@
 
                             const rowData = {
                                 type: pickData.type || 'N/A',
-                                status: pickData.status || submitRowData.statusRemark || '',
+                                status: pickData.status || submitRowData.statusRemark || '', // *** FIX: No 'N/A' ***
                                 refAwb: (pickData.type === 'MultiBox')
                                     ? `Ref: ${pickData.ref || ''} <br> Child: ${pickData.childAwb}`
                                     : `Ref: ${pickData.ref || ''} <br> AWB: ${pickData.awb || ''}`,
                                 customerKyc: pickData.type === 'KYC' 
                                     ? `Cust: ${pickData.customerName || ''} <br> UID: ${pickData.customerUid || ''} <br> KYC: ${pickData.kycNumber} (${pickData.kycType})`
-                                    : '',
+                                    : '', // *** FIX: No 'N/A' ***
                                 docInfo: pickData.type === 'Product'
                                     ? `Doc: ${pickData.docNumber || ''} <br> Type: ${pickData.docType || ''} <br> Remark: ${pickData.remark}`
-                                    : '',
+                                    : '', // *** FIX: No 'N/A' ***
                                 image: finalImageSrc
                             };
                             
+                            // Update count display for bundles
                             let statusText = `${rowData.type} - ${rowData.status}`;
                             if(groupKey) statusText = `${rowData.type} (1 image)`;
 
@@ -2366,22 +2505,30 @@
                             updateStatus(`Added ${pickData.type} for ${pickData.ref} to table.`);
                         }
                         
+                        // --- *** END BUNDLING LOGIC *** ---
+                        
+                        // --- *** NEW: Reset inputs in the picked row *** ---
                         const inputsToClear = parentRow.querySelectorAll('input[type="text"], .kyc-number-input');
                         inputsToClear.forEach(input => {
-                            input.value = '';
+                            input.value = ''; // Clear the value
                         });
+                        // Reset dropdown to first option
                         const selectsToClear = parentRow.querySelectorAll('select');
                         selectsToClear.forEach(select => {
                             select.selectedIndex = 0;
                         });
 
+                        // *** NEW: Deselect the pickup row ***
                         if (selectedPickupRow) {
                             selectedPickupRow.classList.remove('selected-pickup-row');
                             selectedPickupRow = null;
                         }
                         
+                        // *** NEW: Re-render the pickup table to hide the picked row ***
+                        // This will also trigger the new "POD complete" check
                         renderDynamicInputs();
                         
+                        // 5. RESET
                         if (!isImageLocked) {
                             if (imageQueue.length > 0) {
                                 imageQueue.splice(currentImageIndex, 1);
@@ -2398,7 +2545,7 @@
                     } catch (err) {
                         console.error("Failed during pick process:", err);
                         updateStatus("Error processing image.", true);
-                        isProcessingImage = false;
+                        isProcessingImage = false; // Release lock on error
                     } finally {
                         if (pickButton) { 
                             pickButton.disabled = false;
@@ -2418,15 +2565,16 @@
              });
              
              
-             // --- Table Action Button Listeners ---
+             // --- *** NEW: Table Action Button Listeners *** ---
              deleteLastBtn.addEventListener('click', () => {
                 if (tableBody.rows.length > 0) {
                     tableBody.deleteRow(-1);
                     updateStatus("Last entry deleted.");
+                    // Re-render pickup table to show the task again
                     if (selectedOrder) {
                         renderDynamicInputs();
                     }
-                    resetUploader();
+                    resetUploader(); // *** NEW: Clear image cache ***
                 }
              });
 
@@ -2434,10 +2582,11 @@
                 if (tableBody.rows.length > 0) {
                     tableBody.innerHTML = '';
                     updateStatus("All entries cleared.");
+                    // Re-render pickup table to show all tasks again
                     if (selectedOrder) {
                         renderDynamicInputs();
                     }
-                    resetUploader();
+                    resetUploader(); // *** NEW: Clear image cache ***
                 }
              });
              
@@ -2457,6 +2606,7 @@
                     return;
                 }
                 
+                // Get Auth Credentials from localStorage (V1 Logic)
                 let authCode = '', authToken = '', authUser = '';
                 const loginDataJSON = localStorage.getItem('loginData');
                 if (!loginDataJSON) {
@@ -2467,7 +2617,7 @@
                     const loginData = JSON.parse(loginDataJSON);
                     authCode = loginData.CODE;
                     authToken = loginData.TOKEN;
-                    authUser = loginData.USER;
+                    authUser = loginData.USER; // Or NAME, adjust as needed
                 } catch (e) {
                      updateStatus("Authentication error: Could not parse loginData. Please re-login.", true);
                      return;
@@ -2479,22 +2629,26 @@
 
                 for (let i = 0; i < rows.length; i++) {
                     const row = rows[i];
-                    if (row.style.backgroundColor === 'rgb(212, 237, 218)') {
+                    // Skip rows that are already green (successfully submitted)
+                    if (row.style.backgroundColor === 'rgb(212, 237, 218)') { // 'd4edda'
                         successCount++;
                         continue;
                     }
                     
                     updateStatus(`Submitting row ${i + 1} of ${rows.length}...`);
                     
+                    // Retrieve stored data
                     const rowData = JSON.parse(row.dataset.submitData);
                     const images = JSON.parse(row.dataset.images);
                     let finalImageData;
                     let fileName;
 
+                    // --- *** NEW PDF BUNDLING LOGIC *** ---
                     if (rowData.uploadType === 'POD' || rowData.uploadType === 'Reciept') {
-                        finalImageData = images[0];
+                        finalImageData = images[0]; // Just the single base64 image
                         fileName = `${rowData.refNumber || rowData.awbNumber}-${Date.now()}.jpg`;
                     } else {
+                        // Bundle multiple images into a PDF
                         updateStatus(`Bundling ${images.length} images into PDF for ${rowData.uploadType}...`);
                         finalImageData = await createPdfFromImages(images);
                         
@@ -2508,13 +2662,14 @@
                             fileName = `${rowData.refNumber || rowData.awbNumber}-${Date.now()}.pdf`;
                         }
                     }
+                    // --- *** END PDF BUNDLING LOGIC *** ---
 
                     const payload = {
                         code: authCode,
                         token: authToken,
-                        user: authUser,
+                        user: authUser, // Sending user
                         action: 'append',
-                        imageData: finalImageData,
+                        imageData: finalImageData, // This is now either base64 img or base64 pdf
                         fileName: fileName,
                         rowData: rowData,
                     };
@@ -2523,7 +2678,7 @@
                         const response = await fetch(gscriptUrl, {
                             method: 'POST',
                             body: JSON.stringify(payload),
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // V1 used text/plain
                             mode: 'cors',
                         });
                         
@@ -2535,13 +2690,13 @@
                         
                         if (result.status === 'success') {
                             successCount++;
-                            row.style.backgroundColor = '#d4edda';
+                            row.style.backgroundColor = '#d4edda'; // Green
                         } else {
                             throw new Error(result.message || 'Unknown error from server.');
                         }
                     } catch (error) {
                         console.error('Submission error:', error);
-                        row.style.backgroundColor = '#f8d7da';
+                        row.style.backgroundColor = '#f8d7da'; // Red
                         failedRows.push(i + 1);
                         updateStatus(`Error submitting row ${i + 1}: ${error.message}`, true);
                     }
@@ -2553,7 +2708,7 @@
                 } else {
                     updateStatus(`Successfully submitted all ${successCount} rows.`, false);
                     setTimeout(() => {
-                        clearAllBtn.click();
+                        clearAllBtn.click(); // Clear the table (and resetUploader)
                         updateStatus('All data submitted and table cleared.');
                     }, 2000);
                 }
@@ -2573,27 +2728,10 @@
                     console.error('Barcode Detector could not be instantiated.', e);
                 }
             }
-
-            // --- NEW: FAB ACTION LISTENERS ---
-            window.addEventListener('fabAction', (e) => {
-                if (!e.detail || !e.detail.action) return;
-
-                switch(e.detail.action) {
-                    case 'submitUploads':
-                        if (submitBtn) submitBtn.click();
-                        break;
-                    case 'clearAllUploads':
-                        if (clearAllBtn) clearAllBtn.click();
-                        break;
-                    case 'deleteLastUpload':
-                        if (deleteLastBtn) deleteLastBtn.click();
-                        break;
-                }
-            });
         });
     </script>
 
-    <!-- NEW: Standard layout.js script -->
+    <!-- *** NEW: Added layout.js script at the end to load header/footer *** -->
     <script src="layout.js"></script>
 
 </body>
