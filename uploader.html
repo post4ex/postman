@@ -40,9 +40,9 @@
             flex: 0 0 80%;
             max-width: 80%;
             background-color: #ffffff; /* Was f0f0f0 */
-            overflow-y: auto; /* Adds scrollbar if content is too long */
+            /* overflow-y: auto; <-- REMOVED to allow panel to stretch */
         }
-
+ 
         /* Right Panel - 20% */
         .right-panel {
             flex: 0 0 20%;
@@ -2125,11 +2125,11 @@
              }
              
              // Set height after layout.js loads the footer
-             window.addEventListener('footerLoaded', setPanelHeight);
-             
-             // Recalculate on window resize
-             window.addEventListener('resize', setPanelHeight);
-             // --- *** END: Dynamic Height *** ---
+             <!-- *** REMOVED: Dynamic Height for Side Panel *** -->
+             <!-- function setPanelHeight() { ... } -->
+             <!-- window.addEventListener('footerLoaded', setPanelHeight); -->
+             <!-- window.addEventListener('resize', setPanelHeight); -->
+             <!-- --- *** END: Dynamic Height *** --- -->
  
  
              // 5. NEW: Add Left Panel UI Listeners
