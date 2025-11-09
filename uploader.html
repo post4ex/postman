@@ -404,7 +404,11 @@
         .right-panel-header {
             padding: 1rem;
             border-bottom: 1px solid #e2e8f0;
-            flex-shrink: 0; 
+            flex-shrink: 0;
+            /* *** MODIFIED: Added flex for button *** */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* 8px */
         }
         .right-panel-header input {
             width: 100%;
@@ -412,18 +416,19 @@
             border: 1px solid #cbd5e0;
             border-radius: 0.375rem;
             font-size: 0.9rem;
+            /* *** MODIFIED: Added flex-grow *** */
+            flex-grow: 1;
         }
         
         /* *** MODIFIED: Target desktop container *** */
-        #miniOrderListContainer_desktop {
+        #miniOrderListContainer {
             flex-grow: 1; 
             overflow-y: auto;
             padding: 1rem;
             min-height: 0;
         }
         /* *** MODIFIED: Target ALL list items *** */
-        #miniOrderList_desktop li,
-        #miniOrderList_mobile li {
+        #miniOrderList li {
             padding: 0.5rem 0.25rem;
             font-size: 0.875rem;
             cursor: pointer;
@@ -433,37 +438,29 @@
             line-height: 1.4;
             border-bottom: 1px solid #eee;
         }
-        #miniOrderList_desktop li:last-child,
-        #miniOrderList_mobile li:last-child { border-bottom: none; }
+        #miniOrderList li:last-child { border-bottom: none; }
         
-        #miniOrderList_desktop li:hover,
-        #miniOrderList_mobile li:hover { background-color: #eef2ff; }
+        #miniOrderList li:hover { background-color: #eef2ff; }
         
         /* NEW: Selected state for order list */
-        #miniOrderList_desktop li.selected,
-        #miniOrderList_mobile li.selected {
+        #miniOrderList li.selected {
             background-color: #c7d2fe; /* Indigo-200 */
             font-weight: 600;
         }
-        #miniOrderList_desktop li.selected strong,
-        #miniOrderList_mobile li.selected strong {
+        #miniOrderList li.selected strong {
             color: #312e81; /* Indigo-900 */
         }
 
-        #miniOrderList_desktop li strong,
-        #miniOrderList_mobile li strong { color: #4338ca; display: block; margin-bottom: 2px; }
+        #miniOrderList li strong { color: #4338ca; display: block; margin-bottom: 2px; }
         
-        #miniOrderList_desktop .client-info,
-        #miniOrderList_mobile .client-info { font-size: 0.8rem; color: #6b7280; }
+        #miniOrderList .client-info { font-size: 0.8rem; color: #6b7280; }
         
-        #miniOrderList_desktop .details-info,
-        #miniOrderList_mobile .details-info { font-size: 0.75rem; color: #4b5563; margin-top: 2px; }
+        #miniOrderList .details-info { font-size: 0.75rem; color: #4b5563; margin-top: 2px; }
         
-        #miniOrderList_desktop .dest-info,
-        #miniOrderList_mobile .dest-info { font-size: 0.8rem; color: #374151; margin-top: 2px;}
+        #miniOrderList .dest-info { font-size: 0.8rem; color: #374151; margin-top: 2px;}
 
         /* *** MODIFIED: Target desktop button *** */
-        #loadMoreBtn_desktop {
+        #loadMoreBtn {
             display: block;
             width: calc(100% - 2rem); 
             margin: 0 1rem 1rem 1rem; 
@@ -477,8 +474,8 @@
             cursor: pointer;
             flex-shrink: 0; 
         }
-        #loadMoreBtn_desktop:hover { background-color: #e0e7ff; }
-        #loadMoreBtn_desktop:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+        #loadMoreBtn:hover { background-color: #e0e7ff; }
+        #loadMoreBtn:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
 
         .status-message {
             padding: 1rem;
@@ -489,27 +486,30 @@
         /* === NEW: Responsive Table-to-Card CSS === */
         @media (max-width: 1023px) {
             /* --- Main Layout Stacking --- */
-            /* Tailwind classes handle this:
-            .left-panel {
-                overflow-y: visible; /* Allow page to scroll */
-                height: auto;
+            
+            /* MODIFIED: Removed all 'order' and layout properties */
+            
+            /* Reduce padding on mobile */
+            .left-panel .p-5 {
+                padding: 0.75rem; /* 12px */
             }
             
             /* *** NEW: Style for the mobile order list *** */
-            #mobile_order_panel.right-panel {
+            #mobile-order-list-placeholder .right-panel {
                 height: auto;
-                max-height: 50vh; /* User Request: 50vh */
+                max-height: 60vh; /* 60% of viewport height */
                 border-left: none;
                 border-bottom: 1px solid #e2e8f0;
                 margin-top: 1rem; /* Space from status bar */
+                transition: max-height 0.3s ease-in-out; /* Smooth collapse */
             }
-            #mobile_order_panel #miniOrderListContainer_mobile {
+            #mobile-order-list-placeholder .right-panel #miniOrderListContainer {
                 flex-grow: 1;
                 overflow-y: auto;
                 min-height: 0;
                 padding: 0.75rem;
             }
-            #mobile_order_panel #loadMoreBtn_mobile {
+            #mobile-order-list-placeholder .right-panel #loadMoreBtn {
                 display: block;
                 width: calc(100% - 1.5rem);
                 margin: 0 0.75rem 0.75rem 0.75rem;
@@ -523,19 +523,35 @@
                 cursor: pointer;
                 flex-shrink: 0; 
             }
-            #mobile_order_panel #loadMoreBtn_mobile:hover { background-color: #e0e7ff; }
-            #mobile_order_panel #loadMoreBtn_mobile:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+            #mobile-order-list-placeholder .right-panel #loadMoreBtn:hover { background-color: #e0e7ff; }
+            #mobile-order-list-placeholder .right-panel #loadMoreBtn:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
 
-            #mobile_order_panel .right-panel-header {
-              <div class="right-panel ... w-full lg:w-1/5 ...">
-            */
-
-            /* MODIFIED: Removed all 'order' and layout properties */
-            
-            /* Reduce padding on mobile */
-            .left-panel .p-5 {
-                padding: 0.75rem; /* 12px */
+            #mobile-order-list-placeholder .right-panel .right-panel-header {
+                padding: 0.75rem;
             }
+
+            /* *** NEW: Styles for toggle button *** */
+            #toggleOrderListBtn {
+                padding: 8px 12px; /* Re-style button */
+                flex-shrink: 0;
+            }
+            #toggleOrderListBtn i {
+                transition: transform 0.3s ease;
+            }
+            #toggleOrderListBtn.collapsed i {
+                transform: rotate(180deg);
+            }
+
+            /* *** NEW: Styles for the panel when collapsed *** */
+            #mobile-order-list-placeholder .right-panel.collapsed {
+                max-height: 56px; /* Just enough for the header (40px + 16px padding) */
+                overflow: hidden;
+            }
+            #mobile-order-list-placeholder .right-panel.collapsed #miniOrderListContainer,
+            #mobile-order-list-placeholder .right-panel.collapsed #loadMoreBtn {
+                display: none;
+            }
+
 
             /* --- General Table-to-Card Conversion --- */
             .data-table-container table,
@@ -735,7 +751,7 @@
                     <div id="status-bar">Initializing...</div>
 
                     <!-- *** NEW: Placeholder for Right Panel on Mobile *** -->
-                    <div id="mobile-order-list-placeholder" class="lg:hidden w-full mt-4"></div>
+                    <div id="mobile-order-list-placeholder" class="lg:hidden w-full"></div>
 
                     <!-- === NEW: Dynamic Input Area (Rebuilt as a Table) === -->
                     <div id="dynamic-input-area">
@@ -802,14 +818,23 @@
             <!-- *** MODIFIED: Added w-full, lg:w-1/5, lg:max-w-[20%] *** -->
             <!-- Note: This element will be MOVED by JS on mobile -->
             <div class="right-panel w-full lg:w-1/5 lg:max-w-[20%]">
+                <!-- *** MODIFIED: Added flex, items-center, gap-2 *** -->
                 <div class="right-panel-header">
-                    <input type="text" id="searchMiniOrder" placeholder="Filter orders..." class="w-full p-1 border border-gray-300 rounded-md text-sm">
-                <div id="miniOrderListContainer_desktop">
-                    <ul id="miniOrderList_desktop">
+                    <!-- *** MODIFIED: Added flex-grow *** -->
+                    <input type="text" id="searchMiniOrder" placeholder="Filter orders..." class="w-full p-1 border border-gray-300 rounded-md text-sm flex-grow">
+                    <!-- *** NEW: Toggle Button *** -->
+                    <button id="toggleOrderListBtn" class="v1-btn lg:hidden p-2 w-10 h-10 flex-shrink-0">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+                
+                <!-- *** MODIFIED: Renamed IDs to be generic *** -->
+                <div id="miniOrderListContainer">
+                    <ul id="miniOrderList">
                         <li class="status-message">Loading orders...</li>
                     </ul>
                 </div>
-                <button id="loadMoreBtn_desktop" style="display: none;">Load More (Older)</button>
+                <button id="loadMoreBtn" style="display: none;">Load More (Older)</button>
             </div>
         </div>
     </main>
@@ -855,7 +880,7 @@
         let desktopRightPanelParent; // *** NEW: To store desktop layout ***
 
         // --- V2 UI Elements (Right Panel) ---
-        let miniOrderListContainer, orderList, searchMiniOrderInput, loadMoreBtn;
+        let miniOrderListContainer, orderList, searchMiniOrderInput, loadMoreBtn, toggleOrderListBtn;
         
         // --- V1 UI Elements (Left Panel) ---
         let cameraBtn, uploadBtn, fileInput, placeholder, imagePreview, cameraFeed;
@@ -1337,9 +1362,8 @@
                     } else {
                         // No match found
                         updateStatus(`Barcode detected: ${barcodeValue} (No matching order found).`);
-                        // *** MODIFIED: Update BOTH search inputs ***
-                        if (searchMiniOrderInput_desktop) searchMiniOrderInput_desktop.value = barcodeValue;
-                        if (searchMiniOrderInput_mobile) searchMiniOrderInput_mobile.value = barcodeValue;
+                        // *** MODIFIED: Update search input ***
+                        if (searchMiniOrderInput) searchMiniOrderInput.value = barcodeValue;
                         filterAndRenderOrders();
                     }
                     
@@ -1489,9 +1513,8 @@
                     } else {
                         // No match found - put in filter box
                         updateStatus(`OCR: ${ocrText} (No exact match. Filtering list...).`);
-                        // *** MODIFIED: Update BOTH search inputs ***
-                        if (searchMiniOrderInput_desktop) searchMiniOrderInput_desktop.value = ocrText;
-                        if (searchMiniOrderInput_mobile) searchMiniOrderInput_mobile.value = ocrText;
+                        // *** MODIFIED: Update search input ***
+                        if(searchMiniOrderInput) searchMiniOrderInput.value = ocrText;
                         filterAndRenderOrders(); // Trigger the filter
                     }
                     // --- *** END NEW LOGIC *** ---
@@ -1673,22 +1696,15 @@
         }
         
         function renderMiniOrderList(ordersToRender) {
-            // *** NEW: Get both lists ***
-            const lists = [orderList_desktop, orderList_mobile];
-            
-            lists.forEach(list => {
-                if (!list) return;
-                list.innerHTML = ''; // Clear this list
-            });
+            // *** MODIFIED: Get single list ***
+            if (!orderList) return;
+            orderList.innerHTML = '';
             
             displayedOrders = ordersToRender;
 
             if (!ordersToRender || ordersToRender.length === 0) {
-                lists.forEach(list => {
-                    if (list) list.innerHTML = '<li class="status-message">No matching orders found.</li>';
-                });
-                // *** NEW: Hide both load more buttons ***
-                [loadMoreBtn_desktop, loadMoreBtn_mobile].forEach(btn => { if(btn) btn.style.display = 'none'; });
+                orderList.innerHTML = '<li class="status-message">No matching orders found.</li>';
+                if(loadMoreBtn) loadMoreBtn.style.display = 'none';
                 return;
             }
 
@@ -1705,40 +1721,31 @@
                 const value = order.VALUE || 0;
                 const pieces = order.PIECS || 0;
                 
-                const innerHTML = `<strong>${displayAwb}</strong>
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${displayAwb}</strong>
                                 <div class="client-info">${consignorName} -> ${consigneeName}</div>
                                 <div class="details-info">Date: ${orderDate} | Value: ${value} | Pcs: ${pieces}</div>
                                 <div class="dest-info">Dest: ${destination}</div>`;
 
-                // *** NEW: Add to both lists ***
-                lists.forEach(list => {
-                    if (list) {
-                        const li = document.createElement('li');
-                        li.innerHTML = innerHTML;
-                        li.dataset.orderRef = ref;
-                        if (selectedOrder && selectedOrder.REFERANCE === ref) {
-                            li.classList.add('selected');
-                        }
-                        list.appendChild(li);
-                    }
-                });
+                li.dataset.orderRef = ref;
+                if (selectedOrder && selectedOrder.REFERANCE === ref) {
+                    li.classList.add('selected');
+                }
+                orderList.appendChild(li);
             });
 
-            const searchTerm = searchMiniOrderInput_desktop ? searchMiniOrderInput_desktop.value.toLowerCase() : "";
+            const searchTerm = searchMiniOrderInput ? searchMiniOrderInput.value.toLowerCase() : "";
             const totalFilteredCount = filterOrdersBySearchTerm(searchTerm).length;
             
-            // *** NEW: Update both load more buttons ***
-            const loadMoreButtons = [loadMoreBtn_desktop, loadMoreBtn_mobile];
-            if (ordersToRender.length < totalFilteredCount) {
-                loadMoreButtons.forEach(btn => {
-                    if(btn) {
-                        btn.style.display = 'block';
-                        btn.disabled = false;
-                        btn.textContent = `Load More (${ordersToRender.length} / ${totalFilteredCount})`;
-                    }
-                });
-            } else {
-                loadMoreButtons.forEach(btn => { if(btn) btn.style.display = 'none'; });
+            // *** MODIFIED: Update single load more button ***
+            if (loadMoreBtn) {
+                if (ordersToRender.length < totalFilteredCount) {
+                    loadMoreBtn.style.display = 'block';
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.textContent = `Load More (${ordersToRender.length} / ${totalFilteredCount})`;
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                }
             }
         }
         
@@ -1773,14 +1780,13 @@
         }
 
         function filterAndRenderOrders() {
-            // *** MODIFIED: Get search term from desktop OR mobile input ***
-            const searchTerm = (searchMiniOrderInput_desktop ? searchMiniOrderInput_desktop.value.toLowerCase() : "") || 
-                               (searchMiniOrderInput_mobile ? searchMiniOrderInput_mobile.value.toLowerCase() : "");
+            // *** MODIFIED: Get search term from single input ***
+            const searchTerm = searchMiniOrderInput ? searchMiniOrderInput.value.toLowerCase() : "";
             
             let searchFilteredOrders = filterOrdersBySearchTerm(searchTerm);
             if (!Array.isArray(searchFilteredOrders)) searchFilteredOrders = [];
             const dateFilteredOrders = filterOrdersByDate(searchFilteredOrders);
-            renderMiniOrderList(dateFilteredOrders); // This now renders to both
+            renderMiniOrderList(dateFilteredOrders);
         }
 
         // --- === NEW: Function to render existing uploads FOR A SPECIFIC ORDER === ---
@@ -2217,67 +2223,63 @@
 
         // --- App Initialization ---
         function initializeData() {
-            // *** MODIFIED: Assign Desktop & Mobile UI ***
-            miniOrderListContainer_desktop = document.getElementById('miniOrderListContainer_desktop');
-            orderList_desktop = document.getElementById('miniOrderList_desktop');
-            searchMiniOrderInput_desktop = document.getElementById('searchMiniOrder_desktop');
-            loadMoreBtn_desktop = document.getElementById('loadMoreBtn_desktop');
+            // *** MODIFIED: Assign Generic Panel UI ***
+            miniOrderListContainer = document.getElementById('miniOrderListContainer');
+            orderList = document.getElementById('miniOrderList');
+            searchMiniOrderInput = document.getElementById('searchMiniOrder');
+            loadMoreBtn = document.getElementById('loadMoreBtn');
+            toggleOrderListBtn = document.getElementById('toggleOrderListBtn'); // *** NEW ***
             
-            miniOrderListContainer_mobile = document.getElementById('miniOrderListContainer_mobile');
-            orderList_mobile = document.getElementById('miniOrderList_mobile');
-            searchMiniOrderInput_mobile = document.getElementById('searchMiniOrder_mobile');
-            loadMoreBtn_mobile = document.getElementById('loadMoreBtn_mobile');
-            
-            // --- Add Listeners to BOTH sets ---
-            const searchInputs = [searchMiniOrderInput_desktop, searchMiniOrderInput_mobile];
-            const loadMoreButtons = [loadMoreBtn_desktop, loadMoreBtn_mobile];
-            const orderLists = [orderList_desktop, orderList_mobile];
+            // --- Add Listeners to elements ---
+            if (searchMiniOrderInput) {
+                searchMiniOrderInput.addEventListener('input', filterAndRenderOrders);
+            }
 
-            searchInputs.forEach(input => {
-                if (input) {
-                    input.addEventListener('input', (e) => {
-                        // Sync search bars
-                        const searchTerm = e.target.value;
-                        searchInputs.forEach(inp => { if(inp && inp !== e.target) inp.value = searchTerm; });
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', () => {
+                    displayDays += 90; // Load 90 more days
+                    filterAndRenderOrders();
+                });
+            }
+            
+            if (orderList) {
+                orderList.addEventListener('click', (e) => {
+                    const li = e.target.closest('li');
+                    if (!li || !li.dataset.orderRef) return;
+                    
+                    const ref = li.dataset.orderRef;
+                    selectedOrder = allOrders.find(o => String(o.REFERANCE) === ref);
+                    
+                    if (selectedOrder) {
+                        console.log("Selected Order:", selectedOrder);
+                        // Re-render list to show selection
                         filterAndRenderOrders();
-                    });
-                }
-            });
+                        // Render the dynamic inputs on the left
+                        renderDynamicInputs();
 
-            loadMoreButtons.forEach(button => {
-                if (button) {
-                    button.addEventListener('click', () => {
-                        displayDays += 90; // Load 90 more days
-                        filterAndRenderOrders();
-                    });
-                }
-            });
-            
-            orderLists.forEach(list => {
-                if (list) {
-                    list.addEventListener('click', (e) => {
-                        const li = e.target.closest('li');
-                        if (!li || !li.dataset.orderRef) return;
-                        
-                        const ref = li.dataset.orderRef;
-                        selectedOrder = allOrders.find(o => String(o.REFERANCE) === ref);
-                        
-                        if (selectedOrder) {
-                            console.log("Selected Order:", selectedOrder);
-                            // Re-render list to show selection
-                            filterAndRenderOrders();
-                            // Render the dynamic inputs on the left
-                            renderDynamicInputs();
-
-                            // *** MODIFIED: On mobile, scroll to the content after selection ***
-                            // Check if the clicked list was the mobile one
-                            if (list.id === 'miniOrderList_mobile') {
-                                dynamicInputArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // *** NEW: Auto-hide list on mobile after selection ***
+                        if (window.innerWidth < 1024) {
+                            const panel = mobilePlaceholder.querySelector('.right-panel');
+                            if (panel && !panel.classList.contains('collapsed')) {
+                                panel.classList.add('collapsed');
+                                if(toggleOrderListBtn) toggleOrderListBtn.classList.add('collapsed');
                             }
+                            dynamicInputArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }
-                    });
-                }
-            });
+                    }
+                });
+            }
+
+            // *** NEW: Toggle Button Listener ***
+            if (toggleOrderListBtn) {
+                toggleOrderListBtn.addEventListener('click', () => {
+                    const panel = mobilePlaceholder.querySelector('.right-panel');
+                    if (panel) {
+                        panel.classList.toggle('collapsed');
+                        toggleOrderListBtn.classList.toggle('collapsed');
+                    }
+                });
+            }
         }
         
         // --- Main DOMContentLoaded ---
@@ -2367,17 +2369,23 @@
              desktopRightPanelParent = rightPanelEl.parentNode;
              
              function handleResponsiveLayout() {
+                const toggleBtn = document.getElementById('toggleOrderListBtn'); // Get button
                 if (window.innerWidth < 1024) {
                     // Mobile View
                     if (rightPanelEl.parentNode !== mobilePlaceholder) {
                         mobilePlaceholder.appendChild(rightPanelEl);
                     }
                     rightPanelEl.style.height = 'auto';
-                    rightPanelEl.style.maxHeight = '50vh';
+                    rightPanelEl.style.maxHeight = '60vh'; // Set mobile height
                     rightPanelEl.style.overflow = 'hidden'; // Keep internal flex scroll
                     rightPanelEl.style.borderLeft = 'none';
                     rightPanelEl.style.borderBottom = '1px solid #e2e8f0';
                     leftPanelEl.style.overflowY = 'visible';
+                    // *** NEW: Check collapsed state on move ***
+                    if (rightPanelEl.classList.contains('collapsed')) {
+                        rightPanelEl.style.maxHeight = '56px';
+                    }
+
                 } else {
                     // Desktop View
                     if (rightPanelEl.parentNode !== desktopRightPanelParent) {
@@ -2389,6 +2397,12 @@
                     rightPanelEl.style.borderLeft = '1px solid #e2e8f0';
                     rightPanelEl.style.borderBottom = 'none';
                     leftPanelEl.style.overflowY = 'auto';
+
+                    // *** NEW: Ensure list is not collapsed on desktop ***
+                    if (rightPanelEl.classList.contains('collapsed')) {
+                        rightPanelEl.classList.remove('collapsed');
+                        if (toggleBtn) toggleBtn.classList.remove('collapsed');
+                    }
                 }
              }
              
