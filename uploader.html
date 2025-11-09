@@ -22,38 +22,34 @@
         /* Basic Reset */
         * {
             box-sizing: border-box;
-            /* REMOVED margin: 0; padding: 0; (Handled by Tailwind) */
         }
-
-        /* *** MODIFIED: Removed html, body styles. Now handled by body class. *** */
         
         /* Main Container */
         .main-container {
             display: flex;
-            /* *** MODIFIED: Changed 100vh to 100% to fill the <main> tag *** */
             height: 100%; 
             width: 100%;
+            /* *** MODIFIED: Flex direction will be changed by Tailwind (flex-col lg:flex-row) *** */
         }
 
         /* Left Panel - 80% */
         .left-panel {
-            flex: 0 0 80%;
-            max-width: 80%;
-            background-color: #ffffff; /* Was f0f0f0 */
-            overflow-y: auto; /* <-- RESTORED: Allows left panel to scroll */
+            /* *** MODIFIED: Widths now controlled by Tailwind *** */
+            /* flex: 0 0 80%; (Removed) */
+            /* max-width: 80%; (Removed) */
+            background-color: #ffffff;
+            /* overflow-y: auto;  <-- REMOVED: Will be controlled by JS */
         }
  
         /* Right Panel - 20% */
         .right-panel {
-            flex: 0 0 20%;
-            max-width: 20%;
-            background-color: #f7fafc; /* Was e0e0e0 */
-            border-left: 1px solid #e2e8f0; /* Optional divider */
-            /* overflow-y: auto;  <-- REMOVED */
+            /* *** MODIFIED: Widths/heights now controlled by Tailwind and media queries *** */
+            background-color: #f7fafc;
+            border-left: 1px solid #e2e8f0;
             display: flex;
-            flex-direction: column; /* To make list scrollable */
-            height: 100%;
-            overflow: hidden;
+            flex-direction: column;
+            /* height: 100%; <-- REMOVED: Will be controlled by JS */
+            /* overflow: hidden; <-- REMOVED: Will be controlled by JS */
         }
  
         /* --- STYLES FROM V1 (Controls Banner) --- */
@@ -67,6 +63,10 @@
             padding: 8px; 
             background-color: #e9ecef;
             box-sizing: border-box;
+            /* *** NEW: Ensure it stays on top */
+            position: sticky;
+            top: 0;
+            z-index: 20;
         }
         .upload-type-strip, .button-group {
             display: flex; 
@@ -413,14 +413,17 @@
             border-radius: 0.375rem;
             font-size: 0.9rem;
         }
-
-        #miniOrderListContainer {
+        
+        /* *** MODIFIED: Target desktop container *** */
+        #miniOrderListContainer_desktop {
             flex-grow: 1; 
             overflow-y: auto;
             padding: 1rem;
             min-height: 0;
         }
-        #miniOrderList li {
+        /* *** MODIFIED: Target ALL list items *** */
+        #miniOrderList_desktop li,
+        #miniOrderList_mobile li {
             padding: 0.5rem 0.25rem;
             font-size: 0.875rem;
             cursor: pointer;
@@ -430,23 +433,37 @@
             line-height: 1.4;
             border-bottom: 1px solid #eee;
         }
-        #miniOrderList li:last-child { border-bottom: none; }
-        #miniOrderList li:hover { background-color: #eef2ff; }
+        #miniOrderList_desktop li:last-child,
+        #miniOrderList_mobile li:last-child { border-bottom: none; }
+        
+        #miniOrderList_desktop li:hover,
+        #miniOrderList_mobile li:hover { background-color: #eef2ff; }
+        
         /* NEW: Selected state for order list */
-        #miniOrderList li.selected {
+        #miniOrderList_desktop li.selected,
+        #miniOrderList_mobile li.selected {
             background-color: #c7d2fe; /* Indigo-200 */
             font-weight: 600;
         }
-        #miniOrderList li.selected strong {
+        #miniOrderList_desktop li.selected strong,
+        #miniOrderList_mobile li.selected strong {
             color: #312e81; /* Indigo-900 */
         }
 
-        #miniOrderList li strong { color: #4338ca; display: block; margin-bottom: 2px; }
-        #miniOrderList .client-info { font-size: 0.8rem; color: #6b7280; }
-        #miniOrderList .details-info { font-size: 0.75rem; color: #4b5563; margin-top: 2px; }
-        #miniOrderList .dest-info { font-size: 0.8rem; color: #374151; margin-top: 2px;}
+        #miniOrderList_desktop li strong,
+        #miniOrderList_mobile li strong { color: #4338ca; display: block; margin-bottom: 2px; }
+        
+        #miniOrderList_desktop .client-info,
+        #miniOrderList_mobile .client-info { font-size: 0.8rem; color: #6b7280; }
+        
+        #miniOrderList_desktop .details-info,
+        #miniOrderList_mobile .details-info { font-size: 0.75rem; color: #4b5563; margin-top: 2px; }
+        
+        #miniOrderList_desktop .dest-info,
+        #miniOrderList_mobile .dest-info { font-size: 0.8rem; color: #374151; margin-top: 2px;}
 
-        #loadMoreBtn {
+        /* *** MODIFIED: Target desktop button *** */
+        #loadMoreBtn_desktop {
             display: block;
             width: calc(100% - 2rem); 
             margin: 0 1rem 1rem 1rem; 
@@ -460,14 +477,171 @@
             cursor: pointer;
             flex-shrink: 0; 
         }
-        #loadMoreBtn:hover { background-color: #e0e7ff; }
-        #loadMoreBtn:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+        #loadMoreBtn_desktop:hover { background-color: #e0e7ff; }
+        #loadMoreBtn_desktop:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
 
         .status-message {
             padding: 1rem;
             text-align: center;
             color: #6b7280;
         }
+
+        /* === NEW: Responsive Table-to-Card CSS === */
+        @media (max-width: 1023px) {
+            /* --- Main Layout Stacking --- */
+            /* Tailwind classes handle this:
+            .left-panel {
+                overflow-y: visible; /* Allow page to scroll */
+                height: auto;
+            }
+            
+            /* *** NEW: Style for the mobile order list *** */
+            #mobile_order_panel.right-panel {
+                height: auto;
+                max-height: 50vh; /* User Request: 50vh */
+                border-left: none;
+                border-bottom: 1px solid #e2e8f0;
+                margin-top: 1rem; /* Space from status bar */
+            }
+            #mobile_order_panel #miniOrderListContainer_mobile {
+                flex-grow: 1;
+                overflow-y: auto;
+                min-height: 0;
+                padding: 0.75rem;
+            }
+            #mobile_order_panel #loadMoreBtn_mobile {
+                display: block;
+                width: calc(100% - 1.5rem);
+                margin: 0 0.75rem 0.75rem 0.75rem;
+                text-align: center;
+                padding: 6px;
+                font-size: 0.8rem;
+                color: #4f46e5;
+                background-color: #eef2ff;
+                border: 1px solid #c7d2fe;
+                border-radius: 0.375rem;
+                cursor: pointer;
+                flex-shrink: 0; 
+            }
+            #mobile_order_panel #loadMoreBtn_mobile:hover { background-color: #e0e7ff; }
+            #mobile_order_panel #loadMoreBtn_mobile:disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+
+            #mobile_order_panel .right-panel-header {
+              <div class="right-panel ... w-full lg:w-1/5 ...">
+            */
+
+            /* MODIFIED: Removed all 'order' and layout properties */
+            
+            /* Reduce padding on mobile */
+            .left-panel .p-5 {
+                padding: 0.75rem; /* 12px */
+            }
+
+            /* --- General Table-to-Card Conversion --- */
+            .data-table-container table,
+            .pickup-table {
+                border: 0;
+            }
+            
+            .data-table-container thead,
+            .pickup-table thead {
+                display: none; /* Hide desktop headers */
+            }
+
+            .data-table-container tr,
+            .pickup-table tr {
+                display: block;
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                margin-bottom: 1rem;
+                padding: 0.75rem;
+            }
+
+            .data-table-container td,
+            .pickup-table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                font-size: 0.875rem; /* 14px */
+                text-align: right;
+                white-space: normal;
+                border: none;
+                border-bottom: 1px dashed #eee;
+            }
+            
+            /* Fix for pickup table inputs */
+            .pickup-table td {
+                flex-wrap: wrap;
+            }
+            
+            .data-table-container tr td:last-child,
+            .pickup-table tr td:last-child {
+                border-bottom: none;
+            }
+
+            /* Add data labels */
+            .data-table-container td::before,
+            .pickup-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #333;
+                text-align: left;
+                padding-right: 1rem;
+                flex-basis: 40%; /* Give label space */
+            }
+            
+            /* --- Pickup Table Adjustments --- */
+            .pickup-table td::before {
+                width: 30%; /* Give label a fixed width */
+                min-width: 80px;
+                flex-basis: auto; /* Override general rule */
+            }
+            .pickup-table input[type="text"],
+            .pickup-table select,
+            .pickup-table .kyc-inputs {
+                flex-grow: 1;
+                width: auto;
+                min-width: 150px;
+            }
+            /* Action button cell */
+            .pickup-table td[data-label="Action"] {
+                padding: 0.5rem 0 0 0; /* Full width button */
+            }
+            .pickup-table td[data-label="Action"]::before {
+                display: none; /* No label for action button */
+            }
+            .pickup-table .pick-btn-dynamic {
+                width: 100%;
+                margin-top: 0.5rem;
+            }
+
+            /* --- Submission/Existing Table Adjustments --- */
+            .data-table-container td .image-cell-content {
+                width: 80px;
+                height: 60px;
+            }
+            /* Hide cells that were flagged as N/A */
+            .data-table-container td[data-label="N/A"] {
+                display: none;
+            }
+            
+            /* --- Control Strip --- */
+            #table-actions {
+                justify-content: center; /* Center buttons on mobile */
+            }
+            #main-controls-strip .button-group {
+                flex-basis: 100%; /* Make main buttons take full width */
+                justify-content: center;
+            }
+            #main-controls-strip .separator {
+                display: none;
+            }
+
+        } /* End of media query */
+
     </style>
 </head>
 <!-- *** MODIFIED: Reverted to min-h-screen to allow page scrolling *** -->
@@ -476,14 +650,15 @@
     <!-- *** NEW: Header Placeholder *** -->
     <div id="header-placeholder"></div>
  
-    <!-- *** NEW: Main wrapper to fill space between header/footer *** -->
-    <!-- *** MODIFIED: Added class from Carrier.html to fix height on desktop *** -->
-    <main class="flex-grow flex md:h-[calc(100vh-88px)]">
+    <!-- *** MODIFIED: Added flex-col and lg:flex-row for responsive stacking *** -->
+    <!-- *** MODIFIED: Changed md:h... to lg:h... to match new breakpoint *** -->
+    <main class="flex-grow flex flex-col lg:flex-row lg:h-[calc(100vh-88px)]">
         
-        <!-- *** MODIFIED: Removed inline style, 100% height is set in <style> *** -->
-        <div class="main-container">
-            <!-- 80% Left Panel -->
-            <div class="left-panel">
+        <!-- *** MODIFIED: Added flex-col, lg:flex-row, w-full *** -->
+        <div class="main-container flex-col lg:flex-row w-full">
+            
+            <!-- *** MODIFIED: Added w-full lg:w-4/5 *** -->
+            <div class="left-panel w-full lg:w-4/5">
                 <!-- Main Controls Banner (from V1) -->
                 <div id="main-controls-strip">
                     <div class="upload-type-strip">
@@ -506,8 +681,8 @@
                     </div>
                 </div>
 
-                <!-- Wrapper for future content, to restore padding -->
-                <div class="p-5"> 
+                <!-- *** MODIFIED: Added lg:p-5 for responsive padding *** -->
+                <div class="p-3 lg:p-5"> 
 
                     <!-- *** NEW: Hidden input for GScript URL (from V1) *** -->
                     <input type="hidden" id="gscript-url" value="https://script.google.com/macros/s/AKfycbwkC3OXNACPPH-LLPJyhkZKaDh6VtNgGbp8lMQbzz1XF327IN_OhFEEapOzNm3REbn5/exec">
@@ -558,6 +733,9 @@
 
                     <!-- Status Bar (from V1) -->
                     <div id="status-bar">Initializing...</div>
+
+                    <!-- *** NEW: Placeholder for Right Panel on Mobile *** -->
+                    <div id="mobile-order-list-placeholder" class="lg:hidden w-full mt-4"></div>
 
                     <!-- === NEW: Dynamic Input Area (Rebuilt as a Table) === -->
                     <div id="dynamic-input-area">
@@ -621,19 +799,17 @@
                 </div>
             </div>
 
-            <!-- 20% Right Panel (Shipment List) -->
-            <div class="right-panel">
+            <!-- *** MODIFIED: Added w-full, lg:w-1/5, lg:max-w-[20%] *** -->
+            <!-- Note: This element will be MOVED by JS on mobile -->
+            <div class="right-panel w-full lg:w-1/5 lg:max-w-[20%]">
                 <div class="right-panel-header">
                     <input type="text" id="searchMiniOrder" placeholder="Filter orders..." class="w-full p-1 border border-gray-300 rounded-md text-sm">
-                </div>
-                
-                <div id="miniOrderListContainer">
-                    <ul id="miniOrderList">
+                <div id="miniOrderListContainer_desktop">
+                    <ul id="miniOrderList_desktop">
                         <li class="status-message">Loading orders...</li>
                     </ul>
                 </div>
-                
-                <button id="loadMoreBtn" style="display: none;">Load More (Older)</button>
+                <button id="loadMoreBtn_desktop" style="display: none;">Load More (Older)</button>
             </div>
         </div>
     </main>
@@ -676,6 +852,7 @@
         let selectedPickupRow = null; // *** NEW: To track selected pickup row ***
         let selectionCtx, previewCtx;
         let currentEnhancements = { brightness: 0, contrast: 0, sharpen: false, greyscale: false, bw: false };
+        let desktopRightPanelParent; // *** NEW: To store desktop layout ***
 
         // --- V2 UI Elements (Right Panel) ---
         let miniOrderListContainer, orderList, searchMiniOrderInput, loadMoreBtn;
@@ -692,6 +869,7 @@
         let dynamicInputArea; // <-- NEW Dynamic Input Area UI
         let existingUploadsContainer, existingTableBody; // *** NEW: Existing Uploads UI ***
         let gscriptUrlInput; // *** NEW: GScript URL Input ***
+        let mobilePlaceholder; // *** NEW: Mobile placeholder UI ***
 
 
         // --- === IMAGE FUNCTIONS (MOVED TO TOP) === ---
@@ -1159,7 +1337,9 @@
                     } else {
                         // No match found
                         updateStatus(`Barcode detected: ${barcodeValue} (No matching order found).`);
-                        searchMiniOrderInput.value = barcodeValue; // Put in filter
+                        // *** MODIFIED: Update BOTH search inputs ***
+                        if (searchMiniOrderInput_desktop) searchMiniOrderInput_desktop.value = barcodeValue;
+                        if (searchMiniOrderInput_mobile) searchMiniOrderInput_mobile.value = barcodeValue;
                         filterAndRenderOrders();
                     }
                     
@@ -1309,7 +1489,9 @@
                     } else {
                         // No match found - put in filter box
                         updateStatus(`OCR: ${ocrText} (No exact match. Filtering list...).`);
-                        searchMiniOrderInput.value = ocrText;
+                        // *** MODIFIED: Update BOTH search inputs ***
+                        if (searchMiniOrderInput_desktop) searchMiniOrderInput_desktop.value = ocrText;
+                        if (searchMiniOrderInput_mobile) searchMiniOrderInput_mobile.value = ocrText;
                         filterAndRenderOrders(); // Trigger the filter
                     }
                     // --- *** END NEW LOGIC *** ---
@@ -1491,13 +1673,22 @@
         }
         
         function renderMiniOrderList(ordersToRender) {
-            if (!orderList) return;
-            orderList.innerHTML = '';
+            // *** NEW: Get both lists ***
+            const lists = [orderList_desktop, orderList_mobile];
+            
+            lists.forEach(list => {
+                if (!list) return;
+                list.innerHTML = ''; // Clear this list
+            });
+            
             displayedOrders = ordersToRender;
 
             if (!ordersToRender || ordersToRender.length === 0) {
-                orderList.innerHTML = '<li class="status-message">No matching orders found.</li>';
-                loadMoreBtn.style.display = 'none';
+                lists.forEach(list => {
+                    if (list) list.innerHTML = '<li class="status-message">No matching orders found.</li>';
+                });
+                // *** NEW: Hide both load more buttons ***
+                [loadMoreBtn_desktop, loadMoreBtn_mobile].forEach(btn => { if(btn) btn.style.display = 'none'; });
                 return;
             }
 
@@ -1513,28 +1704,41 @@
                 const orderDate = formatDate(order.ORDER_DATE);
                 const value = order.VALUE || 0;
                 const pieces = order.PIECS || 0;
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>${displayAwb}</strong>
+                
+                const innerHTML = `<strong>${displayAwb}</strong>
                                 <div class="client-info">${consignorName} -> ${consigneeName}</div>
                                 <div class="details-info">Date: ${orderDate} | Value: ${value} | Pcs: ${pieces}</div>
                                 <div class="dest-info">Dest: ${destination}</div>`;
-                li.dataset.orderRef = ref;
-                // NEW: Check if this order is the selected one
-                if (selectedOrder && selectedOrder.REFERANCE === ref) {
-                    li.classList.add('selected');
-                }
-                orderList.appendChild(li);
+
+                // *** NEW: Add to both lists ***
+                lists.forEach(list => {
+                    if (list) {
+                        const li = document.createElement('li');
+                        li.innerHTML = innerHTML;
+                        li.dataset.orderRef = ref;
+                        if (selectedOrder && selectedOrder.REFERANCE === ref) {
+                            li.classList.add('selected');
+                        }
+                        list.appendChild(li);
+                    }
+                });
             });
 
-            const searchTerm = searchMiniOrderInput ? searchMiniOrderInput.value.toLowerCase() : "";
+            const searchTerm = searchMiniOrderInput_desktop ? searchMiniOrderInput_desktop.value.toLowerCase() : "";
             const totalFilteredCount = filterOrdersBySearchTerm(searchTerm).length;
             
+            // *** NEW: Update both load more buttons ***
+            const loadMoreButtons = [loadMoreBtn_desktop, loadMoreBtn_mobile];
             if (ordersToRender.length < totalFilteredCount) {
-                loadMoreBtn.style.display = 'block';
-                loadMoreBtn.disabled = false;
-                loadMoreBtn.textContent = `Load More (${ordersToRender.length} / ${totalFilteredCount})`;
+                loadMoreButtons.forEach(btn => {
+                    if(btn) {
+                        btn.style.display = 'block';
+                        btn.disabled = false;
+                        btn.textContent = `Load More (${ordersToRender.length} / ${totalFilteredCount})`;
+                    }
+                });
             } else {
-                loadMoreBtn.style.display = 'none';
+                loadMoreButtons.forEach(btn => { if(btn) btn.style.display = 'none'; });
             }
         }
         
@@ -1569,11 +1773,14 @@
         }
 
         function filterAndRenderOrders() {
-            const searchTerm = searchMiniOrderInput ? searchMiniOrderInput.value.toLowerCase() : "";
+            // *** MODIFIED: Get search term from desktop OR mobile input ***
+            const searchTerm = (searchMiniOrderInput_desktop ? searchMiniOrderInput_desktop.value.toLowerCase() : "") || 
+                               (searchMiniOrderInput_mobile ? searchMiniOrderInput_mobile.value.toLowerCase() : "");
+            
             let searchFilteredOrders = filterOrdersBySearchTerm(searchTerm);
             if (!Array.isArray(searchFilteredOrders)) searchFilteredOrders = [];
             const dateFilteredOrders = filterOrdersByDate(searchFilteredOrders);
-            renderMiniOrderList(dateFilteredOrders);
+            renderMiniOrderList(dateFilteredOrders); // This now renders to both
         }
 
         // --- === NEW: Function to render existing uploads FOR A SPECIFIC ORDER === ---
@@ -1629,14 +1836,27 @@
                 if (upload.UPLOAD_TYPE === 'POD' && !upload.STATUS_REMARK) rowData.status = 'Delivered';
                 if (upload.UPLOAD_TYPE === 'Reciept' && !upload.STATUS_REMARK) rowData.status = 'Booked';
 
-                // Create cells
-                newRow.insertCell().textContent = `${rowData.type} - ${rowData.status}`;
-                newRow.insertCell().innerHTML = rowData.refAwb;
-                newRow.insertCell().innerHTML = rowData.customerKyc || 'N/A';
-                newRow.insertCell().innerHTML = rowData.docInfo || 'N/A';
+                // --- *** MODIFIED: Create cells with data-label *** ---
                 
-                // Image Cell
-                const imageCell = newRow.insertCell();
+                // Cell 0: Status
+                newRow.insertCell(0).dataset.label = 'Status';
+                newRow.cells[0].textContent = `${rowData.type} - ${rowData.status}`;
+
+                // Cell 1: Reference
+                newRow.insertCell(1).dataset.label = 'Reference';
+                newRow.cells[1].innerHTML = rowData.refAwb;
+
+                // Cell 2: Customer/KYC
+                newRow.insertCell(2).dataset.label = rowData.customerKyc ? 'Customer/KYC' : 'N/A';
+                newRow.cells[2].innerHTML = rowData.customerKyc || 'N/A';
+
+                // Cell 3: Doc Info
+                newRow.insertCell(3).dataset.label = rowData.docInfo ? 'Doc Info' : 'N/A';
+                newRow.cells[3].innerHTML = rowData.docInfo || 'N/A';
+                
+                // Cell 4: Image
+                const imageCell = newRow.insertCell(4);
+                imageCell.dataset.label = 'Image';
                 const thumb = document.createElement('img');
                 thumb.src = rowData.image; // Use FILE_URL directly as src
                 const cellDiv = document.createElement('div');
@@ -1649,8 +1869,8 @@
                 cellDiv.appendChild(link);
                 imageCell.appendChild(cellDiv);
                 
-                // Hidden Branch/Code Cell
-                const hiddenCell = newRow.insertCell();
+                // Cell 5: Hidden Branch/Code Cell
+                const hiddenCell = newRow.insertCell(5);
                 hiddenCell.textContent = `Branch: ${upload.BRANCH}, Code: ${upload.CODE}`;
                 hiddenCell.style.display = 'none';
             });
@@ -1673,7 +1893,8 @@
                 const row = rows[i];
                 const keyRef = row.dataset.keyRef;
                 const keyType = row.dataset.keyType;
-                const refMatch = String(keyRef) === String(ref) || String(keyRef) === String(awb);
+                // *** FIX: Ensure keyRef is a string for comparison ***
+                const refMatch = String(keyRef) === String(ref) || (awb && String(keyRef) === String(awb));
                 
                 if (refMatch && keyType === 'POD') {
                     status.pod = true;
@@ -1686,7 +1907,7 @@
             // 2. Check EXISTING uploads
             allUploads.forEach(upload => {
                  const refMatch = (upload.REFERANCE && String(upload.REFERANCE) === String(ref)) ||
-                                (upload.AWB_NUMBER && String(upload.AWB_NUMBER) === String(awb));
+                                (upload.AWB_NUMBER && awb && String(upload.AWB_NUMBER) === String(awb));
                  if (refMatch) {
                     if (upload.UPLOAD_TYPE === 'POD') {
                         status.pod = true;
@@ -1720,13 +1941,17 @@
             // Check is now done in renderDynamicInputs
             const pickData = { 'type': 'POD', 'ref': ref, 'awb': awb };
             const row = tableBody.insertRow();
+            // *** MODIFIED: Added data-label attributes ***
             row.innerHTML = `
-                <td>POD</td>
-                <td>${ref} / ${awb}</td>
-                <td>Status</td>
-                <td><input type="text" class="dynamic-text-input" placeholder="Delivered (default)"></td>
+                <td data-label="Type">POD</td>
+                <td data-label="Reference">${ref} / ${awb}</td>
+                <td data-label="Details">Status</td>
+                <td data-label="Input"><input type="text" class="dynamic-text-input" placeholder="Delivered (default)"></td>
             `;
-            row.insertCell().appendChild(createPickButton(pickData));
+            // *** MODIFIED: Added data-label to action cell ***
+            const actionCell = row.insertCell();
+            actionCell.dataset.label = "Action";
+            actionCell.appendChild(createPickButton(pickData));
         }
 
         /**
@@ -1736,13 +1961,17 @@
             // Check is now done in renderDynamicInputs
             const pickData = { 'type': 'Reciept', 'ref': ref, 'awb': awb };
             const row = tableBody.insertRow();
+            // *** MODIFIED: Added data-label attributes ***
             row.innerHTML = `
-                <td>Reciept</td>
-                <td>${ref} / ${awb}</td>
-                <td>Status</td>
-                <td><input type="text" class="dynamic-text-input" placeholder="Booked (default)"></td>
+                <td data-label="Type">Reciept</td>
+                <td data-label="Reference">${ref} / ${awb}</td>
+                <td data-label="Details">Status</td>
+                <td data-label="Input"><input type="text" class="dynamic-text-input" placeholder="Booked (default)"></td>
             `;
-            row.insertCell().appendChild(createPickButton(pickData));
+            // *** MODIFIED: Added data-label to action cell ***
+            const actionCell = row.insertCell();
+            actionCell.dataset.label = "Action";
+            actionCell.appendChild(createPickButton(pickData));
         }
 
         /**
@@ -1752,34 +1981,42 @@
             // Row 1: Consignor
             let pickData = { 'type': 'KYC', 'ref': ref, 'customerName': consignorName, 'customerUid': consignorUid };
             const kycRow1 = tableBody.insertRow();
+            // *** MODIFIED: Added data-label attributes ***
             kycRow1.innerHTML = `
-                <td>KYC</td>
-                <td>${ref}</td>
-                <td>${consignorName}</td>
-                <td>
+                <td data-label="Type">KYC</td>
+                <td data-label="Reference">${ref}</td>
+                <td data-label="Details">${consignorName}</td>
+                <td data-label="Input">
                     <div class="kyc-inputs">
                         <input type="text" class="kyc-number-input" placeholder="KYC Number">
                         <select class="kyc-type-select">${kycOptionsHTML}</select>
                     </div>
                 </td>
             `;
-            kycRow1.insertCell().appendChild(createPickButton(pickData));
+            // *** MODIFIED: Added data-label to action cell ***
+            let actionCell1 = kycRow1.insertCell();
+            actionCell1.dataset.label = "Action";
+            actionCell1.appendChild(createPickButton(pickData));
             
             // Row 2: Consignee
             pickData = { 'type': 'KYC', 'ref': ref, 'customerName': consigneeName, 'customerUid': consigneeUid };
             const kycRow2 = tableBody.insertRow();
+            // *** MODIFIED: Added data-label attributes ***
             kycRow2.innerHTML = `
-                <td>KYC</td>
-                <td>${ref}</td>
-                <td>${consigneeName}</td>
-                <td>
+                <td data-label="Type">KYC</td>
+                <td data-label="Reference">${ref}</td>
+                <td data-label="Details">${consigneeName}</td>
+                <td data-label="Input">
                     <div class="kyc-inputs">
                         <input type="text" class="kyc-number-input" placeholder="KYC Number">
                         <select class="kyc-type-select">${kycOptionsHTML}</select>
                     </div>
                 </td>
             `;
-            kycRow2.insertCell().appendChild(createPickButton(pickData));
+            // *** MODIFIED: Added data-label to action cell ***
+            let actionCell2 = kycRow2.insertCell();
+            actionCell2.dataset.label = "Action";
+            actionCell2.appendChild(createPickButton(pickData));
         }
 
         /**
@@ -1794,13 +2031,17 @@
                     const pickData = { 'type': 'Product', 'ref': ref, 'docNumber': docNum, 'docType': docType };
                     
                     const productRow = tableBody.insertRow();
+                    // *** MODIFIED: Added data-label attributes ***
                     productRow.innerHTML = `
-                        <td>Product</td>
-                        <td>${ref}</td>
-                        <td>Doc: ${docNum || 'N/A'} (${docType || 'N/A'})</td>
-                        <td><input type="text" class="dynamic-text-input" placeholder="PAPERS UPLOADED (default)"></td>
+                        <td data-label="Type">Product</td>
+                        <td data-label="Reference">${ref}</td>
+                        <td data-label="Details">Doc: ${docNum || 'N/A'} (${docType || 'N/A'})</td>
+                        <td data-label="Input"><input type="text" class="dynamic-text-input" placeholder="PAPERS UPLOADED (default)"></td>
                     `;
-                    productRow.insertCell().appendChild(createPickButton(pickData));
+                    // *** MODIFIED: Added data-label to action cell ***
+                    const actionCell = productRow.insertCell();
+                    actionCell.dataset.label = "Action";
+                    actionCell.appendChild(createPickButton(pickData));
                 });
             } else if (currentUploadType === 'Product') { // Only show "no products" if in filter mode
                 tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px; color: #888;">No products found for this order.</td></tr>';
@@ -1813,13 +2054,17 @@
         function renderMultiBoxRow(tableBody, { ref, awb }) {
             const pickData = { 'type': 'MultiBox', 'ref': ref, 'awb': awb };
             const multiBoxRow = tableBody.insertRow();
+            // *** MODIFIED: Added data-label attributes ***
             multiBoxRow.innerHTML = `
-                <td>MultiBox</td>
-                <td>${ref} / ${awb}</td>
-                <td>Child AWB</td>
-                <td><input type="text" class="dynamic-text-input" placeholder="Enter Child AWB (default: ${awb})"></td>
+                <td data-label="Type">MultiBox</td>
+                <td data-label="Reference">${ref} / ${awb}</td>
+                <td data-label="Details">Child AWB</td>
+                <td data-label="Input"><input type="text" class="dynamic-text-input" placeholder="Enter Child AWB (default: ${awb})"></td>
             `;
-            multiBoxRow.insertCell().appendChild(createPickButton(pickData));
+            // *** MODIFIED: Added data-label to action cell ***
+            const actionCell = multiBoxRow.insertCell();
+            actionCell.dataset.label = "Action";
+            actionCell.appendChild(createPickButton(pickData));
         }
 
         /**
@@ -1972,37 +2217,67 @@
 
         // --- App Initialization ---
         function initializeData() {
-            // Assign Right Panel UI
-            miniOrderListContainer = document.getElementById('miniOrderListContainer');
-            orderList = document.getElementById('miniOrderList');
-            searchMiniOrderInput = document.getElementById('searchMiniOrder');
-            loadMoreBtn = document.getElementById('loadMoreBtn');
+            // *** MODIFIED: Assign Desktop & Mobile UI ***
+            miniOrderListContainer_desktop = document.getElementById('miniOrderListContainer_desktop');
+            orderList_desktop = document.getElementById('miniOrderList_desktop');
+            searchMiniOrderInput_desktop = document.getElementById('searchMiniOrder_desktop');
+            loadMoreBtn_desktop = document.getElementById('loadMoreBtn_desktop');
             
-            // Add Right Panel Listeners
-            searchMiniOrderInput.addEventListener('input', filterAndRenderOrders);
-            loadMoreBtn.addEventListener('click', () => {
-                displayDays += 90; // Load 90 more days
-                filterAndRenderOrders();
-            });
+            miniOrderListContainer_mobile = document.getElementById('miniOrderListContainer_mobile');
+            orderList_mobile = document.getElementById('miniOrderList_mobile');
+            searchMiniOrderInput_mobile = document.getElementById('searchMiniOrder_mobile');
+            loadMoreBtn_mobile = document.getElementById('loadMoreBtn_mobile');
+            
+            // --- Add Listeners to BOTH sets ---
+            const searchInputs = [searchMiniOrderInput_desktop, searchMiniOrderInput_mobile];
+            const loadMoreButtons = [loadMoreBtn_desktop, loadMoreBtn_mobile];
+            const orderLists = [orderList_desktop, orderList_mobile];
 
-            // NEW: Add click listener for order selection
-            orderList.addEventListener('click', (e) => {
-                const li = e.target.closest('li');
-                if (!li || !li.dataset.orderRef) return;
-                
-                const ref = li.dataset.orderRef;
-                selectedOrder = allOrders.find(o => String(o.REFERANCE) === ref);
-                
-                if (selectedOrder) {
-                    console.log("Selected Order:", selectedOrder);
-                    // Re-render list to show selection
-                    filterAndRenderOrders();
-                    // Render the dynamic inputs on the left
-                    renderDynamicInputs();
+            searchInputs.forEach(input => {
+                if (input) {
+                    input.addEventListener('input', (e) => {
+                        // Sync search bars
+                        const searchTerm = e.target.value;
+                        searchInputs.forEach(inp => { if(inp && inp !== e.target) inp.value = searchTerm; });
+                        filterAndRenderOrders();
+                    });
                 }
             });
 
-            // *** REMOVED: loadData() call ***
+            loadMoreButtons.forEach(button => {
+                if (button) {
+                    button.addEventListener('click', () => {
+                        displayDays += 90; // Load 90 more days
+                        filterAndRenderOrders();
+                    });
+                }
+            });
+            
+            orderLists.forEach(list => {
+                if (list) {
+                    list.addEventListener('click', (e) => {
+                        const li = e.target.closest('li');
+                        if (!li || !li.dataset.orderRef) return;
+                        
+                        const ref = li.dataset.orderRef;
+                        selectedOrder = allOrders.find(o => String(o.REFERANCE) === ref);
+                        
+                        if (selectedOrder) {
+                            console.log("Selected Order:", selectedOrder);
+                            // Re-render list to show selection
+                            filterAndRenderOrders();
+                            // Render the dynamic inputs on the left
+                            renderDynamicInputs();
+
+                            // *** MODIFIED: On mobile, scroll to the content after selection ***
+                            // Check if the clicked list was the mobile one
+                            if (list.id === 'miniOrderList_mobile') {
+                                dynamicInputArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }
+                    });
+                }
+            });
         }
         
         // --- Main DOMContentLoaded ---
@@ -2054,6 +2329,7 @@
              existingUploadsContainer = document.getElementById('existing-uploads-container');
              existingTableBody = document.getElementById('existing-data-table-body');
              gscriptUrlInput = document.getElementById('gscript-url'); // *** NEW: Assign GScript URL ***
+             mobilePlaceholder = document.getElementById('mobile-order-list-placeholder'); // *** NEW: Assign Mobile Placeholder ***
 
 
              // Assign canvas contexts
@@ -2085,54 +2361,41 @@
              }
  
  
-             // --- *** NEW: Dynamic Height for Side Panel *** ---
-             function setPanelHeight() {
-                const listContainer = document.getElementById('miniOrderListContainer');
-                const rightPanel = document.querySelector('.right-panel');
-                if (!listContainer || !rightPanel) return;
- 
-                // Find the elements that take up vertical space
-                const header = document.querySelector('header');
-                const footer = document.querySelector('footer');
-                const listHeader = document.querySelector('.right-panel-header');
-                const loadMoreButton = document.getElementById('loadMoreBtn');
- 
-                const headerHeight = header ? header.offsetHeight : 0;
-                const footerHeight = footer ? footer.offsetHeight : 0;
-                const listHeaderHeight = listHeader ? listHeader.offsetHeight : 0;
-                
-                // Check if loadMoreBtn is visible
-                const loadMoreHeight = (loadMoreButton && window.getComputedStyle(loadMoreButton).display !== 'none') 
-                                     ? loadMoreButton.offsetHeight + 16 // 1rem margin
-                                     : 16; // 1rem padding-bottom
- 
-                const viewportHeight = window.innerHeight;
-                
-                // Calculate available height
-                const availableHeight = viewportHeight - headerHeight - footerHeight - listHeaderHeight - loadMoreHeight - 40; // 40px for padding/margins
- 
-                const minHeight = 300; // Minimum 300px height
-                
-                let finalHeight = availableHeight > minHeight ? availableHeight : minHeight;
-                
-                // In case the page content is taller than the viewport, we don't want to overflow
-                const mainContainerTop = rightPanel.getBoundingClientRect().top;
-                const maxPossibleHeight = viewportHeight - mainContainerTop - footerHeight - listHeaderHeight - loadMoreHeight;
-
-                if (finalHeight > maxPossibleHeight) {
-                    finalHeight = maxPossibleHeight > minHeight ? maxPossibleHeight : minHeight;
+             // --- *** NEW: Responsive Layout Handler *** ---
+             const rightPanelEl = document.querySelector('.right-panel');
+             const leftPanelEl = document.querySelector('.left-panel');
+             desktopRightPanelParent = rightPanelEl.parentNode;
+             
+             function handleResponsiveLayout() {
+                if (window.innerWidth < 1024) {
+                    // Mobile View
+                    if (rightPanelEl.parentNode !== mobilePlaceholder) {
+                        mobilePlaceholder.appendChild(rightPanelEl);
+                    }
+                    rightPanelEl.style.height = 'auto';
+                    rightPanelEl.style.maxHeight = '50vh';
+                    rightPanelEl.style.overflow = 'hidden'; // Keep internal flex scroll
+                    rightPanelEl.style.borderLeft = 'none';
+                    rightPanelEl.style.borderBottom = '1px solid #e2e8f0';
+                    leftPanelEl.style.overflowY = 'visible';
+                } else {
+                    // Desktop View
+                    if (rightPanelEl.parentNode !== desktopRightPanelParent) {
+                        desktopRightPanelParent.appendChild(rightPanelEl);
+                    }
+                    rightPanelEl.style.height = '100%';
+                    rightPanelEl.style.maxHeight = 'none';
+                    rightPanelEl.style.overflow = 'hidden';
+                    rightPanelEl.style.borderLeft = '1px solid #e2e8f0';
+                    rightPanelEl.style.borderBottom = 'none';
+                    leftPanelEl.style.overflowY = 'auto';
                 }
- 
-                listContainer.style.height = `${finalHeight}px`;
-                listContainer.style.maxHeight = `${finalHeight}px`;
              }
              
-             // Set height after layout.js loads the footer
-             <!-- *** REMOVED: Dynamic Height for Side Panel *** -->
-             <!-- function setPanelHeight() { ... } -->
-             <!-- window.addEventListener('footerLoaded', setPanelHeight); -->
-             <!-- window.addEventListener('resize', setPanelHeight); -->
-             <!-- --- *** END: Dynamic Height *** --- -->
+             // Run on load and on resize
+             handleResponsiveLayout();
+             window.addEventListener('resize', handleResponsiveLayout);
+             // --- *** END: Responsive Layout Handler *** ---
  
  
              // 5. NEW: Add Left Panel UI Listeners
@@ -2504,8 +2767,15 @@
                             existingRow.dataset.images = JSON.stringify(images);
                             
                             // Update UI
-                            existingRow.cells[0].textContent = `${pickData.type} (${images.length} images)`;
-                            existingRow.cells[4].querySelector('img').src = finalImageSrc; // Show latest image
+                            // *** MODIFIED: Find cell by data-label ***
+                            const statusCell = existingRow.querySelector('td[data-label="Status"]');
+                            if (statusCell) {
+                                statusCell.textContent = `${pickData.type} (${images.length} images)`;
+                            }
+                            const imageCell = existingRow.querySelector('td[data-label="Image"] img');
+                            if (imageCell) {
+                                imageCell.src = finalImageSrc; // Show latest image
+                            }
                             updateStatus(`Added image to ${pickData.type} bundle.`);
                             
                         } else {
@@ -2539,12 +2809,21 @@
                             let statusText = `${rowData.type} - ${rowData.status}`;
                             if(groupKey) statusText = `${rowData.type} (1 image)`;
 
-                            newRow.insertCell().textContent = statusText;
-                            newRow.insertCell().innerHTML = rowData.refAwb;
-                            newRow.insertCell().innerHTML = rowData.customerKyc || 'N/A';
-                            newRow.insertCell().innerHTML = rowData.docInfo || 'N/A';
+                            // --- *** MODIFIED: Create cells with data-label *** ---
+                            newRow.insertCell(0).dataset.label = 'Status';
+                            newRow.cells[0].textContent = statusText;
+
+                            newRow.insertCell(1).dataset.label = 'Reference';
+                            newRow.cells[1].innerHTML = rowData.refAwb;
+
+                            newRow.insertCell(2).dataset.label = rowData.customerKyc ? 'Customer/KYC' : 'N/A';
+                            newRow.cells[2].innerHTML = rowData.customerKyc || 'N/A';
+
+                            newRow.insertCell(3).dataset.label = rowData.docInfo ? 'Doc Info' : 'N/A';
+                            newRow.cells[3].innerHTML = rowData.docInfo || 'N/A';
                             
-                            const imageCell = newRow.insertCell();
+                            const imageCell = newRow.insertCell(4);
+                            imageCell.dataset.label = 'Image';
                             const thumb = document.createElement('img');
                             thumb.src = rowData.image;
                             const cellDiv = document.createElement('div');
@@ -2552,7 +2831,7 @@
                             cellDiv.appendChild(thumb);
                             imageCell.appendChild(cellDiv);
                             
-                            const hiddenCell = newRow.insertCell();
+                            const hiddenCell = newRow.insertCell(5);
                             hiddenCell.textContent = `Branch: ${submitRowData.branch}, Code: ${submitRowData.code}`;
                             hiddenCell.style.display = 'none';
 
