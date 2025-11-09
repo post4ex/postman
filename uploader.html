@@ -40,7 +40,7 @@
             flex: 0 0 80%;
             max-width: 80%;
             background-color: #ffffff; /* Was f0f0f0 */
-            /* overflow-y: auto; <-- REMOVED to allow panel to stretch */
+            overflow-y: auto; /* <-- RESTORED: Allows left panel to scroll */
         }
  
         /* Right Panel - 20% */
@@ -474,8 +474,8 @@
     <div id="header-placeholder"></div>
  
     <!-- *** NEW: Main wrapper to fill space between header/footer *** -->
-    <!-- *** MODIFIED: Removed overflow-hidden to allow page scrolling *** -->
-    <main class="flex-grow flex">
+    <!-- *** MODIFIED: Added class from Carrier.html to fix height on desktop *** -->
+    <main class="flex-grow flex md:h-[calc(100vh-88px)]">
         
         <!-- *** MODIFIED: Removed inline style, 100% height is set in <style> *** -->
         <div class="main-container">
