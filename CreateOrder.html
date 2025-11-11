@@ -195,7 +195,7 @@
                         <div id="bookingMessage" class="p-2 text-sm text-center rounded-md mt-2"></div>
                     </form>
 
-                    <!-- Order Details Table -->
+                    <!-- Order Details Table (HIDDEN) -->
                     <div id="orderTableSection" class="p-4 bg-white border-t border-gray-400 hidden">
                         <h3 class="text-lg font-semibold mb-2 text-gray-800">Order Details</h3>
                         <div class="overflow-x-auto">
@@ -431,33 +431,30 @@
             </div>
 
         </div>
-
-        <!-- NEW: Last 10 Shipments Section -->
-        <div id="shipmentListContainer" class="container mx-auto bg-white border border-gray-400 mt-4">
-            <h2 class="text-xl font-bold text-gray-800 p-4 border-b">
-                Last 10 Shipments
-            </h2>
-            
-            <!-- Header Row (Desktop only) -->
-            <div class="hidden md:grid md:grid-cols-6 gap-4 font-semibold text-gray-600 p-4 border-b bg-gray-50">
-                <div class="col-span-1">Date</div>
-                <div class="col-span-1">Ref / AWB</div>
-                <div class="col-span-1">Carrier / Mode</div>
-                <div class="col-span-1">Pieces / Value</div>
-                <div class="col-span-1">Parties</div>
-                <div class="col-span-1">Destination</div>
-            </div>
-
-            <!-- Data List (Responsive Cards) -->
-            <div id="shipmentList">
-                <div class="p-4 text-center text-gray-500">Loading shipments...</div>
-                <!-- Shipment items will be populated here by JavaScript -->
-            </div>
-        </div>
-        <!-- End of new section -->
-
     </main>
     
+    <!-- NEW: Last 10 Shipments Section -->
+    <div id="shipmentListContainer" class="container mx-auto bg-white border border-gray-400 mt-4">
+        <h2 class="text-xl font-bold text-gray-800 p-4 border-b hidden">
+            Last 10 Shipments
+        </h2>
+        
+        <!-- Header Row (Desktop only) -->
+        <div class="hidden md:grid md:grid-cols-6 gap-4 font-semibold text-gray-600 p-4 border-b bg-gray-50">
+            <div class="col-span-1">Date</div>
+            <div class="col-span-1">Ref / AWB</div>
+            <div class="col-span-1">Carrier / Mode</div>
+            <div class="col-span-1">Pieces / Value</div>
+            <div class="col-span-1">Parties</div>
+            <div class="col-span-1">Destination</div>
+        </div>
+
+        <!-- Data List (Responsive Cards) -->
+        <div id="shipmentList" class="divide-y divide-gray-200 md:divide-y-0">
+            <p class="p-4 text-center text-gray-500">Loading shipments...</p>
+        </div>
+    </div>
+
     <div id="footer-placeholder"></div>
 
     <script src="layout.js"></script>
@@ -498,9 +495,7 @@
             const transportTypeSelect = document.getElementById('transport_type');
             const carrierSelect = document.getElementById('carrier_select');
             const bookingMessage = document.getElementById('bookingMessage');
-            
-            // NEW: Shipment List container
-            const shipmentList = document.getElementById('shipmentList');
+            const shipmentList = document.getElementById('shipmentList'); // ADDED
 
             let loginData = {};
             let isBookingLocked = false;
@@ -522,12 +517,19 @@
             function renderShipmentList(orders) {
                 if (!shipmentList) return;
                 if (!orders || orders.length === 0) {
-                    shipmentList.innerHTML = '<div class="p-4 text-center text-gray-500">No shipments found.</div>';
+                    shipmentList.innerHTML = '<p class="p-4 text-center text-gray-500">No shipments found.</p>';
                     return;
                 }
 
-                // Get last 10, OLDEST first
-                const lastTenOrders = orders.slice(-10);
+                // Sort by REFERANCE number descending, then take the top 10
+                const sortedOrders = [...orders].sort((a, b) => {
+                const refA = Number(a.REFERANCE) || 0;
+                const refB = Number(b.REFERANCE) || 0;
+                return refB - refA; // Sorts descending
+            });
+
+            const lastTenOrders = sortedOrders.slice(0, 10);
+
                 shipmentList.innerHTML = ''; // Clear loader
 
                 lastTenOrders.forEach(order => {
@@ -618,8 +620,6 @@
                     customerNameSelect.selectedIndex = 1;
                     handleCustomerSelectionChange();
                 }
-                // NEW: Render shipments on initial load
-                renderShipmentList(fetchedGSheetData.ORDERS);
             }
 
             function handleDataRefresh(eventDetail) {
@@ -627,8 +627,10 @@
                 if (!eventDetail || !eventDetail.data) return;
                 fetchedGSheetData = eventDetail.data;
                 updateAllDropdowns();
-                // NEW: Render shipments on data refresh
-                renderShipmentList(fetchedGSheetData.ORDERS);
+                // ADDED: Refresh shipment list on data refresh
+                if (eventDetail.data.ORDERS) {
+                    renderShipmentList(eventDetail.data.ORDERS);
+                }
             }
 
             function updateAllDropdowns() {
@@ -816,8 +818,7 @@
                 });
                 document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
                 document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
-                // UPDATED: Get BRANCH from customer data
-                document.getElementById('display_branch').textContent = selectedCustomerDetails.BRANCH || '---';
+                document.getElementById('display_branch').textContent = selectedCustomerDetails.BRANCH || '---'; // MODIFIED
             }
 
             function revalidateMode() {
@@ -1108,13 +1109,30 @@
 
             // --- MAIN INITIALIZATION & EVENT LISTENERS ---
             loginData = JSON.parse(localStorage.getItem('loginData')) || {};
-            window.addEventListener('appDataLoaded', (e) => initializeAppLogic(e.detail));
-            window.addEventListener('appDataRefreshed', (e) => handleDataRefresh(e.detail));
+            
+            window.addEventListener('appDataLoaded', (e) => {
+                initializeAppLogic(e.detail);
+                if (e.detail.data && e.detail.data.ORDERS) { // ADDED
+                    renderShipmentList(e.detail.data.ORDERS); // ADDED
+                }
+            });
+            window.addEventListener('appDataRefreshed', (e) => {
+                handleDataRefresh(e.detail);
+                if (e.detail.data && e.detail.data.ORDERS) { // ADDED
+                    renderShipmentList(e.detail.data.ORDERS); // ADDED
+                }
+            });
+            
             const appDataJSON = localStorage.getItem('appData');
             if (appDataJSON) {
                 try {
                     const appData = JSON.parse(appDataJSON);
-                    if (appData.data) initializeAppLogic({ data: appData.data });
+                    if (appData.data) { // MODIFIED
+                        initializeAppLogic({ data: appData.data });
+                        if (appData.data.ORDERS) { // ADDED
+                            renderShipmentList(appData.data.ORDERS); // ADDED
+                        }
+                    }
                 } catch(e) { console.error("Error parsing initial appData", e); }
             }
             
@@ -1203,10 +1221,9 @@
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
                 const orderData = {
-                    // UPDATED: Added BRANCH to payload
-                    'BRANCH': document.getElementById('display_branch').textContent || '',
+                    'BRANCH': document.getElementById('display_branch').textContent || '', // MODIFIED
                     'CODE': document.getElementById('display_code').textContent || '',
-                    'TIME_STAMP': document.getElementById('display_timestamp').textContent,
+                    'TIME_STAMP': document.getElementById('display_timestamp').textContent, // RESTORED
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
                     'CARRIER': document.getElementById('display_carrier').textContent,
                     'AWB_NUMBER': document.getElementById('awb').value.trim(),
@@ -1263,13 +1280,13 @@
                     if (result.success) {
                         bookingMessage.textContent = result.message;
                         bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-green-700 bg-green-100';
-                        
-                        // UPDATED: Refresh all app data to include this new order
-                        if (window.verifyAndFetchAppData) {
-                            await window.verifyAndFetchAppData(true); // Call global refresh
-                        }
-                        
                         resetForNextBooking();
+                        
+                        // MODIFIED: Call the robust app data refresh
+                        if (window.verifyAndFetchAppData) {
+                            await window.verifyAndFetchAppData(true);
+                        }
+
                     } else { throw new Error(result.message); }
                 } catch (error) {
                     console.error('Error posting data:', error);
@@ -1286,11 +1303,10 @@
                     bookingMessage.textContent = 'AWB fetch logic not implemented yet.';
                     bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-blue-700 bg-blue-100';
                 });
-S
             }
 
             updateTimestamp();
-            orderDateInput.value = formatDate(new Date());
+            orderDateInput.value = formatDate(new Date()); // RESTORED
             setInterval(updateTimestamp, 60000);
             updateDisplayTables();
             updateSummaryDisplay();
