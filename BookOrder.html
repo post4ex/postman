@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- <link rel="stylesheet" href="style.css"> --> <!-- Removed style.css as it wasn't provided -->
+    <link rel="stylesheet" href="style.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -55,7 +55,6 @@
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
-    <!-- Header will be loaded by layout.js -->
     <div id="header-placeholder"></div>
 
     <main class="flex-grow p-1">
@@ -197,7 +196,7 @@
                     </form>
 
                     <!-- Order Details Table -->
-                    <div id="orderTableSection" class="p-4 bg-white border-t border-gray-400 hidden">
+                    <div id="orderTableSection" class="p-4 bg-white border-t border-gray-400">
                         <h3 class="text-lg font-semibold mb-2 text-gray-800">Order Details</h3>
                         <div class="overflow-x-auto">
                             <table class="min-w-full text-sm">
@@ -434,11 +433,9 @@
         </div>
     </main>
     
-    <!-- Footer will be loaded by layout.js -->
     <div id="footer-placeholder"></div>
 
-    <!-- layout.js and calculations.js should be in the same directory -->
-    <script src="layout.js"></script> 
+    <script src="layout.js"></script>
     <script src="calculations.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -699,11 +696,9 @@
                 ['global', 'cod', 'topay', 'fov'].forEach(type => {
                     document.getElementById(`display_${type}`).textContent = document.getElementById(`payment_${type}`).checked ? 'Yes' : 'No';
                 });
-
-                // --- FIX [1 of 2]: Get BRANCH from selectedCustomerDetails ---
                 document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
                 document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
-                document.getElementById('display_branch').textContent = selectedCustomerDetails.BRANCH || '---'; // <-- WAS loginData.BRANCH
+                document.getElementById('display_branch').textContent = selectedCustomerDetails.BRANCH || '---';
             }
 
             function revalidateMode() {
@@ -863,12 +858,8 @@
             
             function handleCustomerSelectionChange() {
                 const selectedCustomerName = customerNameSelect.value;
-                // --- FIX: Find customer from B2B (which has BRANCH and CODE) ---
                 selectedCustomerDetails = (fetchedGSheetData.B2B || []).find(c => c.CLIENT_NAME === selectedCustomerName) || {};
-                
-                // Find contact info (which has address)
                 const contactDetails = (fetchedGSheetData.B2B2C || []).find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
-                
                 if (contactDetails) {
                     senderNameInput.value = contactDetails.NAME;
                     originPincodeInput.value = contactDetails.PINCODE || '';
@@ -952,18 +943,14 @@
                     updateDisplayTables();
                     checkMainDetailsAndToggleInputs();
                     if (query.length < 2 || !fetchedGSheetData.B2B2C) return;
-                    
-                    // --- FIX: Search all B2B2C contacts, not just customer-specific ---
-                    // const customerCode = selectedCustomerDetails.CODE;
-                    // if (!customerCode) return;
-                    // const customerSpecificContacts = fetchedGSheetData.B2B2C.filter(contact => contact.CODE === customerCode);
-                    
-                    const filteredResults = fetchedGSheetData.B2B2C.filter(contact => 
+                    const customerCode = selectedCustomerDetails.CODE;
+                    if (!customerCode) return;
+                    const customerSpecificContacts = fetchedGSheetData.B2B2C.filter(contact => contact.CODE === customerCode);
+                    const filteredResults = customerSpecificContacts.filter(contact => 
                         (contact.NAME && contact.NAME.toLowerCase().includes(query)) || 
                         (contact.PINCODE && contact.PINCODE.toString().includes(query)) || 
                         (contact.CITY && contact.CITY.toLowerCase().includes(query))
                     );
-
                     if (filteredResults.length > 0 || query) {
                         filteredResults.forEach(contact => {
                             const li = document.createElement('li');
@@ -1096,11 +1083,9 @@
                 }
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
-                
-                // --- FIX [2 of 2]: Added 'BRANCH' to the payload ---
                 const orderData = {
-                    'BRANCH': document.getElementById('display_branch').textContent || '', // <-- THIS WAS MISSING
                     'CODE': document.getElementById('display_code').textContent || '',
+                    'BRANCH': document.getElementById('display_branch').textContent || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
                     'CARRIER': document.getElementById('display_carrier').textContent,
@@ -1138,7 +1123,6 @@
                     'IGST': document.getElementById('display_igst').textContent,
                     'TOTAL': document.getElementById('display_total').textContent,
                 };
-
                 const payload = {
                     code: loginData.CODE || loginData.code,
                     token: loginData.TOKEN || loginData.token,
@@ -1146,7 +1130,6 @@
                     multiboxDetails: consignmentBoxes,
                     productDetails: consignmentProducts
                 };
-
                 try {
                     const response = await fetch('https://script.google.com/macros/s/AKfycbx5PZJRnnDmyDtYbWctF6d0428h1haJnDfVA4HKQR4hcsdAolcmkhLG9MgntAhPSQyi/exec', { 
                         method: 'POST',
