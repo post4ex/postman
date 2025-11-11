@@ -450,8 +450,7 @@
         </div>
 
         <!-- Data List (Responsive Cards) -->
--       <div id="shipmentList" class="divide-y divide-gray-200 md:divide-y-0">
-+       <div id="shipmentList">
+        <div id="shipmentList" class="divide-y divide-gray-200 md:divide-y-0">
             <p class="p-4 text-center text-gray-500">Loading shipments...</p>
         </div>
     </div>
@@ -522,38 +521,21 @@
                     return;
                 }
 
-                // --- UPDATE START: Fix sorting and add mappings ---
-                
                 // Sort by REFERANCE number descending, then take the top 10
                 const sortedOrders = [...orders].sort((a, b) => {
-                    const refA = Number(a.REFERANCE) || 0;
-                    const refB = Number(b.REFERANCE) || 0;
-                    return refB - refA; // Sorts descending
-                });
-                const lastTenOrders = sortedOrders.slice(0, 10);
+                const refA = Number(a.REFERANCE) || 0;
+                const refB = Number(b.REFERANCE) || 0;
+                return refB - refA; // Sorts descending
+            });
 
-                // Helper maps for displaying full names
-                const modeMap = new Map();
-                if (fetchedGSheetData.MODE) {
-                    fetchedGSheetData.MODE.forEach(m => modeMap.set(m.SHORT, m.MODE));
-                }
-                const getModeName = (shortCode) => modeMap.get(shortCode) || shortCode;
-
-                const contactMap = new Map();
-                if (fetchedGSheetData.B2B2C) {
-                    fetchedGSheetData.B2B2C.forEach(c => contactMap.set(c.UID, c.NAME));
-                }
-                const getContactName = (uid) => contactMap.get(uid) || uid;
-
-                // --- UPDATE END ---
+            const lastTenOrders = sortedOrders.slice(0, 10);
 
                 shipmentList.innerHTML = ''; // Clear loader
 
                 lastTenOrders.forEach(order => {
                     const orderCard = document.createElement('div');
                     // This class list makes it a card on mobile and a grid row on desktop
--                   orderCard.className = "bg-white p-4 rounded-lg shadow md:shadow-none md:rounded-none md:grid md:grid-cols-6 md:gap-4 md:p-4 md:border-b items-start mb-4 md:mb-0";
-+                   orderCard.className = "bg-white p-4 rounded-lg shadow md:shadow-none md:rounded-none md:grid md:grid-cols-6 md:gap-4 md:border-b items-start mb-4 md:mb-0";
+                    orderCard.className = "bg-white p-4 rounded-lg shadow md:shadow-none md:rounded-none md:grid md:grid-cols-6 md:gap-4 md:p-4 md:border-b items-start mb-4 md:mb-0";
                     
                     // Helper functions for clean data display
                     const val = (v) => v || '---';
@@ -573,127 +555,763 @@
                         }
                     };
 
--                   orderCard.innerHTML = `
--                       <!-- Col 1: Date -->
--                       <div class="mb-2 md:mb-0">
--                           <!-- Mobile label -->
--                           <span class="font-bold text-sm text-gray-500 md:hidden">Date</span>
--                           <!-- Data -->
--                           <span class="block font-medium">${valDate(order.ORDER_DATE)}</span>
--                           <span class="block text-sm text-gray-600">${valDate(order.TRANSIT_DATE)}</span>
--                       </div>
--
--                       <!-- Col 2: Ref/AWB -->
--                       <div class="mb-2 md:mb-0">
--                           <!-- Mobile label -->
--                           <span class="font-bold text-sm text-gray-500 md:hidden">Ref / AWB</span>
--                           <!-- Data -->
--                           <span class="block font-medium text-blue-600">${val(order.REFERANCE)}</span>
--                           <span class="block text-sm text-gray-600">${val(order.AWB_NUMBER)}</span>
--                       </div>
--                       
--                       <!-- Col 3: Carrier/Mode -->
--                       <div class="mb-2 md:mb-0">
--                           <span class="font-bold text-sm text-gray-500 md:hidden">Carrier / Mode</span>
--                           <span class="block font-medium">${val(order.CARRIER)}</span>
--                           <!-- UPDATE: Use getModeName helper -->
--                           <span class="block text-sm text-gray-600">${getModeName(val(order.MODE))}</span>
--                       </div>
--                       
--                       <!-- Col 4: Pieces/Value -->
--                       <div class="mb-2 md:mb-0">
--                           <span class="font-bold text-sm text-gray-500 md:hidden">Pieces / Value</span>
--                           <span class="block font-medium">${valNum(order.PIECS)}</span>
--                           <span class="block text-sm text-gray-600">${valVal(order.VALUE)}</span>
--                       </div>
--                       
--                       <!-- Col 5: Parties -->
--                       <div class="mb-2 md:mb-0">
--                           <span class="font-bold text-sm text-gray-500 md:hidden">Parties</span>
--                           <!-- UPDATE: Use getContactName helper -->
--                           <span class="block font-medium">${getContactName(val(order.CONSIGNOR))}</span>
--                           <span class="block text-sm text-gray-600">${getContactName(val(order.CONSIGNEE))}</span>
--                       </div>
--                       
--                       <!-- Col 6: Destination -->
--                       <div class="mb-2 md:mb-0">
--                           <span class="font-bold text-sm text-gray-500 md:hidden">Destination</span>
--                           <span class="block font-medium">${val(order.DEST_CITY)}</span>
--                           <span class="block text-sm text-gray-600">${val(order.DEST_PINCODE)}</span>
--                       </div>
--                   `;
-+                   orderCard.innerHTML = `
-+                       <!-- Mobile Layout -->
-+                       <div class="flex flex-col md:hidden">
-+                           <!-- Row 1: Date, Ref/AWB, Pieces/Value -->
-+                           <div class="flex justify-between mb-2">
-+                               <div class="w-1/3">
-+                                   <span class="font-bold text-sm text-gray-500">Date</span>
-+                                   <span class="block font-medium">${valDate(order.ORDER_DATE)}</span>
-+                               </div>
-+                               <div class="w-1/3">
-+                                   <span class="font-bold text-sm text-gray-500">Ref / AWB</span>
-+                                   <span class="block font-medium text-blue-600">${val(order.REFERANCE)}</span>
-+                               </div>
-+                               <div class="w-1/3 text-right">
-+                                   <span class="font-bold text-sm text-gray-500">Pieces / Value</span>
-+                                   <span class="block font-medium">${valNum(order.PIECS)}</span>
-+                                   <span class="block text-sm text-gray-600">${valVal(order.VALUE)}</span>
-+                               </div>
-+                           </div>
-+                           <!-- Row 2: Carrier/Mode, Destination -->
-+                           <div class="flex justify-between mb-2">
-+                               <div class="w-1/2">
-+                                   <span class="font-bold text-sm text-gray-500">Carrier / Mode</span>
-+                                   <span class="block font-medium">${val(order.CARRIER)}</span>
-+                                   <span class="block text-sm text-gray-600">${getModeName(val(order.MODE))}</span>
-+                               </div>
-+                               <div class="w-1/2 text-right">
-+                                   <span class="font-bold text-sm text-gray-500">Destination</span>
-+                                   <span class="block font-medium">${val(order.DEST_CITY)}</span>
-+                                   <span class="block text-sm text-gray-600">${val(order.DEST_PINCODE)}</span>
-+                               </div>
-+                           </div>
-+                           <!-- Row 3: Parties -->
-+                           <div class="mb-0"> <!-- No margin-bottom on last element -->
-+                               <span class="font-bold text-sm text-gray-500">Parties</span>
-+                               <span class="block font-medium">${getContactName(val(order.CONSIGNOR))}</span>
-+                               <span class="block text-sm text-gray-600">${getContactName(val(order.CONSIGNEE))}</span>
-+                           </div>
-+                       </div>
-+
-+                       <!-- Desktop Layout (Original Grid Columns) -->
-+                       <!-- Col 1: Date -->
-+                       <div class="hidden md:block">
-+                           <span class="block font-medium">${valDate(order.ORDER_DATE)}</span>
-+                           <span class="block text-sm text-gray-600">${valDate(order.TRANSIT_DATE)}</span>
-+                       </div>
-+                       <!-- Col 2: Ref/AWB -->
-+                       <div class="hidden md:block">
-+                           <span class="block font-medium text-blue-600">${val(order.REFERANCE)}</span>
-+                           <span class="block text-sm text-gray-600">${val(order.AWB_NUMBER)}</span>
-+                       </div>
-+                       <!-- Col 3: Carrier/Mode -->
-+                       <div class="hidden md:block">
-+                           <span class="block font-medium">${val(order.CARRIER)}</span>
-+                           <span class="block text-sm text-gray-600">${getModeName(val(order.MODE))}</span>
-+                       </div>
-+                       <!-- Col 4: Pieces/Value -->
-+                       <div class="hidden md:block">
-+                           <span class="block font-medium">${valNum(order.PIECS)}</span>
-+                           <span class="block text-sm text-gray-600">${valVal(order.VALUE)}</span>
-+                       </div>
-+                       <!-- Col 5: Parties -->
-+                       <div class="hidden md:block">
-+                           <span class="block font-medium">${getContactName(val(order.CONSIGNOR))}</span>
-+                           <span class="block text-sm text-gray-600">${getContactName(val(order.CONSIGNEE))}</span>
-+                       </div>
-+                       <!-- Col 6: Destination -->
-+                       <div class="hidden md:block">
-+                           <span class="block font-medium">${val(order.DEST_CITY)}</span>
-+                           <span class="block text-sm text-gray-600">${val(order.DEST_PINCODE)}</span>
-+                       </div>
-+                   `;
+                    orderCard.innerHTML = `
+                        <!-- Col 1: Date -->
+                        <div class="mb-2 md:mb-0">
+                            <!-- Mobile label -->
+                            <span class="font-bold text-sm text-gray-500 md:hidden">Date</span>
+                            <!-- Data -->
+                            <span class="block font-medium">${valDate(order.ORDER_DATE)}</span>
+                            <span class="block text-sm text-gray-600">${valDate(order.TRANSIT_DATE)}</span>
+                        </div>
+
+                        <!-- Col 2: Ref/AWB -->
+                        <div class="mb-2 md:mb-0">
+                            <!-- Mobile label -->
+                            <span class="font-bold text-sm text-gray-500 md:hidden">Ref / AWB</span>
+                            <!-- Data -->
+                            <span class="block font-medium text-blue-600">${val(order.REFERANCE)}</span>
+                            <span class="block text-sm text-gray-600">${val(order.AWB_NUMBER)}</span>
+                        </div>
+                        
+                        <!-- Col 3: Carrier/Mode -->
+                        <div class="mb-2 md:mb-0">
+                            <span class="font-bold text-sm text-gray-500 md:hidden">Carrier / Mode</span>
+                            <span class="block font-medium">${val(order.CARRIER)}</span>
+                            <span class="block text-sm text-gray-600">${val(order.MODE)}</span>
+                        </div>
+                        
+                        <!-- Col 4: Pieces/Value -->
+                        <div class="mb-2 md:mb-0">
+                            <span class="font-bold text-sm text-gray-500 md:hidden">Pieces / Value</span>
+                            <span class="block font-medium">${valNum(order.PIECS)}</span>
+                            <span class="block text-sm text-gray-600">${valVal(order.VALUE)}</span>
+                        </div>
+                        
+                        <!-- Col 5: Parties -->
+                        <div class="mb-2 md:mb-0">
+                            <span class="font-bold text-sm text-gray-500 md:hidden">Parties</span>
+                            <span class="block font-medium">${val(order.CONSIGNOR)}</span>
+                            <span class="block text-sm text-gray-600">${val(order.CONSIGNEE)}</span>
+                        </div>
+                        
+                        <!-- Col 6: Destination -->
+                        <div class="mb-2 md:mb-0">
+                            <span class="font-bold text-sm text-gray-500 md:hidden">Destination</span>
+                            <span class="block font-medium">${val(order.DEST_CITY)}</span>
+                            <span class="block text-sm text-gray-600">${val(order.DEST_PINCODE)}</span>
+                        </div>
+                    `;
                     shipmentList.appendChild(orderCard);
                 });
             }
+
+            function initializeAppLogic(eventDetail) {
+                if (!eventDetail || !eventDetail.data) {
+                    bookingMessage.textContent = 'Application data could not be loaded.';
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
+                    return;
+                }
+                fetchedGSheetData = eventDetail.data;
+                updateAllDropdowns();
+                setupAutocomplete(senderNameInput, senderAutocompleteResults, senderDetailsDisplay, 'sender');
+                setupAutocomplete(receiverNameInput, receiverAutocompleteResults, receiverDetailsDisplay, 'receiver');
+                if (customerNameSelect.options.length === 2) {
+                    customerNameSelect.selectedIndex = 1;
+                    handleCustomerSelectionChange();
+                }
+            }
+
+            function handleDataRefresh(eventDetail) {
+                console.log('Booking Page: App data refreshed. Preserving selections.');
+                if (!eventDetail || !eventDetail.data) return;
+                fetchedGSheetData = eventDetail.data;
+                updateAllDropdowns();
+                // ADDED: Refresh shipment list on data refresh
+                if (eventDetail.data.ORDERS) {
+                    renderShipmentList(eventDetail.data.ORDERS);
+                }
+            }
+
+            function updateAllDropdowns() {
+                const selectedCustomer = customerNameSelect.value;
+                const selectedCarrier = carrierSelect.value;
+                const selectedMode = transportTypeSelect.value;
+                populateCustomerDropdown();
+                populateCarrierDropdown();
+                populateModeDropdown(selectedContacts.receiver?.ZONE);
+                customerNameSelect.value = selectedCustomer;
+                carrierSelect.value = selectedCarrier;
+                transportTypeSelect.value = selectedMode;
+            }
+
+            function setBookingFieldsLocked(locked) {
+                const fieldsToLock = [
+                    'order_date', 'sender_name', 'receiver_name',
+                    'transport_type', 'carrier_select', 'payment_global',
+                    'payment_topay', 'payment_cod', 'payment_fov'
+                ];
+                fieldsToLock.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        if (locked && id === 'carrier_select' && element.value === '') {
+                           return;
+                        }
+                        element.disabled = locked;
+                        element.classList.toggle('bg-gray-200', locked);
+                        element.classList.toggle('cursor-not-allowed', locked);
+                    }
+                });
+                isBookingLocked = locked;
+            }
+            
+             function toggleWeightProductEntry(locked) {
+                const fields = [
+                    actualWeightInput, lengthInput, breadthInput, heightInput,
+                    productNameInput, docNoInput, ewayBillInput, productTypeSelect, amountInput
+                ];
+                fields.forEach(field => {
+                    field.disabled = locked;
+                    field.classList.toggle('bg-gray-200', locked);
+                    field.classList.toggle('cursor-not-allowed', locked);
+                });
+            }
+
+            function areMainDetailsComplete() {
+                return customerNameSelect.value && selectedContacts.sender && selectedContacts.receiver && transportTypeSelect.value && carrierSelect.value;
+            }
+
+             function checkMainDetailsAndToggleInputs() {
+                toggleWeightProductEntry(!areMainDetailsComplete());
+            }
+
+            function resetForNextBooking() {
+                consignmentBoxes = [];
+                consignmentProducts = [];
+                ['receiver_name', 'awb', 'actual_weight', 'length', 'breadth', 'height', 'product_name', 'doc_no', 'eway_bill', 'amount'].forEach(id => document.getElementById(id).value = '');
+                ['payment_global', 'payment_topay', 'payment_cod', 'payment_fov'].forEach(id => document.getElementById(id).checked = false);
+                selectedContacts.receiver = null;
+                receiverDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
+                transportTypeSelect.value = '';
+                carrierSelect.value = '';
+                renderMultiboxTable();
+                renderProductTable();
+                setBookingFieldsLocked(false); 
+                toggleWeightProductEntry(true); 
+                updateDisplayTables();
+            }
+
+            function resetFullForm() {
+                consignmentBoxes = [];
+                consignmentProducts = [];
+                renderMultiboxTable();
+                renderProductTable();
+                setBookingFieldsLocked(false);
+                userMadeInitialModeChoice = false;
+                document.getElementById('bookingForm').reset();
+                orderDateInput.value = formatDate(new Date());
+                senderDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Select a customer to autofill sender.</span>`;
+                receiverDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Enter receiver details manually.</span>`;
+                bookingMessage.textContent = '';
+                bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
+                selectedContacts = { sender: null, receiver: null };
+                selectedCustomerDetails = {};
+                updateDisplayTables();
+                updateAndDisplayCharges();
+                toggleWeightProductEntry(true);
+            }
+
+            function formatDate(date) {
+                return date.toISOString().split('T')[0];
+            }
+
+            function formatTime(date) {
+                const hh = String(date.getHours()).padStart(2, '0');
+                const min = String(date.getMinutes()).padStart(2, '0');
+                return `${hh}:${min}`;
+            }
+
+            function updateTimestamp() {
+                const now = new Date();
+                timestampInput.value = `${formatDate(now)} ${formatTime(now)}`;
+                updateDisplayTables();
+            }
+            
+            function updateAndDisplayCharges() {
+                const frightVal = calculateFreight(
+                    transportTypeSelect.value,
+                    parseFloat(document.getElementById('display_rate').textContent),
+                    parseFloat(document.getElementById('display_add_rate').textContent),
+                    parseFloat(document.getElementById('display_weight_ceiling').textContent),
+                    parseFloat(document.getElementById('display_weight_zone').textContent)
+                );
+
+                const charges = calculateAllCharges(
+                    frightVal,
+                    summaryTotals,
+                    selectedCustomerDetails,
+                    {
+                        cod: document.getElementById('payment_cod'),
+                        topay: document.getElementById('payment_topay'),
+                        fov: document.getElementById('payment_fov')
+                    },
+                    consignmentProducts,
+                    parseFloat(document.getElementById('display_chg_wt').textContent) || 0
+                );
+
+                for (const key in charges) {
+                    const element = document.getElementById(`display_${key}`);
+                    if (element) {
+                        element.textContent = charges[key];
+                    }
+                }
+            }
+            
+            function updateHelperTable() {
+                const helperData = getHelperTableData(
+                    parseFloat(document.getElementById('display_chg_wt').textContent) || 0,
+                    selectedCustomerDetails,
+                    transportTypeSelect.value,
+                    selectedContacts.receiver?.ZONE,
+                    fetchedGSheetData.RATES
+                );
+                
+                for(const key in helperData) {
+                    const element = document.getElementById(`display_${key}`);
+                    if(element) element.textContent = helperData[key];
+                }
+                
+                updateAndDisplayCharges();
+            }
+
+            function updateSummaryDisplay() {
+                const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
+                const minWt = (selectedModeOption && selectedModeOption.dataset.minWt) ? parseFloat(selectedModeOption.dataset.minWt) : 0;
+                const finalTotalChgWt = Math.max(summaryTotals.totalChgWt, minWt);
+                document.getElementById('display_weight').textContent = summaryTotals.totalWgt ? summaryTotals.totalWgt.toFixed(2) : '---';
+                document.getElementById('display_chg_wt').textContent = finalTotalChgWt ? finalTotalChgWt.toFixed(2) : '---';
+                document.getElementById('display_pieces').textContent = summaryTotals.boxCount || '---';
+                document.getElementById('display_value').textContent = summaryTotals.totalAmount ? `₹${summaryTotals.totalAmount.toFixed(2)}` : '---';
+                updateHelperTable();
+            }
+
+            function updateDisplayTables() {
+                document.getElementById('display_timestamp').textContent = timestampInput.value || '---';
+                document.getElementById('display_order_date').textContent = orderDateInput.value || '---';
+                document.getElementById('display_transit_date').textContent = orderDateInput.value || '---';
+                document.getElementById('display_carrier').textContent = carrierSelect.value || '---';
+                document.getElementById('display_awb_number').textContent = document.getElementById('awb').value || '---';
+                document.getElementById('display_consignor').textContent = selectedContacts.sender?.UID || '---';
+                document.getElementById('display_origin_pincode').textContent = originPincodeInput.value || '---';
+                document.getElementById('display_origin_city').textContent = selectedContacts.sender?.CITY || '---';
+                document.getElementById('display_consignee').textContent = selectedContacts.receiver?.UID || '---';
+                document.getElementById('display_dest_pincode').textContent = destPincodeInput.value || '---';
+                document.getElementById('display_dest_city').textContent = selectedContacts.receiver?.CITY || '---';
+                const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
+                const selectedModeText = selectedModeOption ? selectedModeOption.text.toUpperCase().replace(/ /g, '_') : '';
+                const tatColumnName = `${selectedModeText}_TAT`;
+                document.getElementById('display_tat').textContent = (selectedContacts.receiver && selectedModeText && selectedContacts.receiver[tatColumnName]) || '---';
+                document.getElementById('display_mode').textContent = transportTypeSelect.value || '---';
+                document.getElementById('display_zone').textContent = selectedContacts.receiver?.ZONE || '---';
+                ['global', 'cod', 'topay', 'fov'].forEach(type => {
+                    document.getElementById(`display_${type}`).textContent = document.getElementById(`payment_${type}`).checked ? 'Yes' : 'No';
+                });
+                document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
+                document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
+                document.getElementById('display_branch').textContent = selectedCustomerDetails.BRANCH || '---'; // MODIFIED
+            }
+
+            function revalidateMode() {
+                if (userMadeInitialModeChoice && isBookingLocked) return;
+                let initialMode = transportTypeSelect.value;
+                let newMode = initialMode;
+                let message = '';
+                let temporaryUnlock = false;
+                const weightChangeLimit = parseFloat(selectedCustomerDetails.WEIGHT_CHANGE);
+                const expressOption = Array.from(transportTypeSelect.options).find(opt => opt.text.toUpperCase() === 'EXPRESS');
+                if (!isNaN(weightChangeLimit) && expressOption && !userMadeInitialModeChoice) {
+                    if (summaryTotals.totalChgWt > weightChangeLimit && initialMode === expressOption.value) {
+                        newMode = selectedContacts.receiver?.MODE || newMode;
+                        message = newMode !== initialMode ? `Mode auto-switched to ${newMode} based on weight.` : `Weight exceeds Express limit (${weightChangeLimit}kg). Please select a new mode.`;
+                        if (newMode === initialMode) temporaryUnlock = true;
+                    } else if (summaryTotals.totalChgWt <= weightChangeLimit && initialMode !== expressOption.value) {
+                        newMode = expressOption.value;
+                        message = `Weight is within limit. Mode reverted to Express.`;
+                    }
+                }
+                if(newMode !== initialMode) transportTypeSelect.value = newMode;
+                const receiverZone = selectedContacts.receiver?.ZONE;
+                if(receiverZone && fetchedGSheetData.MODE){
+                    const currentModeData = fetchedGSheetData.MODE.find(m => m.SHORT === transportTypeSelect.value);
+                    if(currentModeData && currentModeData[receiverZone] === 'N'){
+                        const surfaceOption = fetchedGSheetData.MODE.find(m => m.MODE.toUpperCase() === 'SURFACE');
+                        if(surfaceOption){
+                            transportTypeSelect.value = surfaceOption.SHORT;
+                            message = `Mode ${currentModeData.MODE} not available for ${receiverZone}. Switched to Surface. Select another mode if needed.`;
+                            temporaryUnlock = true;
+                        }
+                    }
+                }
+                if(transportTypeSelect.value !== initialMode) renderMultiboxTable();
+                modeChangeMessage.textContent = message;
+                if (isBookingLocked) {
+                    transportTypeSelect.disabled = temporaryUnlock ? false : true;
+                    transportTypeSelect.classList.toggle('bg-gray-200', !temporaryUnlock);
+                    transportTypeSelect.classList.toggle('cursor-not-allowed', !temporaryUnlock);
+                    wasModeUnlocked = temporaryUnlock;
+                }
+                updateDisplayTables();
+            }
+
+            function renderMultiboxTable() {
+                multiboxTableBody.innerHTML = '';
+                let totalWgt = 0, totalVolWt = 0, calculatedTotalChgWt = 0;
+                consignmentBoxes.forEach(box => {
+                    const row = document.createElement('tr');
+                    row.classList.add('hover:bg-gray-50');
+                    row.innerHTML = `
+                        <td class="p-2 border border-gray-400">${box.boxNum}</td>
+                        <td class="p-2 border border-gray-400">${box.actualWeight}</td>
+                        <td class="p-2 border border-gray-400">${box.length}</td>
+                        <td class="p-2 border border-gray-400">${box.breadth}</td>
+                        <td class="p-2 border border-gray-400">${box.height}</td>
+                        <td class="p-2 border border-gray-400">${box.volWeight.toFixed(2)}</td>
+                        <td class="p-2 border border-gray-400">${box.chargeWeight.toFixed(2)}</td>
+                    `;
+                    multiboxTableBody.appendChild(row);
+                    totalWgt += box.actualWeight;
+                    totalVolWt += box.volWeight;
+                    calculatedTotalChgWt += box.chargeWeight;
+                });
+                summaryTotals.totalWgt = totalWgt;
+                summaryTotals.totalChgWt = calculatedTotalChgWt;
+                summaryTotals.boxCount = consignmentBoxes.length;
+                updateSummaryDisplay();
+                revalidateMode(); 
+            }
+
+            function addMultiboxEntry() {
+                const actualWeight = parseFloat(actualWeightInput.value);
+                const length = parseFloat(lengthInput.value);
+                const breadth = parseFloat(breadthInput.value);
+                const height = parseFloat(heightInput.value);
+                const selectedModeOption = transportTypeSelect.options[transportTypeSelect.selectedIndex];
+                const volIngr = parseFloat(selectedModeOption.dataset.volIngr); 
+                multiboxErrorMessage.textContent = ''; 
+                if (!actualWeight || !length || !breadth || !height) {
+                    multiboxErrorMessage.textContent = 'Please fill all Wgt, L, B, and H fields to add a box.';
+                    return;
+                }
+                
+                consignmentBoxes = recalculateAllBoxWeights(
+                    [...consignmentBoxes, { actualWeight, length, breadth, height }],
+                    volIngr
+                );
+                
+                consignmentBoxes.forEach((box, index) => box.boxNum = index + 1);
+
+                if (!isBookingLocked) {
+                    setBookingFieldsLocked(true);
+                } else if (wasModeUnlocked) {
+                    transportTypeSelect.disabled = true;
+                    transportTypeSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
+                    wasModeUnlocked = false;
+                    modeChangeMessage.textContent = '';
+                }
+                renderMultiboxTable();
+                actualWeightInput.value = '';
+                lengthInput.value = '';
+                breadthInput.value = '';
+                heightInput.value = '';
+            }
+
+            function renderProductTable() {
+                productTableBody.innerHTML = '';
+                let totalAmount = 0;
+                consignmentProducts.forEach((product, index) => {
+                    const row = document.createElement('tr');
+                    row.classList.add('hover:bg-gray-50');
+                    row.innerHTML = `
+                        <td class="p-2 border border-gray-400">${index + 1}</td>
+                        <td class="p-2 border border-gray-400">${product.name}</td>
+                        <td class="p-2 border border-gray-400">${product.docNo}</td>
+                        <td class="p-2 border border-gray-400">${product.ewayBill}</td>
+                        <td class="p-2 border border-gray-400">${product.type}</td>
+                        <td class="p-2 border border-gray-400">₹${product.amount.toFixed(2)}</td>
+                    `;
+                    productTableBody.appendChild(row);
+                    totalAmount += product.amount;
+                });
+                summaryTotals.totalAmount = totalAmount;
+                updateSummaryDisplay();
+                updateAndDisplayCharges(); 
+            }
+
+            function addProductEntry() {
+                const productName = productNameInput.value.trim();
+                const docNo = docNoInput.value.trim();
+                const ewayBill = ewayBillInput.value.trim();
+                const productType = productTypeSelect.value;
+                const amount = parseFloat(amountInput.value);
+                ewayStatusMessage.textContent = '';
+                if (!productName || !docNo || !amountInput.value) {
+                    ewayStatusMessage.textContent = 'Product, DocNo and Amount fields are required.';
+                    return;
+                }
+                if (amount >= 50000 && !ewayBill) {
+                    ewayStatusMessage.textContent = 'EWay Bill is mandatory for invoice value ₹50,000 and above.';
+                    return;
+                }
+                if (ewayBill && !/^\d{12}$/.test(ewayBill)) {
+                    ewayStatusMessage.textContent = 'EWay bill must be a 12-digit numeric number.';
+                    return;
+                }
+                consignmentProducts.push({ name: productName, docNo, ewayBill, type: productType, amount: amount || 0 });
+                if (!isBookingLocked) setBookingFieldsLocked(true);
+                renderProductTable();
+                productNameInput.value = '';
+                docNoInput.value = '';
+                ewayBillInput.value = '';
+                amountInput.value = '';
+                productTypeSelect.value = 'INV';
+            }
+            
+            function handleCustomerSelectionChange() {
+                const selectedCustomerName = customerNameSelect.value;
+                selectedCustomerDetails = (fetchedGSheetData.B2B || []).find(c => c.CLIENT_NAME === selectedCustomerName) || {};
+                const contactDetails = (fetchedGSheetData.B2B2C || []).find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
+                if (contactDetails) {
+                    senderNameInput.value = contactDetails.NAME;
+                    originPincodeInput.value = contactDetails.PINCODE || '';
+                    selectedContacts.sender = contactDetails;
+                    displayContactDetails(contactDetails, senderDetailsDisplay);
+                } else {
+                    senderNameInput.value = '';
+                    originPincodeInput.value = '';
+                    selectedContacts.sender = null;
+                    senderDetailsDisplay.innerHTML = `<span class="italic text-gray-500">Select a customer to autofill sender.</span>`;
+                }
+                populateModeDropdown(null); 
+                const expressOption = Array.from(transportTypeSelect.options).find(opt => opt.text.toUpperCase() === 'EXPRESS');
+                if (expressOption) transportTypeSelect.value = expressOption.value;
+                updateDisplayTables();
+                checkMainDetailsAndToggleInputs();
+            }
+
+            function populateCustomerDropdown() {
+                customerNameSelect.innerHTML = '<option value="">Select Customer</option>';
+                if (fetchedGSheetData.B2B?.length > 0) {
+                    fetchedGSheetData.B2B.forEach(client => {
+                        const option = document.createElement('option');
+                        option.value = client.CLIENT_NAME;
+                        option.textContent = client.CLIENT_NAME;
+                        customerNameSelect.appendChild(option);
+                    });
+                }
+            }
+
+            function populateModeDropdown(zone) {
+                transportTypeSelect.innerHTML = '<option value="">Select Mode</option>';
+                if (fetchedGSheetData.MODE?.length > 0) {
+                    fetchedGSheetData.MODE.forEach(mode => {
+                        const isAvailableForZone = !zone || mode[zone] === 'Y';
+                        const option = document.createElement('option');
+                        option.value = mode.SHORT;
+                        option.textContent = mode.MODE;
+                        option.dataset.volIngr = mode.VOL_INGR;
+                        option.dataset.minWt = mode.MIN_WT;
+                        option.disabled = !isAvailableForZone;
+                        transportTypeSelect.appendChild(option);
+                    });
+                }
+            }
+
+            function populateCarrierDropdown() {
+                carrierSelect.innerHTML = '<option value="">Select Carrier</option>';
+                if (fetchedGSheetData.CARRIER?.length > 0) {
+                    fetchedGSheetData.CARRIER.forEach(carrier => {
+                        const option = document.createElement('option');
+                        option.value = carrier.COMPANY_CODE;
+                        option.textContent = carrier.COMPANY_CODE;
+                        carrierSelect.appendChild(option);
+                    });
+                }
+            }
+            
+            function displayContactDetails(contact, displayElement) {
+                if (contact) {
+                    displayElement.innerHTML = `
+                        <p class="text-xs text-gray-600">${contact.ADDRESS || ''}</p>
+                        <p class="text-xs text-gray-600">${contact.CITY || ''}, ${contact.STATE || ''} - ${contact.PINCODE || ''}</p>
+                        <p class="text-xs text-gray-600">Ph: ${contact.MOBILE || ''}</p>
+                    `;
+                } else {
+                    displayElement.innerHTML = `<span class="italic text-gray-500">No details found.</span>`;
+                }
+            }
+
+            function setupAutocomplete(inputElement, resultsElement, displayElement, type) {
+                inputElement.addEventListener('input', () => {
+                    const query = inputElement.value.toLowerCase();
+                    resultsElement.innerHTML = '';
+                    resultsElement.classList.add('hidden');
+                    if (type === 'sender') selectedContacts.sender = null;
+                    if (type === 'receiver') {
+                        selectedContacts.receiver = null;
+                        populateModeDropdown(null);
+                    }
+                    updateDisplayTables();
+                    checkMainDetailsAndToggleInputs();
+                    if (query.length < 2 || !fetchedGSheetData.B2B2C) return;
+                    const customerCode = selectedCustomerDetails.CODE;
+                    if (!customerCode) return;
+                    const customerSpecificContacts = fetchedGSheetData.B2B2C.filter(contact => contact.CODE === customerCode);
+                    const filteredResults = customerSpecificContacts.filter(contact => 
+                        (contact.NAME && contact.NAME.toLowerCase().includes(query)) || 
+                        (contact.PINCODE && contact.PINCODE.toString().includes(query)) || 
+                        (contact.CITY && contact.CITY.toLowerCase().includes(query))
+                    );
+                    if (filteredResults.length > 0 || query) {
+                        filteredResults.forEach(contact => {
+                            const li = document.createElement('li');
+                            li.textContent = `${contact.NAME} - ${contact.CITY}, ${contact.PINCODE}`;
+                            li.addEventListener('click', () => {
+                                inputElement.value = contact.NAME;
+                                displayContactDetails(contact, displayElement);
+                                if (type === 'sender') {
+                                    selectedContacts.sender = contact;
+                                    originPincodeInput.value = contact.PINCODE || '';
+                                } else {
+                                    selectedContacts.receiver = contact;
+                                    destPincodeInput.value = contact.PINCODE || '';
+                                    carrierSelect.value = contact.CARRIER || '';
+                                    populateModeDropdown(contact.ZONE);
+                                }
+                                resultsElement.classList.add('hidden');
+                                revalidateMode(); 
+                                updateDisplayTables();
+                                checkMainDetailsAndToggleInputs();
+                            });
+                            resultsElement.appendChild(li);
+                        });
+                        const addNewLi = document.createElement('li');
+                        addNewLi.className = 'bg-gray-100 font-semibold';
+                        addNewLi.textContent = '+ Add New Contact';
+                        addNewLi.addEventListener('click', () => {
+                            displayElement.innerHTML = `<span class="italic text-gray-500">Enter new contact details manually.</span>`;
+                            resultsElement.classList.add('hidden');
+                        });
+                        resultsElement.appendChild(addNewLi);
+                        resultsElement.classList.remove('hidden');
+                    }
+                });
+            }
+
+            // --- MAIN INITIALIZATION & EVENT LISTENERS ---
+            loginData = JSON.parse(localStorage.getItem('loginData')) || {};
+            
+            window.addEventListener('appDataLoaded', (e) => {
+                initializeAppLogic(e.detail);
+                if (e.detail.data && e.detail.data.ORDERS) { // ADDED
+                    renderShipmentList(e.detail.data.ORDERS); // ADDED
+                }
+            });
+            window.addEventListener('appDataRefreshed', (e) => {
+                handleDataRefresh(e.detail);
+                if (e.detail.data && e.detail.data.ORDERS) { // ADDED
+                    renderShipmentList(e.detail.data.ORDERS); // ADDED
+                }
+            });
+            
+            const appDataJSON = localStorage.getItem('appData');
+            if (appDataJSON) {
+                try {
+                    const appData = JSON.parse(appDataJSON);
+                    if (appData.data) { // MODIFIED
+                        initializeAppLogic({ data: appData.data });
+                        if (appData.data.ORDERS) { // ADDED
+                            renderShipmentList(appData.data.ORDERS); // ADDED
+                        }
+                    }
+                } catch(e) { console.error("Error parsing initial appData", e); }
+            }
+            
+            customerNameSelect.addEventListener('change', handleCustomerSelectionChange);
+            transportTypeSelect.addEventListener('change', () => {
+                if (!isBookingLocked) userMadeInitialModeChoice = true;
+                consignmentBoxes = recalculateAllBoxWeights(consignmentBoxes, parseFloat(transportTypeSelect.options[transportTypeSelect.selectedIndex].dataset.volIngr));
+                renderMultiboxTable();
+                if (isBookingLocked) {
+                    transportTypeSelect.disabled = true;
+                    transportTypeSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
+                    wasModeUnlocked = false; 
+                    modeChangeMessage.textContent = '';
+                }
+                checkMainDetailsAndToggleInputs();
+            });
+            carrierSelect.addEventListener('change', () => {
+                if (isBookingLocked && carrierSelect.value !== '') {
+                    carrierSelect.disabled = true;
+                    carrierSelect.classList.add('bg-gray-200', 'cursor-not-allowed');
+                }
+                checkMainDetailsAndToggleInputs();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.autocomplete-container')) {
+                    senderAutocompleteResults.classList.add('hidden');
+                    receiverAutocompleteResults.classList.add('hidden');
+                }
+            });
+
+            ['order_date', 'carrier_select', 'awb', 'sender_name', 'origin_pincode', 'receiver_name', 'dest_pincode', 'transport_type'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', updateDisplayTables);
+            });
+            ['payment_global', 'payment_topay', 'payment_cod', 'payment_fov'].forEach(id => {
+                document.getElementById(id).addEventListener('change', () => {
+                    updateDisplayTables();
+                    updateAndDisplayCharges();
+                });
+            });
+
+            actualWeightInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lengthInput.focus(); } });
+            lengthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); breadthInput.focus(); } });
+            breadthInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); heightInput.focus(); } });
+            heightInput.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); addMultiboxEntry(); actualWeightInput.focus(); } });
+            productNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); docNoInput.focus(); } });
+            docNoInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ewayBillInput.focus(); } });
+            ewayBillInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); amountInput.focus(); } });
+            amountInput.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); addProductEntry(); productNameInput.focus(); } });
+            clearMultiboxButton.addEventListener('click', () => {
+                consignmentBoxes.pop();
+                renderMultiboxTable();
+                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+            });
+            clearMultiboxButton.addEventListener('dblclick', () => {
+                consignmentBoxes = [];
+                renderMultiboxTable();
+                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+            });
+            clearProductsButton.addEventListener('click', () => {
+                consignmentProducts.pop();
+                renderProductTable();
+                if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+            });
+            clearProductsButton.addEventListener('dblclick', () => {
+                consignmentProducts = [];
+                renderProductTable();
+                 if (consignmentBoxes.length === 0 && consignmentProducts.length === 0) setBookingFieldsLocked(false);
+            });
+            clearAllButton.addEventListener('click', () => {
+                consignmentBoxes = [];
+                consignmentProducts = [];
+                renderMultiboxTable();
+                renderProductTable();
+                setBookingFieldsLocked(false);
+            });
+            cancelButton.addEventListener('click', resetFullForm);
+            bookButton.addEventListener('click', async () => {
+                 bookingMessage.textContent = '';
+                 bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
+                 if (!areMainDetailsComplete() || (consignmentBoxes.length === 0 && consignmentProducts.length === 0)) {
+                    bookingMessage.textContent = 'Please fill all required fields (Customer, Sender, Receiver, Mode, Carrier) and add at least one box or product.';
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
+                    return;
+                }
+                bookButton.disabled = true;
+                bookButton.textContent = 'Booking...';
+                const orderData = {
+                    'BRANCH': document.getElementById('display_branch').textContent || '', // MODIFIED
+                    'CODE': document.getElementById('display_code').textContent || '',
+                    'TIME_STAMP': document.getElementById('display_timestamp').textContent, // RESTORED
+                    'ORDER_DATE': document.getElementById('display_order_date').textContent,
+                    'CARRIER': document.getElementById('display_carrier').textContent,
+                    'AWB_NUMBER': document.getElementById('awb').value.trim(),
+                    'TRANSIT_DATE': document.getElementById('display_transit_date').textContent,
+                    'CONSIGNOR': document.getElementById('display_consignor').textContent,
+                    'ORIGIN_CITY': document.getElementById('display_origin_city').textContent,
+                    'ORIGIN_PINCODE': document.getElementById('display_origin_pincode').textContent,
+                    'CONSIGNEE': document.getElementById('display_consignee').textContent,
+                    'DEST_CITY': document.getElementById('display_dest_city').textContent,
+                    'DEST_PINCODE': document.getElementById('display_dest_pincode').textContent,
+                    'TAT': document.getElementById('display_tat').textContent,
+                    'ZONE': document.getElementById('display_zone').textContent,
+                    'MODE': document.getElementById('display_mode').textContent,
+                    'GLOBAL': document.getElementById('display_global').textContent,
+                    'COD': document.getElementById('display_cod').textContent,
+                    'TOPAY': document.getElementById('display_topay').textContent,
+                    'FOV': document.getElementById('display_fov').textContent,
+                    'WEIGHT': document.getElementById('display_weight').textContent,
+                    'CHG_WT': document.getElementById('display_chg_wt').textContent,
+                    'PIECS': document.getElementById('display_pieces').textContent,
+                    'VALUE': summaryTotals.totalAmount,
+                    'FRIGHT': document.getElementById('display_fright').textContent,
+                    'FUEL_CHG': document.getElementById('display_fuel_chg').textContent,
+                    'COD_CHG': document.getElementById('display_cod_chg').textContent,
+                    'TOPAY_CHG': document.getElementById('display_topay_chg').textContent,
+                    'FOV_CHG': document.getElementById('display_fov_chg').textContent,
+                    'EWAY_CHG': document.getElementById('display_eway_chg').textContent,
+                    'AWB_CHG': document.getElementById('display_awb_chg').textContent,
+                    'PACK_CHG': document.getElementById('display_pack_chg').textContent,
+                    'DEV_CHG': document.getElementById('display_dev_chg').textContent,
+                    'TAXABLE': document.getElementById('display_taxable').textContent,
+                    'SGST': document.getElementById('display_sgst').textContent,
+                    'CGST': document.getElementById('display_cgst').textContent,
+                    'IGST': document.getElementById('display_igst').textContent,
+                    'TOTAL': document.getElementById('display_total').textContent,
+                };
+                const payload = {
+                    code: loginData.CODE || loginData.code,
+                    token: loginData.TOKEN || loginData.token,
+                    orderDetails: orderData,
+                    multiboxDetails: consignmentBoxes,
+                    productDetails: consignmentProducts
+                };
+                try {
+                    const response = await fetch('https://script.google.com/macros/s/AKfycbx5PZJRnnDmyDtYbWctF6d0428h1haJnDfVA4HKQR4hcsdAolcmkhLG9MgntAhPSQyi/exec', { 
+                        method: 'POST',
+                        mode: 'cors',
+                        cache: 'no-cache',
+                        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                        redirect: 'follow',
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        bookingMessage.textContent = result.message;
+                        bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-green-700 bg-green-100';
+                        resetForNextBooking();
+                        
+                        // MODIFIED: Call the robust app data refresh
+                        if (window.verifyAndFetchAppData) {
+                            await window.verifyAndFetchAppData(true);
+                        }
+
+                    } else { throw new Error(result.message); }
+                } catch (error) {
+                    console.error('Error posting data:', error);
+                    bookingMessage.textContent = `Booking failed: ${error.message}`;
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
+                } finally {
+                    bookButton.disabled = false;
+                    bookButton.textContent = 'Book';
+                }
+            });
+            
+            if(getAwbButton) {
+                getAwbButton.addEventListener('click', () => {
+                    bookingMessage.textContent = 'AWB fetch logic not implemented yet.';
+                    bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-blue-700 bg-blue-100';
+                });
+            }
+
+            updateTimestamp();
+            orderDateInput.value = formatDate(new Date()); // RESTORED
+            setInterval(updateTimestamp, 60000);
+            updateDisplayTables();
+            updateSummaryDisplay();
+            toggleWeightProductEntry(true);
+        });
+    </script>
+</body>
+</html>
