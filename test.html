@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- <link rel="stylesheet" href="style.css"> --> <!-- Removed style.css as it wasn't provided -->
+    <link rel="stylesheet" href="style.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -55,7 +55,6 @@
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
-    <!-- Header will be loaded by layout.js -->
     <div id="header-placeholder"></div>
 
     <main class="flex-grow p-1">
@@ -432,13 +431,33 @@
             </div>
 
         </div>
+
+        <!-- NEW: Last 10 Shipments Section -->
+        <div id="shipmentListContainer" class="container mx-auto bg-white border border-gray-400 mt-4 mb-4 rounded-md shadow-lg">
+            <h2 class="text-xl font-bold text-gray-800 p-4 border-b border-gray-200">
+                Last 10 Shipments
+            </h2>
+            
+            <!-- Header Row (Desktop only) -->
+            <div class="hidden md:grid md:grid-cols-6 gap-4 font-semibold text-gray-600 p-4 border-b border-gray-200 bg-gray-50 text-sm">
+                <div class="col-span-1">Date</div>
+                <div class="col-span-1">Ref | AWB</div>
+                <div class="col-span-1">Carrier | Mode</div>
+                <div class="col-span-1">Pcs | Wt | Val</div>
+                <div class="col-span-1">Parties</div>
+                <div class="col-span-1">Destination</div>
+            </div>
+
+            <!-- Data List (Responsive Cards) -->
+            <div id="shipmentList" class="divide-y divide-gray-200 md:divide-y-0">
+                <p class="p-4 text-center text-gray-500">Loading shipments...</p>
+            </div>
+        </div>
     </main>
     
-    <!-- Footer will be loaded by layout.js -->
     <div id="footer-placeholder"></div>
 
-    <!-- layout.js and calculations.js should be in the same directory -->
-    <script src="layout.js"></script> 
+    <script src="layout.js"></script>
     <script src="calculations.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -476,6 +495,11 @@
             const transportTypeSelect = document.getElementById('transport_type');
             const carrierSelect = document.getElementById('carrier_select');
             const bookingMessage = document.getElementById('bookingMessage');
+            
+            // NEW: Shipment List elements
+            const shipmentList = document.getElementById('shipmentList');
+            const shipmentListContainer = document.getElementById('shipmentListContainer');
+
 
             let loginData = {};
             let isBookingLocked = false;
@@ -507,6 +531,8 @@
                     customerNameSelect.selectedIndex = 1;
                     handleCustomerSelectionChange();
                 }
+                // Fetch shipment list after initialization
+                fetchShipmentList();
             }
 
             function handleDataRefresh(eventDetail) {
@@ -514,6 +540,7 @@
                 if (!eventDetail || !eventDetail.data) return;
                 fetchedGSheetData = eventDetail.data;
                 updateAllDropdowns();
+                fetchShipmentList(); // Re-fetch on data refresh
             }
 
             function updateAllDropdowns() {
@@ -582,6 +609,7 @@
                 setBookingFieldsLocked(false); 
                 toggleWeightProductEntry(true); 
                 updateDisplayTables();
+                fetchShipmentList(); // Refresh list after successful booking
             }
 
             function resetFullForm() {
@@ -699,11 +727,9 @@
                 ['global', 'cod', 'topay', 'fov'].forEach(type => {
                     document.getElementById(`display_${type}`).textContent = document.getElementById(`payment_${type}`).checked ? 'Yes' : 'No';
                 });
-
-                // --- FIX [1 of 2]: Get BRANCH from selectedCustomerDetails ---
                 document.getElementById('display_code').textContent = selectedCustomerDetails.CODE || '---';
                 document.getElementById('display_user_name').textContent = loginData.NAME || loginData.name || '---';
-                document.getElementById('display_branch').textContent = selectedCustomerDetails.BRANCH || '---'; // <-- WAS loginData.BRANCH
+                document.getElementById('display_branch').textContent = selectedCustomerDetails.BRANCH || '---';
             }
 
             function revalidateMode() {
@@ -863,12 +889,8 @@
             
             function handleCustomerSelectionChange() {
                 const selectedCustomerName = customerNameSelect.value;
-                // --- FIX: Find customer from B2B (which has BRANCH and CODE) ---
                 selectedCustomerDetails = (fetchedGSheetData.B2B || []).find(c => c.CLIENT_NAME === selectedCustomerName) || {};
-                
-                // Find contact info (which has address)
                 const contactDetails = (fetchedGSheetData.B2B2C || []).find(c => c.NAME === selectedCustomerName && c.CODE === selectedCustomerDetails.CODE);
-                
                 if (contactDetails) {
                     senderNameInput.value = contactDetails.NAME;
                     originPincodeInput.value = contactDetails.PINCODE || '';
@@ -952,18 +974,14 @@
                     updateDisplayTables();
                     checkMainDetailsAndToggleInputs();
                     if (query.length < 2 || !fetchedGSheetData.B2B2C) return;
-                    
-                    // --- FIX: Search all B2B2C contacts, not just customer-specific ---
-                    // const customerCode = selectedCustomerDetails.CODE;
-                    // if (!customerCode) return;
-                    // const customerSpecificContacts = fetchedGSheetData.B2B2C.filter(contact => contact.CODE === customerCode);
-                    
-                    const filteredResults = fetchedGSheetData.B2B2C.filter(contact => 
+                    const customerCode = selectedCustomerDetails.CODE;
+                    if (!customerCode) return;
+                    const customerSpecificContacts = fetchedGSheetData.B2B2C.filter(contact => contact.CODE === customerCode);
+                    const filteredResults = customerSpecificContacts.filter(contact => 
                         (contact.NAME && contact.NAME.toLowerCase().includes(query)) || 
                         (contact.PINCODE && contact.PINCODE.toString().includes(query)) || 
                         (contact.CITY && contact.CITY.toLowerCase().includes(query))
                     );
-
                     if (filteredResults.length > 0 || query) {
                         filteredResults.forEach(contact => {
                             const li = document.createElement('li');
@@ -999,6 +1017,121 @@
                     }
                 });
             }
+
+            // --- SHIPMENT LIST LOGIC HELPER FUNCTIONS ---
+            function formatDateForDisplay(dateString) {
+                // Takes a timestamp string and returns YYYY-MM-DD
+                try {
+                    return dateString ? new Date(dateString).toISOString().split('T')[0] : 'N/A';
+                } catch (e) {
+                    return 'Invalid Date';
+                }
+            }
+
+            function formatCurrency(value) {
+                const num = parseFloat(value);
+                // Return '---' for invalid/empty values, otherwise format to currency without decimals
+                return isNaN(num) || num === 0 ? '---' : num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+
+
+            // --- SHIPMENT LIST LOGIC ---
+            function renderShipmentList(shipments) {
+                const listBody = document.getElementById('shipmentList');
+                const header = shipmentListContainer.querySelector('h2');
+                listBody.innerHTML = '';
+                header.classList.remove('hidden'); // Show header once loaded
+
+                if (shipments.length === 0) {
+                    listBody.innerHTML = '<p class="p-4 text-center text-gray-500">No recent shipments found.</p>';
+                    return;
+                }
+
+                shipments.forEach(shipment => {
+                    const item = document.createElement('div');
+                    item.classList.add('p-4', 'hover:bg-gray-50', 'md:grid', 'md:grid-cols-6', 'md:gap-4', 'md:border-b', 'border-gray-100', 'cursor-pointer');
+                    
+                    // Map data keys based on user's structure:
+                    const reference = shipment.REFERANCE || '---'; 
+                    const awb = shipment.AWB_NUMBER || '---';
+                    const mode = shipment.MODE || '---';
+                    const carrier = shipment.CARRIER || 'N/A';
+                    const pieces = shipment.PIECS || 0;
+                    const chgWt = shipment.CHG_WT ? parseFloat(shipment.CHG_WT).toFixed(2) : '0.00';
+                    const value = formatCurrency(shipment.VALUE); 
+                    const consignorName = shipment.CONSIGNOR || 'N/A';
+                    const consigneeName = shipment.CONSIGNEE || 'N/A';
+                    const destCity = shipment.DEST_CITY || 'N/A';
+                    const destPincode = shipment.DEST_PINCODE || 'N/A';
+                    const orderDate = formatDateForDisplay(shipment.ORDER_DATE);
+
+                    item.innerHTML = `
+                        <!-- Mobile View (Default block) -->
+                        <div class="md:hidden space-y-1">
+                            <div class="font-bold text-gray-900">${consigneeName} (${destCity})</div>
+                            <div class="text-xs text-gray-500">AWB: ${awb} | Ref: ${reference}</div>
+                            <div class="text-sm text-gray-700">${carrier} / ${mode} | Pcs: ${pieces} | Wt: ${chgWt}kg | Val: ${value}</div>
+                        </div>
+
+                        <!-- Desktop View (Grid) -->
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">${orderDate}</div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${reference}</span><br>
+                            <span class="text-xs text-gray-500">${awb}</span>
+                        </div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${carrier}</span><br>
+                            <span class="text-xs text-gray-500">${mode}</span>
+                        </div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${pieces} pcs</span><br>
+                            <span class="text-xs text-gray-500">${chgWt} kg / ${value}</span>
+                        </div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${consignorName}</span><br>
+                            <span class="text-xs text-gray-500">to ${consigneeName}</span>
+                        </div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${destCity}</span><br>
+                            <span class="text-xs text-gray-500">${destPincode}</span>
+                        </div>
+                    `;
+                    listBody.appendChild(item);
+                });
+            }
+
+            async function fetchShipmentList() {
+                const listBody = document.getElementById('shipmentList');
+                const header = shipmentListContainer.querySelector('h2');
+                header.classList.add('hidden'); // Hide header during loading
+                listBody.innerHTML = '<p class="p-4 text-center text-blue-500 flex items-center justify-center"><svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Fetching recent bookings...</p>';
+
+                try {
+                    const allOrders = fetchedGSheetData.ORDERS;
+                    
+                    if (!Array.isArray(allOrders) || allOrders.length === 0) {
+                        renderShipmentList([]); // Show empty state if no data
+                        return;
+                    }
+                    
+                    // Sort the orders by TIME_STAMP in descending order (newest first)
+                    const sortedOrders = [...allOrders].sort((a, b) => {
+                        const dateA = new Date(a.TIME_STAMP);
+                        const dateB = new Date(b.TIME_STAMP);
+                        return dateB.getTime() - dateA.getTime();
+                    });
+
+                    // Take the last 10 (most recent) shipments
+                    const recentShipments = sortedOrders.slice(0, 10);
+                    
+                    renderShipmentList(recentShipments);
+
+                } catch (error) {
+                    console.error('Error reading ORDERS data:', error);
+                    listBody.innerHTML = `<p class="p-4 text-center text-red-500">Failed to load shipments: Data structure error or missing Orders sheet.</p>`;
+                }
+            }
+
 
             // --- MAIN INITIALIZATION & EVENT LISTENERS ---
             loginData = JSON.parse(localStorage.getItem('loginData')) || {};
@@ -1096,11 +1229,9 @@
                 }
                 bookButton.disabled = true;
                 bookButton.textContent = 'Booking...';
-                
-                // --- FIX [2 of 2]: Added 'BRANCH' to the payload ---
                 const orderData = {
-                    'BRANCH': document.getElementById('display_branch').textContent || '', // <-- THIS WAS MISSING
                     'CODE': document.getElementById('display_code').textContent || '',
+                    'BRANCH': document.getElementById('display_branch').textContent || '',
                     'TIME_STAMP': document.getElementById('display_timestamp').textContent,
                     'ORDER_DATE': document.getElementById('display_order_date').textContent,
                     'CARRIER': document.getElementById('display_carrier').textContent,
@@ -1138,7 +1269,6 @@
                     'IGST': document.getElementById('display_igst').textContent,
                     'TOTAL': document.getElementById('display_total').textContent,
                 };
-
                 const payload = {
                     code: loginData.CODE || loginData.code,
                     token: loginData.TOKEN || loginData.token,
@@ -1146,8 +1276,8 @@
                     multiboxDetails: consignmentBoxes,
                     productDetails: consignmentProducts
                 };
-
                 try {
+                    // This fetch URL is hardcoded as per the original file.
                     const response = await fetch('https://script.google.com/macros/s/AKfycbx5PZJRnnDmyDtYbWctF6d0428h1haJnDfVA4HKQR4hcsdAolcmkhLG9MgntAhPSQyi/exec', { 
                         method: 'POST',
                         mode: 'cors',
@@ -1185,6 +1315,9 @@
             updateDisplayTables();
             updateSummaryDisplay();
             toggleWeightProductEntry(true);
+            
+            // Initial fetch of shipment list if appData is already loaded
+            if (appDataJSON) fetchShipmentList();
         });
     </script>
 </body>
