@@ -466,7 +466,8 @@
                     const cnor = b2b2cDataMap.get(order.CONSIGNOR)?.NAME || 'Unknown';
                     const cnee = b2b2cDataMap.get(order.CONSIGNEE)?.NAME || 'Unknown';
                     
-                    const dtObj = order.ORDER_DATE ? new Date(order.ORDER_DATE) : null;
+                    // *** FIX: ORDER_DATE is now "YYYY-MM-DD", create date object correctly ***
+                    const dtObj = order.ORDER_DATE ? new Date(order.ORDER_DATE + 'T00:00:00Z') : null;
                     const dt = dtObj ? dtObj.toLocaleDateString('en-IN', { timeZone: 'UTC', day: '2-digit', month: 'short', year: 'numeric'}) : 'N/A';
                     
                     const trk = trackDataMap.get(ref); 
@@ -539,12 +540,24 @@
 
             // --- Render Functions for Right Pane ---
 
-             function formatDateForDisplay(dateInput) {
+            // *** START: UPDATED formatDateForDisplay FUNCTION ***
+            function formatDateForDisplay(dateInput) {
                  if (!dateInput) return 'N/A';
                  let date;
                  try {
-                     // 1. Try DD/MM/YYYY HH:MM:SS format first
-                     if (typeof dateInput === 'string' && dateInput.includes('/') && dateInput.includes(':')) {
+                     // 1. Try our new YYYY-MM-DD format (from GAS fix)
+                     // This must be the FIRST check.
+                     if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+                         // Parse as UTC to avoid local timezone offset issues
+                         // "2025-01-17" becomes 2025-01-17T00:00:00.000Z
+                         date = new Date(dateInput + 'T00:00:00Z');
+                     }
+                     // 2. Try full ISO format (e.g., "2023-10-27T10:00:00.000Z")
+                     else if (typeof dateInput === 'string' && dateInput.includes('T') && dateInput.includes('Z')) {
+                         date = new Date(dateInput);
+                     }
+                     // 3. Try DD/MM/YYYY HH:MM:SS format (old format)
+                     else if (typeof dateInput === 'string' && dateInput.includes('/') && dateInput.includes(':')) {
                          const parts = dateInput.split(' ');
                          const dateParts = parts[0].split('/');
                          const timeParts = parts.length > 1 ? parts[1].split(':') : ['0', '0', '0'];
@@ -557,18 +570,14 @@
                              parseInt(timeParts[2], 10) || 0 
                          ));
                      }
-                     // 2. Try ISO format (e.g., "2023-10-27T10:00:00.000Z")
-                     else if (typeof dateInput === 'string' && dateInput.includes('T') && dateInput.includes('Z')) {
-                         date = new Date(dateInput);
-                     }
-                      // 3. Try number format (Excel Serial Date)
+                      // 4. Try number format (Excel Serial Date)
                      else if (typeof dateInput === 'number' || (typeof dateInput === 'string' && !isNaN(parseFloat(dateInput)) && isFinite(parseFloat(dateInput)))) {
                          const serial = parseFloat(dateInput);
                           const utc_days = Math.floor(serial - 25569);
                           const utc_value = utc_days * 86400; // seconds
                           date = new Date(utc_value * 1000); // milliseconds
                      }
-                     // 4. Try generic parsing as a fallback
+                     // 5. Try generic parsing as a fallback
                      else {
                          date = new Date(dateInput);
                      }
@@ -578,15 +587,18 @@
                          return 'Invalid Date';
                      }
                      
+                     // Use UTC methods to match the UTC parsing
                      const year = date.getUTCFullYear();
                      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
                      const day = String(date.getUTCDate()).padStart(2, '0');
                      return `${year}-${month}-${day}`;
+
                  } catch (e) {
                      console.error("formatDateForDisplay: Error parsing date:", dateInput, e);
                      return 'Error Date';
                  }
-             }
+            }
+            // *** END: UPDATED formatDateForDisplay FUNCTION ***
 
             function renderShipmentDetails(order) {
                 const d = [ 
@@ -607,6 +619,7 @@
             function renderTrackingStatus(order) {
                 const t = trackDataMap.get(order.REFERANCE); let h = '';
                 if (t) { 
+                    // *** FIX: These dates (like t.DATE) are now also "YYYY-MM-DD" ***
                     const m = formatDateForDisplay(t['Manifest Date']); 
                     const s = formatDateForDisplay(t.DATE); 
                     h = `<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm"><div><div class="text-gray-500 text-xs">Status</div><div class="font-semibold text-gray-800">${t.STATUS || 'N/A'}</div></div><div><div class="text-gray-500 text-xs">Date</div><div class="font-semibold text-gray-800">${s}</div></div><div><div class="text-gray-500 text-xs">Manifest</div><div class="font-semibold text-gray-800">${m}</div></div></div>`; 
@@ -818,6 +831,7 @@
                     // Mobile Timeline View
                     h += `<div class="timeline pr-2 sm:hidden">`; 
                     logs.forEach(l => { 
+                        // *** FIX: This date (l.SCAN_DATE) is now also "YYYY-MM-DD" ***
                         const sd = formatDateForDisplay(l.SCAN_DATE); 
                         h += `<div class="timeline-item"><div class="timeline-dot"></div><p class="font-semibold text-sm text-gray-800">${l.SCAN_STATUS||'N/A'}</p><p class="text-sm text-gray-600">${l.SCAN_LOCATION||'N/A'}</p><time class="text-xs text-gray-400">${sd}</time></div>`; 
                     }); 
@@ -826,6 +840,7 @@
                     // Desktop Table View
                     h += `<div class="hidden sm:block border rounded-md overflow-hidden"><table id="trackingHistoryTable" class="min-w-full text-xs divide-y divide-gray-200"><thead class="bg-gray-50 sticky top-0"><tr><th class="px-3 py-2 text-left font-medium text-gray-500 uppercase">Date & Time</th><th class="px-3 py-2 text-left font-medium text-gray-500 uppercase">Status</th><th class="px-3 py-2 text-left font-medium text-gray-500 uppercase">Location</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`; 
                     logs.forEach(l => { 
+                        // *** FIX: This date (l.SCAN_DATE) is now also "YYYY-MM-DD" ***
                         const sd = formatDateForDisplay(l.SCAN_DATE); 
                         h += `<tr><td class="px-3 py-2 whitespace-nowrap">${sd}</td><td class="px-3 py-2">${l.SCAN_STATUS || 'N/A'}</td><td class="px-3 py-2">${l.SCAN_LOCATION || 'N/A'}</td></tr>`; 
                     }); 
@@ -843,8 +858,11 @@
                 const podUpload = uploads.find(u => u.UPLOAD_TYPE === 'POD');
                 const productUploadsExist = (productDataMap.get(r) || []).length > 0;
                 
+                // *** FIX: These dates are now "YYYY-MM-DD" from GAS ***
                 const transitDate = formatDateForDisplay(order.TRANSIT_DATE);
                 const orderDate = formatDateForDisplay(order.ORDER_DATE);
+                
+                // *** FIX: trackInfo.DATE is also "YYYY-MM-DD" from GAS ***
                 const deliveryDate = (trackInfo && trackInfo.STATUS && trackInfo.STATUS.toUpperCase() === 'DELIVERED') ? formatDateForDisplay(trackInfo.DATE) : 'N/A';
                 
                 let podManual = 'N/A'; 
@@ -872,7 +890,7 @@
                                 <div class="flex justify-between mt-1 pt-1 border-t">
                                     <span class="text-gray-500">Date:</span>
                                     <span class="font-medium text-gray-700">${row.date}</span>
-                                </div>
+                                V                               </div>
                                 <div class="flex justify-between mt-1">
                                     <span class="text-gray-500">Manual:</span>
                                     <span class="font-medium text-gray-700 text-right">${row.manual}</span>
