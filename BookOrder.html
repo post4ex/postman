@@ -51,50 +51,6 @@
         .autocomplete-results li:hover {
             background-color: #f3f4f6;
         }
-
-        /* --- Quick Add Client Form Styles --- */
-        .spinner { border: 3px solid rgba(0, 0, 0, 0.1); border-radius: 50%; border-top: 3px solid #4338ca; width: 14px; height: 14px; animation: spin 1s linear infinite; }
-        .field-spinner { width: 16px; height: 16px; border-top-color: #6d28d9; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .readonly-input { background-color: #e5e7eb; cursor: not-allowed; }
-        
-        .form-input-wrapper {
-            padding: 0; /* Ensures input fills the cell completely */
-        }
-        .form-input {
-            border-radius: 0; /* Remove rounding inside the cell */
-            border: none; /* Let the container handle borders */
-            padding: 0.25rem 0.5rem; /* Compact Padding remains on the INPUT element */
-            transition: border-color 0.2s;
-            width: 100%;
-            height: 100%; /* Ensures input stretches vertically */
-            box-sizing: border-box;
-        }
-        /* Ensure inputs use the container border instead of their own */
-        .grid .form-input {
-            border: 1px solid transparent; 
-        }
-        #newClientBlock .autocomplete-results {
-            position: absolute;
-            z-index: 20;
-            background-color: white;
-            border: 1px solid #d1d5db;
-            border-top: none;
-            max-height: 200px;
-            overflow-y: auto;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-        #newClientBlock .autocomplete-results div {
-            padding: 0.5rem;
-            cursor: pointer;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        #newClientBlock .autocomplete-results div:hover {
-            background-color: #f3f4f6;
-        }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
@@ -380,127 +336,6 @@
                             </button>
                         </div>
                     </div>
-
-                    <!-- ***** START: Quick Add Client Block ***** -->
-                    <div id="newClientBlock" class="card p-4 bg-white border-t border-gray-400 hidden">
-                        <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b pb-2">➕ Quick Add New Client (B2B2C)</h2>
-                
-                        <form id="newClientForm" class="space-y-2">
-                            
-                            <!-- PARENT CUSTOMER CONTEXT (Read-only values provided by parent page) -->
-                            <div class="grid grid-cols-2 gap-0 border border-gray-400">
-                                <div class="border-r border-gray-400 form-input-wrapper">
-                                    <!-- Customer Name Display Field -->
-                                    <input type="text" id="qc_customerNameDisplay" placeholder="Parent Customer Name (Select in Main Form)" class="form-input readonly-input" readonly>
-                                    <!-- CODE is the essential B2B client identifier (Hidden input) -->
-                                    <input type="hidden" name="CODE" id="qc_code" required> 
-                                </div>
-                                <div class="form-input-wrapper">
-                                    <input type="text" name="BRANCH" id="qc_branch" placeholder="Branch Code (Auto-filled)" class="form-input readonly-input" readonly>
-                                </div>
-                            </div>
-
-                            <!-- Name, Mobile, Email, GST -->
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-0 border border-gray-400">
-                                <div class="border-r border-gray-400 form-input-wrapper">
-                                     <input type="text" name="NAME" id="qc_name" placeholder="Client Name*" required class="form-input">
-                                </div>
-                                <div class="border-r border-gray-400 form-input-wrapper">
-                                    <input type="tel" name="MOBILE" id="qc_mobile" placeholder="Mobile*" required class="form-input">
-                                </div>
-                                <div class="border-r border-gray-400 form-input-wrapper">
-                                    <input type="email" name="EMAIL" id="qc_email" placeholder="Email (Optional)" class="form-input">
-                                </div>
-                                <div class="form-input-wrapper">
-                                    <input type="text" name="GST_ID_PAN_ADHAR" id="qc_gst_id" placeholder="GST/PAN/ADHAR (Optional)" class="form-input">
-                                </div>
-                            </div>
-                            
-                            <!-- ADDRESS and PINCODE ROW (Address spans 4, Pincode spans 1) -->
-                            <div class="grid grid-cols-5 gap-0 border border-gray-400">
-                                <!-- Address (col-span-4) -->
-                                <div class="border-r border-gray-400 col-span-4 form-input-wrapper">
-                                    <input type="text" name="ADDRESS" id="qc_address" placeholder="Full Address*" required class="form-input">
-                                </div>
-                                <!-- Pincode (col-span-1) -->
-                                <div class="relative col-span-1 form-input-wrapper">
-                                    <input type="text" name="PINCODE" id="qc_pincode" placeholder="Pincode*" required class="form-input" pattern="\d{6}" maxlength="6">
-                                    <div id="qc_pincodeStatus" class="absolute inset-y-0 right-0 flex items-center pr-3 text-sm text-gray-500 pointer-events-none"></div>
-                                </div>
-                            </div>
-                            
-                            <!-- City, State, Carrier, Submit Button Row (Fixed structure) -->
-                            <div class="grid grid-cols-6 gap-0 border border-gray-400">
-                                <!-- 1. City (col-span-1) -->
-                                <div class="border-r border-gray-400 col-span-1 form-input-wrapper">
-                                    <input type="text" name="CITY" id="qc_city" placeholder="City" class="form-input readonly-input" readonly>
-                                </div>
-                                <!-- 2. State (col-span-2) -->
-                                <div class="border-r border-gray-400 col-span-2 form-input-wrapper">
-                                    <input type="text" name="STATE" id="qc_state" placeholder="State" class="form-input readonly-input" readonly>
-                                </div>
-                                <!-- 3. Carrier (col-span-1) -->
-                                <div class="border-r border-gray-400 col-span-1 form-input-wrapper">
-                                    <input type="text" name="CARRIER" id="qc_carrier" placeholder="Default Carrier" class="form-input" list="carrier-list">
-                                    <datalist id="carrier-list"></datalist>
-                                </div>
-                                 <!-- 4. Submit Button (col-span-1) -->
-                                 <div class="border-r border-gray-400 col-span-1 h-full flex items-stretch justify-stretch">
-                                    <button type="submit" id="qc_submitButton" class="bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center disabled:bg-indigo-400 w-full h-full border-none rounded-none">
-                                        <span id="qc_buttonText">Submit</span>
-                                        <div id="qc_spinner" class="spinner hidden ml-1" style="width: 14px; height: 14px;"></div>
-                                    </button>
-                                 </div>
-                                 <!-- 5. Close Button (col-span-1) -->
-                                <div class="col-span-1 h-full flex items-stretch justify-stretch">
-                                    <button type="button" id="qc_closeButton" class="bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors flex items-center justify-center w-full h-full border-none rounded-none">
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Service Details (HIDDEN SECTION) -->
-                            <div id="serviceDetailsSection" class="hidden">
-                                <h3 class="text-md font-semibold text-gray-700 pt-4 px-2 border-t border-gray-400">Service Details (Auto-Filled)</h3>
-                                
-                                <!-- Row 1: ZONE, ODA, TAT-E, TAT-A -->
-                                <div class="grid grid-cols-2 lg:grid-cols-4 gap-0 border border-gray-400">
-                                    <div class="border-r border-gray-400 form-input-wrapper">
-                                        <input type="text" name="ZONE" id="qc_zone" placeholder="Zone" class="form-input readonly-input" readonly>
-                                    </div>
-                                    <div class="border-r border-gray-400 form-input-wrapper">
-                                        <input type="text" name="ODA" id="qc_oda" placeholder="ODA" class="form-input readonly-input" readonly>
-                                    </div>
-                                    <div class="border-r border-gray-400 form-input-wrapper">
-                                        <input type="text" name="EXPRESS_TAT" id="qc_express_tat" placeholder="TAT-E" class="form-input readonly-input" readonly>
-                                    </div>
-                                    <div class="form-input-wrapper">
-                                        <input type="text" name="AIRLINE_TAT" id="qc_airline_tat" placeholder="TAT-A" class="form-input readonly-input" readonly>
-                                    </div>
-                                </div>
-
-                                <!-- Row 2: TAT-S, TAT-P (Always side-by-side, 50/50 split) -->
-                                <div class="grid grid-cols-2 gap-0 border border-gray-400 border-t-0">
-                                    <div class="border-r border-gray-400 form-input-wrapper">
-                                        <input type="text" name="SURFACE_TAT" id="qc_surface_tat" placeholder="TAT-S" class="form-input readonly-input" readonly>
-                                    </div>
-                                    <div class="form-input-wrapper">
-                                        <input type="text" name="PREMIUM_TAT" id="qc_premium_tat" placeholder="TAT-P" class="form-input readonly-input" readonly>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- HIDDEN INPUTS (Only UID placeholder remains here) -->
-                            <input type="hidden" name="UID" id="qc_uid">
-
-                            <!-- Submission Message Area (Moved here to have full width) -->
-                            <div id="qc_responseMessageContainer" class="pt-2">
-                                <div id="qc_responseMessage" class="text-sm text-center"></div>
-                            </div>
-                        </form>
-                    </div>
-                    <!-- ***** END: Quick Add Client Block ***** -->
-
                 </div>
             </div>
 
@@ -596,6 +431,28 @@
             </div>
 
         </div>
+
+        <!-- NEW: Last 10 Shipments Section -->
+        <div id="shipmentListContainer" class="container mx-auto bg-white border border-gray-400 mt-4 mb-4 rounded-md shadow-lg">
+            <h2 class="text-xl font-bold text-gray-800 p-4 border-b border-gray-200">
+                Last 10 Shipments
+            </h2>
+            
+            <!-- Header Row (Desktop only) -->
+            <div class="hidden md:grid md:grid-cols-6 gap-4 font-semibold text-gray-600 p-4 border-b border-gray-200 bg-gray-50 text-sm">
+                <div class="col-span-1">Date</div>
+                <div class="col-span-1">Ref | AWB</div>
+                <div class="col-span-1">Carrier | Mode</div>
+                <div class="col-span-1">Pcs | Wt | Val</div>
+                <div class="col-span-1">Parties</div>
+                <div class="col-span-1">Destination</div>
+            </div>
+
+            <!-- Data List (Responsive Cards) -->
+            <div id="shipmentList" class="divide-y divide-gray-200 md:divide-y-0">
+                <p class="p-4 text-center text-gray-500">Loading shipments...</p>
+            </div>
+        </div>
     </main>
     
     <div id="footer-placeholder"></div>
@@ -603,12 +460,7 @@
     <script src="layout.js"></script>
     <script src="calculations.js"></script>
     <script>
-        // --- Quick Add Client Form CONFIGURATION (Outside DOMContentLoaded) ---
-        const QC_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcZAkvu9JAxVpVeWT5pTOi6j2yEbJuFb48B-pweCG5BWZNLhbVYXP9Rzm_v6iMdUGrw/exec';
-        const QC_PINCODE_API_URL = 'https://script.google.com/macros/s/AKfycbzZOoT6tp9XVgXiOdiiUL9wWchgGqdBPoTI9BiuT2HyKBIuFzPKPZI4z3kF1IAYBgpn/exec';
-
-
-        // document.addEventListener('DOMContentLoaded', () => { // <-- REMOVED THIS LINE
+        document.addEventListener('DOMContentLoaded', () => {
             const timestampInput = document.getElementById('timestamp');
             const orderDateInput = document.getElementById('order_date');
             const senderNameInput = document.getElementById('sender_name');
@@ -643,35 +495,11 @@
             const transportTypeSelect = document.getElementById('transport_type');
             const carrierSelect = document.getElementById('carrier_select');
             const bookingMessage = document.getElementById('bookingMessage');
+            
+            // NEW: Shipment List elements
+            const shipmentList = document.getElementById('shipmentList');
+            const shipmentListContainer = document.getElementById('shipmentListContainer');
 
-            // --- Quick Add Client (QC) UI Elements ---
-            const qc_ui = {
-                form: document.getElementById('newClientForm'),
-                submitButton: document.getElementById('qc_submitButton'),
-                buttonText: document.getElementById('qc_buttonText'),
-                spinner: document.getElementById('qc_spinner'),
-                responseMessage: document.getElementById('qc_responseMessage'),
-                customerNameDisplay: document.getElementById('qc_customerNameDisplay'),
-                pincodeInput: document.getElementById('qc_pincode'),
-                pincodeStatus: document.getElementById('qc_pincodeStatus'),
-                cityInput: document.getElementById('qc_city'),
-                stateInput: document.getElementById('qc_state'),
-                carrierInput: document.getElementById('qc_carrier'), 
-                carrierList: document.getElementById('carrier-list'), 
-                zoneInput: document.getElementById('qc_zone'),
-                expressTatInput: document.getElementById('qc_express_tat'),
-                airlineTatInput: document.getElementById('qc_airline_tat'),
-                surfaceTatInput: document.getElementById('qc_surface_tat'),
-                premiumTatInput: document.getElementById('qc_premium_tat'),
-                odaInput: document.getElementById('qc_oda'),
-                codeHiddenInput: document.getElementById('qc_code'),
-                branchInput: document.getElementById('qc_branch'),
-                gstInput: document.getElementById('qc_gst_id'),
-                emailInput: document.getElementById('qc_email'),
-                uidInput: document.getElementById('qc_uid'),
-                serviceDetailsSection: document.getElementById('serviceDetailsSection'),
-                closeButton: document.getElementById('qc_closeButton')
-            };
 
             let loginData = {};
             let isBookingLocked = false;
@@ -688,9 +516,6 @@
                 boxCount: 0,
                 totalAmount: 0
             };
-            let currentQuickAddType = 'receiver'; // State for auto-filling
-            let qcPincodeTimeout;
-
 
             function initializeAppLogic(eventDetail) {
                 if (!eventDetail || !eventDetail.data) {
@@ -706,8 +531,8 @@
                     customerNameSelect.selectedIndex = 1;
                     handleCustomerSelectionChange();
                 }
-                // --- QC ---
-                qc_loadInitialData();
+                // Fetch shipment list after initialization
+                fetchShipmentList();
             }
 
             function handleDataRefresh(eventDetail) {
@@ -715,10 +540,7 @@
                 if (!eventDetail || !eventDetail.data) return;
                 fetchedGSheetData = eventDetail.data;
                 updateAllDropdowns();
-                // --- QC ---
-                if (eventDetail.data.CARRIER) {
-                    qc_populateCarrierDataList(eventDetail.data.CARRIER);
-                }
+                fetchShipmentList(); // Re-fetch on data refresh
             }
 
             function updateAllDropdowns() {
@@ -787,6 +609,7 @@
                 setBookingFieldsLocked(false); 
                 toggleWeightProductEntry(true); 
                 updateDisplayTables();
+                fetchShipmentList(); // Refresh list after successful booking
             }
 
             function resetFullForm() {
@@ -1098,7 +921,18 @@
                 }
             }
 
-static t                 transportTypeSelect.appendChild(option);
+            function populateModeDropdown(zone) {
+                transportTypeSelect.innerHTML = '<option value="">Select Mode</option>';
+                if (fetchedGSheetData.MODE?.length > 0) {
+                    fetchedGSheetData.MODE.forEach(mode => {
+                        const isAvailableForZone = !zone || mode[zone] === 'Y';
+                        const option = document.createElement('option');
+                        option.value = mode.SHORT;
+                        option.textContent = mode.MODE;
+                        option.dataset.volIngr = mode.VOL_INGR;
+                        option.dataset.minWt = mode.MIN_WT;
+                        option.disabled = !isAvailableForZone;
+                        transportTypeSelect.appendChild(option);
                     });
                 }
             }
@@ -1175,31 +1009,8 @@ static t                 transportTypeSelect.appendChild(option);
                         addNewLi.className = 'bg-gray-100 font-semibold';
                         addNewLi.textContent = '+ Add New Contact';
                         addNewLi.addEventListener('click', () => {
-                            // --- MODIFICATION: Show Quick Add Form ---
+                            displayElement.innerHTML = `<span class="italic text-gray-500">Enter new contact details manually.</span>`;
                             resultsElement.classList.add('hidden');
-                            
-                            const quickAddBlock = document.getElementById('newClientBlock');
-                            if (quickAddBlock) {
-                                quickAddBlock.classList.remove('hidden');
-                            }
-                            
-                            // Pass context to the form
-                            if (window.setQuickAddContext) {
-                                const customerName = selectedCustomerDetails.CLIENT_NAME || 'Unknown Customer';
-                                const customerCode = selectedCustomerDetails.CODE || '';
-                                const branchCode = selectedCustomerDetails.BRANCH || '';
-                                
-                                if (!customerCode) {
-                                     bookingMessage.textContent = 'Please select a parent customer before adding a new contact.';
-                                     bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-red-700 bg-red-100';
-                                     if (quickAddBlock) quickAddBlock.classList.add('hidden');
-                                     return;
-                                }
-                                
-                                currentQuickAddType = type; // Set state for 'sender' or 'receiver'
-                                window.setQuickAddContext(customerName, customerCode, branchCode);
-                            }
-                            // --- END MODIFICATION ---
                         });
                         resultsElement.appendChild(addNewLi);
                         resultsElement.classList.remove('hidden');
@@ -1207,174 +1018,139 @@ static t                 transportTypeSelect.appendChild(option);
                 });
             }
 
-            // --- START: Quick Add Client (QC) Functions ---
-            const qc_populateCarrierDataList = (carriers) => {
-                if (!qc_ui.carrierList) return;
-                qc_ui.carrierList.innerHTML = '';
-                carriers.forEach(carrier => {
-                    const option = document.createElement('option');
-                    option.value = carrier.COMPANY_CODE; 
-                    option.textContent = `${carrier.COMPANY_CODE} - ${carrier.COMPANY_NAME || 'Unnamed'}`; 
-                    qc_ui.carrierList.appendChild(option);
-                });
-            };
-
-            const qc_loadInitialData = () => {
-                const appDataJSON = localStorage.getItem('appData');
-                if (appDataJSON) {
-                    try {
-                        const appData = JSON.parse(appDataJSON);
-                        if (appData && appData.data && appData.data.CARRIER) {
-                            qc_populateCarrierDataList(appData.data.CARRIER);
-                        }
-                    } catch (e) {
-                        console.error('QC: Error parsing or accessing carrier data:', e);
-                    }
-                }
-                qc_ui.customerNameDisplay.value = "";
-                qc_ui.codeHiddenInput.value = "";
-                qc_ui.branchInput.value = "";
-            };
-
-            const qc_clearPincodeDataFields = () => {
-                const fields = [qc_ui.cityInput, qc_ui.stateInput, qc_ui.zoneInput, qc_ui.expressTatInput, qc_ui.airlineTatInput, qc_ui.surfaceTatInput, qc_ui.premiumTatInput, qc_ui.odaInput];
-                fields.forEach(field => field.value = '');
-            };
-
-            async function qc_fetchPincodeData(pincode) {
-                qc_ui.pincodeStatus.innerHTML = '<div class="spinner field-spinner"></div>';
+            // --- SHIPMENT LIST LOGIC HELPER FUNCTIONS ---
+            function formatDateForDisplay(dateString) {
+                // Takes a timestamp string and returns YYYY-MM-DD
                 try {
-                    const response = await fetch(`${QC_PINCODE_API_URL}?pincode=${pincode}`);
-                    if (!response.ok) throw new Error('Network response was not OK');
-                    const result = await response.json();
-
-                    if (result.found && result.data) {
-                        const data = result.data;
-                        qc_ui.stateInput.value = data.StateName || '';
-                        qc_ui.cityInput.value = data.DestinationName || '';
-                        qc_ui.zoneInput.value = data.ZONE || '';
-                        qc_ui.expressTatInput.value = data['Dox (E)'] || '';
-                        qc_ui.airlineTatInput.value = data['NonDox (A)'] || '';
-                        qc_ui.surfaceTatInput.value = data['NonDox (S)'] || '';
-                        qc_ui.premiumTatInput.value = data['PRO (P)'] || '';
-                        qc_ui.odaInput.value = data.ODA || '';
-                        if (qc_ui.carrierInput.value.trim() === '') {
-                            qc_ui.carrierInput.value = data.Carrier || '';
-                        }
-                        qc_ui.pincodeStatus.innerHTML = '<span class="text-green-500">✔</span>';
-                    } else {
-                        qc_clearPincodeDataFields();
-                        qc_ui.pincodeStatus.innerHTML = '<span class="text-red-500">✖</span>';
-                    }
-                } catch (error) {
-                    console.error('QC: Error fetching pincode data:', error);
-                    qc_clearPincodeDataFields();
-                    qc_ui.pincodeStatus.innerHTML = '<span class="text-red-500">!</span>';
+                    return dateString ? new Date(dateString).toISOString().split('T')[0] : 'N/A';
+                } catch (e) {
+                    return 'Invalid Date';
                 }
             }
-            
-            window.setQuickAddContext = (customerName, customerCode, branchCode) => {
-                qc_ui.customerNameDisplay.value = customerName;
-                qc_ui.codeHiddenInput.value = customerCode;
-                qc_ui.branchInput.value = branchCode;
-                qc_showResponseMessage(`Ready to add new contact for ${customerName}.`, 'info');
-            };
 
-            async function qc_handleRequest(action) {
-                qc_setLoading(true);
+            function formatCurrency(value) {
+                const num = parseFloat(value);
+                // Return '---' for invalid/empty values, otherwise format to currency without decimals
+                return isNaN(num) || num === 0 ? '---' : num.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
 
-                const loginDataJSON = localStorage.getItem('loginData');
-                const loginData = loginDataJSON ? JSON.parse(loginDataJSON) : null;
-                const auth = { 
-                    code: loginData?.CODE || loginData?.code, 
-                    token: loginData?.TOKEN || loginData?.token 
-                };
+            function lookupModeName(shortCode) {
+                if (!fetchedGSheetData.MODE || !shortCode) return shortCode;
+                const modeEntry = fetchedGSheetData.MODE.find(m => m.SHORT === shortCode);
+                return modeEntry ? modeEntry.MODE : shortCode;
+            }
 
-                if (!auth.code || !auth.token) {
-                    qc_showResponseMessage('Authentication error. Please log in again.', 'error');
-                    qc_setLoading(false);
+            function lookupContactName(uid) {
+                if (!fetchedGSheetData.B2B2C || !uid) return 'N/A';
+                // Find the contact by UID, which corresponds to the CONSIGNOR/CONSIGNEE field
+                const contact = fetchedGSheetData.B2B2C.find(c => c.UID === uid);
+                return contact ? contact.NAME : uid;
+            }
+
+
+            // --- SHIPMENT LIST LOGIC ---
+            function renderShipmentList(shipments) {
+                const listBody = document.getElementById('shipmentList');
+                const header = shipmentListContainer.querySelector('h2');
+                listBody.innerHTML = '';
+                header.classList.remove('hidden'); // Show header once loaded
+
+                if (shipments.length === 0) {
+                    listBody.innerHTML = '<p class="p-4 text-center text-gray-500">No recent shipments found.</p>';
                     return;
                 }
-                
-                let data = {};
-                new FormData(qc_ui.form).forEach((value, key) => { data[key] = value; });
-                data.UID = `TEMP-${Date.now()}`; 
 
-                const payload = { 
-                    auth: auth, 
-                    data: data, 
-                    action: 'submit', 
-                    type: 'client' 
-                };
+                shipments.forEach(shipment => {
+                    const item = document.createElement('div');
+                    item.classList.add('p-4', 'hover:bg-gray-50', 'md:grid', 'md:grid-cols-6', 'md:gap-4', 'md:border-b', 'border-gray-100', 'cursor-pointer');
+                    
+                    // Map data keys and perform lookups
+                    const reference = shipment.REFERANCE || '---'; 
+                    const awb = shipment.AWB_NUMBER || '---';
+                    
+                    // Lookups
+                    const mode = lookupModeName(shipment.MODE); // Mapped
+                    const consignorName = lookupContactName(shipment.CONSIGNOR); // Mapped
+                    const consigneeName = lookupContactName(shipment.CONSIGNEE); // Mapped
+                    
+                    // Other data
+                    const carrier = shipment.CARRIER || 'N/A';
+                    const pieces = shipment.PIECS || 0;
+                    const chgWt = shipment.CHG_WT ? parseFloat(shipment.CHG_WT).toFixed(2) : '0.00';
+                    const value = formatCurrency(shipment.VALUE); 
+                    const destCity = shipment.DEST_CITY || 'N/A';
+                    const destPincode = shipment.DEST_PINCODE || 'N/A';
+                    const orderDate = formatDateForDisplay(shipment.ORDER_DATE);
+
+                    item.innerHTML = `
+                        <!-- Mobile View (Default block) -->
+                        <div class="md:hidden space-y-1">
+                            <div class="font-bold text-gray-900">${consigneeName} (${destCity})</div>
+                            <div class="text-xs text-gray-500">AWB: ${awb} | Ref: ${reference}</div>
+                            <div class="text-sm text-gray-700">${carrier} / ${mode} | Pcs: ${pieces} | Wt: ${chgWt}kg | Val: ${value}</div>
+                        </div>
+
+                        <!-- Desktop View (Grid) -->
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">${orderDate}</div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${reference}</span><br>
+                            <span class="text-xs text-gray-500">${awb}</span>
+                        </div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${carrier}</span><br>
+                            <span class="text-xs text-gray-500">${mode}</span>
+                        </div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${pieces} pcs</span><br>
+                            <span class="text-xs text-gray-500">${chgWt} kg / ${value}</span>
+                        </div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${consignorName}</span><br>
+                            <span class="text-xs text-gray-500">to ${consigneeName}</span>
+                        </div>
+                        <div class="hidden md:block col-span-1 text-sm text-gray-800">
+                            <span class="font-medium">${destCity}</span><br>
+                            <span class="text-xs text-gray-500">${destPincode}</span>
+                        </div>
+                    `;
+                    listBody.appendChild(item);
+                });
+            }
+
+            async function fetchShipmentList() {
+                const listBody = document.getElementById('shipmentList');
+                const header = shipmentListContainer.querySelector('h2');
+                header.classList.add('hidden'); // Hide header during loading
+                listBody.innerHTML = '<p class="p-4 text-center text-blue-500 flex items-center justify-center"><svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Fetching recent bookings...</p>';
 
                 try {
-                    const response = await fetch(QC_SCRIPT_URL, { 
-                        method: 'POST', 
-                        body: JSON.stringify(payload),
-                        mode: 'cors' 
+                    const allOrders = fetchedGSheetData.ORDERS;
+                    
+                    if (!Array.isArray(allOrders) || allOrders.length === 0) {
+                        renderShipmentList([]); // Show empty state if no data
+                        return;
+                    }
+                    
+                    // Sort the orders by TIME_STAMP in descending order (newest first)
+                    const sortedOrders = [...allOrders].sort((a, b) => {
+                        const dateA = new Date(a.TIME_STAMP);
+                        const dateB = new Date(b.TIME_STAMP);
+                        return dateB.getTime() - dateA.getTime();
                     });
-                    
-                    if (!response.ok) throw new Error(`Network error: ${response.status} ${response.statusText}`);
-                    const result = await response.json();
-                    
-                    if (result.error) throw new Error(result.message);
-                    
-                    qc_showResponseMessage(`Client created successfully! UID: ${result.data.UID}`, 'success', result.data);
-                    qc_ui.form.reset(); 
-                    
-                    if (window.verifyAndFetchAppData) {
-                        await window.verifyAndFetchAppData(true); 
-                    }
 
-                    // --- Auto-fill and close ---
-                    const newContact = result.data;
-                    if (currentQuickAddType === 'receiver') {
-                        receiverNameInput.value = newContact.NAME;
-                        displayContactDetails(newContact, receiverDetailsDisplay);
-                        selectedContacts.receiver = newContact;
-                        destPincodeInput.value = newContact.PINCODE || '';
-                        carrierSelect.value = newContact.CARRIER || '';
-                        populateModeDropdown(newContact.ZONE);
-                    } else { // 'sender'
-                        senderNameInput.value = newContact.NAME;
-                        displayContactDetails(newContact, senderDetailsDisplay);
-                        selectedContacts.sender = newContact;
-                        originPincodeInput.value = newContact.PINCODE || '';
-                    }
+                    // Take the last 10 (most recent) shipments
+                    const recentShipments = sortedOrders.slice(0, 10);
                     
-                    revalidateMode(); 
-                    updateDisplayTables();
-                    checkMainDetailsAndToggleInputs();
-
-                    setTimeout(() => {
-                        document.getElementById('newClientBlock').classList.add('hidden');
-                        qc_ui.responseMessage.innerHTML = '';
-                    }, 2000);
-                    // --- End Auto-fill ---
+                    // Ensure the header is shown before rendering the list items
+                    shipmentListContainer.querySelector('h2').classList.remove('hidden');
+                    
+                    renderShipmentList(recentShipments);
 
                 } catch (error) {
-                    qc_showResponseMessage(error.message, 'error');
-                } finally {
-                    qc_setLoading(false);
+                    console.error('Error reading ORDERS data:', error);
+                    listBody.innerHTML = `<p class="p-4 text-center text-red-500">Failed to load shipments: Data structure error or missing Orders sheet.</p>`;
                 }
             }
-            
-            function qc_setLoading(isLoading) {
-                qc_ui.spinner.classList.toggle('hidden', !isLoading);
-                qc_ui.submitButton.disabled = isLoading;
-                qc_ui.buttonText.textContent = isLoading ? 'Submitting...' : 'Submit';
-            }
-
-            function qc_showResponseMessage(message, type, data = null) {
-                let content = `<p class="font-semibold">${message}</p>`;
-                if (data && data.UID) {
-                    content += `<p class="mt-1 text-xs text-gray-700">UID: ${data.UID}</p>`;
-                }
-                
-                qc_ui.responseMessage.innerHTML = content;
-                qc_ui.responseMessage.className = `p-2 rounded-lg text-sm ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
-            }
-            // --- END: Quick Add Client (QC) Functions ---
 
 
             // --- MAIN INITIALIZATION & EVENT LISTENERS ---
@@ -1463,7 +1239,6 @@ static t                 transportTypeSelect.appendChild(option);
                 setBookingFieldsLocked(false);
             });
             cancelButton.addEventListener('click', resetFullForm);
-            
             bookButton.addEventListener('click', async () => {
                  bookingMessage.textContent = '';
                  bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2';
@@ -1522,6 +1297,7 @@ static t                 transportTypeSelect.appendChild(option);
                     productDetails: consignmentProducts
                 };
                 try {
+                    // This fetch URL is hardcoded as per the original file.
                     const response = await fetch('https://script.google.com/macros/s/AKfycbx5PZJRnnDmyDtYbWctF6d0428h1haJnDfVA4HKQR4hcsdAolcmkhLG9MgntAhPSQyi/exec', { 
                         method: 'POST',
                         mode: 'cors',
@@ -1535,14 +1311,6 @@ static t                 transportTypeSelect.appendChild(option);
                         bookingMessage.textContent = result.message;
                         bookingMessage.className = 'p-2 text-sm text-center rounded-md mt-2 text-green-700 bg-green-100';
                         resetForNextBooking();
-                        
-                        // --- MODIFICATION: Call the robust app data refresh ---
-                        if (window.verifyAndFetchAppData) {
-                            console.log('Booking successful, forcing app data refresh...');
-                            await window.verifyAndFetchAppData(true);
-                        }
-                        // --- END MODIFICATION ---
-
                     } else { throw new Error(result.message); }
                 } catch (error) {
                     console.error('Error posting data:', error);
@@ -1561,47 +1329,16 @@ static t                 transportTypeSelect.appendChild(option);
                 });
             }
 
-            // --- QC Event Listeners ---
-            qc_ui.pincodeInput.addEventListener('input', () => {
-                clearTimeout(qcPincodeTimeout);
-                qc_ui.pincodeStatus.innerHTML = '';
-                const pincode = qc_ui.pincodeInput.value.trim();
-                if (pincode.length < 6) { 
-                    qc_clearPincodeDataFields();
-                }
-                if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
-                    qcPincodeTimeout = setTimeout(() => qc_fetchPincodeData(pincode), 500);
-                }
-            });
-            
-            qc_ui.form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                qc_ui.responseMessage.innerHTML = ''; 
-                if (!qc_ui.codeHiddenInput.value) {
-                    qc_showResponseMessage("ERROR: Parent Customer context (CODE/BRANCH) is missing. Please select a customer in the main booking form.", "error");
-                    return;
-                }
-                qc_handleRequest('submit'); 
-            });
-
-            if (qc_ui.closeButton) {
-                qc_ui.closeButton.addEventListener('click', () => {
-                    document.getElementById('newClientBlock').classList.add('hidden');
-                    qc_ui.responseMessage.innerHTML = ''; // Clear messages
-                });
-            }
-
-            // --- End QC Event Listeners ---
-
-
             updateTimestamp();
             orderDateInput.value = formatDate(new Date());
             setInterval(updateTimestamp, 60000);
             updateDisplayTables();
             updateSummaryDisplay();
             toggleWeightProductEntry(true);
-            qc_loadInitialData(); // Final check to load carrier list if appData was slow
-        // }); // <-- REMOVED THIS LINE
+            
+            // Initial fetch of shipment list if appData is already loaded
+            if (appDataJSON) fetchShipmentList();
+        });
     </script>
 </body>
 </html>
