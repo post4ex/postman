@@ -10,24 +10,24 @@
 function calculateFreight(transportType, rate, addRate, weightCeiling, weightZone) {
     if (isNaN(rate) || isNaN(weightCeiling)) return 0;
 
-    let fright = 0;
+    let freight = 0;
     const selectedMode = transportType;
 
     if (selectedMode === 'E' || selectedMode === 'P') {
         if (!isNaN(addRate)) {
-            fright = rate + ((weightCeiling * 2) - 1) * addRate;
+            freight = rate + ((weightCeiling * 2) - 1) * addRate;
         } else {
-            fright = rate;
+            freight = rate;
         }
     } else {
         if (!isNaN(addRate) && !isNaN(weightZone)) {
             const weightDiv = weightCeiling - weightZone;
-            fright = rate + (weightDiv * addRate);
+            freight = rate + (weightDiv * addRate);
         } else {
-            fright = weightCeiling * rate;
+            freight = weightCeiling * rate;
         }
     }
-    return fright > 0 ? fright : 0;
+    return freight > 0 ? freight : 0;
 }
 
 /**
@@ -43,11 +43,18 @@ function getHelperTableData(chgWt, selectedCustomerDetails, transportType, recei
     let weightCeiling = 0;
     const weightChange = parseFloat(selectedCustomerDetails.WEIGHT_CHANGE);
 
-    if (!isNaN(weightChange) && chgWt >= weightChange) {
+    // --- THIS IS THE UPDATED LOGIC BLOCK ---
+    if (!isNaN(weightChange) && chgWt <= weightChange) {
+        // CONDITION 1: weightChange is valid AND chgWt is LESS than or EQUAL to it.
+        // Rounds the weight up to the nearest 0.5 kg.
         weightCeiling = Math.ceil(chgWt * 2) / 2;
     } else {
+        // CONDITION 2: weightChange is valid AND chgWt is GREATER than it.
+        // OR FALLBACK: weightChange is NOT a valid number (isNaN).
+        // Rounds the weight up to the next whole integer.
         weightCeiling = Math.ceil(chgWt);
     }
+    // --- END OF UPDATED LOGIC BLOCK ---
 
     let weightZone = '---';
     if (transportType) {
@@ -80,7 +87,7 @@ function getHelperTableData(chgWt, selectedCustomerDetails, transportType, recei
     }
 
     return {
-        weight_ceiling: weightCeiling.toFixed(2),
+        weight_ceiling: weightCeiling, // Returns a number
         weight_zone: weightZone,
         rate_uid: rateUid,
         rate: rate,
@@ -90,7 +97,7 @@ function getHelperTableData(chgWt, selectedCustomerDetails, transportType, recei
 
 /**
  * Calculates all additional charges, taxes, and the final total.
- * @param {number} frightValue - The base freight value.
+ * @param {number} freightValue - The base freight value.
  * @param {object} summaryTotals - Object containing total amount.
  * @param {object} selectedCustomerDetails - Details of the selected customer.
  * @param {object} paymentCheckboxes - Object with the state of payment checkboxes.
@@ -98,7 +105,7 @@ function getHelperTableData(chgWt, selectedCustomerDetails, transportType, recei
  * @param {number} chgWt - The chargeable weight.
  * @returns {object} An object containing all calculated charge values.
  */
-function calculateAllCharges(frightValue, summaryTotals, selectedCustomerDetails, paymentCheckboxes, consignmentProducts, chgWt) {
+function calculateAllCharges(freightValue, summaryTotals, selectedCustomerDetails, paymentCheckboxes, consignmentProducts, chgWt) {
     const totalValue = summaryTotals.totalAmount;
     
     const codCheckbox = paymentCheckboxes.cod;
@@ -114,23 +121,23 @@ function calculateAllCharges(frightValue, summaryTotals, selectedCustomerDetails
         }
         if (topayCheckbox.checked && selectedCustomerDetails['%_TOPAY_IF']) {
             const rate = parseFloat(selectedCustomerDetails['%_TOPAY_IF']);
-            topayCharge = Math.max(150, frightValue * rate);
+            topayCharge = Math.max(150, freightValue * rate);
         }
         if (fovCheckbox.checked && selectedCustomerDetails['%_FOV_IF']) {
             const rate = parseFloat(selectedCustomerDetails['%_FOV_IF']);
             fovCharge = Math.max(100, totalValue * rate);
         }
         awbCharge = parseFloat(selectedCustomerDetails['AWB_CHARGES']) || 0;
-        fuelCharge = frightValue * (parseFloat(selectedCustomerDetails['FUEL_CHARGES']) || 0);
+        fuelCharge = freightValue * (parseFloat(selectedCustomerDetails['FUEL_CHARGES']) || 0);
         const ewayCount = consignmentProducts.filter(p => p.ewayBill).length;
         ewayCharge = ewayCount * (parseFloat(selectedCustomerDetails['EWAY_IF']) || 0);
         packCharge = chgWt * (parseFloat(selectedCustomerDetails['PACKING_CHARGES']) || 0);
-        devCharge = frightValue * (parseFloat(selectedCustomerDetails['DEV_CHARGES']) || 0);
+        devCharge = freightValue * (parseFloat(selectedCustomerDetails['DEV_CHARGES']) || 0);
     }
     
     const otherCharges = fuelCharge + codCharge + topayCharge + fovCharge + ewayCharge + awbCharge + packCharge + devCharge;
 
-    const subtotal = frightValue + otherCharges;
+    const subtotal = freightValue + otherCharges;
     let taxableAmount = 0, sgst = 0, cgst = 0, igst = 0, total = 0;
 
     if (selectedCustomerDetails.GST_INC === 'Y') {
@@ -155,23 +162,24 @@ function calculateAllCharges(frightValue, summaryTotals, selectedCustomerDetails
     }
     const totalGst = sgst + cgst + igst;
 
+    // Returns raw numbers for calculations
     return {
-        fright: frightValue.toFixed(2),
-        other_chg: otherCharges.toFixed(2),
-        gst_total: totalGst.toFixed(2),
-        total: total.toFixed(2),
-        fuel_chg: fuelCharge.toFixed(2),
-        cod_chg: codCharge.toFixed(2),
-        topay_chg: topayCharge.toFixed(2),
-        fov_chg: fovCharge.toFixed(2),
-        eway_chg: ewayCharge.toFixed(2),
-        awb_chg: awbCharge.toFixed(2),
-        pack_chg: packCharge.toFixed(2),
-        dev_chg: devCharge.toFixed(2),
-        taxable: taxableAmount.toFixed(2),
-        sgst: sgst.toFixed(2),
-        cgst: cgst.toFixed(2),
-        igst: igst.toFixed(2)
+        freight: freightValue,
+        other_chg: otherCharges,
+        gst_total: totalGst,
+        total: total,
+        fuel_chg: fuelCharge,
+        cod_chg: codCharge,
+        topay_chg: topayCharge,
+        fov_chg: fovCharge,
+        eway_chg: ewayCharge,
+        awb_chg: awbCharge,
+        pack_chg: packCharge,
+        dev_chg: devCharge,
+        taxable: taxableAmount,
+        sgst: sgst,
+        cgst: cgst,
+        igst: igst
     };
 }
 
@@ -183,10 +191,17 @@ function calculateAllCharges(frightValue, summaryTotals, selectedCustomerDetails
  */
 function recalculateAllBoxWeights(consignmentBoxes, volIngr) {
     const volDivisor = volIngr || 4700;
-    consignmentBoxes.forEach(box => {
-        box.volWeight = (box.length * box.breadth * box.height) / volDivisor;
-        box.chargeWeight = Math.max(box.actualWeight, box.volWeight);
+    
+    // Returns a NEW array instead of modifying the original
+    return consignmentBoxes.map(box => {
+        const volWeight = (box.length * box.breadth * box.height) / volDivisor;
+        const chargeWeight = Math.max(box.actualWeight, volWeight);
+        
+        // Creates a new box object with the new properties
+        return {
+            ...box,
+            volWeight: volWeight,
+            chargeWeight: chargeWeight
+        };
     });
-    return consignmentBoxes;
 }
-
