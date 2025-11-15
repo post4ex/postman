@@ -3,74 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Postman</title>
+    <title>Login - Postman (V5.6)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* General Body & Container Styles */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* bg-gray-100 */
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            width: 100%;
-        }
-        .card {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        /* Dropdown Menu for Mobile Navigation */
-        .dropdown-menu {
-            position: absolute;
-            right: 1.5rem;
-            top: 5rem;
-            background-color: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            padding: 0.5rem;
-            z-index: 50;
+        body { font-family: 'Inter', sans-serif; }
+        /* This CSS handles the floating label animation */
+        .peer:not(:placeholder-shown) ~ label, .peer:focus ~ label {
+            @apply text-sm -translate-y-4 text-blue-500;
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
-    <div id="header-placeholder"></div>
+    <!-- 
+      NARRATION: This is the V5.6 login page.
+      - It matches the V5.6 (Fully Narrated) API.
+      - It sends `user` and `pass` (no `code`).
+      - It expects `sessionId`, `name`, `code`, `token` back.
+      - It saves all of them to `localStorage` to support
+        both your new multi-tab system and your old system.
+    -->
 
     <main class="flex-grow flex items-center justify-center p-4">
         <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden grid md:grid-cols-2 gap-0">
             <!-- Column 1: Login Form -->
             <div class="p-8 md:p-12">
                 <div class="flex justify-center mb-8">
-                    <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-20 w-auto">
+                    <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-20 w-auto"
+                         onerror="this.onerror=null; this.src='https://placehold.co/150x80/022c5a/ffffff?text=Postman';">
                 </div>
                 <form id="login-form" class="space-y-6">
-                    <!-- Code Input -->
-                    <div class="relative">
-                        <input type="text" id="code" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
-                        <label for="code" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
-                            User Code
-                        </label>
-                    </div>
                     <!-- Username Input -->
                     <div class="relative">
                         <input type="text" id="username" autocomplete="username" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
-                        <label for="username" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
+                        <label for="username" class="absolute text-gray-500 transition-all left-4 top-5 pointer-events-none">
                             Username
                         </label>
                     </div>
                     <!-- Password Input -->
                     <div class="relative">
                         <input type="password" id="password" autocomplete="current-password" required placeholder=" " class="w-full peer p-4 pt-6 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-colors">
-                        <label for="password" class="absolute text-gray-500 peer-focus:text-blue-500 peer-focus:text-sm peer-focus:-translate-y-4 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:-translate-y-4 transition-all left-4 top-5 pointer-events-none">
+                        <label for="password" class="absolute text-gray-500 transition-all left-4 top-5 pointer-events-none">
                             Password
                         </label>
                     </div>
                     <!-- Submit Button -->
-                    <button type="submit" class="w-full py-4 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors mt-6 flex items-center justify-center">
+                    <button type="submit" class="w-full py-4 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors mt-6 flex items-center justify-center" disabled>
                         <span id="button-text">Log In</span>
                         <svg id="spinner" class="animate-spin h-5 w-5 text-white ml-3 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -83,21 +61,17 @@
 
             <!-- Column 2: Greeting and Image -->
             <div class="hidden md:block relative">
-                <!-- Background Image -->
-                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1585713181935-d5f622cc261b?q=80&w=2070&auto=format&fit=crop');">
-                </div>
-                 <!-- Overlay and Text -->
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1585713181935-d5f622cc261b?q=80&w=2070&auto=format&fit=crop');"></div>
                 <div class="relative z-10 flex flex-col justify-center items-center h-full p-8 bg-blue-900 bg-opacity-75 text-white text-center">
-                     <h2 class="text-4xl font-bold mb-4">Postman Welcomes to do Adventures .</h2>
+                     <h2 class="text-4xl font-bold mb-4">Postman Welcomes You</h2>
                      <p class="text-lg">Manage shipments, track packages, and access all your services seamlessly in one place.</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <div id="footer-placeholder"></div>
-
-    <script src="layout.js"></script>
+    <!-- The layout.js file is not used on the login page -->
+    <!-- <script src="layout.js"></script> -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
              // --- DOM Elements ---
@@ -105,23 +79,22 @@
             const messageArea = document.getElementById('message-area');
             const spinner = document.getElementById('spinner');
             const buttonText = document.getElementById('button-text');
+            const submitButton = loginForm.querySelector('button[type="submit"]');
 
             // --- Configuration ---
-            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxPq1267mnqnaRbBwQqZ87Yvg31sSgXl4aRR1PbTkGthIvJCPdmz6PTkn6iY2sg_rRsDA/exec';
-            const SESSION_KEY = 'loginData'; // Use 'loginData' to match layout.js
+            // NARRATION: Updated to the new V1 Deployment URL
+            const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwEjKXvfpBJASCn5Bak19P7ehFIYAFAEjWm2PUaJgTuWkZnQqwekDiRzGbszQPI-hI55Q/exec';
+            const SESSION_KEY = 'loginData'; 
+            
+            // --- NARRATION: This MUST match the 1-hour server timer ---
+            const ABSOLUTE_SESSION_TIMEOUT_SECONDS = 3600; 
 
-            // --- Session Function ---
-            function saveUserSession(fullUserData) {
-                const expiry = new Date().getTime() + (2 * 60 * 60 * 1000); // 2 hours
-                
-                // Combine user data with the expiry timestamp required by layout.js
-                const sessionItem = {
-                    ...fullUserData, // Spread all properties like NAME, ROLE, etc.
-                    expires: expiry 
-                };
-                
-                localStorage.setItem(SESSION_KEY, JSON.stringify(sessionItem));
-            }
+            // --- Initialization ---
+            // Clear all storage on login page load to ensure a clean start.
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            submitButton.disabled = false; // Enable button
 
             // --- Event Listener ---
             loginForm.addEventListener('submit', async (e) => {
@@ -130,35 +103,38 @@
                 displayMessage('', 'info');
 
                 const formData = {
-                    code: document.getElementById('code').value.trim(),
                     username: document.getElementById('username').value.trim(),
                     password: document.getElementById('password').value.trim(),
                 };
 
-                if (!formData.code || !formData.username || !formData.password) {
-                    displayMessage('All fields are required.', 'error');
-                    setLoading(false);
-                    return;
-                }
+                // NARRATION: Create GET request parameters
+                const params = new URLSearchParams({
+                    action: 'login',
+                    user: formData.username,
+                    pass: formData.password
+                });
+                const URL = WEB_APP_URL + '?' + params.toString();
 
                 try {
-                    const response = await fetch(WEB_APP_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(formData)
-                    });
+                    // NARRATION: Changed to GET, removed POST body/headers
+                    const response = await fetch(URL, { method: 'GET', mode: 'cors' });
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const result = await response.json();
 
-                    if (result.status === 'success') {
+                    // NARRATION: Updated this check to look for all the new data
+                    if (result.success && result.data.sessionId && result.data.code) {
                         displayMessage('Login successful! Redirecting...', 'success');
+                        
+                        // Pass the *entire* data object to be saved
                         saveUserSession(result.data);
+                        
                         setTimeout(() => {
+                            // NARRATION: Redirect to your dashboard page
                             window.location.href = 'https://post4ex.github.io/postman/dashboard.html';
                         }, 1000);
 
                     } else {
-                        displayMessage(result.message, 'error');
+                        displayMessage(result.message || 'Login failed. Please check credentials.', 'error');
                         setLoading(false);
                     }
                 } catch (error) {
@@ -168,17 +144,43 @@
                 }
             });
 
+            // --- NARRATION: This function is UPGRADED for transition ---
+            function saveUserSession(data) {
+                // 1. Create the 1-hour client-side expiry (matches server)
+                const expiry = new Date().getTime() + (ABSOLUTE_SESSION_TIMEOUT_SECONDS * 1000); // 1 hour
+                
+                // 2. Save EVERYTHING to LOCAL STORAGE
+                // This supports both the new `sessionId` and your
+                // old system's `code` and `token`.
+                localStorage.setItem(SESSION_KEY, JSON.stringify({
+                    sessionId: data.sessionId,
+                    expires: expiry,
+
+                    // --- TRANSITION CODE (Remove Later) ---
+                    // These are for your old system.
+                    name: data.name,
+                    code: data.code,
+                    token: data.token
+                    // --- END TRANSITION CODE ---
+                }));
+                
+                // NARRATION: We do NOT save appData here.
+                // Your `layout.js` will fetch that and save it
+                // to `sessionStorage`.
+            }
+
             // --- UI Functions ---
             function setLoading(isLoading) {
                 spinner.classList.toggle('hidden', !isLoading);
                 buttonText.textContent = isLoading ? 'Verifying...' : 'Log In';
-                loginForm.querySelector('button[type="submit"]').disabled = isLoading;
-                ['code', 'username', 'password'].forEach(id => {
-                    document.getElementById(id).disabled = isLoading;
-                });
+                submitButton.disabled = isLoading;
+                // NARRATION: Updated this to only disable the two existing fields
+                document.getElementById('username').disabled = isLoading;
+                document.getElementById('password').disabled = isLoading;
             }
 
             function displayMessage(message, type) {
+                // Using .textContent is a critical XSS protection.
                 messageArea.textContent = message;
                 messageArea.className = 'text-center font-medium mt-4 text-sm';
                 if (type === 'error') messageArea.classList.add('text-red-600');
@@ -189,4 +191,3 @@
     </script>
 </body>
 </html>
-
