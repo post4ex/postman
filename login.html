@@ -24,6 +24,9 @@
         both your new multi-tab system and your old system.
     -->
 
+    <!-- NARRATION: Added Header Placeholder Back -->
+    <div id="header-placeholder"></div>
+
     <main class="flex-grow flex items-center justify-center p-4">
         <div class="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden grid md:grid-cols-2 gap-0">
             <!-- Column 1: Login Form -->
@@ -68,11 +71,16 @@
                 </div>
             </div>
         </div>
-    </main>
+    </Main>
 
-    <!-- The layout.js file is not used on the login page -->
-    <!-- <script src="layout.js"></script> -->
+    <!-- NARRATION: Added Footer Placeholder Back -->
+    <div id="footer-placeholder"></div>
+
+    <!-- NARRATION: Added layout.js script back -->
+    <script src="layout.js"></script>
+    
     <script>
+        // NARRATION: This script runs *after* layout.js
         document.addEventListener('DOMContentLoaded', () => {
              // --- DOM Elements ---
             const loginForm = document.getElementById('login-form');
@@ -82,7 +90,6 @@
             const submitButton = loginForm.querySelector('button[type="submit"]');
 
             // --- Configuration ---
-            // NARRATION: Updated to the new V1 Deployment URL
             const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwEjKXvfpBJASCn5Bak19P7ehFIYAFAEjWm2PUaJgTuWkZnQqwekDiRzGbszQPI-hI55Q/exec';
             const SESSION_KEY = 'loginData'; 
             
@@ -141,7 +148,7 @@
                     console.error("Login Error:", error);
                     displayMessage('An unexpected error occurred. Please try again.', 'error');
                     setLoading(false);
-                }
+A                }
             });
 
             // --- NARRATION: This function is UPGRADED for transition ---
